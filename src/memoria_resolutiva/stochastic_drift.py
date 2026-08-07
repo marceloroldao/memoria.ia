@@ -27,23 +27,31 @@ class StochasticSummary:
     missed_runs: int
 
 
+def _effective_fraction(fraction: float, noise: float) -> float:
+    """Mix nominal evidence toward 0.5 to model non-directional ambiguity/noise."""
+    if not 0.0 <= noise <= 1.0:
+        raise ValueError("noise must be in [0, 1]")
+    return (1.0 - noise) * fraction + noise * 0.5
+
+
 def simulate_stochastic_drift_once(
     seed: int,
     fractions: tuple[float, ...] = (0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0),
     *,
     samples_per_epoch: int = 100,
     decay: float = 0.9,
+    noise: float = 0.0,
 ) -> StochasticRun:
     """Simulate noisy gradual drift using binomial sampling at every epoch.
 
-    Each nominal fraction is a probability, not an exact count. The observed number
-    of new-relation samples therefore fluctuates independently for every seed.
-    Detection uses the same exponential recency rule as TemporalRelationMemory.
+    `noise` moves each nominal relation probability toward 0.5 before sampling.
+    This preserves the nominal ground-truth transition epoch while reducing the
+    observable separation between old and new evidence.
     """
     if samples_per_epoch < 1:
         raise ValueError("samples_per_epoch must be >= 1")
-    if not 0.0 < decay <= 1.0:
-        raise ValueError("decay must be in (0, 1]")
+    if decay <= 0.0:
+        raise ValueError("decay must be > 0")
     if any(not 0.0 <= f <= 1.0 for f in fractions):
         raise ValueError("fractions must be in [0, 1]")
 
@@ -54,7 +62,8 @@ def simulate_stochastic_drift_once(
     false_alarms = 0
 
     for epoch, fraction in enumerate(fractions):
-        new_count = sum(rng.random() < fraction for _ in range(samples_per_epoch))
+        p = _effective_fraction(fraction, noise)
+        new_count = sum(rng.random() < p for _ in range(samples_per_epoch))
         old_count = samples_per_epoch - new_count
         observations.append((old_count, new_count))
 
@@ -85,6 +94,7 @@ def evaluate_stochastic_drift(
     *,
     samples_per_epoch: int = 100,
     decay: float = 0.9,
+    noise: float = 0.0,
     seed_start: int = 0,
 ) -> tuple[StochasticSummary, tuple[StochasticRun, ...]]:
     if runs < 1:
@@ -96,6 +106,7 @@ def evaluate_stochastic_drift(
             fractions,
             samples_per_epoch=samples_per_epoch,
             decay=decay,
+            noise=noise,
         )
         for i in range(runs)
     )
