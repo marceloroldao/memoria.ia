@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.22 scope
+## v0.24 scope
 
 The current prototype implements:
 
@@ -37,14 +37,16 @@ The current prototype implements:
 - end-to-end online comparison against incremental cooccurrence and rebuilt TF-IDF-like context retrieval
 - append-only factual timelines with historical and current queries
 - provenance-aware conflicting evidence with explicit abstention
+- online source-reliability learning from confirmed/contradicted historical claims
+- evidence-family clustering that prevents copied sources from multiplying support
 
-v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines: later facts can supersede the current state without deleting earlier states, enabling direct queries such as “what is true now?”, “what was recorded at epoch t?” and “when was value X superseded?”.
+v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims using a Beta prior and conservative Wilson diagnostics.
 
-v0.22 adds **contradiction and provenance handling**. Multiple sources may assert different values for the same subject/relation at the same epoch. Evidence is preserved per source instead of being collapsed or overwritten. Resolution is weighted and includes an explicit abstention rule: if the leading value is not separated from the strongest rival by the configured decision margin, the memory returns `conflict=True` and `winner=None` rather than manufacturing certainty.
+v0.24 adds **independence-aware evidence resolution**. Raw source count is no longer treated as independent support. Every evidence item carries a source and an `origin` family. Multiple sites, agents or messages that derive from the same origin are collapsed into one evidence family for a claim; within one origin/value pair, only the strongest supplied weight contributes. This blocks a simple echo-chamber failure mode where many copies of one report manufacture a majority.
 
-In the controlled mechanism test, equal-weight evidence (`Carlos` from source A versus `Ana` from source B, 1.0 vs 1.0) produces a conflict with no winner and confidence 0.50. A 3.0 vs 1.0 evidence split resolves to the stronger value with confidence 0.75 while preserving the weaker source in provenance. A later unambiguous epoch can become the current state while the earlier conflicting epoch remains independently queryable.
+In the controlled echo test, 10 sources repeat value `X` but all share one origin, while two genuinely independent origins support value `Y`. The resolver therefore counts one independent origin for `X` and two for `Y`, so `Y` wins despite the 10-to-2 raw source count. A 2-vs-2 independent split triggers abstention when the normalized margin is below threshold. These are controlled mechanism tests, not a general solution for discovering causal/source independence in open-world data.
 
-Source weights are currently experimental inputs, not objective truth scores. Future work must derive or calibrate source reliability from reproducible evidence rather than manually assigning trust.
+The difficult unresolved problem is **origin inference** itself. v0.24 assumes origin labels are known or supplied by upstream provenance analysis. Future work must infer likely copying/dependence from URLs, timestamps, citations, content similarity and source graphs rather than trusting declared origin metadata.
 
 ## Install and test
 
@@ -67,6 +69,8 @@ python experiments/drift_baselines_v19.py
 python experiments/end_to_end_v20.py
 python experiments/factual_timeline_v21.py
 python experiments/conflict_provenance_v22.py
+python experiments/source_reliability_v23.py
+python experiments/evidence_independence_v24.py
 ```
 
 Optional Word2Vec baseline:
@@ -88,8 +92,8 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines and provenance-aware conflict representation on controlled tests. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines, provenance-aware conflict representation, learned source reliability and resistance to duplicate-origin evidence on controlled tests. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, automatic discovery of independent sources, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
-The next decisive stage is to replace manually supplied evidence weights with a learned/calibrated reliability mechanism based on source history: sources gain or lose reliability only when later independently verified outcomes confirm or contradict their past assertions. That would let the system distinguish “source disagreement” from “evidence-weighted confidence” without hard-coding authority.
+The next decisive stage is to infer evidence dependence automatically and test coordinated misinformation / copying graphs where sources hide their common origin. That should be benchmarked against raw-majority, reliability-weighted and independence-aware resolution on the same synthetic and external provenance datasets.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
