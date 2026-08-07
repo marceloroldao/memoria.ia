@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.24 scope
+## v0.25 scope
 
 The current prototype implements:
 
@@ -39,14 +39,15 @@ The current prototype implements:
 - provenance-aware conflicting evidence with explicit abstention
 - online source-reliability learning from confirmed/contradicted historical claims
 - evidence-family clustering that prevents copied sources from multiplying support
+- inferred source-dependency links using content overlap, temporal proximity and explicit citations
 
-v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims using a Beta prior and conservative Wilson diagnostics.
+v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims. v0.24 added independence-aware evidence resolution when origin families are known.
 
-v0.24 adds **independence-aware evidence resolution**. Raw source count is no longer treated as independent support. Every evidence item carries a source and an `origin` family. Multiple sites, agents or messages that derive from the same origin are collapsed into one evidence family for a claim; within one origin/value pair, only the strongest supplied weight contributes. This blocks a simple echo-chamber failure mode where many copies of one report manufacture a majority.
+v0.25 adds **automatic dependency inference**. Source documents are compared only against earlier documents. A probable dependency score combines lexical Jaccard overlap, exponential temporal proximity and explicit citation signals. Links above threshold form a directed dependency graph, and dependency chains are collapsed to their earliest reachable origin. This lets the evidence resolver estimate origin families when provenance labels are not directly supplied.
 
-In the controlled echo test, 10 sources repeat value `X` but all share one origin, while two genuinely independent origins support value `Y`. The resolver therefore counts one independent origin for `X` and two for `Y`, so `Y` wins despite the 10-to-2 raw source count. A 2-vs-2 independent split triggers abstention when the normalized margin is below threshold. These are controlled mechanism tests, not a general solution for discovering causal/source independence in open-world data.
+The controlled attack contains one false origin followed by 10 near-identical or explicitly citing copies, versus three independently worded documents supporting the rival value. The inferred graph collapses the false echo into one probable origin while preserving the three independent documents as separate roots. Thus an upstream raw 11-to-3 source count can be transformed into an estimated 1-to-3 origin count before evidence resolution.
 
-The difficult unresolved problem is **origin inference** itself. v0.24 assumes origin labels are known or supplied by upstream provenance analysis. Future work must infer likely copying/dependence from URLs, timestamps, citations, content similarity and source graphs rather than trusting declared origin metadata.
+This is a mechanism test only. Jaccard overlap, publication timing and citations are insufficient to establish true causal dependence in unrestricted data. Paraphrases can evade lexical detection, unrelated sources can independently use similar wording, timestamps can be missing or manipulated, and citation graphs can be incomplete. The dependency score must therefore be treated as probabilistic provenance evidence, not ground truth.
 
 ## Install and test
 
@@ -71,6 +72,7 @@ python experiments/factual_timeline_v21.py
 python experiments/conflict_provenance_v22.py
 python experiments/source_reliability_v23.py
 python experiments/evidence_independence_v24.py
+python experiments/dependency_inference_v25.py
 ```
 
 Optional Word2Vec baseline:
@@ -92,8 +94,8 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines, provenance-aware conflict representation, learned source reliability and resistance to duplicate-origin evidence on controlled tests. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, automatic discovery of independent sources, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines, provenance-aware conflict representation, learned source reliability, resistance to duplicate-origin evidence, and basic automatic dependency inference on controlled tests. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, reliable open-world source-independence discovery, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
-The next decisive stage is to infer evidence dependence automatically and test coordinated misinformation / copying graphs where sources hide their common origin. That should be benchmarked against raw-majority, reliability-weighted and independence-aware resolution on the same synthetic and external provenance datasets.
+The next decisive stage is adversarial dependency inference: paraphrased copies, delayed reposts, missing citations and coordinated source networks, compared against raw-majority and provenance-aware resolution. Precision/recall of dependency-edge inference should be measured separately from final claim-resolution accuracy.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
