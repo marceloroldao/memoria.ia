@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.8 scope
+## v0.9 scope
 
 The current prototype implements:
 
@@ -35,8 +35,9 @@ The current prototype implements:
 - deterministic natural-language tokenization
 - sentence-level contextual observation
 - ambiguity probing using ranked alternatives, entropy and top-margin
-- unordered window-cooccurrence baseline for direct comparison
-- comparative natural-language benchmark for signed trajectory context vs unordered local statistics
+- unordered window-cooccurrence baseline
+- TF-IDF-like unordered context-vector baseline
+- comparative benchmark for signed positional context vs stronger non-neural context statistics
 - unit tests and retrieval benchmarks
 
 SQLite persistence deliberately stores both the original payload and the resolutive node graph at this research stage. This makes round-trip validation explicit while the project measures when hierarchical storage becomes advantageous.
@@ -45,9 +46,9 @@ The v0.2 association experiment is structural, not semantic. The v0.3 extension 
 
 The v0.4 extension adds **contextual association**. Nodes are not declared synonymous or equivalent. Instead, each node accumulates a sparse profile of neighboring nodes and their signed relative positions. Similarity is computed from these observed trajectory contexts with inverse-frequency weighting so ubiquitous context contributes less.
 
-The v0.5 extension evaluates that mechanism across several domains at once, v0.6 adds adversarial distractors, and v0.7 introduces direct natural-language observation and ambiguity measurement.
+The v0.5 extension evaluates that mechanism across several domains at once, v0.6 adds adversarial distractors, v0.7 introduces direct natural-language observation and ambiguity measurement, and v0.8 adds the first direct comparison against unordered cooccurrence.
 
-The v0.8 extension adds a **non-neural baseline comparison**. The same corpus is processed by the resolutive signed-context model and by an unordered local cooccurrence baseline. In the current controlled natural-language experiment, the resolutive model recovers 8/8 hidden-pair directional queries at top-1, while the unordered baseline recovers 6/8. The mean expected-partner margin is approximately 0.35 for the resolutive model versus 0.22 for the unordered baseline. This suggests that signed relative position adds useful information in this controlled corpus, but the result is not yet an external benchmark.
+The v0.9 extension adds a **TF-IDF-like contextual baseline** that keeps weighted neighboring-token profiles but deliberately discards signed relative position. In the current controlled Portuguese benchmark, both the resolutive model and the TF-IDF contextual baseline recover 8/8 hidden-pair directional queries at top-1. The distinction appears in robustness against distractors: the mean expected-partner margin is approximately 0.61 for the resolutive model versus 0.33 for the TF-IDF contextual baseline, with minimum margins of approximately 0.39 and 0.21 respectively. This is stronger controlled evidence that positional trajectory information contributes useful signal, but it is not an external benchmark and does not establish superiority over modern NLP models.
 
 ## Install and test
 
@@ -61,10 +62,11 @@ python experiments/multidomain_v05.py
 python experiments/generalization_v06.py
 python experiments/natural_language_v07.py
 python experiments/comparative_v08.py
+python experiments/comparative_v09.py
 ```
 
 ## Research status
 
-This is an experimental research project. The current implementation tests memory structure, persistence, retrieval, ordered trajectories, contextual association, adversarial generalization, small-corpus natural-language behavior and baseline comparison. It does **not** yet claim unrestricted semantic understanding, general intelligence, or replacement of neural networks.
+This is an experimental research project. The current implementation tests memory structure, persistence, retrieval, ordered trajectories, contextual association, adversarial generalization, small-corpus natural-language behavior and comparative non-neural baselines. It does **not** yet claim unrestricted semantic understanding, general intelligence, or replacement of neural networks.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
