@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.12 scope
+## v0.13 scope
 
 The current prototype implements:
 
@@ -32,15 +32,18 @@ The current prototype implements:
 - explicit vocabulary coverage separated from zero semantic similarity
 - Spearman rank correlation on covered benchmark pairs
 - online/incremental observation without replaying prior batches
-- immediate post-update retrieval measurement
-- retention measurement for previously learned relations
-- per-batch update-time measurement
+- immediate post-update retrieval and retention measurement
+- streaming-scale evaluator with heterogeneous noise and adversarial rivals
+- per-batch update latency and sparse-memory growth metrics
+- incrementally maintained contextual feature document frequencies
 
-v0.11 established the external evaluation protocol and corrected coverage semantics.
+v0.12 established the explicit online-learning protocol: new observations are appended to the existing memory, previous batches are not replayed, and immediate acquisition plus retention are measured after each update.
 
-v0.12 adds an explicit **online learning protocol**. New observations are appended directly to the existing sparse contextual memory. Prior batches are not replayed or globally retrained. After each incoming batch the evaluator measures (1) whether the newly introduced relation is immediately available at top-1, (2) whether previously learned relations remain top-1, and (3) the incremental update cost.
+v0.13 extends that protocol to a longer heterogeneous stream and fixes a scalability bottleneck discovered during stress testing. Earlier versions rebuilt contextual feature document frequencies during every similarity calculation. v0.13 maintains those frequencies incrementally at observation time, so retrieval no longer rescans the complete contextual feature space merely to rebuild global weights.
 
-In the current controlled four-stage experiment, each new relation becomes immediately retrievable after its batch is observed, while previously learned pairs remain top-1 throughout. The prototype therefore demonstrates the intended incremental behavior in a small controlled setting. This is not yet evidence that retention will remain perfect at large scale; v0.12 exists to make that claim measurable rather than assumed.
+The controlled v0.13 experiment uses 60 sequential batches (about 2,100 sentences with the default configuration), 30 hidden relation pairs, unrelated noise, repeated revisits and plausible rival tokens injected late in the stream. In the prototype simulation, immediate acquisition and checkpoint retention remained 1.00 through the final checkpoint. Mean batch-update latency did not grow across the run. These values are evidence only for this synthetic controlled stream; they do not establish absence of forgetting or constant-time behavior at unrestricted scale.
+
+The new `footprint()` metric reports sparse node count, contextual feature count, document-frequency index size and total observations so model growth can be compared with accuracy and latency.
 
 ## Install and test
 
@@ -53,6 +56,12 @@ Online-learning experiment:
 
 ```bash
 python experiments/online_learning_v12.py
+```
+
+Streaming-scale experiment:
+
+```bash
+python experiments/streaming_v13.py
 ```
 
 Optional Word2Vec baseline:
@@ -74,8 +83,8 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, or superiority over modern NLP/embedding models.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
-The next decisive stage is a large sequential stream with thousands of batches, measuring retention curves, immediate-learning accuracy, update latency, memory growth and comparison with incremental/retrained baselines.
+The next decisive stage is a substantially larger stream with independent natural-language data, explicit concept drift and contradictory evidence, while comparing retention, immediate-learning accuracy, update latency, query latency, memory growth and baseline retraining/incremental costs.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
