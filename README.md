@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.19 scope
+## v0.20 scope
 
 The current prototype implements:
 
@@ -34,14 +34,15 @@ The current prototype implements:
 - deterministic and stochastic gradual concept-drift evaluation
 - stability-map sweep over sample size, temporal decay, drift speed and noise
 - matched EWMA and CUSUM online change-detection baselines
+- end-to-end online comparison against incremental cooccurrence and rebuilt TF-IDF-like context retrieval
 
-v0.17 established stochastic drift evaluation across many random seeds. The reference 1,000-seed protocol with 100 observations per epoch and decay `0.9` produced exact first-majority detection in `994/1000` runs, eventual detection `1.000`, mean delay about `0.006` epoch and no pre-transition false alarms in that specific synthetic protocol.
+v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. The contribution therefore cannot be claimed to lie in the exponential change filter itself.
 
-v0.18 added a stability map over drift profile, sample size, temporal decay and ambiguity/noise. It exposed the expected adaptation-versus-stability trade-off: longer temporal memory is conservative but can lag; shorter temporal memory responds faster but becomes more sensitive to stochastic fluctuations.
+v0.20 moves the comparison to the **complete online-memory workflow**. Resolutive Memory and a simple cooccurrence baseline receive only each incoming batch and update their existing sparse state. A TF-IDF-like contextual baseline is rebuilt from the full accumulated history after every batch, representing a retraining/reindexing workflow. After every update the benchmark measures immediate retrieval of the newly introduced relation, retention of older relations, update/rebuild latency and sparse structural growth.
 
-v0.19 adds **classical online change-detection baselines**. The recency-weighted Resolutive detector is compared on exactly the same sampled streams against a matched EWMA and a one-sided CUSUM. When EWMA uses `alpha = 1 - exp(-decay)`, its behavior is expected to be very close to the normalized exponential temporal detector. This is an important negative/clarifying result: the exponential change detector by itself should not be presented as a novel contribution. The research question therefore shifts to whether the surrounding architecture — persistent episodic history, direct relation memory, sparse contextual association, multiscale reconstruction and immediate online incorporation — provides measurable advantages beyond the classical filter.
+In the current small controlled corpus, all three approaches preserve the tested relations, so this experiment does not establish a quality advantage for Resolutive Memory. The architectural distinction is update semantics: Resolutive Memory and incremental cooccurrence incorporate only new observations, while the rebuilt TF-IDF-like baseline reprocesses the accumulated history. Timing ratios are environment-specific and are intentionally not treated as universal performance claims.
 
-In the reference stochastic protocol with 100 observations per epoch, the matched EWMA and Resolutive exponential detector are nearly coincident in exact detection and delay. The configured CUSUM is substantially more conservative: it can reduce early alarms but typically detects later. These comparisons are protocol- and parameter-specific rather than universal rankings.
+The important unresolved comparison is therefore whether richer ordered/episodic structure provides a useful quality, provenance or historical-query advantage over simpler incremental indexes at comparable update and memory cost.
 
 ## Install and test
 
@@ -61,6 +62,7 @@ python experiments/gradual_drift_v16.py
 python experiments/stochastic_drift_v17.py
 python experiments/stability_map_v18.py
 python experiments/drift_baselines_v19.py
+python experiments/end_to_end_v20.py
 ```
 
 Optional Word2Vec baseline:
@@ -84,6 +86,6 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking and statistically characterized synthetic change detection. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, factual truth assessment, or superiority over modern NLP/embedding models.
 
-v0.19 specifically establishes that the current exponential temporal detector is closely related to standard EWMA behavior. The next decisive comparison should therefore evaluate the complete Resolutive Memory system — not only its temporal filter — against standard continual-learning / retrieval systems on independent natural-language streams, including memory growth, update cost, historical query fidelity and immediate-use latency.
+v0.20 establishes an end-to-end protocol for comparing immediate online incorporation, retention and structural growth. The next decisive stage should use a much longer independent natural-language stream with conflicting updates and historical questions, then compare (1) accuracy after each update, (2) provenance/historical fidelity, (3) update and query latency, and (4) measured serialized memory size rather than only sparse structural counts.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
