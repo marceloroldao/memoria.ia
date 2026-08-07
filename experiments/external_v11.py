@@ -33,18 +33,33 @@ def main() -> None:
 
     resolutive, tfidf, word2vec = train_models(sentences, word2vec_seed=args.seed)
     models = [
-        ("resolutive", resolutive.associator.similarity),
-        ("tfidf", tfidf.similarity),
+        (
+            "resolutive",
+            resolutive.associator.similarity,
+            lambda word: word.lower() in resolutive.associator.profiles,
+        ),
+        (
+            "tfidf",
+            tfidf.similarity,
+            lambda word: word.lower() in tfidf.profiles,
+        ),
     ]
     if word2vec is not None:
-        models.append(("word2vec", word2vec.similarity))
+        models.append(
+            (
+                "word2vec",
+                word2vec.similarity,
+                lambda word: word2vec.model is not None and word.lower() in word2vec.model.wv,
+            )
+        )
 
     print(f"corpus_lines={len(sentences)} benchmark_pairs={len(rows)}")
-    for name, similarity in models:
-        result = evaluate_similarity_rows(rows, similarity)
+    for name, similarity, contains in models:
+        result = evaluate_similarity_rows(rows, similarity, contains=contains)
         print(
             f"{name:10s} coverage={result['coverage']:.3f} "
-            f"spearman={result['spearman']:.3f} pairs={int(result['pairs'])}"
+            f"covered={int(result['covered_pairs'])}/{int(result['pairs'])} "
+            f"spearman={result['spearman']:.3f}"
         )
 
 
