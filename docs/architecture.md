@@ -42,6 +42,22 @@ where:
 
 This means that identical node sets no longer imply identical memories. A reversed or temporally distorted trajectory receives a lower score than the same ordered trajectory.
 
+## Contextual association — v0.4
+
+v0.4 tests whether association can emerge from repeated trajectory context without predeclared synonym tables, dense embeddings or neural networks.
+
+For each observed node `n`, the model accumulates a sparse contextual profile:
+
+`C(n)[(delta, neighbor)] += 1`
+
+where `delta` is the signed relative position of a neighboring node inside a configurable trajectory radius.
+
+Two nodes are compared by weighted cosine similarity between these sparse contextual profiles. Context features shared by many nodes are down-weighted with inverse-frequency weighting, while rarer contextual features contribute more strongly.
+
+In a controlled experiment, two distinct symbolic nodes repeatedly exposed to the same trajectory neighborhoods converge to a high contextual similarity, while a node exposed to unrelated neighborhoods receives a substantially lower score.
+
+This behavior is best described as **distributional structural association**. It demonstrates learned contextual convergence, but it is not by itself proof that the system understands lexical semantics or abstract meaning.
+
 ## Current limits
 
-The system currently measures structural and sequential similarity. It does not yet infer lexical semantics, synonymy or abstract meaning. Those are future experimental targets and must be evaluated separately.
+The system currently measures structural, sequential, temporal and contextual similarity. Contextual convergence must still be stress-tested on larger corpora, adversarial cases, paraphrases and multimodal data before stronger cognitive claims are justified.
