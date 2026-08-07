@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.16 scope
+## v0.17 scope
 
 The current prototype implements:
 
@@ -32,12 +32,14 @@ The current prototype implements:
 - direct episodic relation memory separated from contextual similarity
 - episodic timeline reconstruction and dominant-association change detection
 - gradual concept-drift evaluation with detection delay and false alarms
+- stochastic gradual-drift evaluation across many random seeds
+- probability of exact change-epoch detection, eventual detection, delay dispersion and false-alarm rate
 
-v0.12 established online learning. v0.13 stress-tested longer streams and moved contextual document-frequency maintenance to observation time. v0.14 introduced temporal epochs. v0.15 separated contextual similarity from direct episodic relations and added historical timeline reconstruction.
+v0.12 established online learning. v0.13 stress-tested longer streams and moved contextual document-frequency maintenance to observation time. v0.14 introduced temporal epochs. v0.15 separated contextual similarity from direct episodic relations and added historical timeline reconstruction. v0.16 added deterministic gradual drift.
 
-v0.16 adds **gradual concept drift**. A controlled sequence changes evidence from an old relation to a new one using fractions `0%, 10%, 30%, 50%, 70%, 90%, 100%` for the new relation. Ground-truth change is defined as the first epoch where the new relation is a strict local majority. Detection is the first epoch where the recency-weighted current relation score of the new partner exceeds the old one.
+v0.17 adds **stochastic gradual drift**. The nominal sequence uses new-relation probabilities `0%, 10%, 30%, 50%, 70%, 90%, 100%`, but each epoch is sampled independently rather than receiving exact counts. The reference protocol runs 1,000 deterministic random seeds with 100 observations per epoch and recency decay `0.9`.
 
-For the default deterministic test with decay `0.9`, the expected transition occurs at epoch 4 (30/70 old/new) and the detector also switches at epoch 4, yielding detection delay `0` and `0` false alarms. A control stream that never crosses 50% produces no detected change. These are synthetic mechanism tests, not evidence of unrestricted temporal reasoning or factual truth assessment.
+For that reference protocol, the detector switches on the expected first-majority epoch in `994/1000` runs (`0.994` probability). The remaining 6 runs switch one epoch later. Eventual detection is `1.000`, mean detection delay is approximately `0.006` epoch, delay standard deviation is approximately `0.077`, and the observed false-alarm rate before the defined ground-truth transition is `0.000` in this simulation. These numbers are properties of this synthetic protocol only; they are not universal accuracy claims.
 
 ## Install and test
 
@@ -54,6 +56,7 @@ python experiments/streaming_v13.py
 python experiments/temporal_drift_v14.py
 python experiments/episodic_timeline_v15.py
 python experiments/gradual_drift_v16.py
+python experiments/stochastic_drift_v17.py
 ```
 
 Optional Word2Vec baseline:
@@ -75,8 +78,8 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking and gradual-change detection on synthetic streams. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, factual truth assessment, or superiority over modern NLP/embedding models.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking and robust change detection on the current synthetic stochastic protocol. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, factual truth assessment, or superiority over modern NLP/embedding models.
 
-The next decisive stage is noisy stochastic gradual drift across many random seeds and independent natural-language streams, measuring mean detection delay, false-alarm rate, historical fidelity, current-state accuracy, latency and memory growth.
+The next decisive stage is to vary sample size, decay, drift speed and noise strength systematically, then repeat the same temporal protocol on independent natural-language streams and compare against standard online change-detection baselines.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
