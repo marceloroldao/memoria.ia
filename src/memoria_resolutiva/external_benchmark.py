@@ -37,17 +37,44 @@ def spearman(x: list[float], y: list[float]) -> float:
     return num / (dx * dy) if dx and dy else 0.0
 
 
-def evaluate_similarity_rows(rows: list[SimilarityRow], similarity) -> dict[str, float]:
-    human, model = [], []
+def evaluate_similarity_rows(rows: list[SimilarityRow], similarity, contains=None) -> dict[str, float]:
+    """Evaluate human-rated word pairs.
+
+    If `contains` is supplied it must return whether a word is in the model's
+    learned vocabulary. This keeps zero semantic similarity distinct from
+    out-of-vocabulary coverage failure. Spearman is computed only on covered
+    pairs when explicit coverage is available.
+    """
+    human: list[float] = []
+    model: list[float] = []
     covered = 0
+
     for row in rows:
+        is_covered = True
+        if contains is not None:
+            is_covered = bool(contains(row.word1) and contains(row.word2))
+        if not is_covered:
+            continue
         score = similarity(row.word1, row.word2)
         human.append(row.human_score)
         model.append(score)
-        if score != 0.0:
-            covered += 1
+        covered += 1
+
+    if contains is None:
+        # Backward-compatible fallback when the model exposes no vocabulary API.
+        human = []
+        model = []
+        covered = 0
+        for row in rows:
+            score = similarity(row.word1, row.word2)
+            human.append(row.human_score)
+            model.append(score)
+            if score != 0.0:
+                covered += 1
+
     return {
         "pairs": float(len(rows)),
+        "covered_pairs": float(covered),
         "coverage": covered / len(rows) if rows else 0.0,
         "spearman": spearman(human, model),
     }
