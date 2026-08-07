@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.10 scope
+## v0.11 scope
 
 The current prototype implements:
 
@@ -28,17 +28,20 @@ The current prototype implements:
 - unordered cooccurrence and TF-IDF-like context baselines
 - optional Word2Vec baseline through `gensim`
 - multi-seed Word2Vec stability evaluation
-- external word-similarity benchmark support
-- Spearman rank correlation and vocabulary coverage metrics
-- reproducible experiments and unit tests
+- external corpus loader with third-party data kept outside the repository
+- generic human-rated word-similarity loader
+- explicit vocabulary coverage separated from zero semantic similarity
+- Spearman rank correlation on covered benchmark pairs
+- reproducible external benchmark CLI for Resolutive / TF-IDF / Word2Vec
+- regression tests for ranking and coverage semantics
 
 The v0.9 controlled benchmark showed equal 8/8 top-1 accuracy for the resolutive and TF-IDF-like context models, with larger partner-vs-distractor margins for the signed positional model.
 
-v0.10 adds a shallow neural/distributional baseline. On the deliberately tiny v0.9 corpus, Word2Vec is highly seed-sensitive: in a five-seed probe it ranged from 3/8 to 7/8 top-1 and produced negative minimum margins in every run. This is recorded as evidence that a tiny constructed corpus is inadequate for a definitive Word2Vec comparison, not as evidence that the resolutive model is superior to Word2Vec.
+v0.10 added Word2Vec and showed that the deliberately tiny controlled corpus is too small for a stable embedding comparison: five deterministic Word2Vec seeds ranged from 3/8 to 7/8 top-1 and all produced at least one negative partner-vs-distractor margin. This is treated as a benchmark-design warning, not as evidence of superiority.
 
-The project now includes generic external benchmark evaluation using human-scored word pairs. This enables PT-65, Portuguese WordSim-353, Portuguese SimLex-999 or compatible datasets to be evaluated using vocabulary coverage and Spearman correlation between model similarity and human judgments.
+v0.11 moves the project to a reproducible **external evaluation protocol**. Third-party corpora and benchmarks are not copied into this repository. A UTF-8 corpus can be supplied at runtime, all models are trained on the same input, and a human-rated Portuguese word-similarity file is evaluated by vocabulary coverage and Spearman correlation. Coverage is now explicit: an in-vocabulary pair with model similarity `0.0` is no longer incorrectly counted as out-of-vocabulary.
 
-An external corpus candidate is the TTS-Portuguese Corpus, which is openly licensed under CC BY 4.0 and reports 71,358 words with 13,311 distinct words. External corpora and human-rated similarity benchmarks should remain independent from the controlled development corpus.
+Portuguese benchmark candidates include LX-SimLex-999 and LX-WordSim-353 from LX-DSemVectors. An independently sourced training corpus candidate is TTS-Portuguese Corpus (CC BY 4.0), which reports 71,358 words and 13,311 distinct words. The training corpus and human-rated evaluation pairs must remain logically separated.
 
 ## Install and test
 
@@ -51,13 +54,21 @@ Optional Word2Vec baseline:
 
 ```bash
 python -m pip install -e '.[word2vec]'
-python experiments/comparative_v10.py
 ```
 
-Earlier experiments remain available under `experiments/`.
+External benchmark example:
+
+```bash
+python experiments/external_v11.py \
+  --corpus /path/to/portuguese_corpus.txt \
+  --benchmark /path/to/LX-SimLex-999.txt \
+  --word1-col 0 --word2-col 1 --score-col 3 --skip-header
+```
+
+Column indices depend on the source benchmark format; inspect the upstream file before running. Earlier experiments remain available under `experiments/`.
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, or superiority over modern NLP/embedding models. The next decisive stage is evaluation on an independently sourced corpus with standard Portuguese similarity benchmarks and strict train/test separation.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, or superiority over modern NLP/embedding models. The decisive next stage is an actual large-corpus run with standard Portuguese human-rated benchmarks, reported with coverage, Spearman correlation, runtime and memory usage.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
