@@ -13,44 +13,17 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.28 scope
+## v0.29 scope
 
-The current prototype implements:
+The current prototype includes the previous online, temporal, provenance and emergent-ontology experiments and now adds **context-conditioned concept splitting for polysemous words**.
 
-- unique content nodes separated from temporal occurrences
-- exact byte reconstruction and multiscale deduplication
-- structural retrieval using rare-node attractors
-- SQLite persistence
-- ordered trajectory and sparse contextual association
-- natural-language tokenization and ambiguity probing
-- TF-IDF-like and optional Word2Vec baselines
-- external similarity evaluation with coverage and Spearman correlation
-- online/incremental learning without replaying prior batches
-- retention, update latency and sparse-memory growth measurements
-- incrementally maintained contextual feature statistics
-- explicit temporal epochs and recency-weighted current-state queries
-- direct episodic relation memory separated from contextual similarity
-- episodic timeline reconstruction and dominant-association change detection
-- deterministic and stochastic gradual concept-drift evaluation
-- stability-map sweep over sample size, temporal decay, drift speed and noise
-- matched EWMA and CUSUM online change-detection baselines
-- end-to-end online comparison against incremental cooccurrence and rebuilt TF-IDF-like context retrieval
-- append-only factual timelines with historical and current queries
-- provenance-aware conflicting evidence with explicit abstention
-- online source-reliability learning from confirmed/contradicted historical claims
-- evidence-family clustering that prevents copied sources from multiplying support
-- inferred source-dependency links using content overlap, temporal proximity and explicit citations
-- adversarial dependency evaluation with precision, recall, false-positive and false-negative edge metrics
-- rule-based semantic/event fingerprints using canonical concepts, action concepts and numeric anchors
-- emergent contextual ontology clustering without a manual synonym map
+v0.29 introduces `PolysemyMemory`. A surface token is no longer forced to own one global semantic state. Each occurrence produces a local context trajectory. The occurrence is attached to the closest existing sense when contextual overlap is sufficient; otherwise a new sense node is created online. No neural model and no global replay/retraining step are required.
 
-v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims. v0.24 added independence-aware evidence resolution when origin families are known. v0.25 added basic automatic dependency inference. v0.26 exposed the failure surface under adversarial paraphrase and missing provenance cues. v0.27 added a hand-authored semantic-structural fingerprint baseline.
+The controlled experiment uses the Portuguese word `banco` in two regimes: finance (`credito`, `emprestimo`, `cliente`, `conta`, `juros`) and data/storage (`dados`, `registros`, `servidor`, `tabelas`, `consulta`). The expected behavior is that repeated observations create at least two context-conditioned sense nodes and that finance/data queries resolve to different sense IDs.
 
-v0.28 adds an **emergent ontology mechanism test**. Terms are grouped only from contextual similarity learned by `TextContextMemory`; no synonym dictionary is supplied to the clustering step. In the controlled corpus, `tarifa`, `cobranca` and `encargo` repeatedly occur in equivalent structural contexts and form one latent cluster, while `estrela` and `astro` form another. Cluster purity is measured against labels used only for evaluation, not for training.
+A second regression test starts with only the financial meaning and later streams database-related sentences. The new sense must appear after the new evidence without replaying the earlier financial sentences. This preserves the project's central online-learning constraint: concept structure may expand as memory is formed.
 
-The online test also introduces a previously unseen term, `taxa`. Before contextual observations it remains isolated. After receiving new sentences that place `taxa` in the same contexts as the existing fee terms, the term joins the `tarifa/cobranca/encargo` cluster without editing a dictionary or retraining from scratch. This demonstrates the intended mechanism that ontology membership can emerge and update incrementally from memory formation.
-
-This remains a controlled distributional test. Contextual similarity can merge antonyms, topical neighbors or polysemous terms that share contexts, and the current threshold-based connected-component clustering can suffer chaining effects. Therefore v0.28 does not establish autonomous semantic understanding or a general ontology learner.
+This remains a controlled mechanism test. The current splitter uses sparse local context and Jaccard overlap with a threshold. It can over-split rare words, under-split closely related senses, and is sensitive to window size and threshold. It does not establish general word-sense disambiguation. The next rigorous stage should measure sense purity, over-splitting/under-splitting and stability across shuffled streams, then compare against simple clustering and embedding baselines.
 
 ## Install and test
 
@@ -59,26 +32,13 @@ python -m pip install -e .
 python -m pytest -q
 ```
 
-Key experiments:
+Key recent experiments:
 
 ```bash
-python experiments/online_learning_v12.py
-python experiments/streaming_v13.py
-python experiments/temporal_drift_v14.py
-python experiments/episodic_timeline_v15.py
-python experiments/gradual_drift_v16.py
-python experiments/stochastic_drift_v17.py
-python experiments/stability_map_v18.py
-python experiments/drift_baselines_v19.py
-python experiments/end_to_end_v20.py
-python experiments/factual_timeline_v21.py
-python experiments/conflict_provenance_v22.py
-python experiments/source_reliability_v23.py
-python experiments/evidence_independence_v24.py
-python experiments/dependency_inference_v25.py
 python experiments/adversarial_dependency_v26.py
 python experiments/semantic_fingerprint_v27.py
 python experiments/emergent_ontology_v28.py
+python experiments/polysemy_v29.py
 ```
 
 Optional Word2Vec baseline:
@@ -87,21 +47,10 @@ Optional Word2Vec baseline:
 python -m pip install -e '.[word2vec]'
 ```
 
-External benchmark example:
-
-```bash
-python experiments/external_v11.py \
-  --corpus /path/to/portuguese_corpus.txt \
-  --benchmark /path/to/LX-SimLex-999.txt \
-  --word1-col 0 --word2-col 1 --score-col 3 --skip-header
-```
-
 Third-party datasets remain outside this repository. Earlier experiments remain available under `experiments/`.
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines, provenance-aware conflict representation, learned source reliability, resistance to duplicate-origin evidence, basic automatic dependency inference, and controlled emergent contextual clustering. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, reliable open-world source-independence discovery, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
-
-v0.28 shows that small latent term groups can emerge and accept new members online from repeated contexts without a manual synonym map. The next decisive test should evaluate concept splitting and polysemy: one word used in two meanings must be able to belong to distinct context-conditioned concepts instead of forcing one global cluster.
+This is an experimental research project. Current controlled evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, online incorporation, temporal/episodic tracking, provenance-aware conflict representation, learned source reliability, duplicate-origin resistance, basic dependency inference, emergent contextual clustering, and now context-conditioned splitting of one surface word into multiple sense nodes. It does **not** establish unrestricted semantic understanding, general intelligence, general word-sense disambiguation, factual truth assessment, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
