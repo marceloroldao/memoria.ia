@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.13 scope
+## v0.14 scope
 
 The current prototype implements:
 
@@ -36,14 +36,17 @@ The current prototype implements:
 - streaming-scale evaluator with heterogeneous noise and adversarial rivals
 - per-batch update latency and sparse-memory growth metrics
 - incrementally maintained contextual feature document frequencies
+- explicit temporal epochs for concept drift and contradictory evidence
+- recency-weighted current-state queries without deleting historical state
+- historical epoch queries and change-score measurement
 
 v0.12 established the explicit online-learning protocol: new observations are appended to the existing memory, previous batches are not replayed, and immediate acquisition plus retention are measured after each update.
 
-v0.13 extends that protocol to a longer heterogeneous stream and fixes a scalability bottleneck discovered during stress testing. Earlier versions rebuilt contextual feature document frequencies during every similarity calculation. v0.13 maintains those frequencies incrementally at observation time, so retrieval no longer rescans the complete contextual feature space merely to rebuild global weights.
+v0.13 extends that protocol to a longer heterogeneous stream and fixes a scalability bottleneck discovered during stress testing. Contextual feature document frequencies are maintained incrementally at observation time, so retrieval no longer rescans the complete contextual feature space merely to rebuild global weights.
 
-The controlled v0.13 experiment uses 60 sequential batches (about 2,100 sentences with the default configuration), 30 hidden relation pairs, unrelated noise, repeated revisits and plausible rival tokens injected late in the stream. In the prototype simulation, immediate acquisition and checkpoint retention remained 1.00 through the final checkpoint. Mean batch-update latency did not grow across the run. These values are evidence only for this synthetic controlled stream; they do not establish absence of forgetting or constant-time behavior at unrestricted scale.
+v0.14 introduces **temporal concept drift**. Instead of collapsing all evidence into a single timeless contextual profile, observations can be grouped into explicit epochs. Historical epochs remain queryable, while current-state similarity combines epoch-local evidence using exponential recency weighting. This allows the system to represent both "what was associated before" and "what is favored now" without deleting the old trajectory.
 
-The new `footprint()` metric reports sparse node count, contextual feature count, document-frequency index size and total observations so model growth can be compared with accuracy and latency.
+In the controlled temporal-drift experiment, `rota` is first associated with `ponte`, then later with `tunel`. The old epoch retains `rota↔ponte` similarity near 1.00. After the transition epoch, the recency-weighted current scores are approximately 0.29 for `ponte` and 0.71 for `tunel`; after the latest epoch they are approximately 0.11 and 0.89 respectively. The historical old-epoch score remains near 1.00. This demonstrates the intended mechanism on a synthetic corpus only; it does not establish temporal reasoning in unrestricted language.
 
 ## Install and test
 
@@ -62,6 +65,12 @@ Streaming-scale experiment:
 
 ```bash
 python experiments/streaming_v13.py
+```
+
+Temporal concept-drift experiment:
+
+```bash
+python experiments/temporal_drift_v14.py
 ```
 
 Optional Word2Vec baseline:
@@ -83,8 +92,8 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
-The next decisive stage is a substantially larger stream with independent natural-language data, explicit concept drift and contradictory evidence, while comparing retention, immediate-learning accuracy, update latency, query latency, memory growth and baseline retraining/incremental costs.
+The next decisive stage is temporal learning on independent natural-language streams with multiple repeated concept changes, measuring detection delay, false change alarms, historical fidelity, current-state accuracy, latency and memory growth.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
