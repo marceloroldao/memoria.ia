@@ -47,14 +47,9 @@ class TemporalContextMemory:
         for idx, memory in enumerate(self.epochs):
             age = latest - idx
             weight = exp(-self.decay * age)
-            score = memory.associator.similarity(a.lower(), b.lower())
-            # Epochs where neither token was observed should not dilute a relation.
-            pa = memory.associator.profiles.get(a.lower())
-            pb = memory.associator.profiles.get(b.lower())
-            if not pa or not pb:
-                continue
-            weighted += weight * score
             total_weight += weight
+            score = memory.associator.similarity(a.lower(), b.lower())
+            weighted += weight * score
         return weighted / total_weight if total_weight else 0.0
 
     def nearest_current(self, token: str, top_k: int = 5) -> list[TemporalAssociation]:
