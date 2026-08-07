@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.25 scope
+## v0.26 scope
 
 The current prototype implements:
 
@@ -40,14 +40,15 @@ The current prototype implements:
 - online source-reliability learning from confirmed/contradicted historical claims
 - evidence-family clustering that prevents copied sources from multiplying support
 - inferred source-dependency links using content overlap, temporal proximity and explicit citations
+- adversarial dependency evaluation with precision, recall, false-positive and false-negative edge metrics
 
-v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims. v0.24 added independence-aware evidence resolution when origin families are known.
+v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims. v0.24 added independence-aware evidence resolution when origin families are known. v0.25 added basic automatic dependency inference.
 
-v0.25 adds **automatic dependency inference**. Source documents are compared only against earlier documents. A probable dependency score combines lexical Jaccard overlap, exponential temporal proximity and explicit citation signals. Links above threshold form a directed dependency graph, and dependency chains are collapsed to their earliest reachable origin. This lets the evidence resolver estimate origin families when provenance labels are not directly supplied.
+v0.26 adds **adversarial dependency evaluation**. The dependency detector is now tested on strong paraphrases, delayed reposts, missing citations and independently worded rival evidence. Evaluation separates provenance reconstruction from final fact resolution by reporting dependency-edge precision, recall, false positives and false negatives.
 
-The controlled attack contains one false origin followed by 10 near-identical or explicitly citing copies, versus three independently worded documents supporting the rival value. The inferred graph collapses the false echo into one probable origin while preserving the three independent documents as separate roots. Thus an upstream raw 11-to-3 source count can be transformed into an estimated 1-to-3 origin count before evidence resolution.
+The controlled adversarial corpus contains a false origin, an easy lexical copy, stronger paraphrases with increasing publication delay, and multiple independently worded documents supporting the rival claim. Threshold sweeps expose the expected precision/recall trade-off: relaxed thresholds recover more copied/paraphrased items but risk linking independent documents, while strict thresholds reduce false links but miss heavily rewritten copies. This is intentionally treated as a failure-surface measurement rather than a claim of solved source attribution.
 
-This is a mechanism test only. Jaccard overlap, publication timing and citations are insufficient to establish true causal dependence in unrestricted data. Paraphrases can evade lexical detection, unrelated sources can independently use similar wording, timestamps can be missing or manipulated, and citation graphs can be incomplete. The dependency score must therefore be treated as probabilistic provenance evidence, not ground truth.
+A central conclusion of v0.26 is that lexical overlap plus time and citations is not enough for robust open-world provenance. Strong paraphrase can reduce recall substantially. Future provenance inference should add semantic similarity, named-entity/event fingerprints, URL/domain relationships and graph-level consistency, and should be evaluated on external datasets with known source relationships.
 
 ## Install and test
 
@@ -73,6 +74,7 @@ python experiments/conflict_provenance_v22.py
 python experiments/source_reliability_v23.py
 python experiments/evidence_independence_v24.py
 python experiments/dependency_inference_v25.py
+python experiments/adversarial_dependency_v26.py
 ```
 
 Optional Word2Vec baseline:
@@ -96,6 +98,6 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines, provenance-aware conflict representation, learned source reliability, resistance to duplicate-origin evidence, and basic automatic dependency inference on controlled tests. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, reliable open-world source-independence discovery, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
-The next decisive stage is adversarial dependency inference: paraphrased copies, delayed reposts, missing citations and coordinated source networks, compared against raw-majority and provenance-aware resolution. Precision/recall of dependency-edge inference should be measured separately from final claim-resolution accuracy.
+v0.26 makes the current provenance limitation measurable. The next decisive stage is to improve paraphrase robustness and then compare raw-majority, reliability-weighted and independence-aware claim resolution on large randomized source graphs, ideally followed by external provenance datasets.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
