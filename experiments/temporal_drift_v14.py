@@ -1,21 +1,24 @@
 from memoria_resolutiva.temporal_memory import TemporalContextMemory
 
 OLD = [
-    "rota usa ponte para atravessar o rio",
-    "motorista escolhe ponte para atravessar o rio",
-    "cidade orienta trafego pela ponte principal",
+    "rota conecta margens do rio",
+    "ponte conecta margens do rio",
+    "cidade usa rota durante travessia",
+    "cidade usa ponte durante travessia",
 ] * 60
 
 TRANSITION = [
-    "rota usa tunel para atravessar o rio",
-    "motorista escolhe tunel para atravessar o rio",
-    "cidade orienta trafego pelo tunel principal",
+    "rota conecta margens do rio",
+    "tunel conecta margens do rio",
+    "cidade usa rota durante travessia",
+    "cidade usa tunel durante travessia",
 ] * 20
 
 NEW = [
-    "rota usa tunel para atravessar o rio",
-    "motorista escolhe tunel para atravessar o rio",
-    "cidade orienta trafego pelo tunel principal",
+    "rota conecta margens do rio",
+    "tunel conecta margens do rio",
+    "cidade usa rota durante travessia",
+    "cidade usa tunel durante travessia",
 ] * 80
 
 
@@ -25,10 +28,10 @@ def main() -> None:
     print("epoch 0 historical:", memory.nearest_at(e0, "rota", 3))
     print("epoch 0 current   :", memory.nearest_current("rota", 3))
 
-    e1 = memory.add_epoch(TRANSITION, label="transicao")
+    memory.add_epoch(TRANSITION, label="transicao")
     print("epoch 1 current   :", memory.nearest_current("rota", 3))
 
-    e2 = memory.add_epoch(NEW, label="agora")
+    memory.add_epoch(NEW, label="agora")
     print("epoch 2 current   :", memory.nearest_current("rota", 3))
     print("old epoch preserved:", memory.nearest_at(e0, "rota", 3))
 
