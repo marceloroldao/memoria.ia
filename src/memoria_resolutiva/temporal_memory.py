@@ -12,6 +12,16 @@ class TemporalAssociation:
     score: float
 
 
+@dataclass(frozen=True, slots=True)
+class TemporalChange:
+    epoch: int
+    label: str
+    previous: str | None
+    current: str | None
+    previous_score: float
+    current_score: float
+
+
 class TemporalContextMemory:
     """Online contextual memory with explicit temporal epochs.
 
@@ -65,6 +75,43 @@ class TemporalContextMemory:
     def nearest_at(self, epoch: int, token: str, top_k: int = 5) -> list[TemporalAssociation]:
         ranked = self.epochs[epoch].nearest(token, top_k=top_k)
         return [TemporalAssociation(candidate, score) for candidate, score in ranked]
+
+    def dominant_at(self, epoch: int, token: str) -> TemporalAssociation | None:
+        ranked = self.nearest_at(epoch, token, top_k=1)
+        return ranked[0] if ranked else None
+
+    def dominant_current(self, token: str) -> TemporalAssociation | None:
+        ranked = self.nearest_current(token, top_k=1)
+        return ranked[0] if ranked else None
+
+    def timeline(self, token: str) -> list[TemporalAssociation | None]:
+        """Return the dominant association independently for every historical epoch."""
+        return [self.dominant_at(epoch, token) for epoch in range(len(self.epochs))]
+
+    def detect_changes(self, token: str) -> list[TemporalChange]:
+        """Detect epochs where the dominant historical partner changes.
+
+        This is intentionally epoch-local: it reports what each stored episode says,
+        not the recency-weighted current belief.
+        """
+        changes: list[TemporalChange] = []
+        previous: TemporalAssociation | None = None
+        for epoch, current in enumerate(self.timeline(token)):
+            previous_name = previous.candidate if previous else None
+            current_name = current.candidate if current else None
+            if epoch == 0 or current_name != previous_name:
+                changes.append(
+                    TemporalChange(
+                        epoch=epoch,
+                        label=self.epoch_labels[epoch],
+                        previous=previous_name,
+                        current=current_name,
+                        previous_score=previous.score if previous else 0.0,
+                        current_score=current.score if current else 0.0,
+                    )
+                )
+            previous = current
+        return changes
 
     def change_score(self, token: str, old_partner: str, new_partner: str) -> float:
         """Positive values indicate that recency-weighted evidence favors new_partner."""
