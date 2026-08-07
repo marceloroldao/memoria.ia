@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.3 scope
+## v0.4 scope
 
 The current prototype implements:
 
@@ -26,17 +26,17 @@ The current prototype implements:
 - structural trajectory-association experiments
 - ordered trajectory similarity using sequence alignment
 - temporal-delta consistency between occurrences
+- sparse contextual association learned from repeated trajectory neighborhoods
+- nearest-context lookup without embeddings or neural networks
 - unit tests and retrieval benchmarks
 
 SQLite persistence deliberately stores both the original payload and the resolutive node graph at this research stage. This makes round-trip validation explicit while the project measures when hierarchical storage becomes advantageous.
 
-The v0.2 association experiment is **structural, not semantic**. The v0.3 extension adds order and temporal-spacing sensitivity so that two memories containing the same nodes in different sequences are no longer treated as equivalent.
+The v0.2 association experiment is structural, not semantic. The v0.3 extension adds order and temporal-spacing sensitivity so that two memories containing the same nodes in different sequences are no longer treated as equivalent.
 
-The current ordered score combines:
+The v0.4 extension adds **contextual association**. Nodes are not declared synonymous or equivalent. Instead, each node accumulates a sparse profile of neighboring nodes and their signed relative positions. Similarity is computed from these observed trajectory contexts with inverse-frequency weighting so ubiquitous context contributes less.
 
-`S = (1 - w_t) * S_order + w_t * S_time`
-
-where `S_order` is based on longest common subsequence and `S_time` measures consistency of local-time deltas.
+This is a distributional structural experiment: successful contextual convergence is evidence of association learned from trajectories, not yet proof of semantic understanding.
 
 ## Install and test
 
@@ -45,10 +45,11 @@ python -m pip install -e .
 python -m pytest -q
 python benchmarks/benchmark_retrieval.py
 python experiments/ordered_trajectory_v03.py
+python experiments/emergent_context_v04.py
 ```
 
 ## Research status
 
-This is an experimental research project. The current implementation tests memory structure, persistence, retrieval and trajectory association. It does **not** yet claim semantic understanding, general intelligence, or replacement of neural networks.
+This is an experimental research project. The current implementation tests memory structure, persistence, retrieval, ordered trajectories and emergent contextual association. It does **not** yet claim semantic understanding, general intelligence, or replacement of neural networks.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
