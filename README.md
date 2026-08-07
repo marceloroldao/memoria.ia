@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.4 scope
+## v0.5 scope
 
 The current prototype implements:
 
@@ -28,6 +28,9 @@ The current prototype implements:
 - temporal-delta consistency between occurrences
 - sparse contextual association learned from repeated trajectory neighborhoods
 - nearest-context lookup without embeddings or neural networks
+- multidomain controlled corpora with hidden associations
+- automatic top-1 and top-k association metrics
+- noise-injection experiments
 - unit tests and retrieval benchmarks
 
 SQLite persistence deliberately stores both the original payload and the resolutive node graph at this research stage. This makes round-trip validation explicit while the project measures when hierarchical storage becomes advantageous.
@@ -36,7 +39,9 @@ The v0.2 association experiment is structural, not semantic. The v0.3 extension 
 
 The v0.4 extension adds **contextual association**. Nodes are not declared synonymous or equivalent. Instead, each node accumulates a sparse profile of neighboring nodes and their signed relative positions. Similarity is computed from these observed trajectory contexts with inverse-frequency weighting so ubiquitous context contributes less.
 
-This is a distributional structural experiment: successful contextual convergence is evidence of association learned from trajectories, not yet proof of semantic understanding.
+The v0.5 extension evaluates that mechanism across several domains at once. Controlled hidden pairs such as `carro/automovel`, `guardar/armazenar`, `fibra/enlace` and `estrela/astro` are exposed through repeated contexts while unrelated noise trajectories are injected. Evaluation reports top-1 accuracy and top-k recall rather than relying on a single illustrative example.
+
+In the current controlled corpus, the prototype recovered all 8 directional hidden-pair queries at top-1 despite 500 injected noise trajectories. This result demonstrates mechanism stability under synthetic multidomain noise; it is not yet evidence of unrestricted semantic understanding.
 
 ## Install and test
 
@@ -46,6 +51,7 @@ python -m pytest -q
 python benchmarks/benchmark_retrieval.py
 python experiments/ordered_trajectory_v03.py
 python experiments/emergent_context_v04.py
+python experiments/multidomain_v05.py
 ```
 
 ## Research status
