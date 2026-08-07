@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import product
-from statistics import mean, pstdev
 
 from .stochastic_drift import evaluate_stochastic_drift
 
@@ -37,31 +36,30 @@ def build_stability_map(
     """Sweep stochastic gradual-drift regimes.
 
     `noise` mixes each target fraction toward 0.5 before sampling, so larger values
-    make old/new evidence less separable. Results are protocol-specific and are
-    intended to expose trade-offs rather than select a universal parameter.
+    make old/new evidence less separable. Results are protocol-specific and expose
+    the latency/noise trade-off instead of selecting a universal parameter.
     """
     points: list[StabilityPoint] = []
     for profile, fractions in DRIFT_PROFILES.items():
         for samples, decay, noise in product(sample_grid, decay_grid, noise_grid):
-            report = evaluate_stochastic_drift(
-                fractions,
-                seeds=seeds,
+            summary, _runs = evaluate_stochastic_drift(
+                runs=seeds,
+                fractions=fractions,
                 samples_per_epoch=samples,
                 decay=decay,
                 noise=noise,
             )
-            delays = [run.detection_delay for run in report.runs if run.detection_delay is not None]
             points.append(
                 StabilityPoint(
                     profile=profile,
                     samples_per_epoch=samples,
                     decay=decay,
                     noise=noise,
-                    detection_rate=report.detection_rate,
-                    exact_detection_rate=report.exact_detection_rate,
-                    mean_delay=mean(delays) if delays else None,
-                    std_delay=pstdev(delays) if len(delays) > 1 else (0.0 if delays else None),
-                    false_alarm_rate=report.false_alarm_rate,
+                    detection_rate=summary.eventual_detection_probability,
+                    exact_detection_rate=summary.correct_epoch_probability,
+                    mean_delay=summary.mean_detection_delay,
+                    std_delay=summary.std_detection_delay,
+                    false_alarm_rate=summary.false_alarm_rate,
                 )
             )
     return tuple(points)
