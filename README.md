@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.26 scope
+## v0.27 scope
 
 The current prototype implements:
 
@@ -41,14 +41,15 @@ The current prototype implements:
 - evidence-family clustering that prevents copied sources from multiplying support
 - inferred source-dependency links using content overlap, temporal proximity and explicit citations
 - adversarial dependency evaluation with precision, recall, false-positive and false-negative edge metrics
+- rule-based semantic/event fingerprints using canonical concepts, action concepts and numeric anchors
 
-v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims. v0.24 added independence-aware evidence resolution when origin families are known. v0.25 added basic automatic dependency inference.
+v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines. v0.22 added contradiction/provenance handling with explicit abstention. v0.23 introduced source reliability learned online from later confirmed or contradicted historical claims. v0.24 added independence-aware evidence resolution when origin families are known. v0.25 added basic automatic dependency inference. v0.26 exposed the failure surface under adversarial paraphrase and missing provenance cues.
 
-v0.26 adds **adversarial dependency evaluation**. The dependency detector is now tested on strong paraphrases, delayed reposts, missing citations and independently worded rival evidence. Evaluation separates provenance reconstruction from final fact resolution by reporting dependency-edge precision, recall, false positives and false negatives.
+v0.27 adds a **semantic-structural fingerprint baseline** for provenance. Instead of relying only on raw word overlap, documents are mapped into compact event features: canonical domain concepts, action concepts such as fee/payment, and numeric anchors. A hybrid similarity combines this structural score with lexical Jaccard.
 
-The controlled adversarial corpus contains a false origin, an easy lexical copy, stronger paraphrases with increasing publication delay, and multiple independently worded documents supporting the rival claim. Threshold sweeps expose the expected precision/recall trade-off: relaxed thresholds recover more copied/paraphrased items but risk linking independent documents, while strict thresholds reduce false links but miss heavily rewritten copies. This is intentionally treated as a failure-surface measurement rather than a claim of solved source attribution.
+The controlled paraphrase experiment compares five copied/rephrased versions of a fee-on-fiber event against three independent documents. With the reference thresholds used by the experiment, the hybrid fingerprint recovers more strong paraphrases than lexical overlap alone while avoiding the obvious unrelated control. It still misses at least one heavily rewritten formulation and remains vulnerable to same-domain false positives if thresholds are relaxed. This is therefore a partial robustness gain, not general semantic understanding.
 
-A central conclusion of v0.26 is that lexical overlap plus time and citations is not enough for robust open-world provenance. Strong paraphrase can reduce recall substantially. Future provenance inference should add semantic similarity, named-entity/event fingerprints, URL/domain relationships and graph-level consistency, and should be evaluated on external datasets with known source relationships.
+The current canonical concept map is deliberately small and explicit. It is useful to test the architectural hypothesis that event structure can preserve provenance through paraphrase, but it is not scalable as a hand-authored ontology. Future work should learn or derive event fingerprints from the memory itself and evaluate them against external paraphrase/provenance data.
 
 ## Install and test
 
@@ -75,6 +76,7 @@ python experiments/source_reliability_v23.py
 python experiments/evidence_independence_v24.py
 python experiments/dependency_inference_v25.py
 python experiments/adversarial_dependency_v26.py
+python experiments/semantic_fingerprint_v27.py
 ```
 
 Optional Word2Vec baseline:
@@ -98,6 +100,6 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines, provenance-aware conflict representation, learned source reliability, resistance to duplicate-origin evidence, and basic automatic dependency inference on controlled tests. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, reliable open-world source-independence discovery, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
-v0.26 makes the current provenance limitation measurable. The next decisive stage is to improve paraphrase robustness and then compare raw-majority, reliability-weighted and independence-aware claim resolution on large randomized source graphs, ideally followed by external provenance datasets.
+v0.27 shows that compact event fingerprints can improve paraphrase robustness on a controlled domain without using a neural model, but the hand-authored canonical map is itself a limitation. The next decisive test is to learn these structural associations online from repeated contexts and compare learned fingerprints against the fixed ontology and standard embedding baselines.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
