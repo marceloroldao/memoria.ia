@@ -13,42 +13,31 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.15 scope
+## v0.16 scope
 
 The current prototype implements:
 
 - unique content nodes separated from temporal occurrences
-- exact byte reconstruction
-- multiscale deduplication
+- exact byte reconstruction and multiscale deduplication
 - structural retrieval using rare-node attractors
 - SQLite persistence
-- ordered trajectory similarity and temporal-delta consistency
-- sparse contextual association from repeated trajectory neighborhoods
+- ordered trajectory and sparse contextual association
 - natural-language tokenization and ambiguity probing
-- unordered cooccurrence and TF-IDF-like context baselines
-- optional Word2Vec baseline through `gensim`
-- multi-seed Word2Vec stability evaluation
-- external corpus and human-rated similarity benchmark loaders
-- explicit vocabulary coverage separated from zero semantic similarity
-- Spearman rank correlation on covered benchmark pairs
-- online/incremental observation without replaying prior batches
-- immediate post-update retrieval and retention measurement
-- streaming-scale evaluator with heterogeneous noise and adversarial rivals
-- per-batch update latency and sparse-memory growth metrics
-- incrementally maintained contextual feature document frequencies
-- explicit temporal epochs for concept drift and contradictory evidence
-- recency-weighted current-state queries without deleting historical state
-- historical epoch queries and change-score measurement
-- episodic timeline reconstruction
-- automatic dominant-association change detection
+- TF-IDF-like and optional Word2Vec baselines
+- external similarity evaluation with coverage and Spearman correlation
+- online/incremental learning without replaying prior batches
+- retention, update latency and sparse-memory growth measurements
+- incrementally maintained contextual feature statistics
+- explicit temporal epochs and recency-weighted current-state queries
+- direct episodic relation memory separated from contextual similarity
+- episodic timeline reconstruction and dominant-association change detection
+- gradual concept-drift evaluation with detection delay and false alarms
 
-v0.12 established the explicit online-learning protocol. v0.13 extended it to a longer stream and moved contextual document-frequency maintenance to observation time. v0.14 introduced temporal epochs so current evidence can change without deleting historical associations.
+v0.12 established online learning. v0.13 stress-tested longer streams and moved contextual document-frequency maintenance to observation time. v0.14 introduced temporal epochs. v0.15 separated contextual similarity from direct episodic relations and added historical timeline reconstruction.
 
-v0.15 adds **episodic temporal memory**. For a query token, the system can now reconstruct the dominant association independently at every stored epoch, report the current recency-weighted dominant association, and detect epochs where the historical dominant partner changed.
+v0.16 adds **gradual concept drift**. A controlled sequence changes evidence from an old relation to a new one using fractions `0%, 10%, 30%, 50%, 70%, 90%, 100%` for the new relation. Ground-truth change is defined as the first epoch where the new relation is a strict local majority. Detection is the first epoch where the recency-weighted current relation score of the new partner exceeds the old one.
 
-The controlled episodic experiment uses the sequence `ponte → tunel → ponte → balsa → balsa → tunel`. The expected change epochs are `[0, 1, 2, 3, 5]`: epoch 4 is correctly not flagged because the dominant association remains `balsa`. This tests return to a previously seen state, persistence without change, and a later transition. Historical epoch queries remain independent from the recency-weighted current query.
-
-This remains a synthetic mechanism test. It demonstrates temporal bookkeeping and change detection, not unrestricted temporal reasoning or factual truth assessment.
+For the default deterministic test with decay `0.9`, the expected transition occurs at epoch 4 (30/70 old/new) and the detector also switches at epoch 4, yielding detection delay `0` and `0` false alarms. A control stream that never crosses 50% produces no detected change. These are synthetic mechanism tests, not evidence of unrestricted temporal reasoning or factual truth assessment.
 
 ## Install and test
 
@@ -57,28 +46,14 @@ python -m pip install -e .
 python -m pytest -q
 ```
 
-Online-learning experiment:
+Key experiments:
 
 ```bash
 python experiments/online_learning_v12.py
-```
-
-Streaming-scale experiment:
-
-```bash
 python experiments/streaming_v13.py
-```
-
-Temporal concept-drift experiment:
-
-```bash
 python experiments/temporal_drift_v14.py
-```
-
-Episodic temporal experiment:
-
-```bash
 python experiments/episodic_timeline_v15.py
+python experiments/gradual_drift_v16.py
 ```
 
 Optional Word2Vec baseline:
@@ -100,8 +75,8 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation and episodic change tracking. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, factual truth assessment, or superiority over modern NLP/embedding models.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking and gradual-change detection on synthetic streams. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, factual truth assessment, or superiority over modern NLP/embedding models.
 
-The next decisive stage is temporal learning on independent natural-language streams with noisy gradual changes, measuring detection delay, false change alarms, historical fidelity, current-state accuracy, latency and memory growth.
+The next decisive stage is noisy stochastic gradual drift across many random seeds and independent natural-language streams, measuring mean detection delay, false-alarm rate, historical fidelity, current-state accuracy, latency and memory growth.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
