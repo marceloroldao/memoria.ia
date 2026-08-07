@@ -8,6 +8,9 @@ version = "0.1.0"
 description = "Experimental hierarchical resolutive memory"
 requires-python = ">=3.10"
 
+[project.optional-dependencies]
+word2vec = ["gensim>=4.3"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
