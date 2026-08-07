@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.20 scope
+## v0.22 scope
 
 The current prototype implements:
 
@@ -35,14 +35,16 @@ The current prototype implements:
 - stability-map sweep over sample size, temporal decay, drift speed and noise
 - matched EWMA and CUSUM online change-detection baselines
 - end-to-end online comparison against incremental cooccurrence and rebuilt TF-IDF-like context retrieval
+- append-only factual timelines with historical and current queries
+- provenance-aware conflicting evidence with explicit abstention
 
-v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. The contribution therefore cannot be claimed to lie in the exponential change filter itself.
+v0.19 established that the exponential temporal detector alone is closely related to a matched EWMA. v0.20 moved the comparison to the complete online-memory workflow. v0.21 added append-only factual timelines: later facts can supersede the current state without deleting earlier states, enabling direct queries such as “what is true now?”, “what was recorded at epoch t?” and “when was value X superseded?”.
 
-v0.20 moves the comparison to the **complete online-memory workflow**. Resolutive Memory and a simple cooccurrence baseline receive only each incoming batch and update their existing sparse state. A TF-IDF-like contextual baseline is rebuilt from the full accumulated history after every batch, representing a retraining/reindexing workflow. After every update the benchmark measures immediate retrieval of the newly introduced relation, retention of older relations, update/rebuild latency and sparse structural growth.
+v0.22 adds **contradiction and provenance handling**. Multiple sources may assert different values for the same subject/relation at the same epoch. Evidence is preserved per source instead of being collapsed or overwritten. Resolution is weighted and includes an explicit abstention rule: if the leading value is not separated from the strongest rival by the configured decision margin, the memory returns `conflict=True` and `winner=None` rather than manufacturing certainty.
 
-In the current small controlled corpus, all three approaches preserve the tested relations, so this experiment does not establish a quality advantage for Resolutive Memory. The architectural distinction is update semantics: Resolutive Memory and incremental cooccurrence incorporate only new observations, while the rebuilt TF-IDF-like baseline reprocesses the accumulated history. Timing ratios are environment-specific and are intentionally not treated as universal performance claims.
+In the controlled mechanism test, equal-weight evidence (`Carlos` from source A versus `Ana` from source B, 1.0 vs 1.0) produces a conflict with no winner and confidence 0.50. A 3.0 vs 1.0 evidence split resolves to the stronger value with confidence 0.75 while preserving the weaker source in provenance. A later unambiguous epoch can become the current state while the earlier conflicting epoch remains independently queryable.
 
-The important unresolved comparison is therefore whether richer ordered/episodic structure provides a useful quality, provenance or historical-query advantage over simpler incremental indexes at comparable update and memory cost.
+Source weights are currently experimental inputs, not objective truth scores. Future work must derive or calibrate source reliability from reproducible evidence rather than manually assigning trust.
 
 ## Install and test
 
@@ -63,6 +65,8 @@ python experiments/stochastic_drift_v17.py
 python experiments/stability_map_v18.py
 python experiments/drift_baselines_v19.py
 python experiments/end_to_end_v20.py
+python experiments/factual_timeline_v21.py
+python experiments/conflict_provenance_v22.py
 ```
 
 Optional Word2Vec baseline:
@@ -84,8 +88,8 @@ Third-party datasets remain outside this repository. Earlier experiments remain 
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking and statistically characterized synthetic change detection. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, constant-time retrieval, factual truth assessment, or superiority over modern NLP/embedding models.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation, temporal epoch preservation, episodic relation tracking, factual timelines and provenance-aware conflict representation on controlled tests. It does **not** yet establish unrestricted semantic understanding, general intelligence, factual truth assessment, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
 
-v0.20 establishes an end-to-end protocol for comparing immediate online incorporation, retention and structural growth. The next decisive stage should use a much longer independent natural-language stream with conflicting updates and historical questions, then compare (1) accuracy after each update, (2) provenance/historical fidelity, (3) update and query latency, and (4) measured serialized memory size rather than only sparse structural counts.
+The next decisive stage is to replace manually supplied evidence weights with a learned/calibrated reliability mechanism based on source history: sources gain or lose reliability only when later independently verified outcomes confirm or contradict their past assertions. That would let the system distinguish “source disagreement” from “evidence-weighted confidence” without hard-coding authority.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
