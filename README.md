@@ -13,7 +13,7 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.11 scope
+## v0.12 scope
 
 The current prototype implements:
 
@@ -28,26 +28,31 @@ The current prototype implements:
 - unordered cooccurrence and TF-IDF-like context baselines
 - optional Word2Vec baseline through `gensim`
 - multi-seed Word2Vec stability evaluation
-- external corpus loader with third-party data kept outside the repository
-- generic human-rated word-similarity loader
+- external corpus and human-rated similarity benchmark loaders
 - explicit vocabulary coverage separated from zero semantic similarity
 - Spearman rank correlation on covered benchmark pairs
-- reproducible external benchmark CLI for Resolutive / TF-IDF / Word2Vec
-- regression tests for ranking and coverage semantics
+- online/incremental observation without replaying prior batches
+- immediate post-update retrieval measurement
+- retention measurement for previously learned relations
+- per-batch update-time measurement
 
-The v0.9 controlled benchmark showed equal 8/8 top-1 accuracy for the resolutive and TF-IDF-like context models, with larger partner-vs-distractor margins for the signed positional model.
+v0.11 established the external evaluation protocol and corrected coverage semantics.
 
-v0.10 added Word2Vec and showed that the deliberately tiny controlled corpus is too small for a stable embedding comparison: five deterministic Word2Vec seeds ranged from 3/8 to 7/8 top-1 and all produced at least one negative partner-vs-distractor margin. This is treated as a benchmark-design warning, not as evidence of superiority.
+v0.12 adds an explicit **online learning protocol**. New observations are appended directly to the existing sparse contextual memory. Prior batches are not replayed or globally retrained. After each incoming batch the evaluator measures (1) whether the newly introduced relation is immediately available at top-1, (2) whether previously learned relations remain top-1, and (3) the incremental update cost.
 
-v0.11 moves the project to a reproducible **external evaluation protocol**. Third-party corpora and benchmarks are not copied into this repository. A UTF-8 corpus can be supplied at runtime, all models are trained on the same input, and a human-rated Portuguese word-similarity file is evaluated by vocabulary coverage and Spearman correlation. Coverage is now explicit: an in-vocabulary pair with model similarity `0.0` is no longer incorrectly counted as out-of-vocabulary.
-
-Portuguese benchmark candidates include LX-SimLex-999 and LX-WordSim-353 from LX-DSemVectors. An independently sourced training corpus candidate is TTS-Portuguese Corpus (CC BY 4.0), which reports 71,358 words and 13,311 distinct words. The training corpus and human-rated evaluation pairs must remain logically separated.
+In the current controlled four-stage experiment, each new relation becomes immediately retrievable after its batch is observed, while previously learned pairs remain top-1 throughout. The prototype therefore demonstrates the intended incremental behavior in a small controlled setting. This is not yet evidence that retention will remain perfect at large scale; v0.12 exists to make that claim measurable rather than assumed.
 
 ## Install and test
 
 ```bash
 python -m pip install -e .
 python -m pytest -q
+```
+
+Online-learning experiment:
+
+```bash
+python experiments/online_learning_v12.py
 ```
 
 Optional Word2Vec baseline:
@@ -65,10 +70,12 @@ python experiments/external_v11.py \
   --word1-col 0 --word2-col 1 --score-col 3 --skip-header
 ```
 
-Column indices depend on the source benchmark format; inspect the upstream file before running. Earlier experiments remain available under `experiments/`.
+Third-party datasets remain outside this repository. Earlier experiments remain available under `experiments/`.
 
 ## Research status
 
-This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, or superiority over modern NLP/embedding models. The decisive next stage is an actual large-corpus run with standard Portuguese human-rated benchmarks, reported with coverage, Spearman correlation, runtime and memory usage.
+This is an experimental research project. The current evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, controlled online incorporation and promising controlled comparisons. It does **not** yet establish unrestricted semantic understanding, general intelligence, absence of forgetting at scale, or superiority over modern NLP/embedding models.
+
+The next decisive stage is a large sequential stream with thousands of batches, measuring retention curves, immediate-learning accuracy, update latency, memory growth and comparison with incremental/retrained baselines.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
