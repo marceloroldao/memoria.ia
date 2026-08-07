@@ -13,17 +13,17 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.29 scope
+## v0.30 scope
 
-The current prototype includes the previous online, temporal, provenance and emergent-ontology experiments and now adds **context-conditioned concept splitting for polysemous words**.
+The current prototype includes the previous online, temporal, provenance, emergent-ontology and polysemy experiments and now adds **order-stability evaluation for context-conditioned sense splitting**.
 
-v0.29 introduces `PolysemyMemory`. A surface token is no longer forced to own one global semantic state. Each occurrence produces a local context trajectory. The occurrence is attached to the closest existing sense when contextual overlap is sufficient; otherwise a new sense node is created online. No neural model and no global replay/retraining step are required.
+v0.29 introduced `PolysemyMemory`, allowing one surface token to own multiple context-conditioned sense nodes without neural training or global replay. v0.30 tests whether those sense distinctions survive different observation orders.
 
-The controlled experiment uses the Portuguese word `banco` in two regimes: finance (`credito`, `emprestimo`, `cliente`, `conta`, `juros`) and data/storage (`dados`, `registros`, `servidor`, `tabelas`, `consulta`). The expected behavior is that repeated observations create at least two context-conditioned sense nodes and that finance/data queries resolve to different sense IDs.
+The controlled `banco` corpus is presented in four regimes: finance-first, data-first, alternating, and many shuffled streams. The evaluator records (1) whether finance and database queries resolve to different senses and (2) how many sense nodes are created.
 
-A second regression test starts with only the financial meaning and later streams database-related sentences. The new sense must appear after the new evidence without replaying the earlier financial sentences. This preserves the project's central online-learning constraint: concept structure may expand as memory is formed.
+Internal simulation of the reference corpus found a useful mixed result: finance-vs-data separation remained stable across the tested shuffled orders, but the current local-Jaccard splitter typically created about 6-7 sense nodes rather than the intended two broad senses. Therefore the main v0.30 finding is **successful domain separation with substantial over-splitting**. This is intentionally recorded as a failure surface rather than hidden behind a tuned test.
 
-This remains a controlled mechanism test. The current splitter uses sparse local context and Jaccard overlap with a threshold. It can over-split rare words, under-split closely related senses, and is sensitive to window size and threshold. It does not establish general word-sense disambiguation. The next rigorous stage should measure sense purity, over-splitting/under-splitting and stability across shuffled streams, then compare against simple clustering and embedding baselines.
+The next algorithmic problem is sense consolidation: merge nearby micro-senses after enough evidence accumulates while preserving truly distinct meanings. A future version should reduce the number of `banco` senses toward two without losing order robustness or requiring replay of the full history.
 
 ## Install and test
 
@@ -35,22 +35,16 @@ python -m pytest -q
 Key recent experiments:
 
 ```bash
-python experiments/adversarial_dependency_v26.py
 python experiments/semantic_fingerprint_v27.py
 python experiments/emergent_ontology_v28.py
 python experiments/polysemy_v29.py
-```
-
-Optional Word2Vec baseline:
-
-```bash
-python -m pip install -e '.[word2vec]'
+python experiments/polysemy_stability_v30.py
 ```
 
 Third-party datasets remain outside this repository. Earlier experiments remain available under `experiments/`.
 
 ## Research status
 
-This is an experimental research project. Current controlled evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, online incorporation, temporal/episodic tracking, provenance-aware conflict representation, learned source reliability, duplicate-origin resistance, basic dependency inference, emergent contextual clustering, and now context-conditioned splitting of one surface word into multiple sense nodes. It does **not** establish unrestricted semantic understanding, general intelligence, general word-sense disambiguation, factual truth assessment, absence of forgetting at scale, constant-time retrieval, or superiority over modern NLP/embedding models.
+This is an experimental research project. Current controlled evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, online incorporation, temporal/episodic tracking, provenance-aware conflict representation, learned source reliability, emergent contextual clustering, and context-conditioned sense splitting. v0.30 specifically shows that the current splitter can preserve broad polysemous separation under order changes while still over-fragmenting each broad sense. It does **not** establish general word-sense disambiguation or semantic understanding.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
