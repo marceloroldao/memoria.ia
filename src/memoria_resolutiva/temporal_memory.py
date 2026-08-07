@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from math import exp
 
-from .textual import TextContextMemory
+from .textual import TextContextMemory, tokenize
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,11 +24,10 @@ class TemporalChange:
 
 
 class TemporalContextMemory:
-    """Online contextual memory with explicit temporal epochs.
+    """Temporal semantic/context similarity memory.
 
-    Observations are never deleted from historical epochs. Current queries combine
-    epoch-local similarities with exponentially decaying recency weights, while
-    historical queries can inspect any epoch directly.
+    This class answers which tokens occur in similar signed neighborhoods. It must
+    not be confused with direct episodic relation memory such as `rota -> ponte`.
     """
 
     def __init__(self, radius: int = 3, decay: float = 0.8):
@@ -58,8 +58,7 @@ class TemporalContextMemory:
             age = latest - idx
             weight = exp(-self.decay * age)
             total_weight += weight
-            score = memory.associator.similarity(a.lower(), b.lower())
-            weighted += weight * score
+            weighted += weight * memory.associator.similarity(a.lower(), b.lower())
         return weighted / total_weight if total_weight else 0.0
 
     def nearest_current(self, token: str, top_k: int = 5) -> list[TemporalAssociation]:
@@ -76,27 +75,95 @@ class TemporalContextMemory:
         ranked = self.epochs[epoch].nearest(token, top_k=top_k)
         return [TemporalAssociation(candidate, score) for candidate, score in ranked]
 
-    def dominant_at(self, epoch: int, token: str) -> TemporalAssociation | None:
-        ranked = self.nearest_at(epoch, token, top_k=1)
-        return ranked[0] if ranked else None
+    def change_score(self, token: str, old_partner: str, new_partner: str) -> float:
+        return self.current_similarity(token, new_partner) - self.current_similarity(token, old_partner)
 
-    def dominant_current(self, token: str) -> TemporalAssociation | None:
-        ranked = self.nearest_current(token, top_k=1)
-        return ranked[0] if ranked else None
 
-    def timeline(self, token: str) -> list[TemporalAssociation | None]:
-        """Return the dominant association independently for every historical epoch."""
-        return [self.dominant_at(epoch, token) for epoch in range(len(self.epochs))]
+class TemporalRelationMemory:
+    """Episodic memory for direct local token relations across temporal epochs.
 
-    def detect_changes(self, token: str) -> list[TemporalChange]:
-        """Detect epochs where the dominant historical partner changes.
+    Each epoch stores sparse co-occurrence edges. An edge receives inverse-distance
+    evidence when two tokens occur within `radius` positions in an observation.
+    Historical edges are never deleted. Current queries use exponential recency
+    weighting across all epochs, while historical queries inspect one epoch only.
+    """
 
-        This is intentionally epoch-local: it reports what each stored episode says,
-        not the recency-weighted current belief.
-        """
+    def __init__(self, radius: int = 3, decay: float = 0.8):
+        if radius < 1:
+            raise ValueError("radius must be >= 1")
+        if not 0.0 < decay <= 1.0:
+            raise ValueError("decay must be in (0, 1]")
+        self.radius = radius
+        self.decay = decay
+        self.epochs: list[dict[str, Counter[str]]] = []
+        self.epoch_labels: list[str] = []
+
+    def _build_epoch(self, sentences) -> dict[str, Counter[str]]:
+        edges: dict[str, Counter[str]] = defaultdict(Counter)
+        for sentence in sentences:
+            tokens = tokenize(sentence)
+            for i, token in enumerate(tokens):
+                lo = max(0, i - self.radius)
+                hi = min(len(tokens), i + self.radius + 1)
+                for j in range(lo, hi):
+                    if i == j:
+                        continue
+                    distance = abs(j - i)
+                    edges[token][tokens[j]] += 1.0 / distance
+        return dict(edges)
+
+    def add_epoch(self, sentences, label: str | None = None) -> int:
+        self.epochs.append(self._build_epoch(sentences))
+        self.epoch_labels.append(label or f"epoch-{len(self.epochs) - 1}")
+        return len(self.epochs) - 1
+
+    def relation_at(self, epoch: int, source: str, target: str) -> float:
+        return float(self.epochs[epoch].get(source.lower(), Counter()).get(target.lower(), 0.0))
+
+    def current_relation(self, source: str, target: str) -> float:
+        if not self.epochs:
+            return 0.0
+        latest = len(self.epochs) - 1
+        weighted = 0.0
+        total_weight = 0.0
+        for idx in range(len(self.epochs)):
+            weight = exp(-self.decay * (latest - idx))
+            weighted += weight * self.relation_at(idx, source, target)
+            total_weight += weight
+        return weighted / total_weight if total_weight else 0.0
+
+    def dominant_at(self, epoch: int, source: str, candidates: list[str] | tuple[str, ...] | None = None) -> TemporalAssociation | None:
+        source = source.lower()
+        outgoing = self.epochs[epoch].get(source)
+        if not outgoing:
+            return None
+        allowed = set(c.lower() for c in candidates) if candidates else None
+        items = [(target, float(score)) for target, score in outgoing.items() if allowed is None or target in allowed]
+        if not items:
+            return None
+        target, score = max(items, key=lambda item: item[1])
+        return TemporalAssociation(target, score)
+
+    def dominant_current(self, source: str, candidates: list[str] | tuple[str, ...] | None = None) -> TemporalAssociation | None:
+        source = source.lower()
+        universe: set[str] = set()
+        for epoch in self.epochs:
+            universe.update(epoch.get(source, Counter()))
+        if candidates:
+            universe &= {c.lower() for c in candidates}
+        if not universe:
+            return None
+        ranked = [(target, self.current_relation(source, target)) for target in universe]
+        target, score = max(ranked, key=lambda item: item[1])
+        return TemporalAssociation(target, score)
+
+    def timeline(self, source: str, candidates: list[str] | tuple[str, ...] | None = None) -> list[TemporalAssociation | None]:
+        return [self.dominant_at(epoch, source, candidates) for epoch in range(len(self.epochs))]
+
+    def detect_changes(self, source: str, candidates: list[str] | tuple[str, ...] | None = None) -> list[TemporalChange]:
         changes: list[TemporalChange] = []
         previous: TemporalAssociation | None = None
-        for epoch, current in enumerate(self.timeline(token)):
+        for epoch, current in enumerate(self.timeline(source, candidates)):
             previous_name = previous.candidate if previous else None
             current_name = current.candidate if current else None
             if epoch == 0 or current_name != previous_name:
@@ -112,7 +179,3 @@ class TemporalContextMemory:
                 )
             previous = current
         return changes
-
-    def change_score(self, token: str, old_partner: str, new_partner: str) -> float:
-        """Positive values indicate that recency-weighted evidence favors new_partner."""
-        return self.current_similarity(token, new_partner) - self.current_similarity(token, old_partner)
