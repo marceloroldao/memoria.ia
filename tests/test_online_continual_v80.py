@@ -14,8 +14,9 @@ def test_continual_probe_returns_bounded_metrics():
     r = evaluate_regime_switch("res", lambda: PackedMemoryLifecycle(levels=4), 8, 8, 8)
     assert 0.0 <= r.online_accuracy <= 1.0
     assert 0.0 <= r.post_shift_accuracy <= 1.0
-    assert 0 <= r.recovery_steps <= 8
-    assert r.retained_old_regime
+    assert 0 <= r.deactivation_steps <= 8
+    assert 0 <= r.reactivation_steps <= 8
+    assert r.retained_history
 
 
 def test_resolutive_reactivates_after_return_to_old_regime():
