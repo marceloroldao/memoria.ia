@@ -3,7 +3,7 @@ from .distributed_consensus import ConsensusDecision, KnowledgeDescriptor
 from .layers import LayerSpec, layer_bits
 from .store import ResolutiveMemory
 
-__version__ = "0.95.0rc1"
+__version__ = "0.95.0"
 
 __all__ = [
     "MemoryConfig",
