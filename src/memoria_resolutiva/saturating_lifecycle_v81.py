@@ -69,3 +69,20 @@ class SaturatingPackedMemoryLifecycle:
 
     def snapshot(self, item: Hashable):
         return tuple((s.level, s.strength, s.active, s.ever_active) for s in self._states(item))
+
+
+class SaturatingMemoryLifecycle(SaturatingPackedMemoryLifecycle):
+    """Historical v0.81 constructor retained for v0.82/v0.83 reproducibility.
+
+    ``max_strength`` is the older public name for the same saturation bound.
+    """
+
+    def __init__(self, levels: int = 5, activate_threshold: float = 1.0,
+                 deactivate_threshold: float = 0.25, max_strength: float = 1.25):
+        super().__init__(
+            levels=levels,
+            activate_threshold=activate_threshold,
+            deactivate_threshold=deactivate_threshold,
+            saturation=max_strength,
+        )
+        self.max_strength = max_strength
