@@ -13,17 +13,15 @@ The layer rule is:
 
 `R(L) = 8 * 2^L`
 
-## v0.30 scope
+## Current research scope — v0.60
 
-The current prototype includes the previous online, temporal, provenance, emergent-ontology and polysemy experiments and now adds **order-stability evaluation for context-conditioned sense splitting**.
+The prototype has evolved from structural hierarchical memory into a broader experimental memory system covering exact reconstruction, deduplication, ordered trajectories, sparse contextual association, online incorporation, temporal/episodic tracking, provenance-aware conflict representation, source reliability, emergent ontology, polysemy, sense consolidation, regime adaptation, layered consolidation/deconsolidation, layer-local clocks, memory lifecycle, stress/scaling analysis and conventional baselines.
 
-v0.29 introduced `PolysemyMemory`, allowing one surface token to own multiple context-conditioned sense nodes without neural training or global replay. v0.30 tests whether those sense distinctions survive different observation orders.
+v0.58 introduced a capability-per-cost score, but its demonstration experiment still contained placeholder capability/cost values. v0.59 removes that methodological weakness by measuring retention, short-noise resistance, persistent-regime adaptation and reactivation directly from each memory model and pairing those observations with measured latency and peak memory.
 
-The controlled `banco` corpus is presented in four regimes: finance-first, data-first, alternating, and many shuffled streams. The evaluator records (1) whether finance and database queries resolve to different senses and (2) how many sense nodes are created.
+v0.60 adds multi-seed statistical evaluation. The same workload family is generated across multiple deterministic seeds and evaluated at multiple event scales. For each system the evaluator reports means and sample standard deviations for quality, latency, peak memory and utility-per-cost, plus a 95% normal-approximation confidence interval for the utility score.
 
-Internal simulation of the reference corpus found a useful mixed result: finance-vs-data separation remained stable across the tested shuffled orders, but the current local-Jaccard splitter typically created about 6-7 sense nodes rather than the intended two broad senses. Therefore the main v0.30 finding is **successful domain separation with substantial over-splitting**. This is intentionally recorded as a failure surface rather than hidden behind a tuned test.
-
-The next algorithmic problem is sense consolidation: merge nearby micro-senses after enough evidence accumulates while preserving truly distinct meanings. A future version should reduce the number of `banco` senses toward two without losing order robustness or requiring replay of the full history.
+This version intentionally does **not** claim superiority. The next requirement is to execute the v0.60 experiment in clean reproducible environments, record raw results, inspect variance and determine whether any apparent advantage persists across seeds, scales and hardware.
 
 ## Install and test
 
@@ -35,16 +33,17 @@ python -m pytest -q
 Key recent experiments:
 
 ```bash
-python experiments/semantic_fingerprint_v27.py
-python experiments/emergent_ontology_v28.py
-python experiments/polysemy_v29.py
-python experiments/polysemy_stability_v30.py
+python experiments/stress_v55.py
+python experiments/baseline_comparison_v57.py
+python experiments/capability_cost_v58.py
+python experiments/measured_capability_cost_v59.py
+python experiments/statistical_robustness_v60.py
 ```
 
 Third-party datasets remain outside this repository. Earlier experiments remain available under `experiments/`.
 
 ## Research status
 
-This is an experimental research project. Current controlled evidence supports exact reconstruction, multiscale structural memory, sparse contextual association, online incorporation, temporal/episodic tracking, provenance-aware conflict representation, learned source reliability, emergent contextual clustering, and context-conditioned sense splitting. v0.30 specifically shows that the current splitter can preserve broad polysemous separation under order changes while still over-fragmenting each broad sense. It does **not** establish general word-sense disambiguation or semantic understanding.
+This is an experimental research project. Results must be treated as controlled prototype evidence until reproduced under larger workloads, external datasets and independent environments. Negative results and failure surfaces are retained rather than hidden by parameter tuning.
 
 See [`docs/architecture.md`](docs/architecture.md) for the current model.
