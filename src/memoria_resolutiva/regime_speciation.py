@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .partial_recurrence import cosine
 
@@ -46,10 +46,11 @@ class RegimeLineageMemory:
         if sim >= self.variant_threshold:
             self._drift_counts[parent] = 0
             return "variant"
-        if sim <= self.speciation_threshold:
-            self._drift_counts[parent] = self._drift_counts.get(parent, 0) + 1
-        else:
-            self._drift_counts[parent] = max(0, self._drift_counts.get(parent, 0) - 1)
+
+        # Any consecutive observation below the variant threshold contributes
+        # evidence of persistent drift. The stricter speciation threshold still
+        # marks strong divergence, but persistence is what promotes a new regime.
+        self._drift_counts[parent] = self._drift_counts.get(parent, 0) + 1
         if self._drift_counts[parent] >= self.persistence:
             generation = self.nodes[parent].generation + 1
             self.nodes[child_name] = RegimeNode(child_name, list(profile), parent, generation)
