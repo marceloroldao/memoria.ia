@@ -7,6 +7,12 @@ from typing import Callable, Iterable
 
 from .textual import tokenize
 
+_STOPWORDS = {
+    "a", "ao", "aos", "as", "com", "da", "das", "de", "do", "dos",
+    "e", "em", "eu", "foi", "na", "nas", "no", "nos", "o", "os",
+    "para", "pela", "pelas", "pelo", "pelos", "por", "um", "uma",
+}
+
 
 @dataclass(frozen=True, slots=True)
 class SenseResolution:
@@ -22,8 +28,8 @@ class PolysemyRouterV96:
 
     Each concept is learned from example sentences. Resolution compares the
     query sentence context against concept-specific sparse context profiles.
-    The ambiguous surface token itself is removed from the profile so the
-    decision depends on surrounding evidence rather than the word identity.
+    The ambiguous surface token and a small deterministic set of function words
+    are removed so the decision depends on discriminative surrounding evidence.
 
     The router deliberately abstains when score or runner-up margin is too low.
     """
@@ -40,7 +46,7 @@ class PolysemyRouterV96:
     def _context(sentence: str, surface: str) -> Counter[str]:
         s = surface.strip().lower()
         tokens = tokenize(sentence)
-        return Counter(t for t in tokens if t != s)
+        return Counter(t for t in tokens if t != s and t not in _STOPWORDS)
 
     @staticmethod
     def _cosine(a: Counter[str], b: Counter[str]) -> float:
