@@ -17,13 +17,13 @@ class MemoryConfig:
 
 
 class ResolutiveMemoryAPI:
-    """v0.90 stabilization facade.
+    """v0.95 release-candidate stabilization facade.
 
-    This is the candidate public contract. Experimental internals remain
-    replaceable as long as these operations preserve their documented meaning.
+    Experimental internals remain replaceable as long as these public
+    operations preserve their documented meaning through the v1.0 gate.
     """
 
-    API_VERSION = "0.91"
+    API_VERSION = "0.95.0rc1"
 
     def __init__(self, config: MemoryConfig | None = None):
         self.config = config or MemoryConfig()
