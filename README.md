@@ -60,7 +60,7 @@ The stabilization facade exposes:
 - `save(...)`
 - `load(...)`
 
-See `docs/API_V090.md` and subsequent v0.91 persistence notes.
+See `docs/API_V090.md` and subsequent persistence/result notes.
 
 ## Research status
 
@@ -78,6 +78,10 @@ Important known limitations include:
 
 Source is publicly visible under the **Resolutive Research and Non-Commercial License (RRNCL) v1.0**. Academic, educational and non-commercial research use is permitted under its terms. Commercial use requires separate authorization. Because commercial use is restricted, this project should not be represented as OSI-approved Open Source.
 
-## Compatibility
+## Resolutive Science compatibility
 
-RSMS compatibility target: **resolutive-science 1.0 candidate alignment**. Formal compatibility must be re-audited against the released central specification before v1.0.
+- Resolutive Science repository baseline: **v0.1.1**
+- Project governance baseline: **RSPS 1.0-draft**
+- RSMS compatibility: **pending a formally numbered RSMS release in `resolutive-science`**
+
+The repository does not claim compatibility with a nonexistent or unpublished RSMS version. Once a numbered RSMS is released, this declaration must be re-audited and pinned before the stable v1.0 release.
