@@ -1,3 +1,5 @@
+import zlib
+
 import pytest
 
 from memoria_resolutiva.routed_lifecycle import RoutedLifecycleMemory
@@ -45,5 +47,5 @@ def test_compact_corruption_is_detected():
     m, _, _ = build_memory()
     blob = bytearray(encode_compact_routed_snapshot(m))
     blob[-1] ^= 0xFF
-    with pytest.raises((ValueError, zlib.error, Exception)):
+    with pytest.raises((ValueError, zlib.error)):
         decode_compact_routed_snapshot(bytes(blob))
