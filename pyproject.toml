@@ -4,9 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "memoria-resolutiva"
-version = "0.1.0"
-description = "Experimental hierarchical resolutive memory"
+version = "0.95.0rc1"
+description = "Experimental resolutive memory with online lifecycle, multitrajectory routing, distributed consensus, and persistence"
 requires-python = ">=3.10"
+license = {text = "Resolutive Research and Non-Commercial License (RRNCL) v1.0"}
+authors = [{name = "Marcelo Roldão Matos"}]
 
 [project.optional-dependencies]
 word2vec = ["gensim>=4.3"]
