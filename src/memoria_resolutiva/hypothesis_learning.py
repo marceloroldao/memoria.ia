@@ -14,12 +14,11 @@ class Hypothesis:
     prior_confidence: float
     confirmations: int = 0
     rejections: int = 0
-    status: str = "pending"  # pending | supported | rejected
+    status: str = "pending"
     history: list[tuple[int, str, float]] = field(default_factory=list)
 
     @property
     def posterior_confidence(self) -> float:
-        # Beta-style evidence update centered on the analogical prior.
         strength = 4.0
         a = max(1e-9, self.prior_confidence * strength) + self.confirmations
         b = max(1e-9, (1.0 - self.prior_confidence) * strength) + self.rejections
@@ -27,13 +26,6 @@ class Hypothesis:
 
 
 class HypothesisLearner:
-    """Close the loop from analogical candidate to tested evidence.
-
-    Hypotheses remain distinct from observed facts. Only explicit environmental
-    observations update confirmation/rejection counts. This preserves provenance
-    and prevents inferred claims from self-confirming.
-    """
-
     def __init__(self, support_threshold: float = 0.80, reject_threshold: float = 0.20):
         self.support_threshold = support_threshold
         self.reject_threshold = reject_threshold
@@ -51,6 +43,7 @@ class HypothesisLearner:
     def observe(self, target: Hashable, relation: Hashable, value: Hashable) -> None:
         self.time += 1
         self.facts.add((target, relation, value))
+        eps = 1e-12
         for h in self.hypotheses.values():
             if h.target != target or h.relation != relation or h.status == "rejected":
                 continue
@@ -61,9 +54,9 @@ class HypothesisLearner:
                 h.rejections += 1
                 event = "reject"
             p = h.posterior_confidence
-            if p >= self.support_threshold:
+            if p + eps >= self.support_threshold:
                 h.status = "supported"
-            elif p <= self.reject_threshold:
+            elif p - eps <= self.reject_threshold:
                 h.status = "rejected"
             else:
                 h.status = "pending"
