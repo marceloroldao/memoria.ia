@@ -5,6 +5,7 @@ from typing import Hashable, Iterable
 
 from .distributed_consensus import KnowledgeDescriptor, compare_knowledge
 from .routed_lifecycle import RoutedLifecycleMemory
+from .routed_persistence import load_routed_snapshot, save_routed_snapshot
 
 Node = Hashable
 
@@ -22,7 +23,7 @@ class ResolutiveMemoryAPI:
     replaceable as long as these operations preserve their documented meaning.
     """
 
-    API_VERSION = "0.90"
+    API_VERSION = "0.91"
 
     def __init__(self, config: MemoryConfig | None = None):
         self.config = config or MemoryConfig()
@@ -48,6 +49,16 @@ class ResolutiveMemoryAPI:
 
     def route_status(self, trajectory: Iterable[Node]):
         return self._memory.status(trajectory)
+
+    def save(self, path) -> None:
+        save_routed_snapshot(self._memory, path)
+
+    @classmethod
+    def load(cls, path):
+        routed = load_routed_snapshot(path)
+        obj = cls(MemoryConfig(levels=routed.levels, max_strength=routed.max_strength))
+        obj._memory = routed
+        return obj
 
     @staticmethod
     def compare(a: KnowledgeDescriptor, b: KnowledgeDescriptor):
