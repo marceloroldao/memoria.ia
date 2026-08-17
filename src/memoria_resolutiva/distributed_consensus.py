@@ -45,7 +45,9 @@ def compare_knowledge(a: KnowledgeDescriptor, b: KnowledgeDescriptor) -> Consens
         return ConsensusDecision("conflict", score, semantic, modality, "high semantic overlap with opposing polarity")
 
     score = (0.75 * semantic + 0.25 * modality) * confidence
-    if semantic >= 0.55 and score >= 0.45:
+    # 'related' is deliberately non-destructive: this threshold may be more
+    # permissive because it never authorizes automatic identity/merge.
+    if semantic >= 0.55 and score >= 0.40:
         return ConsensusDecision("related", score, semantic, modality, "shared semantic neighborhood without identity proof")
 
     return ConsensusDecision("distinct", score, semantic, modality, "insufficient evidence for merge or conflict")
