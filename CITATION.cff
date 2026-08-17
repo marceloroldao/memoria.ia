@@ -7,6 +7,7 @@ authors:
     given-names: "Marcelo Roldão"
     orcid: "https://orcid.org/0009-0003-6075-4680"
 repository-code: "https://github.com/marceloroldao/memoria.ia"
+doi: "10.5281/zenodo.21973472"
 version: "0.95.1"
 date-released: "2026-08-17"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
