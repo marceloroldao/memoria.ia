@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use memoria.ia in academic or scientific work, please cite this software."
+title: "memoria.ia: Resolutive Memory"
+type: software
+authors:
+  - family-names: "Matos"
+    given-names: "Marcelo Roldão"
+    orcid: "https://orcid.org/0009-0003-6075-4680"
+repository-code: "https://github.com/marceloroldao/memoria.ia"
+version: "0.95.0rc1"
+date-released: "2026-08-17"
+license: "LicenseRef-RRNCL-1.0"
+keywords:
+  - resolutive memory
+  - online learning
+  - continual memory
+  - multimodal memory
+  - distributed memory
