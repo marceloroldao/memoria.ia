@@ -2,9 +2,14 @@
 
 Experimental implementation of **Resolutive Memory**, a memory architecture built around reusable knowledge nodes, multiple trajectories, online lifecycle dynamics, distributed consensus, and persistence.
 
-## Current maturity — v0.95.0
+## Archived release
 
-The v0.95.0 stable research release consolidates controlled experimental stages covering:
+Latest archived release: **v0.95.1**  
+Zenodo DOI: **10.5281/zenodo.21973472**
+
+## Current maturity — v0.95 series
+
+The v0.95 stable research line consolidates controlled experimental stages covering:
 
 - hierarchical and temporal memory layers;
 - online support/contradiction updates without neural retraining;
@@ -23,19 +28,21 @@ The validated temporal rule remains:
 
 `r_L = 2^-L`
 
-with the v0.95.0 default configuration:
+with the v0.95 default configuration:
 
 - levels = 5
 - max_strength = 1.25
 
 ## Validation
 
-The v0.95.0 release was promoted from `v0.95.0rc1` after a clean Google Colab checkout on Python 3.12 completed the full release gate:
+The v0.95 implementation was promoted from `v0.95.0rc1` after a clean Google Colab checkout on Python 3.12 completed the full release gate:
 
 - 267 tests passed;
 - 0 failures;
 - `python scripts/release_gate_v95.py`;
 - final output: `v0.95 release gate: PASS`.
+
+The `v0.95.1` release is a metadata-only citation interoperability fix over the validated v0.95.0 implementation.
 
 ## Install and test
 
@@ -58,7 +65,7 @@ python experiments/incompressible_snapshot_v94.py
 
 ## Public API
 
-The v0.95.0 facade exposes:
+The v0.95 facade exposes:
 
 - `remember(...)`
 - `reinforce(...)`
