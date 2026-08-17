@@ -8,7 +8,7 @@ Minimum supported interpreter for the candidate package:
 
 - Python >= 3.10
 
-Create an isolated environment, then install the repository in editable mode:
+Create an isolated environment, then install the repository with the declared test dependencies:
 
 ```bash
 python -m venv .venv
@@ -18,14 +18,19 @@ source .venv/bin/activate
 # .venv\Scripts\Activate.ps1
 
 python -m pip install --upgrade pip
-python -m pip install -e .
-python -m pip install pytest
+python -m pip install -e '.[test]'
 ```
 
 Optional Word2Vec baseline:
 
 ```bash
 python -m pip install -e '.[word2vec]'
+```
+
+To install both test and Word2Vec extras:
+
+```bash
+python -m pip install -e '.[test,word2vec]'
 ```
 
 ## Release-candidate gate
