@@ -1,10 +1,10 @@
-# Reproducibility — memoria.ia v0.95.0rc1
+# Reproducibility — memoria.ia v0.95.0
 
-Status: release-candidate reproducibility manifest.
+Status: stable v0.95 research-release reproducibility manifest.
 
 ## Environment
 
-Minimum supported interpreter for the candidate package:
+Minimum supported interpreter:
 
 - Python >= 3.10
 
@@ -33,7 +33,7 @@ To install both test and Word2Vec extras:
 python -m pip install -e '.[test,word2vec]'
 ```
 
-## Release-candidate gate
+## Release gate
 
 Run the complete repository test suite through the gate script:
 
@@ -53,9 +53,9 @@ A successful release gate ends with:
 v0.95 release gate: PASS
 ```
 
-## Representative experiments
+The v0.95.0rc1 predecessor completed this gate in a clean Google Colab checkout on Python 3.12 with 267 tests passed and 0 failures. The v0.95.0 promotion changes release metadata/version identifiers only; the functional implementation is frozen from that validated candidate.
 
-The following commands reproduce the main late-stage architecture and benchmark checks:
+## Representative experiments
 
 ```bash
 python experiments/compact_stress_v63.py
@@ -81,7 +81,7 @@ Negative and inconclusive results are retained as part of the research record.
 
 ## Release traceability
 
-Candidate version: `0.95.0rc1`
+Release version: `0.95.0`
 
 Resolutive Science baseline: `marceloroldao/resolutive-science` v0.1.1
 

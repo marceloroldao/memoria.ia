@@ -7,7 +7,7 @@ from memoria_resolutiva import (
 
 
 def test_candidate_api_is_exported_from_package_root():
-    assert ResolutiveMemoryAPI.API_VERSION == "0.95.0rc1"
+    assert ResolutiveMemoryAPI.API_VERSION == "0.95.0"
     assert MemoryConfig().levels == 5
     assert MemoryConfig().max_strength == 1.25
 

@@ -2,9 +2,9 @@
 
 Experimental implementation of **Resolutive Memory**, a memory architecture built around reusable knowledge nodes, multiple trajectories, online lifecycle dynamics, distributed consensus, and persistence.
 
-## Current maturity — v0.95.0rc1 gate
+## Current maturity — v0.95.0
 
-The project has progressed through controlled experimental stages covering:
+The v0.95.0 stable research release consolidates controlled experimental stages covering:
 
 - hierarchical and temporal memory layers;
 - online support/contradiction updates without neural retraining;
@@ -19,20 +19,29 @@ The project has progressed through controlled experimental stages covering:
 - compact snapshot transport format;
 - scaling, memory-cost, stress and continual-learning benchmarks.
 
-The candidate temporal rule remains:
+The validated temporal rule remains:
 
 `r_L = 2^-L`
 
-with default candidate configuration:
+with the v0.95.0 default configuration:
 
 - levels = 5
 - max_strength = 1.25
 
+## Validation
+
+The v0.95.0 release was promoted from `v0.95.0rc1` after a clean Google Colab checkout on Python 3.12 completed the full release gate:
+
+- 267 tests passed;
+- 0 failures;
+- `python scripts/release_gate_v95.py`;
+- final output: `v0.95 release gate: PASS`.
+
 ## Install and test
 
 ```bash
-python -m pip install -e .
-python -m pytest -q
+python -m pip install -e '.[test]'
+python scripts/release_gate_v95.py
 ```
 
 Representative recent experiments:
@@ -41,15 +50,15 @@ Representative recent experiments:
 python experiments/compact_stress_v63.py
 python experiments/scaling_v64.py
 python experiments/stability_plasticity_v82.py
-python experiments/stochastic_robustness_v83.py
+python experiments/stochastic_stability_v83.py
 python experiments/multitrajectory_v87.py
 python experiments/compact_snapshot_v93.py
-python experiments/high_entropy_snapshot_v94.py
+python experiments/incompressible_snapshot_v94.py
 ```
 
-## Candidate public API
+## Public API
 
-The stabilization facade exposes:
+The v0.95.0 facade exposes:
 
 - `remember(...)`
 - `reinforce(...)`
@@ -64,7 +73,7 @@ See `docs/API_V090.md` and subsequent persistence/result notes.
 
 ## Research status
 
-This is still a research prototype. v0.95.0rc1 is a **release-candidate gate**, not a final v1.0 release. Claims are limited to controlled tests in this repository. Negative results, failed hypotheses and known limits are retained.
+This remains a research implementation, not a claim of general intelligence or a final v1.0 architecture. Claims are limited to controlled tests in this repository. Negative results, failed hypotheses and known limits are retained.
 
 Important known limitations include:
 
@@ -84,4 +93,4 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 - Project governance baseline: **RSPS 1.0-draft**
 - RSMS compatibility: **pending a formally numbered RSMS release in `resolutive-science`**
 
-The repository does not claim compatibility with a nonexistent or unpublished RSMS version. Once a numbered RSMS is released, this declaration must be re-audited and pinned before the stable v1.0 release.
+The repository does not claim compatibility with a nonexistent or unpublished RSMS version. Once a numbered RSMS is released, this declaration must be re-audited and pinned before the v1.0 release.

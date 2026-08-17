@@ -34,4 +34,4 @@ def test_default_config_is_frozen_candidate():
     c = MemoryConfig()
     assert c.levels == 5
     assert c.max_strength == 1.25
-    assert ResolutiveMemoryAPI.API_VERSION == "0.95.0rc1"
+    assert ResolutiveMemoryAPI.API_VERSION == "0.95.0"
