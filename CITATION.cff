@@ -7,9 +7,9 @@ authors:
     given-names: "Marcelo Roldão"
     orcid: "https://orcid.org/0009-0003-6075-4680"
 repository-code: "https://github.com/marceloroldao/memoria.ia"
-version: "0.95.0"
+version: "0.95.1"
 date-released: "2026-08-17"
-license: "LicenseRef-RRNCL-1.0"
+license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
 keywords:
   - resolutive memory
   - online learning
