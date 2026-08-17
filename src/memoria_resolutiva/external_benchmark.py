@@ -34,17 +34,17 @@ def spearman(x: list[float], y: list[float]) -> float:
     num = sum((a - mx) * (b - my) for a, b in zip(rx, ry))
     dx = sum((a - mx) ** 2 for a in rx) ** 0.5
     dy = sum((b - my) ** 2 for b in ry) ** 0.5
-    return num / (dx * dy) if dx and dy else 0.0
+    if not (dx and dy):
+        return 0.0
+    value = num / (dx * dy)
+    if abs(value - 1.0) < 1e-12:
+        return 1.0
+    if abs(value + 1.0) < 1e-12:
+        return -1.0
+    return value
 
 
 def evaluate_similarity_rows(rows: list[SimilarityRow], similarity, contains=None) -> dict[str, float]:
-    """Evaluate human-rated word pairs.
-
-    If `contains` is supplied it must return whether a word is in the model's
-    learned vocabulary. This keeps zero semantic similarity distinct from
-    out-of-vocabulary coverage failure. Spearman is computed only on covered
-    pairs when explicit coverage is available.
-    """
     human: list[float] = []
     model: list[float] = []
     covered = 0
@@ -61,7 +61,6 @@ def evaluate_similarity_rows(rows: list[SimilarityRow], similarity, contains=Non
         covered += 1
 
     if contains is None:
-        # Backward-compatible fallback when the model exposes no vocabulary API.
         human = []
         model = []
         covered = 0
