@@ -26,6 +26,14 @@ class EmergentOntology:
     def observe_many(self, sentences: list[str]) -> None:
         self.memory.observe_many(sentences)
 
+    def _similarity(self, a: str, b: str) -> float:
+        # Preserve the ordered/trajectory score but allow lexical ontology
+        # grouping to recover equivalence under small grammatical shifts.
+        return max(
+            self.memory.similarity(a, b),
+            self.memory.unordered_similarity(a, b),
+        )
+
     def cluster(self, terms: list[str]) -> tuple[tuple[str, ...], ...]:
         unseen = set(t.lower() for t in terms)
         groups: list[tuple[str, ...]] = []
@@ -37,7 +45,7 @@ class EmergentOntology:
             while changed:
                 changed = False
                 for candidate in list(unseen):
-                    if any(self.memory.similarity(candidate, member) >= self.threshold for member in group):
+                    if any(self._similarity(candidate, member) >= self.threshold for member in group):
                         group.add(candidate)
                         unseen.remove(candidate)
                         changed = True
