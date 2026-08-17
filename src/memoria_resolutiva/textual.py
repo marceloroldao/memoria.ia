@@ -37,6 +37,10 @@ class TextContextMemory:
         for sentence in sentences:
             self.observe_sentence(sentence)
 
+    def similarity(self, a: str, b: str) -> float:
+        """Backward-compatible contextual similarity delegate."""
+        return self.associator.similarity(a.lower(), b.lower())
+
     def nearest(self, token: str, top_k: int = 5) -> list[tuple[str, float]]:
         return self.associator.nearest(token.lower(), top_k=top_k)
 
