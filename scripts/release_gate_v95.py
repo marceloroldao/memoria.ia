@@ -26,9 +26,9 @@ def main() -> int:
 
     from memoria_resolutiva import ResolutiveMemoryAPI, __version__
 
-    if __version__ != "0.95.0rc1":
+    if __version__ != "0.95.0":
         raise SystemExit(f"unexpected package version: {__version__}")
-    if ResolutiveMemoryAPI.API_VERSION != "0.95.0rc1":
+    if ResolutiveMemoryAPI.API_VERSION != "0.95.0":
         raise SystemExit(f"unexpected API version: {ResolutiveMemoryAPI.API_VERSION}")
 
     cmd = [sys.executable, "-m", "pytest", "-q"]
