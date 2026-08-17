@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Hashable
 
 from .baseline_benchmark import HashMemory
-from .packed_lifecycle import PackedMemoryLifecycle
 
 
 class DecayMemory:
@@ -47,13 +46,13 @@ def _active(memory, key: Hashable) -> bool:
         return memory.data.get(key, 0.0) > 0.0
     if isinstance(memory, DecayMemory):
         return memory.active(key)
-    if isinstance(memory, PackedMemoryLifecycle):
+    if hasattr(memory, "active_depth"):
         return memory.active_depth(key) >= 0
     raise TypeError(type(memory))
 
 
 def _historical(memory, key: Hashable) -> bool:
-    if isinstance(memory, PackedMemoryLifecycle):
+    if hasattr(memory, "historical_depth"):
         return memory.historical_depth(key) >= 0
     if isinstance(memory, HashMemory):
         return key in memory.data
@@ -63,13 +62,7 @@ def _historical(memory, key: Hashable) -> bool:
 
 
 def evaluate_regime_switch(name: str, factory, stable_steps: int = 32, shift_steps: int = 32, return_steps: int = 32) -> ContinualMetrics:
-    """Single-key active -> inactive -> active continual-learning probe.
-
-    Prediction is measured before each update, so no system receives credit for
-    seeing the current label before predicting it. The test measures how quickly
-    established state deactivates under sustained contradiction and how quickly
-    it reactivates when the old regime returns.
-    """
+    """Single-key active -> inactive -> active continual-learning probe."""
     m = factory()
     key = "concept"
     labels = [True] * stable_steps + [False] * shift_steps + [True] * return_steps
@@ -86,14 +79,12 @@ def evaluate_regime_switch(name: str, factory, stable_steps: int = 32, shift_ste
             correct += 1
             if i >= stable_steps:
                 post_shift_correct += 1
-
         if stable_steps <= i < stable_steps + shift_steps and not deactivated and not pred:
             deactivation_steps = i - stable_steps
             deactivated = True
         if i >= stable_steps + shift_steps and not reactivated and pred:
             reactivation_steps = i - (stable_steps + shift_steps)
             reactivated = True
-
         if target_active:
             m.support(key)
         else:
@@ -112,6 +103,7 @@ def evaluate_regime_switch(name: str, factory, stable_steps: int = 32, shift_ste
 
 
 def default_factories():
+    from .packed_lifecycle import PackedMemoryLifecycle
     return {
         "hash": HashMemory,
         "decay_098": lambda: DecayMemory(0.98),
