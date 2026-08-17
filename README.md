@@ -1,25 +1,87 @@
 # memoria.ia
 
-Experimental research repository for **Resolutive Memory**: a hierarchical, deduplicated memory architecture organized in layers of increasing bit resolution.
+Experimental implementation of **Resolutive Memory**, a memory architecture built around reusable knowledge nodes, multiple trajectories, online lifecycle dynamics, distributed consensus, and persistence.
 
-Initial layer rule:
+## Current maturity — v0.95.0rc1 gate
 
-- L0 = 8 bits
-- L1 = 16 bits
-- L2 = 32 bits
-- L3 = 64 bits
-- L(n+1) = 2 × L(n)
+The project has progressed through controlled experimental stages covering:
 
-The project is currently experimental. Claims are limited to reproducible implementations and benchmarks contained in this repository.
+- hierarchical and temporal memory layers;
+- online support/contradiction updates without neural retraining;
+- consolidation, deconsolidation and reactivation;
+- saturation-based stability/plasticity control;
+- polysemy and sense-consolidation experiments;
+- multinodal and multimodal trajectories;
+- individual and collective memory routes;
+- shared payloads with independent route confidence;
+- conservative distributed consensus (`same`, `related`, `conflict`, `distinct`);
+- atomic persistent snapshots with CRC validation;
+- compact snapshot transport format;
+- scaling, memory-cost, stress and continual-learning benchmarks.
+
+The candidate temporal rule remains:
+
+`r_L = 2^-L`
+
+with default candidate configuration:
+
+- levels = 5
+- max_strength = 1.25
+
+## Install and test
+
+```bash
+python -m pip install -e .
+python -m pytest -q
+```
+
+Representative recent experiments:
+
+```bash
+python experiments/compact_stress_v63.py
+python experiments/scaling_v64.py
+python experiments/stability_plasticity_v82.py
+python experiments/stochastic_robustness_v83.py
+python experiments/multitrajectory_v87.py
+python experiments/compact_snapshot_v93.py
+python experiments/high_entropy_snapshot_v94.py
+```
+
+## Candidate public API
+
+The stabilization facade exposes:
+
+- `remember(...)`
+- `reinforce(...)`
+- `challenge(...)`
+- `recall(...)`
+- `route_status(...)`
+- `compare(...)`
+- `save(...)`
+- `load(...)`
+
+See `docs/API_V090.md` and subsequent persistence/result notes.
+
+## Research status
+
+This is still a research prototype. v0.95.0rc1 is a **release-candidate gate**, not a final v1.0 release. Claims are limited to controlled tests in this repository. Negative results, failed hypotheses and known limits are retained.
+
+Important known limitations include:
+
+- payload and trajectory persistence currently requires JSON-serializable values;
+- compact snapshot compression depends on data redundancy and may trade CPU time for storage savings;
+- semantic consolidation remains experimental and does not claim general language understanding;
+- no claim is made that this replaces a general neural model or LLM;
+- distributed consensus is conservative and deliberately avoids automatic destructive merge for merely related knowledge.
 
 ## License
 
-This repository is distributed under the **Resolutive Research and Non-Commercial License (RRNCL) v1.0**. See [`LICENSE`](LICENSE).
+Source is publicly visible under the **Resolutive Research and Non-Commercial License (RRNCL) v1.0**. Academic, educational and non-commercial research use is permitted under its terms. Commercial use requires separate authorization. Because commercial use is restricted, this project should not be represented as OSI-approved Open Source.
 
-Academic, scientific, educational, personal experimental, and eligible non-commercial research use is permitted subject to the license terms, attribution requirements, and preservation of notices.
+## Resolutive Science compatibility
 
-**Commercial use is not granted by the public license.** Commercial deployment, monetization, proprietary integration, resale, sublicensing, paid services, or other commercial exploitation requires a separate written commercial license or authorization from the copyright holder.
+- Resolutive Science repository baseline: **v0.1.1**
+- Project governance baseline: **RSPS 1.0-draft**
+- RSMS compatibility: **pending a formally numbered RSMS release in `resolutive-science`**
 
-Because the license restricts commercial use, this project should **not** be described as OSI-approved "open source". It is publicly available source code under a research/non-commercial license.
-
-Copyright © 2026 Marcelo Roldão Matos.
+The repository does not claim compatibility with a nonexistent or unpublished RSMS version. Once a numbered RSMS is released, this declaration must be re-audited and pinned before the stable v1.0 release.

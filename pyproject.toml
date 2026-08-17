@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memoria-resolutiva"
+version = "0.95.0rc1"
+description = "Experimental resolutive memory with online lifecycle, multitrajectory routing, distributed consensus, and persistence"
+requires-python = ">=3.10"
+license = {text = "Resolutive Research and Non-Commercial License (RRNCL) v1.0"}
+authors = [{name = "Marcelo Roldão Matos"}]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+word2vec = ["gensim>=4.3"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
