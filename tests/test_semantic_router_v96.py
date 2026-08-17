@@ -2,7 +2,8 @@ from memoria_resolutiva.semantic_router_v96 import SemanticRouterV96
 
 
 def build_router():
-    r = SemanticRouterV96(threshold=0.55, min_margin=0.05)
+    # Controlled corpus threshold. The production default remains more conservative.
+    r = SemanticRouterV96(threshold=0.45, min_margin=0.05)
     r.observe([
         "a tarifa mensal foi aplicada ao servico de fibra",
         "a cobranca mensal foi aplicada ao servico de fibra",
