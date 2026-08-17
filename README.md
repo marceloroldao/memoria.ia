@@ -1,27 +1,32 @@
 # memoria.ia
 
-Experimental implementation of **Resolutive Memory**, a hierarchical memory architecture based on reusable nodes, trajectories and increasing bit resolution.
+Experimental implementation of **Resolutive Memory**, a memory architecture built around reusable knowledge nodes, multiple trajectories, online lifecycle dynamics, distributed consensus, and persistence.
 
-## Layer model
+## Current maturity — v0.95.0rc1 gate
 
-- L0 = 8 bits
-- L1 = 16 bits
-- L2 = 32 bits
-- L3 = 64 bits
+The project has progressed through controlled experimental stages covering:
 
-The layer rule is:
+- hierarchical and temporal memory layers;
+- online support/contradiction updates without neural retraining;
+- consolidation, deconsolidation and reactivation;
+- saturation-based stability/plasticity control;
+- polysemy and sense-consolidation experiments;
+- multinodal and multimodal trajectories;
+- individual and collective memory routes;
+- shared payloads with independent route confidence;
+- conservative distributed consensus (`same`, `related`, `conflict`, `distinct`);
+- atomic persistent snapshots with CRC validation;
+- compact snapshot transport format;
+- scaling, memory-cost, stress and continual-learning benchmarks.
 
-`R(L) = 8 * 2^L`
+The candidate temporal rule remains:
 
-## Current research scope — v0.60
+`r_L = 2^-L`
 
-The prototype has evolved from structural hierarchical memory into a broader experimental memory system covering exact reconstruction, deduplication, ordered trajectories, sparse contextual association, online incorporation, temporal/episodic tracking, provenance-aware conflict representation, source reliability, emergent ontology, polysemy, sense consolidation, regime adaptation, layered consolidation/deconsolidation, layer-local clocks, memory lifecycle, stress/scaling analysis and conventional baselines.
+with default candidate configuration:
 
-v0.58 introduced a capability-per-cost score, but its demonstration experiment still contained placeholder capability/cost values. v0.59 removes that methodological weakness by measuring retention, short-noise resistance, persistent-regime adaptation and reactivation directly from each memory model and pairing those observations with measured latency and peak memory.
-
-v0.60 adds multi-seed statistical evaluation. The same workload family is generated across multiple deterministic seeds and evaluated at multiple event scales. For each system the evaluator reports means and sample standard deviations for quality, latency, peak memory and utility-per-cost, plus a 95% normal-approximation confidence interval for the utility score.
-
-This version intentionally does **not** claim superiority. The next requirement is to execute the v0.60 experiment in clean reproducible environments, record raw results, inspect variance and determine whether any apparent advantage persists across seeds, scales and hardware.
+- levels = 5
+- max_strength = 1.25
 
 ## Install and test
 
@@ -30,20 +35,49 @@ python -m pip install -e .
 python -m pytest -q
 ```
 
-Key recent experiments:
+Representative recent experiments:
 
 ```bash
-python experiments/stress_v55.py
-python experiments/baseline_comparison_v57.py
-python experiments/capability_cost_v58.py
-python experiments/measured_capability_cost_v59.py
-python experiments/statistical_robustness_v60.py
+python experiments/compact_stress_v63.py
+python experiments/scaling_v64.py
+python experiments/stability_plasticity_v82.py
+python experiments/stochastic_robustness_v83.py
+python experiments/multitrajectory_v87.py
+python experiments/compact_snapshot_v93.py
+python experiments/high_entropy_snapshot_v94.py
 ```
 
-Third-party datasets remain outside this repository. Earlier experiments remain available under `experiments/`.
+## Candidate public API
+
+The stabilization facade exposes:
+
+- `remember(...)`
+- `reinforce(...)`
+- `challenge(...)`
+- `recall(...)`
+- `route_status(...)`
+- `compare(...)`
+- `save(...)`
+- `load(...)`
+
+See `docs/API_V090.md` and subsequent v0.91 persistence notes.
 
 ## Research status
 
-This is an experimental research project. Results must be treated as controlled prototype evidence until reproduced under larger workloads, external datasets and independent environments. Negative results and failure surfaces are retained rather than hidden by parameter tuning.
+This is still a research prototype. v0.95.0rc1 is a **release-candidate gate**, not a final v1.0 release. Claims are limited to controlled tests in this repository. Negative results, failed hypotheses and known limits are retained.
 
-See [`docs/architecture.md`](docs/architecture.md) for the current model.
+Important known limitations include:
+
+- payload and trajectory persistence currently requires JSON-serializable values;
+- compact snapshot compression depends on data redundancy and may trade CPU time for storage savings;
+- semantic consolidation remains experimental and does not claim general language understanding;
+- no claim is made that this replaces a general neural model or LLM;
+- distributed consensus is conservative and deliberately avoids automatic destructive merge for merely related knowledge.
+
+## License
+
+Source is publicly visible under the **Resolutive Research and Non-Commercial License (RRNCL) v1.0**. Academic, educational and non-commercial research use is permitted under its terms. Commercial use requires separate authorization. Because commercial use is restricted, this project should not be represented as OSI-approved Open Source.
+
+## Compatibility
+
+RSMS compatibility target: **resolutive-science 1.0 candidate alignment**. Formal compatibility must be re-audited against the released central specification before v1.0.
