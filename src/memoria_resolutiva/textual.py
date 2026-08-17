@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from dataclasses import dataclass
-from math import log2
+from math import log2, sqrt
 
 from .contextual import ContextAssociator
 
@@ -38,8 +39,36 @@ class TextContextMemory:
             self.observe_sentence(sentence)
 
     def similarity(self, a: str, b: str) -> float:
-        """Backward-compatible contextual similarity delegate."""
+        """Position-sensitive contextual similarity used by trajectory experiments."""
         return self.associator.similarity(a.lower(), b.lower())
+
+    def unordered_similarity(self, a: str, b: str) -> float:
+        """Compare contextual neighborhoods while ignoring relative offsets.
+
+        This is intended for lexical/ontology grouping, where small grammatical
+        shifts (article choice, inflection, or one-position displacement) should
+        not erase otherwise strong contextual evidence. The original
+        position-sensitive similarity remains unchanged for trajectory work.
+        """
+        pa = self.associator.profiles.get(a.lower())
+        pb = self.associator.profiles.get(b.lower())
+        if not pa or not pb:
+            return 0.0
+
+        ca: Counter[str] = Counter()
+        cb: Counter[str] = Counter()
+        for (_offset, token), count in pa.items():
+            ca[token] += count
+        for (_offset, token), count in pb.items():
+            cb[token] += count
+
+        shared = set(ca) & set(cb)
+        dot = sum(ca[token] * cb[token] for token in shared)
+        norm_a = sqrt(sum(value * value for value in ca.values()))
+        norm_b = sqrt(sum(value * value for value in cb.values()))
+        if norm_a == 0.0 or norm_b == 0.0:
+            return 0.0
+        return dot / (norm_a * norm_b)
 
     def nearest(self, token: str, top_k: int = 5) -> list[tuple[str, float]]:
         return self.associator.nearest(token.lower(), top_k=top_k)
