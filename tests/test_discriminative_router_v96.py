@@ -13,10 +13,10 @@ def build_pair(n=64):
     for i in range(n):
         anchor = f"conceito{i}"
         synonym = f"termo{i}"
-        # Shared generic context plus two concept-specific discriminators.
+        # Rare discriminators deliberately sit inside radius=3.
         sentences.extend([
-            f"o {anchor} aparece no sistema comum grupo{i} sinal{i}",
-            f"o {synonym} aparece no sistema comum grupo{i} sinal{i}",
+            f"o {anchor} grupo{i} sinal{i} aparece no sistema comum",
+            f"o {synonym} grupo{i} sinal{i} aparece no sistema comum",
         ])
     full.observe(sentences)
     disc.observe(sentences)
