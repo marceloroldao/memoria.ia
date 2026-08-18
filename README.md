@@ -98,6 +98,6 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 
 - Resolutive Science repository baseline: **v0.1.1**
 - Project governance baseline: **RSPS 1.0-draft**
-- RSMS compatibility: **pending a formally numbered RSMS release in `resolutive-science`**
+- RSMS compatibility: **1.0-rc.1 — candidate compatibility**
 
-The repository does not claim compatibility with a nonexistent or unpublished RSMS version. Once a numbered RSMS is released, this declaration must be re-audited and pinned before the v1.0 release.
+The current declaration is pinned to the published RSMS release-candidate specification in `resolutive-science`. It must be re-audited when RSMS 1.0 becomes stable and before a stable `memoria.ia` v1.0 release. Project-specific computational semantics remain subordinate to explicit RSMS definitions where shared terminology is used.
