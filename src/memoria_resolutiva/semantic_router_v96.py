@@ -35,11 +35,9 @@ class SemanticRouterV96:
     contextual evidence exceeds both a score threshold and runner-up margin.
     Ambiguous cases abstain and may be delegated to an external/neural fallback.
 
-    v0.96 also maintains a sparse contextual candidate index. The index changes
-    only which concepts are scored; it does not change the scoring or acceptance
-    rule. Any concept with positive ordered or unordered contextual similarity
-    must share at least one contextual token and is therefore reachable through
-    this index.
+    An optional sparse contextual candidate index is retained as an experiment.
+    It is disabled by default because the first scaling benchmark showed no
+    latency advantage on a corpus with highly shared contextual vocabulary.
     """
 
     def __init__(
@@ -48,7 +46,7 @@ class SemanticRouterV96:
         radius: int = 3,
         threshold: float = 0.60,
         min_margin: float = 0.08,
-        indexed: bool = True,
+        indexed: bool = False,
     ) -> None:
         self.memory = TextContextMemory(radius=radius)
         self.threshold = threshold
