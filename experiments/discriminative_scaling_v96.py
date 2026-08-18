@@ -19,9 +19,10 @@ def build(n: int):
         anchor = f"conceito{i}"
         synonym = f"termo{i}"
         domain = f"dominio{i % 25}"
+        # Concept-specific discriminators remain inside radius=3.
         sentences.extend([
-            f"o {anchor} opera no sistema comum {domain} assinatura{i} evento{i}",
-            f"o {synonym} opera no sistema comum {domain} assinatura{i} evento{i}",
+            f"o {anchor} assinatura{i} evento{i} {domain} opera no sistema comum",
+            f"o {synonym} assinatura{i} evento{i} {domain} opera no sistema comum",
         ])
     full.observe(sentences)
     disc.observe(sentences)
