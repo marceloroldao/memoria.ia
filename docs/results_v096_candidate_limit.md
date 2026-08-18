@@ -29,12 +29,25 @@ The full scan reference was about 8.81 ms/query in the same equivalent local run
 
 Within this controlled corpus, `candidate_limit=8` is the best tested operating point: it preserves the reference decision while minimizing exact scoring work.
 
-This is **not** promoted as a production default yet. The result may fail when concepts are semantically close, contextual discriminators are noisy, or multiple concepts share rare features. Before promotion, v0.96 must test:
+This is **not** promoted as a production default yet. The result may fail when concepts are semantically close, contextual discriminators are noisy, or multiple concepts share rare features.
 
-1. near-neighbor concepts;
-2. corrupted/missing contextual features;
-3. adversarial overlap;
-4. recall under candidate pressure;
-5. repeated-run latency.
+## New robustness follow-up
+
+Two additional v0.96 experiments now test this limit under degraded evidence:
+
+1. `experiments/evidence_degradation_v96.py` progressively removes concept-specific evidence and compares candidate limits 8/16/32/64 against full-scan parity and abstention.
+2. `AdaptiveDiscriminativeSemanticRouterV96` evaluates a progressive ladder `(8, 16, 32, 64)`. It starts with the smallest candidate set and expands only when the inherited score/margin rule abstains.
+
+The adaptive router is deliberately experimental. It tests whether easy queries can keep the speed advantage of a small candidate set while uncertain queries spend additional CPU to protect recall.
+
+## Promotion rule
+
+Neither fixed-8 nor adaptive routing should become the default until broader tests show that it:
+
+- preserves recall relative to full scan;
+- does not increase false positives;
+- preserves ambiguity abstention;
+- provides repeatable latency benefit;
+- remains stable when discriminative evidence is partially lost or corrupted.
 
 The published v0.95.1 baseline remains unchanged.
