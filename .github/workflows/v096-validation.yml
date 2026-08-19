@@ -44,3 +44,6 @@ jobs:
 
       - name: Run threshold sweep
         run: python experiments/trajectory_contrastive_threshold_sweep_v96.py
+
+      - name: Run independent adversarial generalization benchmark
+        run: python experiments/adversarial_generalization_v96.py
