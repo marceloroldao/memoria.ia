@@ -50,3 +50,6 @@ jobs:
 
       - name: Run state-aware adversarial benchmark
         run: python experiments/state_aware_adversarial_v96.py
+
+      - name: Run state-aware threshold sweep
+        run: python experiments/state_aware_threshold_sweep_v96.py
