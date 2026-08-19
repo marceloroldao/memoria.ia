@@ -25,6 +25,17 @@ class SentenceResolution:
     source: str
 
 
+@dataclass(frozen=True, slots=True)
+class NoveltyDiagnostics:
+    predicted_concept_id: str | None
+    shared_terms: int
+    query_terms: int
+    shared_term_fraction: float
+    weighted_query_coverage: float
+    score: float
+    margin: float
+
+
 class SentenceSemanticRouterV96:
     """Experimental sentence-level sparse semantic router.
 
@@ -32,6 +43,10 @@ class SentenceSemanticRouterV96:
     of a query sentence against concept profiles learned from example sentences.
     It uses sparse counters and inverse concept frequency only; no embedding or
     neural network is involved.
+
+    v0.96 exposes novelty diagnostics separately from the acceptance rule so that
+    open-set rejection can be calibrated experimentally without silently changing
+    the semantic classifier.
     """
 
     def __init__(self, *, threshold: float = 0.14, min_margin: float = 0.02) -> None:
@@ -80,20 +95,58 @@ class SentenceSemanticRouterV96:
             return 0.0
         return dot / (nq * nc)
 
-    def resolve(self, sentence: str) -> SentenceResolution:
+    def _rank(self, sentence: str):
         if self._dirty:
             self._rebuild_df()
         query = self._content_profile(sentence)
         if not query or not self._profiles:
-            return SentenceResolution(None, 0.0, 0.0, "unresolved")
-
+            return query, []
         ranked = sorted(
             ((concept_id, self._score(query, profile)) for concept_id, profile in self._profiles.items()),
             key=lambda item: (-item[1], item[0]),
         )
+        return query, ranked
+
+    def resolve(self, sentence: str) -> SentenceResolution:
+        query, ranked = self._rank(sentence)
+        if not query or not ranked:
+            return SentenceResolution(None, 0.0, 0.0, "unresolved")
+
         best_id, best_score = ranked[0]
         second = ranked[1][1] if len(ranked) > 1 else 0.0
         margin = best_score - second
         if best_score >= self.threshold and margin >= self.min_margin:
             return SentenceResolution(best_id, best_score, margin, "memory")
         return SentenceResolution(None, best_score, margin, "unresolved")
+
+    def novelty_diagnostics(self, sentence: str) -> NoveltyDiagnostics:
+        query, ranked = self._rank(sentence)
+        if not query or not ranked:
+            return NoveltyDiagnostics(None, 0, len(query), 0.0, 0.0, 0.0, 0.0)
+
+        best_id, best_score = ranked[0]
+        second = ranked[1][1] if len(ranked) > 1 else 0.0
+        margin = best_score - second
+        concept = self._profiles[best_id]
+        shared = set(query) & set(concept)
+        query_terms = len(query)
+        shared_terms = len(shared)
+        shared_fraction = shared_terms / query_terms if query_terms else 0.0
+
+        total_query_weight = sum(query[t] * self._weight(t) for t in query)
+        shared_query_weight = sum(query[t] * self._weight(t) for t in shared)
+        weighted_coverage = (
+            shared_query_weight / total_query_weight if total_query_weight > 0 else 0.0
+        )
+        predicted = (
+            best_id if best_score >= self.threshold and margin >= self.min_margin else None
+        )
+        return NoveltyDiagnostics(
+            predicted_concept_id=predicted,
+            shared_terms=shared_terms,
+            query_terms=query_terms,
+            shared_term_fraction=shared_fraction,
+            weighted_query_coverage=weighted_coverage,
+            score=best_score,
+            margin=margin,
+        )
