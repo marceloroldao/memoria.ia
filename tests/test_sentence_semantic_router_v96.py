@@ -37,3 +37,20 @@ def test_unrelated_sentence_abstains():
     r = build()
     out = r.resolve("o cliente marcou uma visita tecnica para sexta feira")
     assert out.concept_id is None
+
+
+def test_novelty_diagnostics_report_shared_evidence():
+    r = build()
+    d = r.novelty_diagnostics("a cobranca trouxe uma tarifa adicional para o cliente")
+    assert d.predicted_concept_id == "billing"
+    assert d.shared_terms >= 2
+    assert d.query_terms >= d.shared_terms
+    assert 0.0 < d.shared_term_fraction <= 1.0
+    assert 0.0 < d.weighted_query_coverage <= 1.0
+
+
+def test_novelty_diagnostics_for_unseen_sentence_have_low_or_zero_coverage():
+    r = build()
+    d = r.novelty_diagnostics("foi marcada uma visita tecnica para sexta feira")
+    assert d.predicted_concept_id is None
+    assert 0.0 <= d.weighted_query_coverage <= 1.0
