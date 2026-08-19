@@ -47,3 +47,6 @@ jobs:
 
       - name: Run independent adversarial generalization benchmark
         run: python experiments/adversarial_generalization_v96.py
+
+      - name: Run state-aware adversarial benchmark
+        run: python experiments/state_aware_adversarial_v96.py
