@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Iterable
 
+from memoria_resolutiva.contrastive_sentence_router_v96 import ContrastiveSentenceSemanticRouterV96
 from memoria_resolutiva.sentence_semantic_router_v96 import SentenceSemanticRouterV96
 
 
@@ -73,6 +74,26 @@ CALIBRATION = [
     (None, "a loja informou o novo horario de atendimento"),
 ]
 
+# Adjacent negatives are calibration-only counterexamples. They are not reused in TEST.
+CONTRASTIVE_CALIBRATION = {
+    "payment_delay": [
+        "o pagamento foi realizado e existe comprovante de quitacao",
+        "a fatura foi paga e o recibo confirma que nao existe pendencia",
+    ],
+    "account_block": [
+        "o usuario atualizou telefone e email no cadastro sem bloqueio",
+        "houve alteracao cadastral e a autenticacao continua liberada",
+    ],
+    "optical_loss": [
+        "o tecnico trocou a fonte eletrica da onu e o sinal optico permaneceu normal",
+        "a onu recebeu manutencao de alimentacao sem perda de potencia optica",
+    ],
+    "billing_fee": [
+        "o cliente solicitou cancelamento do contrato sem questionar cobranca",
+        "o assinante pediu encerramento do servico para o proximo mes",
+    ],
+}
+
 TEST = [
     ("billing_fee", "o usuario questionou um encargo novo lancado na fatura"),
     ("billing_fee", "a cobranca veio maior por uma tarifa que nao reconheco"),
@@ -125,7 +146,20 @@ def build(threshold: float, min_margin: float) -> SentenceSemanticRouterV96:
     return router
 
 
-def evaluate(router: SentenceSemanticRouterV96, rows: Iterable[tuple[str | None, str]]):
+def build_contrastive(threshold: float, min_margin: float, min_contrast_margin: float):
+    router = ContrastiveSentenceSemanticRouterV96(
+        threshold=threshold,
+        min_margin=min_margin,
+        min_contrast_margin=min_contrast_margin,
+    )
+    for concept_id, examples in TRAIN.items():
+        router.observe_concept(concept_id, examples)
+    for concept_id, examples in CONTRASTIVE_CALIBRATION.items():
+        router.observe_counterexamples(concept_id, examples)
+    return router
+
+
+def evaluate(router, rows: Iterable[tuple[str | None, str]]):
     rows = list(rows)
     correct = false_positive = abstention = wrong_known = positive = positive_ok = 0
     matrix: dict[str, Counter[str]] = defaultdict(Counter)
@@ -144,12 +178,13 @@ def evaluate(router: SentenceSemanticRouterV96, rows: Iterable[tuple[str | None,
             abstention += int(predicted is None)
             wrong_known += int(predicted is not None and predicted != expected)
     n = len(rows)
+    negatives = sum(1 for expected, _ in rows if expected is None)
     return Metrics(
         accuracy=correct / n,
         positive_recall=positive_ok / positive if positive else 0.0,
-        false_positive_rate=false_positive / n,
-        abstention_rate=abstention / n,
-        wrong_known_class_rate=wrong_known / n,
+        false_positive_rate=false_positive / negatives if negatives else 0.0,
+        abstention_rate=abstention / positive if positive else 0.0,
+        wrong_known_class_rate=wrong_known / positive if positive else 0.0,
     ), matrix, outputs
 
 
@@ -161,27 +196,43 @@ def calibrate():
             min_margin = mi / 100
             router = build(threshold, min_margin)
             metrics, _, _ = evaluate(router, CALIBRATION)
-            # Strongly penalize open-set false positives and wrong known-class
-            # predictions. Calibration never sees TEST.
-            objective = (
-                metrics.accuracy
-                - 2.0 * metrics.false_positive_rate
-                - 2.0 * metrics.wrong_known_class_rate
-            )
-            candidate = (objective, metrics.accuracy, -metrics.false_positive_rate,
-                         threshold, min_margin)
+            objective = metrics.accuracy - 0.5 * metrics.false_positive_rate - metrics.wrong_known_class_rate
+            candidate = (objective, metrics.accuracy, -metrics.false_positive_rate, threshold, min_margin)
             if best is None or candidate > best:
                 best = candidate
     assert best is not None
     return best[-2], best[-1]
 
 
+def calibrate_contrastive(threshold: float, min_margin: float):
+    # Counterexample margin is calibrated only on calibration data plus the explicit
+    # contrastive calibration set; TEST remains untouched.
+    calibration_rows = CALIBRATION + [(None, sentence) for rows in CONTRASTIVE_CALIBRATION.values() for sentence in rows]
+    best = None
+    for ci in range(-5, 21):
+        contrast = ci / 100
+        router = build_contrastive(threshold, min_margin, contrast)
+        metrics, _, _ = evaluate(router, calibration_rows)
+        objective = metrics.accuracy - 0.75 * metrics.false_positive_rate - metrics.wrong_known_class_rate
+        candidate = (objective, metrics.accuracy, -metrics.false_positive_rate, contrast)
+        if best is None or candidate > best:
+            best = candidate
+    assert best is not None
+    return best[-1]
+
+
 def main():
     threshold, margin = calibrate()
-    router = build(threshold, margin)
-    metrics, matrix, outputs = evaluate(router, TEST)
-    print({"threshold": threshold, "min_margin": margin})
-    print(metrics)
+    base = build(threshold, margin)
+    base_metrics, _, _ = evaluate(base, TEST)
+
+    contrast_margin = calibrate_contrastive(threshold, margin)
+    contrastive = build_contrastive(threshold, margin, contrast_margin)
+    metrics, matrix, outputs = evaluate(contrastive, TEST)
+
+    print({"threshold": threshold, "min_margin": margin, "min_contrast_margin": contrast_margin})
+    print({"base": base_metrics})
+    print({"contrastive": metrics})
     print("confusion_matrix")
     for expected in sorted(matrix):
         print(expected, dict(matrix[expected]))
@@ -193,6 +244,7 @@ def main():
                 "predicted": result.concept_id,
                 "score": result.score,
                 "margin": result.margin,
+                "source": result.source,
                 "sentence": sentence,
             })
 
