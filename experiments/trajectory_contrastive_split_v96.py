@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from pathlib import Path
+import runpy
 
-from experiments.natural_language_split_v96 import TRAIN, TEST
 from memoria_resolutiva.trajectory_contrastive_v96 import TrajectoryContrastiveRouterV96
 
+# Load the benchmark dataset from the sibling experiment file without requiring
+# experiments/ to be a Python package. This keeps direct Colab execution simple:
+#   python experiments/trajectory_contrastive_split_v96.py
+_DATA = runpy.run_path(str(Path(__file__).with_name("natural_language_split_v96.py")))
+TRAIN = _DATA["TRAIN"]
+TEST = _DATA["TEST"]
 
 COUNTEREXAMPLES = {
     "payment_delay": [
