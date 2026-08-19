@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from math import sqrt
 from typing import Iterable
 
 from .sentence_semantic_router_v96 import SentenceSemanticRouterV96, _STOPWORDS
-from .textual import tokenize
 
 _NEGATORS = {"nao", "sem", "nunca", "jamais"}
+_SCOPE_BREAKERS = {"mas", "porem", "contudo", "entretanto", "todavia"}
+_RELATION_TOKEN_RE = re.compile(r"[\wÀ-ÿ]+|[,;:.!?]", re.UNICODE)
+_PUNCTUATION = {",", ";", ":", ".", "!", "?"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,19 +27,15 @@ class RelationDecision:
 class RelationAwareTrajectoryRouterV96:
     """Non-neural lexical router with a separate event/state consistency gate.
 
-    The lexical channel remains the v0.96 sentence profile. Relation/state
-    features are *not* mixed into the cosine vector, avoiding the score dilution
-    observed in the first state-aware experiment.
+    Lexical similarity remains in the original sentence channel. Negation/state
+    information is used only as a gate and therefore does not dilute cosine
+    similarity.
 
-    A candidate may be rejected when:
-      1. the query explicitly negates a content token observed for the candidate;
-      2. an independently stored negative trajectory is sufficiently similar.
-
-    Rejected candidates are skipped and the next lexical candidate is examined.
-    This permits a query such as ``fibra nao rompeu ... recepcao fraca`` to reject
-    a break event before considering a loss/attenuation event.
-
-    This is an experimental v0.96 component, not a production default.
+    Importantly, polarity is learned from positive examples: if a concept was
+    itself observed with ``sem X`` or ``nao X``, a new query containing the same
+    relation is not treated as contradictory. This distinguishes, for example,
+    an outage learned as ``sem conexao`` from a genuinely contradictory state
+    such as ``fibra nao rompeu`` for a physical-break concept.
     """
 
     def __init__(
@@ -55,9 +54,37 @@ class RelationAwareTrajectoryRouterV96:
         self.min_contrast_margin = min_contrast_margin
         self.negation_scope = max(1, int(negation_scope))
         self._negative_trajectories: dict[str, list[Counter[str]]] = defaultdict(list)
+        self._positive_negated_tokens: dict[str, Counter[str]] = defaultdict(Counter)
+
+    @staticmethod
+    def _relation_tokens(sentence: str) -> list[str]:
+        return [t.lower() for t in _RELATION_TOKEN_RE.findall(sentence)]
+
+    def _negated_content_tokens(self, sentence: str) -> set[str]:
+        raw = self._relation_tokens(sentence)
+        negated: set[str] = set()
+        budget = 0
+        for token in raw:
+            if token in _PUNCTUATION or token in _SCOPE_BREAKERS:
+                budget = 0
+                continue
+            if token in _NEGATORS:
+                budget = self.negation_scope
+                continue
+            if token in _STOPWORDS:
+                continue
+            if budget > 0:
+                negated.add(token)
+                budget -= 1
+        return negated
 
     def observe_concept(self, concept_id: str, examples: Iterable[str]) -> None:
+        examples = list(examples)
         self.base.observe_concept(concept_id, examples)
+        for sentence in examples:
+            self._positive_negated_tokens[concept_id].update(
+                self._negated_content_tokens(sentence)
+            )
 
     def observe_counterexample(self, concept_id: str, sentence: str) -> None:
         profile = self.base._content_profile(sentence)
@@ -75,21 +102,6 @@ class RelationAwareTrajectoryRouterV96:
         if na == 0.0 or nb == 0.0:
             return 0.0
         return dot / (na * nb)
-
-    def _negated_content_tokens(self, sentence: str) -> set[str]:
-        raw = tokenize(sentence)
-        negated: set[str] = set()
-        budget = 0
-        for token in raw:
-            if token in _NEGATORS:
-                budget = self.negation_scope
-                continue
-            if token in _STOPWORDS:
-                continue
-            if budget > 0:
-                negated.add(token)
-                budget -= 1
-        return negated
 
     def _negative_score(self, concept_id: str, query: Counter[str]) -> float:
         negatives = self._negative_trajectories.get(concept_id, ())
@@ -111,7 +123,10 @@ class RelationAwareTrajectoryRouterV96:
                 continue
 
             concept_profile = self.base._profiles[concept_id]
-            contradictory = tuple(sorted(negated & set(concept_profile)))
+            learned_negative_relation = set(self._positive_negated_tokens.get(concept_id, ()))
+            contradictory = tuple(
+                sorted((negated & set(concept_profile)) - learned_negative_relation)
+            )
             if contradictory:
                 rejected_negation.update(contradictory)
                 continue
