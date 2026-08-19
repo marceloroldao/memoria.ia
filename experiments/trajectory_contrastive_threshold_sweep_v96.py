@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -12,6 +13,7 @@ _spec = importlib.util.spec_from_file_location("natural_language_split_v96", _SP
 if _spec is None or _spec.loader is None:
     raise RuntimeError(f"cannot load benchmark dataset: {_SPLIT_PATH}")
 _split = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = _split
 _spec.loader.exec_module(_split)
 TRAIN = _split.TRAIN
 TEST = _split.TEST
