@@ -33,6 +33,22 @@ with the v0.95 default configuration:
 - levels = 5
 - max_strength = 1.25
 
+## MA2A — Agent-to-Agent Protocol
+
+The project now includes the experimental **Memoria.ia Agent-to-Agent Protocol (MA2A) v0.1** specification:
+
+- `docs/RFC_MA2A_v0.1.md`
+
+MA2A defines deterministic agent discovery, authenticated session negotiation, canonical trajectory addressing, `RESOLVE_REQ` / `RESOLVE_RESP`, delta synchronization, reinforcement signaling, deterministic conflict resolution, replay protection, and hard namespace isolation.
+
+Its core interoperability principle is:
+
+> **Agents exchange state, not conversation.**
+
+The base privacy invariant is structural: trajectories under `("user", "private", ...)` MUST be rejected before transport serialization and MUST NOT be persisted or processed by L2/L3 synchronization infrastructure.
+
+The MA2A RFC is currently an experimental protocol specification. Performance claims for local Resolutive Memory remain separate from end-to-end network behavior and require reproducible benchmark validation.
+
 ## Validation
 
 The v0.95 implementation was promoted from `v0.95.0rc1` after a clean Google Colab checkout on Python 3.12 completed the full release gate:
