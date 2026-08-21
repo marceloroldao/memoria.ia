@@ -35,7 +35,7 @@ with the v0.95 default configuration:
 
 ## MA2A — Agent-to-Agent Protocol
 
-The project now includes the experimental **Memoria.ia Agent-to-Agent Protocol (MA2A) v0.1** specification:
+The project includes the experimental **Memoria.ia Agent-to-Agent Protocol (MA2A) v0.1** specification:
 
 - `docs/RFC_MA2A_v0.1.md`
 
@@ -46,6 +46,32 @@ Its core interoperability principle is:
 > **Agents exchange state, not conversation.**
 
 The base privacy invariant is structural: trajectories under `("user", "private", ...)` MUST be rejected before transport serialization and MUST NOT be persisted or processed by L2/L3 synchronization infrastructure.
+
+### MA2A reference implementation
+
+The experimental reference core lives in:
+
+- `src/memoria_resolutiva/a2a.py`
+- `tests/test_a2a_protocol.py`
+- `scripts/ma2a_reference_demo.py`
+
+It currently implements canonical trajectory encoding/hashing, fail-closed transport namespace enforcement, canonical JSON framing, Ed25519 node identities/signatures, replay protection, deterministic state hashing, idempotent delta application, direct trajectory resolution, and deterministic tie-breaking for already-detected concurrent scalar writes.
+
+Install the MA2A crypto dependency and run the executable two-agent demonstration with:
+
+```bash
+python -m pip install -e '.[a2a]'
+python scripts/ma2a_reference_demo.py
+```
+
+Run the MA2A conformance tests with:
+
+```bash
+python -m pip install -e '.[test]'
+pytest -q tests/test_a2a_protocol.py
+```
+
+The reference core intentionally does not yet freeze a production network transport. WebSocket, QUIC, IPv6 overlay, VPN, LAN, Wi-Fi Direct, and Bluetooth transports can be layered around the same signed MA2A frames without changing protocol semantics.
 
 The MA2A RFC is currently an experimental protocol specification. Performance claims for local Resolutive Memory remain separate from end-to-end network behavior and require reproducible benchmark validation.
 
