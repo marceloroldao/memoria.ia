@@ -59,3 +59,6 @@ jobs:
 
       - name: Run relation-aware threshold sweep
         run: python experiments/relation_aware_threshold_sweep_v96.py
+
+      - name: Run entity-state two-channel benchmark
+        run: python experiments/two_channel_adversarial_v96.py
