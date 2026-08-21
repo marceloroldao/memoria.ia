@@ -62,3 +62,6 @@ jobs:
 
       - name: Run entity-state two-channel benchmark
         run: python experiments/two_channel_adversarial_v96.py
+
+      - name: Run entity-state two-channel sweep
+        run: python experiments/two_channel_state_sweep_v96.py
