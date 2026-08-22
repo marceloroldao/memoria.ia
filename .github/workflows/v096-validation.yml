@@ -1,0 +1,128 @@
+name: v0.96 semantic validation
+
+on:
+  push:
+    branches:
+      - experiment/v0.96-semantic-routing
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install 'pytest>=8'
+
+      - name: Run full test suite
+        run: python -m pytest -q
+
+      - name: Run protocol isolation tests
+        run: python -m pytest -q tests/test_v096_training_protocol.py
+
+      - name: Run clean calibration-selected benchmark
+        run: python experiments/clean_calibrated_event_action_v96.py | tee clean_protocol_result.txt
+
+      - name: Upload clean protocol result
+        uses: actions/upload-artifact@v4
+        with:
+          name: v096-clean-protocol-result
+          path: clean_protocol_result.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Run clean architecture ablation
+        run: python experiments/clean_ablation_v96.py | tee clean_ablation_result.txt
+
+      - name: Upload clean ablation result
+        uses: actions/upload-artifact@v4
+        with:
+          name: v096-clean-ablation-result
+          path: clean_ablation_result.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Run trajectory contrastive unit tests
+        run: python -m pytest -q tests/test_trajectory_contrastive_v96.py
+
+      - name: Run trajectory contrastive benchmark
+        run: python experiments/trajectory_contrastive_split_v96.py
+
+      - name: Run threshold sweep
+        run: python experiments/trajectory_contrastive_threshold_sweep_v96.py
+
+      - name: Run independent adversarial generalization benchmark
+        run: python experiments/adversarial_generalization_v96.py
+
+      - name: Run state-aware adversarial benchmark
+        run: python experiments/state_aware_adversarial_v96.py
+
+      - name: Run state-aware threshold sweep
+        run: python experiments/state_aware_threshold_sweep_v96.py
+
+      - name: Run relation-aware event-state benchmark
+        run: python experiments/relation_aware_adversarial_v96.py
+
+      - name: Run relation-aware threshold sweep
+        run: python experiments/relation_aware_threshold_sweep_v96.py
+
+      - name: Run entity-state two-channel benchmark
+        run: python experiments/two_channel_adversarial_v96.py
+
+      - name: Run entity-state two-channel sweep
+        run: python experiments/two_channel_state_sweep_v96.py
+
+      - name: Run event-pair trajectory benchmark
+        run: python experiments/event_pair_adversarial_v96.py
+
+      - name: Run event-pair trajectory sweep
+        run: python experiments/event_pair_sweep_v96.py
+
+      - name: Run discriminative state-term multiplicity sweep
+        run: python experiments/two_channel_state_terms_sweep_v96.py
+
+      - name: Run contextual soft-state benchmark
+        run: python experiments/soft_state_adversarial_v96.py
+
+      - name: Run contextual soft-state sweep
+        run: python experiments/soft_state_sweep_v96.py
+
+      - name: Run sparse event-action contrast benchmark
+        run: python experiments/event_action_adversarial_v96.py
+
+      - name: Run sparse event-action contrast sweep
+        run: python experiments/event_action_sweep_v96.py
+
+      - name: Run trajectory plus event-action hybrid benchmark
+        run: python experiments/trajectory_event_action_adversarial_v96.py
+
+      - name: Run trajectory plus event-action hybrid sweep
+        run: python experiments/trajectory_event_action_sweep_v96.py
+
+      - name: Run contrastive reranking plus event-action benchmark
+        run: python experiments/reranked_event_action_adversarial_v96.py
+
+      - name: Run contrastive reranking plus event-action sweep
+        run: python experiments/reranked_event_action_sweep_v96.py
+
+      - name: Run ambiguity-margin sweep without negative reranking
+        run: python experiments/reranked_margin_sweep_v96.py
