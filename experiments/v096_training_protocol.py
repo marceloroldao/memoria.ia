@@ -40,11 +40,7 @@ def normalize_sentence(sentence: str) -> str:
 
 
 def iter_clean_concept_counterexamples() -> Iterable[tuple[str, str]]:
-    """Yield only pre-test calibration counterexamples.
-
-    No sentence from TEST, ADVERSARIAL_DEV, or DEVELOPMENT_COUNTEREXAMPLES is
-    admitted into this clean calibration path.
-    """
+    """Yield only pre-test calibration counterexamples."""
     seen: set[tuple[str, str]] = set()
     for concept_id in sorted(CONTRASTIVE_CALIBRATION):
         for sentence in CONTRASTIVE_CALIBRATION[concept_id]:
@@ -89,30 +85,52 @@ def clean_calibration_rows() -> list[tuple[str | None, str]]:
     return out
 
 
+def iter_development_concept_counterexamples() -> Iterable[tuple[str, str]]:
+    """Development-only negatives; forbidden for clean holdout claims."""
+    seen: set[tuple[str, str]] = set()
+    for source in (DEVELOPMENT_COUNTEREXAMPLES, CONTRASTIVE_CALIBRATION):
+        for concept_id in sorted(source):
+            for sentence in source[concept_id]:
+                key = (concept_id, normalize_sentence(sentence))
+                if key in seen:
+                    continue
+                seen.add(key)
+                yield concept_id, sentence
+
+
+def iter_development_global_actions() -> Iterable[str]:
+    seen: set[str] = set()
+    for _, sentence in iter_development_concept_counterexamples():
+        key = normalize_sentence(sentence)
+        if key not in seen:
+            seen.add(key)
+            yield sentence
+    for expected, sentence in CALIBRATION:
+        if expected is None:
+            key = normalize_sentence(sentence)
+            if key not in seen:
+                seen.add(key)
+                yield sentence
+
+
 def _normalized_rows(rows: Iterable[tuple[str | None, str]]) -> set[str]:
     return {normalize_sentence(sentence) for _, sentence in rows}
 
 
 def protocol_audit() -> dict[str, object]:
-    train_sentences = {
-        normalize_sentence(sentence)
-        for examples in TRAIN.values()
-        for sentence in examples
-    }
+    train_sentences = {normalize_sentence(s) for examples in TRAIN.values() for s in examples}
     calibration_sentences = _normalized_rows(clean_calibration_rows())
     test_sentences = _normalized_rows(TEST)
     adversarial_sentences = _normalized_rows(ADVERSARIAL_DEV)
     dev_counterexamples = {
-        normalize_sentence(sentence)
+        normalize_sentence(s)
         for examples in DEVELOPMENT_COUNTEREXAMPLES.values()
-        for sentence in examples
+        for s in examples
     }
-
     clean_memory = train_sentences | calibration_sentences
     clean_test_overlap = sorted(clean_memory & test_sentences)
     clean_adversarial_overlap = sorted(clean_memory & adversarial_sentences)
     dev_counterexample_test_overlap = sorted(dev_counterexamples & test_sentences)
-
     return {
         "clean_protocol_id": CLEAN_PROTOCOL_ID,
         "development_protocol_id": DEVELOPMENT_PROTOCOL_ID,
@@ -131,3 +149,13 @@ def protocol_audit() -> dict[str, object]:
 
 def protocol_summary() -> dict[str, object]:
     return protocol_audit()
+
+
+# Backward-compatible names are intentionally development-only. Existing historical
+# adversarial scripts keep running, but their output must not be presented as a
+# blind publication estimate.
+PROTOCOL_ID = DEVELOPMENT_PROTOCOL_ID
+ADVERSARIAL = ADVERSARIAL_DEV
+COUNTEREXAMPLES = DEVELOPMENT_COUNTEREXAMPLES
+iter_concept_counterexamples = iter_development_concept_counterexamples
+iter_global_actions = iter_development_global_actions
