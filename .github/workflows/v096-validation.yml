@@ -36,6 +36,12 @@ jobs:
       - name: Run full test suite
         run: python -m pytest -q
 
+      - name: Run protocol isolation tests
+        run: python -m pytest -q tests/test_v096_training_protocol.py
+
+      - name: Run clean calibration-selected benchmark
+        run: python experiments/clean_calibrated_event_action_v96.py
+
       - name: Run trajectory contrastive unit tests
         run: python -m pytest -q tests/test_trajectory_contrastive_v96.py
 
