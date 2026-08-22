@@ -24,42 +24,42 @@ _adv = _load("adversarial_generalization_v96_protocol", _HERE / "adversarial_gen
 TRAIN = _split.TRAIN
 CALIBRATION = _split.CALIBRATION
 CONTRASTIVE_CALIBRATION = _split.CONTRASTIVE_CALIBRATION
-ADVERSARIAL = _adv.ADVERSARIAL
-COUNTEREXAMPLES = _adv.COUNTEREXAMPLES
+TEST = _split.TEST
 
-PROTOCOL_ID = "v0.96-event-action-protocol-1"
+# Development diagnostics only. These corpora have already been inspected during
+# architecture development and therefore are not publication-grade blind holdouts.
+ADVERSARIAL_DEV = _adv.ADVERSARIAL
+DEVELOPMENT_COUNTEREXAMPLES = _adv.COUNTEREXAMPLES
+
+CLEAN_PROTOCOL_ID = "v0.96-clean-calibration-protocol-2"
+DEVELOPMENT_PROTOCOL_ID = "v0.96-adversarial-development-only"
 
 
-def _normalized(sentence: str) -> str:
+def normalize_sentence(sentence: str) -> str:
     return " ".join(sentence.split()).strip().lower()
 
 
-def iter_concept_counterexamples() -> Iterable[tuple[str, str]]:
-    """Yield deterministic, deduplicated concept-specific negative trajectories.
+def iter_clean_concept_counterexamples() -> Iterable[tuple[str, str]]:
+    """Yield only pre-test calibration counterexamples.
 
-    Sources are limited to the pre-existing calibration/counterexample corpora. The
-    frozen ADVERSARIAL set is evaluation-only and is never yielded here.
+    No sentence from TEST, ADVERSARIAL_DEV, or DEVELOPMENT_COUNTEREXAMPLES is
+    admitted into this clean calibration path.
     """
     seen: set[tuple[str, str]] = set()
-    for source in (COUNTEREXAMPLES, CONTRASTIVE_CALIBRATION):
-        for concept_id in sorted(source):
-            for sentence in source[concept_id]:
-                key = (concept_id, _normalized(sentence))
-                if key in seen:
-                    continue
-                seen.add(key)
-                yield concept_id, sentence
+    for concept_id in sorted(CONTRASTIVE_CALIBRATION):
+        for sentence in CONTRASTIVE_CALIBRATION[concept_id]:
+            key = (concept_id, normalize_sentence(sentence))
+            if key in seen:
+                continue
+            seen.add(key)
+            yield concept_id, sentence
 
 
-def iter_global_actions() -> Iterable[str]:
-    """Yield one deterministic, globally deduplicated action/normal corpus.
-
-    Every concept-specific counterexample also contributes once to the global
-    action/normal channel. Calibration entries labelled None are then added once.
-    """
+def iter_clean_global_actions() -> Iterable[str]:
+    """Yield globally deduplicated action/normal calibration evidence."""
     seen: set[str] = set()
-    for _, sentence in iter_concept_counterexamples():
-        key = _normalized(sentence)
+    for _, sentence in iter_clean_concept_counterexamples():
+        key = normalize_sentence(sentence)
         if key in seen:
             continue
         seen.add(key)
@@ -67,21 +67,67 @@ def iter_global_actions() -> Iterable[str]:
     for expected, sentence in CALIBRATION:
         if expected is not None:
             continue
-        key = _normalized(sentence)
+        key = normalize_sentence(sentence)
         if key in seen:
             continue
         seen.add(key)
         yield sentence
 
 
-def protocol_summary() -> dict[str, int | str]:
-    concept_negatives = list(iter_concept_counterexamples())
-    actions = list(iter_global_actions())
-    return {
-        "protocol_id": PROTOCOL_ID,
-        "concepts": len(TRAIN),
-        "positive_sentences": sum(len(v) for v in TRAIN.values()),
-        "concept_counterexamples": len(concept_negatives),
-        "global_actions": len(actions),
-        "adversarial_evaluation_sentences": len(ADVERSARIAL),
+def clean_calibration_rows() -> list[tuple[str | None, str]]:
+    """Rows allowed for parameter selection before evaluation."""
+    rows = list(CALIBRATION)
+    rows.extend((None, sentence) for sentence in iter_clean_global_actions())
+    out: list[tuple[str | None, str]] = []
+    seen: set[tuple[str | None, str]] = set()
+    for expected, sentence in rows:
+        key = (expected, normalize_sentence(sentence))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append((expected, sentence))
+    return out
+
+
+def _normalized_rows(rows: Iterable[tuple[str | None, str]]) -> set[str]:
+    return {normalize_sentence(sentence) for _, sentence in rows}
+
+
+def protocol_audit() -> dict[str, object]:
+    train_sentences = {
+        normalize_sentence(sentence)
+        for examples in TRAIN.values()
+        for sentence in examples
     }
+    calibration_sentences = _normalized_rows(clean_calibration_rows())
+    test_sentences = _normalized_rows(TEST)
+    adversarial_sentences = _normalized_rows(ADVERSARIAL_DEV)
+    dev_counterexamples = {
+        normalize_sentence(sentence)
+        for examples in DEVELOPMENT_COUNTEREXAMPLES.values()
+        for sentence in examples
+    }
+
+    clean_memory = train_sentences | calibration_sentences
+    clean_test_overlap = sorted(clean_memory & test_sentences)
+    clean_adversarial_overlap = sorted(clean_memory & adversarial_sentences)
+    dev_counterexample_test_overlap = sorted(dev_counterexamples & test_sentences)
+
+    return {
+        "clean_protocol_id": CLEAN_PROTOCOL_ID,
+        "development_protocol_id": DEVELOPMENT_PROTOCOL_ID,
+        "concepts": len(TRAIN),
+        "positive_train_sentences": len(train_sentences),
+        "clean_calibration_rows": len(clean_calibration_rows()),
+        "clean_global_actions": len(list(iter_clean_global_actions())),
+        "test_rows": len(TEST),
+        "adversarial_dev_rows": len(ADVERSARIAL_DEV),
+        "clean_train_calibration_vs_test_exact_overlap": clean_test_overlap,
+        "clean_train_calibration_vs_adversarial_exact_overlap": clean_adversarial_overlap,
+        "development_counterexample_vs_test_exact_overlap": dev_counterexample_test_overlap,
+        "clean_training_path_exactly_disjoint_from_test": not clean_test_overlap,
+    }
+
+
+def protocol_summary() -> dict[str, object]:
+    return protocol_audit()
