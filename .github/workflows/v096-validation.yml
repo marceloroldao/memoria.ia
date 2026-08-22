@@ -71,3 +71,6 @@ jobs:
 
       - name: Run event-pair trajectory sweep
         run: python experiments/event_pair_sweep_v96.py
+
+      - name: Run discriminative state-term multiplicity sweep
+        run: python experiments/two_channel_state_terms_sweep_v96.py
