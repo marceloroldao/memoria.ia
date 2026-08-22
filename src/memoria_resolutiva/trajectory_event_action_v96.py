@@ -25,8 +25,9 @@ class TrajectoryEventActionRouterV96:
 
     Concept identity is proposed by the trajectory-contrastive memory. A separate
     sparse event/action log-ratio gate then decides whether the sentence asserts an
-    abnormal event at all. The two memories are trained only from TRAIN and
-    calibration counterexamples.
+    abnormal event at all. Concept-specific negatives and global action/normal
+    evidence are intentionally observed through separate methods so experiment
+    protocols can control their weights exactly.
     """
 
     def __init__(
@@ -45,8 +46,6 @@ class TrajectoryEventActionRouterV96:
             negative_threshold=negative_threshold,
             min_contrast_margin=min_contrast_margin,
         )
-        # Its lexical channel is not used for decisions here; this object stores the
-        # event/action corpus and exposes the diagnostics implementation.
         self.event_action = EventActionContrastRouterV96(
             lexical_threshold=threshold,
             lexical_margin=min_margin,
@@ -63,7 +62,6 @@ class TrajectoryEventActionRouterV96:
 
     def observe_counterexample(self, concept_id: str, sentence: str) -> None:
         self.candidate.observe_counterexample(concept_id, sentence)
-        self.event_action.observe_action(sentence)
 
     def observe_action(self, sentence: str) -> None:
         self.event_action.observe_action(sentence)
