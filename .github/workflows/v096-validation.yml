@@ -65,3 +65,9 @@ jobs:
 
       - name: Run entity-state two-channel sweep
         run: python experiments/two_channel_state_sweep_v96.py
+
+      - name: Run event-pair trajectory benchmark
+        run: python experiments/event_pair_adversarial_v96.py
+
+      - name: Run event-pair trajectory sweep
+        run: python experiments/event_pair_sweep_v96.py
