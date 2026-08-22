@@ -74,3 +74,9 @@ jobs:
 
       - name: Run discriminative state-term multiplicity sweep
         run: python experiments/two_channel_state_terms_sweep_v96.py
+
+      - name: Run contextual soft-state benchmark
+        run: python experiments/soft_state_adversarial_v96.py
+
+      - name: Run contextual soft-state sweep
+        run: python experiments/soft_state_sweep_v96.py
