@@ -86,3 +86,9 @@ jobs:
 
       - name: Run sparse event-action contrast sweep
         run: python experiments/event_action_sweep_v96.py
+
+      - name: Run trajectory plus event-action hybrid benchmark
+        run: python experiments/trajectory_event_action_adversarial_v96.py
+
+      - name: Run trajectory plus event-action hybrid sweep
+        run: python experiments/trajectory_event_action_sweep_v96.py
