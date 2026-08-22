@@ -92,3 +92,9 @@ jobs:
 
       - name: Run trajectory plus event-action hybrid sweep
         run: python experiments/trajectory_event_action_sweep_v96.py
+
+      - name: Run contrastive reranking plus event-action benchmark
+        run: python experiments/reranked_event_action_adversarial_v96.py
+
+      - name: Run contrastive reranking plus event-action sweep
+        run: python experiments/reranked_event_action_sweep_v96.py
