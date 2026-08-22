@@ -23,13 +23,9 @@ class RerankedEventActionDecision:
 class RerankedEventActionRouterV96:
     """Low-threshold retrieval, concept contrastive reranking, then event/action gate.
 
-    This experiment deliberately separates three decisions:
-    1. broad sparse retrieval keeps paraphrase recall high;
-    2. concept-specific negative trajectories rerank neighboring known classes;
-    3. a global event-vs-action memory rejects normal operations/open-set mentions.
-
-    No embeddings or neural networks are used. Counterexamples only affect the
-    concept they were observed against and never rewrite positive concept memory.
+    The experiment keeps concept-specific negative trajectories and global
+    action/normal evidence as independent memories. This avoids accidental
+    reweighting when benchmarks compare different architectures.
     """
 
     def __init__(
@@ -66,7 +62,6 @@ class RerankedEventActionRouterV96:
         profile = self.base._content_profile(sentence)
         if profile:
             self._negative[concept_id].append(profile)
-        self.event_action.observe_action(sentence)
 
     def observe_action(self, sentence: str) -> None:
         self.event_action.observe_action(sentence)
