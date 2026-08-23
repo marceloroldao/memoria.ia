@@ -9,6 +9,7 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError("install memoria-resolutiva[product] for the HTTP product API") from exc
 
+from .llm_adapter import LLMAdapterError
 from .product_chat import ProductChatService, token_reduction
 from .product_identity import MemoryScope, NodeIdentity
 from .product_service import EnterpriseMemoryService, MemoryRevoked, OrganizationMismatch
@@ -212,13 +213,16 @@ def create_app(
     def chat(request: ChatRequest):
         if chat_service is None:
             raise HTTPException(status_code=503, detail="LLM adapter is not configured")
-        result = chat_service.run(
-            scope=scope_from(request.scope),
-            message=request.message,
-            mode=request.mode,  # pydantic pattern restricts values
-            baseline_context=request.baseline_context,
-            memory_keys=request.memory_keys,
-        )
+        try:
+            result = chat_service.run(
+                scope=scope_from(request.scope),
+                message=request.message,
+                mode=request.mode,
+                baseline_context=request.baseline_context,
+                memory_keys=request.memory_keys,
+            )
+        except LLMAdapterError as exc:
+            raise HTTPException(status_code=503, detail="LLM provider unavailable") from exc
         return {
             "text": result.text,
             "context": list(result.context),
@@ -230,18 +234,21 @@ def create_app(
         if chat_service is None:
             raise HTTPException(status_code=503, detail="LLM adapter is not configured")
         scope = scope_from(request.scope)
-        baseline = chat_service.run(
-            scope=scope,
-            message=request.message,
-            mode="baseline",
-            baseline_context=request.baseline_context,
-        )
-        memoria = chat_service.run(
-            scope=scope,
-            message=request.message,
-            mode="memoria",
-            memory_keys=request.memory_keys,
-        )
+        try:
+            baseline = chat_service.run(
+                scope=scope,
+                message=request.message,
+                mode="baseline",
+                baseline_context=request.baseline_context,
+            )
+            memoria = chat_service.run(
+                scope=scope,
+                message=request.message,
+                mode="memoria",
+                memory_keys=request.memory_keys,
+            )
+        except LLMAdapterError as exc:
+            raise HTTPException(status_code=503, detail="LLM provider unavailable") from exc
         reduction = token_reduction(
             baseline_tokens=baseline.metrics.input_tokens,
             memoria_tokens=memoria.metrics.input_tokens,
