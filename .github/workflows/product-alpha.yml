@@ -157,6 +157,20 @@ jobs:
           assert body['hit'] is True, body
           assert body['record']['payload'] == {'value': 'survives-restart'}, body
           PY
+      - name: Product alpha acceptance gate
+        run: |
+          python experiments/product_alpha_acceptance.py \
+            --tests-passed \
+            --container-validated \
+            --benchmark-file benchmark-results/product-context-v1.json \
+            --output benchmark-results/product-alpha-acceptance-v1.json \
+            --fail-on-fail
+      - name: Upload product alpha acceptance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-alpha-acceptance
+          path: benchmark-results/product-alpha-acceptance-v1.json
+          if-no-files-found: error
       - name: Container logs on failure
         if: failure()
         run: docker logs memoria-ci || true
