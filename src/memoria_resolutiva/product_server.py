@@ -6,6 +6,7 @@ import os
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
+from .product_admin_config import attach_configuration_routes
 from .product_applications import ApplicationRegistry
 from .product_chat import ProductChatService
 from .product_config import ProductConfigurationStore
@@ -106,15 +107,16 @@ def build_app():
         data_dir / "applications.json",
     )
 
-    return create_app(
+    app = create_app(
         service,
         api_key=api_key,
         data_dir=data_dir,
         node_identity=node_identity,
         chat_service=_build_chat_service(service, configuration),
         application_registry=application_registry,
-        configuration_store=configuration,
     )
+    attach_configuration_routes(app, api_key=api_key, store=configuration)
+    return app
 
 
 app = build_app()
