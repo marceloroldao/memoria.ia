@@ -1,0 +1,33 @@
+name: product-alpha validation
+
+on:
+  push:
+    branches:
+      - product/enterprise-alpha
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install 'pytest>=8'
+      - name: Existing and product tests
+        run: python -m pytest -q
+      - name: Product identity boundary
+        run: python -m pytest -q tests/test_product_identity.py
