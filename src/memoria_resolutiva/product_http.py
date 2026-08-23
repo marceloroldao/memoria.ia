@@ -9,6 +9,7 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError("install memoria-resolutiva[product] for the HTTP product API") from exc
 
+from .product_chat import ProductChatService, token_reduction
 from .product_identity import MemoryScope, NodeIdentity
 from .product_service import EnterpriseMemoryService, MemoryRevoked, OrganizationMismatch
 
@@ -44,12 +45,28 @@ class ResolveMemoryRequest(BaseModel):
     version: int | None = Field(default=None, ge=1)
 
 
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=20000)
+    mode: str = Field(default="memoria", pattern="^(baseline|memoria)$")
+    baseline_context: list[str] = Field(default_factory=list)
+    memory_keys: list[str] = Field(default_factory=list)
+    scope: ScopeModel = ScopeModel()
+
+
+class CompareChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=20000)
+    baseline_context: list[str] = Field(default_factory=list)
+    memory_keys: list[str] = Field(default_factory=list)
+    scope: ScopeModel = ScopeModel()
+
+
 def create_app(
     service: EnterpriseMemoryService,
     *,
     api_key: str,
     data_dir: str | Path | None = None,
     node_identity: NodeIdentity | None = None,
+    chat_service: ProductChatService | None = None,
 ) -> FastAPI:
     if not api_key:
         raise ValueError("api_key must be configured")
@@ -93,6 +110,12 @@ def create_app(
                 "license_status": node_identity.license_status.value,
                 "capabilities": sorted(node_identity.capabilities),
             }
+        llm = None
+        if chat_service is not None:
+            llm = {
+                "provider": chat_service.adapter.provider_name,
+                "model": chat_service.adapter.model_name,
+            }
         return {
             "organization": {
                 "organization_id": service.organization.organization_id,
@@ -100,6 +123,7 @@ def create_app(
             },
             "node": identity,
             "memory": service.statistics,
+            "llm": llm,
             "semantic_routing": "experimental",
             "security_status": "not-security-reviewed",
         }
@@ -182,6 +206,51 @@ def create_app(
                 "version": record.version,
                 "revoked": record.revoked,
             },
+        }
+
+    @app.post(f"{API_PREFIX}/chat", dependencies=[Depends(require_api_key)])
+    def chat(request: ChatRequest):
+        if chat_service is None:
+            raise HTTPException(status_code=503, detail="LLM adapter is not configured")
+        result = chat_service.run(
+            scope=scope_from(request.scope),
+            message=request.message,
+            mode=request.mode,  # pydantic pattern restricts values
+            baseline_context=request.baseline_context,
+            memory_keys=request.memory_keys,
+        )
+        return {
+            "text": result.text,
+            "context": list(result.context),
+            "metrics": result.metrics.as_dict(),
+        }
+
+    @app.post(f"{API_PREFIX}/chat/compare", dependencies=[Depends(require_api_key)])
+    def compare_chat(request: CompareChatRequest):
+        if chat_service is None:
+            raise HTTPException(status_code=503, detail="LLM adapter is not configured")
+        scope = scope_from(request.scope)
+        baseline = chat_service.run(
+            scope=scope,
+            message=request.message,
+            mode="baseline",
+            baseline_context=request.baseline_context,
+        )
+        memoria = chat_service.run(
+            scope=scope,
+            message=request.message,
+            mode="memoria",
+            memory_keys=request.memory_keys,
+        )
+        reduction = token_reduction(
+            baseline_tokens=baseline.metrics.input_tokens,
+            memoria_tokens=memoria.metrics.input_tokens,
+        )
+        return {
+            "baseline": {"text": baseline.text, "metrics": baseline.metrics.as_dict()},
+            "memoria": {"text": memoria.text, "metrics": memoria.metrics.as_dict()},
+            "token_reduction": reduction,
+            "token_reduction_percent": None if reduction is None else reduction * 100.0,
         }
 
     return app
