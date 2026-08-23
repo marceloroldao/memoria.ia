@@ -38,6 +38,7 @@ def test_store_and_resolve_memory(tmp_path):
         },
     )
     assert stored.status_code == 201
+    assert stored.json()["version"] == 1
 
     resolved = c.post(
         "/api/v1/memories/resolve",
@@ -48,6 +49,64 @@ def test_store_and_resolve_memory(tmp_path):
     assert body["hit"] is True
     assert body["record"]["knowledge_id"] == "customer-1"
     assert body["record"]["payload"] == {"plan": "pro"}
+    assert body["record"]["version"] == 1
+
+
+def test_update_creates_version_and_old_version_remains_resolvable(tmp_path):
+    c = client(tmp_path)
+    headers = {"X-Memoria-Key": "secret"}
+    c.post(
+        "/api/v1/memories",
+        headers=headers,
+        json={"knowledge_id": "k", "key": "profile", "payload": {"plan": "basic"}},
+    )
+    updated = c.put(
+        "/api/v1/memories/profile",
+        headers=headers,
+        json={"payload": {"plan": "pro"}},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["version"] == 2
+
+    latest = c.post(
+        "/api/v1/memories/resolve",
+        headers=headers,
+        json={"key": "profile"},
+    ).json()
+    old = c.post(
+        "/api/v1/memories/resolve",
+        headers=headers,
+        json={"key": "profile", "version": 1},
+    ).json()
+    assert latest["record"]["payload"] == {"plan": "pro"}
+    assert old["record"]["payload"] == {"plan": "basic"}
+
+
+def test_revoke_hides_memory_and_audit_can_read_it(tmp_path):
+    c = client(tmp_path)
+    headers = {"X-Memoria-Key": "secret"}
+    c.post(
+        "/api/v1/memories",
+        headers=headers,
+        json={"knowledge_id": "k", "key": "revocable", "payload": "secret"},
+    )
+    revoked = c.delete("/api/v1/memories/revocable", headers=headers)
+    assert revoked.status_code == 200
+    assert revoked.json()["revoked"] is True
+
+    hidden = c.post(
+        "/api/v1/memories/resolve",
+        headers=headers,
+        json={"key": "revocable"},
+    ).json()
+    audit = c.post(
+        "/api/v1/memories/resolve",
+        headers=headers,
+        json={"key": "revocable", "include_revoked": True},
+    ).json()
+    assert hidden == {"hit": False, "record": None}
+    assert audit["hit"] is True
+    assert audit["record"]["revoked"] is True
 
 
 def test_scope_isolation_at_http_boundary(tmp_path):
