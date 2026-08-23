@@ -1,9 +1,6 @@
 name: live Gemini provider validation
 
 on:
-  push:
-    branches:
-      - product/enterprise-alpha
   workflow_dispatch:
 
 permissions:
@@ -11,7 +8,6 @@ permissions:
 
 jobs:
   live-gemini:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'live(gemini): validate')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
