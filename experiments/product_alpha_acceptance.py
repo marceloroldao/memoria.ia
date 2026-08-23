@@ -196,7 +196,11 @@ def main() -> None:
     parser.add_argument("--tests-passed", action="store_true")
     parser.add_argument("--container-validated", action="store_true")
     parser.add_argument("--benchmark-file", type=Path)
-    parser.add_argument("--live-provider-file", type=Path)
+    parser.add_argument(
+        "--live-provider-file",
+        type=Path,
+        default=Path("product-evidence/live-gemini-v1.json"),
+    )
     parser.add_argument("--fail-on-fail", action="store_true")
     args = parser.parse_args()
 
