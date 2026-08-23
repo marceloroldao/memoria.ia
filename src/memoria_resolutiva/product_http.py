@@ -5,6 +5,8 @@ import hmac
 
 try:
     from fastapi import Depends, FastAPI, Header, HTTPException
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel, Field
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError("install memoria-resolutiva[product] for the HTTP product API") from exc
@@ -79,6 +81,13 @@ def create_app(
         docs_url="/docs",
         redoc_url=None,
     )
+
+    web_root = Path(__file__).with_name("webui")
+    app.mount("/ui", StaticFiles(directory=web_root), name="ui")
+
+    @app.get("/", include_in_schema=False)
+    def web_ui():
+        return FileResponse(web_root / "index.html")
 
     def require_api_key(x_memoria_key: str | None = Header(default=None)) -> None:
         if x_memoria_key is None or not hmac.compare_digest(x_memoria_key, api_key):
