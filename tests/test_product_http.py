@@ -1,13 +1,16 @@
 from fastapi.testclient import TestClient
 
+from memoria_resolutiva.llm_adapter import MockLLMAdapter
+from memoria_resolutiva.product_chat import ProductChatService
 from memoria_resolutiva.product_http import create_app
 from memoria_resolutiva.product_identity import OrganizationIdentity
 from memoria_resolutiva.product_service import EnterpriseMemoryService
 
 
-def client(tmp_path):
+def client(tmp_path, *, with_chat=False):
     service = EnterpriseMemoryService(OrganizationIdentity("org-a", "Org A"))
-    app = create_app(service, api_key="secret", data_dir=tmp_path)
+    chat_service = ProductChatService(service, MockLLMAdapter()) if with_chat else None
+    app = create_app(service, api_key="secret", data_dir=tmp_path, chat_service=chat_service)
     return TestClient(app)
 
 
@@ -140,3 +143,56 @@ def test_store_persists_to_disk(tmp_path):
     )
     assert (tmp_path / "memory.snapshot").exists()
     assert (tmp_path / "enterprise.manifest.json").exists()
+
+
+def test_chat_is_unavailable_without_adapter(tmp_path):
+    c = client(tmp_path)
+    r = c.post(
+        "/api/v1/chat",
+        headers={"X-Memoria-Key": "secret"},
+        json={"message": "hello"},
+    )
+    assert r.status_code == 503
+
+
+def test_memoria_chat_returns_measured_hit_metrics(tmp_path):
+    c = client(tmp_path, with_chat=True)
+    headers = {"X-Memoria-Key": "secret"}
+    c.post(
+        "/api/v1/memories",
+        headers=headers,
+        json={"knowledge_id": "plan", "key": "customer.plan", "payload": "plan is pro"},
+    )
+    r = c.post(
+        "/api/v1/chat",
+        headers=headers,
+        json={"message": "what is the plan?", "mode": "memoria", "memory_keys": ["customer.plan", "missing"]},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["metrics"]["memory_hits"] == 1
+    assert body["metrics"]["memory_misses"] == 1
+    assert body["metrics"]["provider"] == "mock"
+
+
+def test_compare_reports_observed_token_reduction(tmp_path):
+    c = client(tmp_path, with_chat=True)
+    headers = {"X-Memoria-Key": "secret"}
+    c.post(
+        "/api/v1/memories",
+        headers=headers,
+        json={"knowledge_id": "plan", "key": "customer.plan", "payload": "plan is pro"},
+    )
+    r = c.post(
+        "/api/v1/chat/compare",
+        headers=headers,
+        json={
+            "message": "what is the plan?",
+            "baseline_context": ["plan is pro", "irrelevant history " * 20],
+            "memory_keys": ["customer.plan"],
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["baseline"]["metrics"]["input_tokens"] > body["memoria"]["metrics"]["input_tokens"]
+    assert body["token_reduction"] > 0
