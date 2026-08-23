@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 
 from .llm_adapter import MockLLMAdapter
+from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
 from .product_chat import ProductChatService
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
@@ -18,12 +19,30 @@ def _env(name: str, default: str | None = None, *, required: bool = False) -> st
     return value
 
 
+def _optional_float(name: str) -> float | None:
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        return None
+    return float(value)
+
+
 def _build_chat_service(memory: EnterpriseMemoryService) -> ProductChatService | None:
     provider = os.getenv("MEMORIA_LLM_PROVIDER", "").strip().lower()
     if not provider:
         return None
     if provider == "mock":
         return ProductChatService(memory, MockLLMAdapter())
+    if provider == "openai":
+        adapter = OpenAIResponsesAdapter(
+            api_key=_env("OPENAI_API_KEY", required=True),
+            model=_env("MEMORIA_LLM_MODEL", required=True),
+            base_url=_env("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            pricing=OpenAIPricing(
+                input_usd_per_million=_optional_float("MEMORIA_LLM_INPUT_USD_PER_MILLION"),
+                output_usd_per_million=_optional_float("MEMORIA_LLM_OUTPUT_USD_PER_MILLION"),
+            ),
+        )
+        return ProductChatService(memory, adapter)
     raise RuntimeError(f"unsupported MEMORIA_LLM_PROVIDER: {provider}")
 
 
