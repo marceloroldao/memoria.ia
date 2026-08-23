@@ -2,6 +2,36 @@
 
 Experimental implementation of **Resolutive Memory**, a memory architecture built around reusable knowledge nodes, multiple trajectories, online lifecycle dynamics, distributed consensus, and persistence.
 
+## Enterprise product alpha
+
+Active product branch: `product/enterprise-alpha`
+
+The repository is being evolved incrementally into an installable PC/VPS/server product without replacing the validated research core. The current alpha layer includes:
+
+- organization-scoped memory isolation;
+- node and entitlement metadata boundaries;
+- FastAPI `/api/v1` service;
+- administrator and scoped application credentials;
+- append-only logical memory versions and revocation;
+- persistent restart/recovery;
+- Docker/Compose deployment;
+- minimal web chat/admin UI;
+- provider-neutral LLM adapter with mock, Gemini and OpenAI implementations;
+- per-request memory/context/token/latency/external-call metrics;
+- baseline-vs-Memoria context comparison;
+- live sanitized integration evidence for Gemini and OpenAI;
+- validated product-state backup/restore with SHA-256 integrity and organization checks;
+- dedicated product-alpha acceptance and CI workflows.
+
+Semantic routing from v0.96 remains experimental and is not required for the exact-key product-alpha contract. MA2A federation/PKI also remains outside the local product-alpha boundary.
+
+Product-alpha documentation:
+
+- `docs/ENTERPRISE_ALPHA_GAP_ANALYSIS.md`
+- `docs/SECURITY_ALPHA.md`
+
+The alpha must not be described as production-secure. The HTTP status surface intentionally retains `security_status: not-security-reviewed` until the documented security gate is completed.
+
 ## Archived release
 
 Latest archived release: **v0.95.1**  
@@ -46,10 +76,21 @@ The `v0.95.1` release is a metadata-only citation interoperability fix over the 
 
 ## Install and test
 
+Research baseline:
+
 ```bash
 python -m pip install -e '.[test]'
 python scripts/release_gate_v95.py
 ```
+
+Product-alpha development install:
+
+```bash
+python -m pip install -e '.[product,test]'
+python -m pytest -q
+```
+
+Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.example` on the product branch.
 
 Representative recent experiments:
 
@@ -78,9 +119,11 @@ The v0.95 facade exposes:
 
 See `docs/API_V090.md` and subsequent persistence/result notes.
 
+The product branch wraps the stable memory facade behind a versioned HTTP/service boundary; experimental semantic-router internals are intentionally not part of the product-alpha API contract.
+
 ## Research status
 
-This remains a research implementation, not a claim of general intelligence or a final v1.0 architecture. Claims are limited to controlled tests in this repository. Negative results, failed hypotheses and known limits are retained.
+The research line remains an experimental implementation, not a claim of general intelligence or a final v1.0 architecture. Claims are limited to controlled tests in this repository. Negative results, failed hypotheses and known limits are retained.
 
 Important known limitations include:
 
@@ -88,7 +131,8 @@ Important known limitations include:
 - compact snapshot compression depends on data redundancy and may trade CPU time for storage savings;
 - semantic consolidation remains experimental and does not claim general language understanding;
 - no claim is made that this replaces a general neural model or LLM;
-- distributed consensus is conservative and deliberately avoids automatic destructive merge for merely related knowledge.
+- distributed consensus is conservative and deliberately avoids automatic destructive merge for merely related knowledge;
+- the current Enterprise layer is a product alpha and has not completed a formal production security review.
 
 ## License
 
@@ -98,6 +142,6 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 
 - Resolutive Science repository baseline: **v0.1.1**
 - Project governance baseline: **RSPS 1.0-draft**
-- RSMS compatibility: **pending a formally numbered RSMS release in `resolutive-science`**
+- RSMS compatibility: **candidate compatibility with RSMS 1.0-rc.1; re-audit required before stable v1.0**
 
-The repository does not claim compatibility with a nonexistent or unpublished RSMS version. Once a numbered RSMS is released, this declaration must be re-audited and pinned before the v1.0 release.
+Compatibility declarations must be re-audited and pinned before the v1.0 release.
