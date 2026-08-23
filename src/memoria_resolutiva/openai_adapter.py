@@ -5,11 +5,7 @@ from typing import Sequence
 
 import httpx
 
-from .llm_adapter import LLMResponse, LLMUsage
-
-
-class LLMProviderError(RuntimeError):
-    pass
+from .llm_adapter import LLMAdapterError, LLMResponse, LLMUsage
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,8 +73,6 @@ class OpenAIResponsesAdapter:
 
     @staticmethod
     def _output_text(data: dict) -> str:
-        # Responses API output is a list of typed items. Keep parsing narrow and
-        # fail explicitly if no textual output is returned.
         chunks: list[str] = []
         for item in data.get("output", []):
             if not isinstance(item, dict) or item.get("type") != "message":
@@ -89,7 +83,7 @@ class OpenAIResponsesAdapter:
                     if isinstance(text, str):
                         chunks.append(text)
         if not chunks:
-            raise LLMProviderError("OpenAI response did not contain output_text")
+            raise LLMAdapterError("OpenAI response did not contain output_text")
         return "".join(chunks)
 
     def generate(self, *, message: str, context: Sequence[str]) -> LLMResponse:
@@ -108,7 +102,7 @@ class OpenAIResponsesAdapter:
             response.raise_for_status()
             data = response.json()
         except (httpx.HTTPError, ValueError) as exc:
-            raise LLMProviderError("OpenAI request failed") from exc
+            raise LLMAdapterError("OpenAI request failed") from exc
 
         usage = data.get("usage") or {}
         input_tokens = usage.get("input_tokens")
