@@ -44,6 +44,41 @@
     </section>
 
     <section class="panel">
+      <h2>Configuration</h2>
+      <h3>LLM provider</h3>
+      <div class="grid two">
+        <label>Provider
+          <select id="llmProvider">
+            <option value="mock">Mock / local test</option>
+            <option value="gemini">Gemini</option>
+            <option value="openai">OpenAI</option>
+          </select>
+        </label>
+        <label>Model <input id="llmModel" placeholder="gemini-2.5-flash or OpenAI model" /></label>
+      </div>
+      <label>Provider API key
+        <input id="llmApiKey" type="password" autocomplete="off" placeholder="Leave blank to keep the existing credential" />
+      </label>
+      <div class="actions">
+        <button id="saveLlmConfig">Save LLM configuration</button>
+        <button id="refreshConfiguration">Refresh configuration</button>
+      </div>
+      <pre id="llmConfigStatus" class="output">No configuration loaded.</pre>
+
+      <h3>License</h3>
+      <div class="grid two">
+        <label>License ID <input id="licenseId" placeholder="lic-early-access-001" /></label>
+        <label>Plan <input id="licensePlan" value="early_access" /></label>
+        <label>Valid until <input id="licenseValidUntil" placeholder="2027-08-23T00:00:00+00:00" /></label>
+        <label>Maximum nodes <input id="licenseMaxNodes" type="number" min="1" value="1" /></label>
+      </div>
+      <label>Capabilities <input id="licenseCapabilities" value="memory.read,memory.write,chat.use" /></label>
+      <button id="saveLicenseConfig">Save license metadata</button>
+      <pre id="licenseConfigStatus" class="output">No license loaded.</pre>
+      <p>Product-alpha validates local metadata only. Cryptographic license issuance/validation remains external.</p>
+    </section>
+
+    <section class="panel">
       <h2>Applications</h2>
       <p>Create a credential for each application. The plaintext credential is displayed only once.</p>
       <div class="grid two">
