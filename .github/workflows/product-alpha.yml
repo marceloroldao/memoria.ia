@@ -36,6 +36,14 @@ jobs:
         run: python -m pytest -q tests/test_product_http.py
       - name: Product LLM adapter and metrics
         run: python -m pytest -q tests/test_product_chat.py
+      - name: Product context benchmark
+        run: python experiments/product_context_benchmark.py --output benchmark-results/product-context-v1.json
+      - name: Upload product benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-context-benchmark
+          path: benchmark-results/product-context-v1.json
+          if-no-files-found: error
       - name: Build container
         run: docker build -t memoria-enterprise-alpha .
       - name: Container smoke test with persistent restart
