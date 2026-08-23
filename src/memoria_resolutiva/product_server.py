@@ -6,6 +6,7 @@ import os
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
+from .product_applications import ApplicationRegistry
 from .product_chat import ProductChatService
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
@@ -83,12 +84,18 @@ def build_app():
         capabilities=frozenset(filter(None, os.getenv("MEMORIA_CAPABILITIES", "memory.read,memory.write").split(","))),
     )
 
+    application_registry = ApplicationRegistry(
+        organization_id,
+        data_dir / "applications.json",
+    )
+
     return create_app(
         service,
         api_key=api_key,
         data_dir=data_dir,
         node_identity=node_identity,
         chat_service=_build_chat_service(service),
+        application_registry=application_registry,
     )
 
 
