@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memoria.ia Enterprise</title>
+  <link rel="stylesheet" href="/ui/style.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Memoria.ia Enterprise</h1>
+      <p>product-alpha · private memory service</p>
+    </div>
+    <div class="auth">
+      <label>API key <input id="apiKey" type="password" autocomplete="off" placeholder="X-Memoria-Key" /></label>
+      <button id="refreshAdmin">Refresh status</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel chat-panel">
+      <h2>Chat</h2>
+      <div class="grid two">
+        <label>Application ID <input id="applicationId" value="web" /></label>
+        <label>Memory keys <input id="memoryKeys" placeholder="customer.alpha.plan, invoice.status" /></label>
+      </div>
+      <label>Baseline context
+        <textarea id="baselineContext" rows="5" placeholder="Optional. One context block per line for baseline comparison."></textarea>
+      </label>
+      <label>Message
+        <textarea id="message" rows="5" placeholder="Ask a question..."></textarea>
+      </label>
+      <div class="actions">
+        <button id="sendMemoria">Send · Memoria mode</button>
+        <button id="compare">Compare baseline vs Memoria</button>
+      </div>
+      <pre id="answer" class="output">No request yet.</pre>
+    </section>
+
+    <section class="panel">
+      <h2>Request metrics</h2>
+      <div id="metrics" class="metrics"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Administration</h2>
+      <pre id="admin" class="output">Enter the API key and refresh.</pre>
+    </section>
+  </main>
+
+  <footer>
+    <span>Semantic routing remains experimental. Security status is shown by the server.</span>
+  </footer>
+  <script src="/ui/app.js"></script>
+</body>
+</html>
