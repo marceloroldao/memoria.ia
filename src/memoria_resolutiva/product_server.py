@@ -8,6 +8,7 @@ from .llm_adapter import MockLLMAdapter
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
 from .product_applications import ApplicationRegistry
 from .product_chat import ProductChatService
+from .product_config import ProductConfigurationStore
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
 from .product_service import EnterpriseMemoryService
@@ -28,16 +29,28 @@ def _optional_float(name: str) -> float | None:
     return float(value)
 
 
-def _build_chat_service(memory: EnterpriseMemoryService) -> ProductChatService | None:
-    provider = os.getenv("MEMORIA_LLM_PROVIDER", "").strip().lower()
+def _build_chat_service(
+    memory: EnterpriseMemoryService,
+    configuration: ProductConfigurationStore,
+) -> ProductChatService | None:
+    persisted = configuration.llm()
+    provider = os.getenv("MEMORIA_LLM_PROVIDER", persisted.provider or "").strip().lower()
     if not provider:
         return None
     if provider == "mock":
         return ProductChatService(memory, MockLLMAdapter())
+
+    model = os.getenv("MEMORIA_LLM_MODEL", persisted.model or "").strip()
+    if not model:
+        raise RuntimeError("MEMORIA_LLM_MODEL is required for an external provider")
+
     if provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY", persisted.api_key or "")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY is required for OpenAI")
         adapter = OpenAIResponsesAdapter(
-            api_key=_env("OPENAI_API_KEY", required=True),
-            model=_env("MEMORIA_LLM_MODEL", required=True),
+            api_key=api_key,
+            model=model,
             base_url=_env("OPENAI_BASE_URL", "https://api.openai.com/v1"),
             pricing=OpenAIPricing(
                 input_usd_per_million=_optional_float("MEMORIA_LLM_INPUT_USD_PER_MILLION"),
@@ -46,9 +59,12 @@ def _build_chat_service(memory: EnterpriseMemoryService) -> ProductChatService |
         )
         return ProductChatService(memory, adapter)
     if provider == "gemini":
+        api_key = os.getenv("GEMINI_API_KEY", persisted.api_key or "")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY is required for Gemini")
         adapter = GeminiGenerateContentAdapter(
-            api_key=_env("GEMINI_API_KEY", required=True),
-            model=_env("MEMORIA_LLM_MODEL", required=True),
+            api_key=api_key,
+            model=model,
             base_url=_env("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta"),
             pricing=GeminiPricing(
                 input_usd_per_million=_optional_float("MEMORIA_LLM_INPUT_USD_PER_MILLION"),
@@ -64,6 +80,7 @@ def build_app():
     organization_name = os.getenv("MEMORIA_ORGANIZATION_NAME")
     api_key = _env("MEMORIA_API_KEY", required=True)
     data_dir = Path(_env("MEMORIA_DATA_DIR", "/data"))
+    configuration = ProductConfigurationStore(data_dir)
 
     manifest = data_dir / "enterprise.manifest.json"
     if manifest.exists():
@@ -94,8 +111,9 @@ def build_app():
         api_key=api_key,
         data_dir=data_dir,
         node_identity=node_identity,
-        chat_service=_build_chat_service(service),
+        chat_service=_build_chat_service(service, configuration),
         application_registry=application_registry,
+        configuration_store=configuration,
     )
 
 
