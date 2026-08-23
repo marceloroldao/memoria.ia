@@ -63,6 +63,22 @@ with the v0.95 default configuration:
 - levels = 5
 - max_strength = 1.25
 
+## MA2A — Agent-to-Agent Protocol
+
+The project includes the experimental **Memoria.ia Agent-to-Agent Protocol (MA2A) v0.1** specification:
+
+- `docs/RFC_MA2A_v0.1.md`
+
+MA2A defines deterministic agent discovery, authenticated session negotiation, canonical trajectory addressing, `RESOLVE_REQ` / `RESOLVE_RESP`, delta synchronization, reinforcement signaling, deterministic conflict resolution, replay protection, and hard namespace isolation.
+
+Its core interoperability principle is:
+
+> **Agents exchange state, not conversation.**
+
+The base privacy invariant is structural: trajectories under `("user", "private", ...)` MUST be rejected before transport serialization and MUST NOT be persisted or processed by L2/L3 synchronization infrastructure.
+
+The MA2A RFC is currently an experimental protocol specification. Performance claims for local Resolutive Memory remain separate from end-to-end network behavior and require reproducible benchmark validation. The local Enterprise product alpha does not depend on federation/PKI being production-ready.
+
 ## Validation
 
 The v0.95 implementation was promoted from `v0.95.0rc1` after a clean Google Colab checkout on Python 3.12 completed the full release gate:
@@ -142,6 +158,6 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 
 - Resolutive Science repository baseline: **v0.1.1**
 - Project governance baseline: **RSPS 1.0-draft**
-- RSMS compatibility: **candidate compatibility with RSMS 1.0-rc.1; re-audit required before stable v1.0**
+- RSMS compatibility: **1.0-rc.1 — candidate compatibility**
 
-Compatibility declarations must be re-audited and pinned before the v1.0 release.
+The current declaration is pinned to the published RSMS release-candidate specification in `resolutive-science`. It must be re-audited when RSMS 1.0 becomes stable and before a stable `memoria.ia` v1.0 release. Project-specific computational semantics remain subordinate to explicit RSMS definitions where shared terminology is used.
