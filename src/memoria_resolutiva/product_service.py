@@ -106,6 +106,7 @@ class EnterpriseMemoryService:
         *,
         modality: str = "text",
         provenance: str = "local",
+        activate: bool = True,
     ) -> None:
         route = self._route(scope, trajectory)
         self._memory.remember(
@@ -115,6 +116,12 @@ class EnterpriseMemoryService:
             modality=modality,
             provenance=provenance,
         )
+        # The research lifecycle intentionally registers routes inactive.
+        # Product semantics require store -> retrieve to work immediately,
+        # therefore the product facade activates a newly stored route by default
+        # without changing the validated engine behavior.
+        if activate:
+            self._memory.reinforce(route, 1.0)
 
     def recall(
         self,
