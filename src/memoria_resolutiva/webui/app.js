@@ -20,6 +20,10 @@ function baselineContext() {
   return $('baselineContext').value.split('\n').map(v => v.trim()).filter(Boolean);
 }
 
+function csv(id) {
+  return $(id).value.split(',').map(v => v.trim()).filter(Boolean);
+}
+
 async function api(path, options = {}) {
   const response = await fetch(path, { ...options, headers: { ...headers(), ...(options.headers || {}) } });
   const body = await response.json().catch(() => ({}));
@@ -44,6 +48,26 @@ function showMetrics(metrics, prefix = '') {
   }
 }
 
+async function refreshConfiguration() {
+  try {
+    const body = await api('/api/v1/admin/configuration');
+    $('llmConfigStatus').textContent = JSON.stringify(body.llm, null, 2);
+    $('licenseConfigStatus').textContent = JSON.stringify(body.license, null, 2);
+    if (body.llm && body.llm.provider) $('llmProvider').value = body.llm.provider;
+    if (body.llm && body.llm.model) $('llmModel').value = body.llm.model;
+    if (body.license) {
+      $('licenseId').value = body.license.license_id || '';
+      $('licensePlan').value = body.license.plan || 'early_access';
+      $('licenseValidUntil').value = body.license.valid_until || '';
+      $('licenseMaxNodes').value = body.license.max_nodes || 1;
+      $('licenseCapabilities').value = (body.license.capabilities || []).join(',');
+    }
+  } catch (err) {
+    $('llmConfigStatus').textContent = `Error: ${err.message}`;
+    $('licenseConfigStatus').textContent = `Error: ${err.message}`;
+  }
+}
+
 async function refreshApplications() {
   try {
     const body = await api('/api/v1/admin/applications');
@@ -57,18 +81,61 @@ $('refreshAdmin').addEventListener('click', async () => {
   try {
     const body = await api('/api/v1/admin/status');
     $('admin').textContent = JSON.stringify(body, null, 2);
-    await refreshApplications();
+    await Promise.all([refreshApplications(), refreshConfiguration()]);
   } catch (err) {
     $('admin').textContent = `Error: ${err.message}`;
   }
 });
 
 $('refreshApplications').addEventListener('click', refreshApplications);
+$('refreshConfiguration').addEventListener('click', refreshConfiguration);
+
+$('saveLlmConfig').addEventListener('click', async () => {
+  $('llmConfigStatus').textContent = 'Saving...';
+  try {
+    const apiKey = $('llmApiKey').value.trim();
+    const payload = {
+      provider: $('llmProvider').value,
+      model: $('llmModel').value.trim(),
+    };
+    if (apiKey) payload.api_key = apiKey;
+    const body = await api('/api/v1/admin/configuration/llm', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    $('llmApiKey').value = '';
+    $('llmConfigStatus').textContent = JSON.stringify({
+      ...body.llm,
+      restart_required: body.restart_required,
+    }, null, 2);
+  } catch (err) {
+    $('llmConfigStatus').textContent = `Error: ${err.message}`;
+  }
+});
+
+$('saveLicenseConfig').addEventListener('click', async () => {
+  $('licenseConfigStatus').textContent = 'Saving...';
+  try {
+    const body = await api('/api/v1/admin/configuration/license', {
+      method: 'PUT',
+      body: JSON.stringify({
+        license_id: $('licenseId').value.trim(),
+        plan: $('licensePlan').value.trim() || 'early_access',
+        valid_until: $('licenseValidUntil').value.trim() || null,
+        max_nodes: Number($('licenseMaxNodes').value || 1),
+        capabilities: csv('licenseCapabilities'),
+      }),
+    });
+    $('licenseConfigStatus').textContent = JSON.stringify(body, null, 2);
+  } catch (err) {
+    $('licenseConfigStatus').textContent = `Error: ${err.message}`;
+  }
+});
 
 $('createApplication').addEventListener('click', async () => {
   $('newCredential').textContent = 'Creating...';
   try {
-    const scopes = $('newApplicationScopes').value.split(',').map(v => v.trim()).filter(Boolean);
+    const scopes = csv('newApplicationScopes');
     const body = await api('/api/v1/admin/applications', {
       method: 'POST',
       body: JSON.stringify({
