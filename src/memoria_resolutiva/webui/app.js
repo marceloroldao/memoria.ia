@@ -44,12 +44,50 @@ function showMetrics(metrics, prefix = '') {
   }
 }
 
+async function refreshApplications() {
+  try {
+    const body = await api('/api/v1/admin/applications');
+    $('applications').textContent = JSON.stringify(body.applications, null, 2);
+  } catch (err) {
+    $('applications').textContent = `Error: ${err.message}`;
+  }
+}
+
 $('refreshAdmin').addEventListener('click', async () => {
   try {
     const body = await api('/api/v1/admin/status');
     $('admin').textContent = JSON.stringify(body, null, 2);
+    await refreshApplications();
   } catch (err) {
     $('admin').textContent = `Error: ${err.message}`;
+  }
+});
+
+$('refreshApplications').addEventListener('click', refreshApplications);
+
+$('createApplication').addEventListener('click', async () => {
+  $('newCredential').textContent = 'Creating...';
+  try {
+    const scopes = $('newApplicationScopes').value.split(',').map(v => v.trim()).filter(Boolean);
+    const body = await api('/api/v1/admin/applications', {
+      method: 'POST',
+      body: JSON.stringify({
+        application_id: $('newApplicationId').value.trim(),
+        display_name: $('newApplicationName').value.trim() || null,
+        scopes,
+      }),
+    });
+    $('newCredential').textContent = [
+      'SAVE THIS CREDENTIAL NOW. IT WILL NOT BE SHOWN AGAIN.',
+      '',
+      body.credential,
+      '',
+      `Application: ${body.application.application_id}`,
+      `Scopes: ${body.application.scopes.join(', ')}`,
+    ].join('\n');
+    await refreshApplications();
+  } catch (err) {
+    $('newCredential').textContent = `Error: ${err.message}`;
   }
 });
 
