@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from typing import Protocol, Sequence
 
 
+class LLMAdapterError(RuntimeError):
+    """Provider-neutral external inference failure."""
+
+
 @dataclass(frozen=True, slots=True)
 class LLMUsage:
     input_tokens: int | None = None
@@ -39,8 +43,6 @@ def estimate_tokens(text: str) -> int:
     """Deterministic fallback estimate, explicitly not a provider tokenizer."""
     if not text:
         return 0
-    # Character-based approximation keeps benchmarks reproducible without
-    # coupling the product core to a provider tokenizer.
     return max(1, (len(text) + 3) // 4)
 
 
