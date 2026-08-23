@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import os
 
+from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
 from .product_chat import ProductChatService
@@ -38,6 +39,17 @@ def _build_chat_service(memory: EnterpriseMemoryService) -> ProductChatService |
             model=_env("MEMORIA_LLM_MODEL", required=True),
             base_url=_env("OPENAI_BASE_URL", "https://api.openai.com/v1"),
             pricing=OpenAIPricing(
+                input_usd_per_million=_optional_float("MEMORIA_LLM_INPUT_USD_PER_MILLION"),
+                output_usd_per_million=_optional_float("MEMORIA_LLM_OUTPUT_USD_PER_MILLION"),
+            ),
+        )
+        return ProductChatService(memory, adapter)
+    if provider == "gemini":
+        adapter = GeminiGenerateContentAdapter(
+            api_key=_env("GEMINI_API_KEY", required=True),
+            model=_env("MEMORIA_LLM_MODEL", required=True),
+            base_url=_env("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta"),
+            pricing=GeminiPricing(
                 input_usd_per_million=_optional_float("MEMORIA_LLM_INPUT_USD_PER_MILLION"),
                 output_usd_per_million=_optional_float("MEMORIA_LLM_OUTPUT_USD_PER_MILLION"),
             ),
