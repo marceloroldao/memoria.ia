@@ -13,6 +13,11 @@ authors = [{name = "Marcelo Roldão Matos"}]
 [project.optional-dependencies]
 test = ["pytest>=8"]
 word2vec = ["gensim>=4.3"]
+product = [
+  "fastapi>=0.116,<1",
+  "uvicorn>=0.35,<1",
+  "httpx>=0.28,<1",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
