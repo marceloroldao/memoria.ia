@@ -15,7 +15,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,3 +34,98 @@ jobs:
         run: python -m pytest -q tests/test_product_service.py
       - name: Product HTTP API
         run: python -m pytest -q tests/test_product_http.py
+      - name: Build container
+        run: docker build -t memoria-enterprise-alpha .
+      - name: Container smoke test with persistent restart
+        env:
+          MEMORIA_TEST_KEY: ci-only-not-a-secret
+        run: |
+          docker volume create memoria-ci-data
+          docker run -d --name memoria-ci \
+            -p 18080:8080 \
+            -e MEMORIA_ORGANIZATION_ID=ci-org \
+            -e MEMORIA_ORGANIZATION_NAME='CI Organization' \
+            -e MEMORIA_API_KEY="$MEMORIA_TEST_KEY" \
+            -e MEMORIA_DATA_DIR=/data \
+            -v memoria-ci-data:/data \
+            memoria-enterprise-alpha
+
+          python - <<'PY'
+          import json, time, urllib.request
+
+          def request(path, *, method='GET', body=None, key=None):
+              headers = {'Content-Type': 'application/json'}
+              if key:
+                  headers['X-Memoria-Key'] = key
+              data = None if body is None else json.dumps(body).encode()
+              req = urllib.request.Request('http://127.0.0.1:18080' + path, data=data, headers=headers, method=method)
+              with urllib.request.urlopen(req, timeout=5) as response:
+                  return response.status, json.loads(response.read().decode())
+
+          for _ in range(30):
+              try:
+                  status, body = request('/api/v1/health')
+                  if status == 200 and body.get('status') == 'ok':
+                      break
+              except Exception:
+                  time.sleep(1)
+          else:
+              raise SystemExit('container health endpoint did not become ready')
+
+          status, body = request('/api/v1/memories', method='POST', key='ci-only-not-a-secret', body={
+              'knowledge_id': 'ci-memory',
+              'key': 'ci.persistence',
+              'payload': {'value': 'survives-restart'},
+          })
+          assert status == 201, (status, body)
+          PY
+
+          docker stop memoria-ci
+          docker rm memoria-ci
+
+          docker run -d --name memoria-ci \
+            -p 18080:8080 \
+            -e MEMORIA_ORGANIZATION_ID=ci-org \
+            -e MEMORIA_ORGANIZATION_NAME='CI Organization' \
+            -e MEMORIA_API_KEY="$MEMORIA_TEST_KEY" \
+            -e MEMORIA_DATA_DIR=/data \
+            -v memoria-ci-data:/data \
+            memoria-enterprise-alpha
+
+          python - <<'PY'
+          import json, time, urllib.request
+
+          def request(path, *, method='GET', body=None, key=None):
+              headers = {'Content-Type': 'application/json'}
+              if key:
+                  headers['X-Memoria-Key'] = key
+              data = None if body is None else json.dumps(body).encode()
+              req = urllib.request.Request('http://127.0.0.1:18080' + path, data=data, headers=headers, method=method)
+              with urllib.request.urlopen(req, timeout=5) as response:
+                  return response.status, json.loads(response.read().decode())
+
+          for _ in range(30):
+              try:
+                  status, _ = request('/api/v1/health')
+                  if status == 200:
+                      break
+              except Exception:
+                  time.sleep(1)
+          else:
+              raise SystemExit('restarted container did not become ready')
+
+          status, body = request('/api/v1/memories/resolve', method='POST', key='ci-only-not-a-secret', body={
+              'key': 'ci.persistence'
+          })
+          assert status == 200, (status, body)
+          assert body['hit'] is True, body
+          assert body['record']['payload'] == {'value': 'survives-restart'}, body
+          PY
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs memoria-ci || true
+      - name: Cleanup container resources
+        if: always()
+        run: |
+          docker rm -f memoria-ci || true
+          docker volume rm memoria-ci-data || true
