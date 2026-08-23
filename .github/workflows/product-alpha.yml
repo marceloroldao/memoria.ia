@@ -34,6 +34,8 @@ jobs:
         run: python -m pytest -q tests/test_product_service.py
       - name: Product HTTP API
         run: python -m pytest -q tests/test_product_http.py
+      - name: Product LLM adapter and metrics
+        run: python -m pytest -q tests/test_product_chat.py
       - name: Build container
         run: docker build -t memoria-enterprise-alpha .
       - name: Container smoke test with persistent restart
@@ -47,6 +49,7 @@ jobs:
             -e MEMORIA_ORGANIZATION_NAME='CI Organization' \
             -e MEMORIA_API_KEY="$MEMORIA_TEST_KEY" \
             -e MEMORIA_DATA_DIR=/data \
+            -e MEMORIA_LLM_PROVIDER=mock \
             -v memoria-ci-data:/data \
             memoria-enterprise-alpha
 
@@ -78,6 +81,19 @@ jobs:
               'payload': {'value': 'survives-restart'},
           })
           assert status == 201, (status, body)
+
+          status, body = request('/api/v1/chat/compare', method='POST', key='ci-only-not-a-secret', body={
+              'message': 'what value is stored?',
+              'baseline_context': [
+                  'value survives restart',
+                  'irrelevant repeated baseline context ' * 20,
+              ],
+              'memory_keys': ['ci.persistence'],
+          })
+          assert status == 200, (status, body)
+          assert body['baseline']['metrics']['provider'] == 'mock', body
+          assert body['memoria']['metrics']['memory_hits'] == 1, body
+          assert body['token_reduction'] > 0, body
           PY
 
           docker stop memoria-ci
@@ -89,6 +105,7 @@ jobs:
             -e MEMORIA_ORGANIZATION_NAME='CI Organization' \
             -e MEMORIA_API_KEY="$MEMORIA_TEST_KEY" \
             -e MEMORIA_DATA_DIR=/data \
+            -e MEMORIA_LLM_PROVIDER=mock \
             -v memoria-ci-data:/data \
             memoria-enterprise-alpha
 
