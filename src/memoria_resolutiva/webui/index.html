@@ -13,7 +13,7 @@
       <p>product-alpha · private memory service</p>
     </div>
     <div class="auth">
-      <label>API key <input id="apiKey" type="password" autocomplete="off" placeholder="X-Memoria-Key" /></label>
+      <label>Administrator API key <input id="apiKey" type="password" autocomplete="off" placeholder="X-Memoria-Key" /></label>
       <button id="refreshAdmin">Refresh status</button>
     </div>
   </header>
@@ -44,8 +44,24 @@
     </section>
 
     <section class="panel">
+      <h2>Applications</h2>
+      <p>Create a credential for each application. The plaintext credential is displayed only once.</p>
+      <div class="grid two">
+        <label>Application ID <input id="newApplicationId" placeholder="crm" /></label>
+        <label>Display name <input id="newApplicationName" placeholder="Customer CRM" /></label>
+      </div>
+      <label>Scopes <input id="newApplicationScopes" value="memory.read,memory.write,chat.use" /></label>
+      <div class="actions">
+        <button id="createApplication">Create application credential</button>
+        <button id="refreshApplications">Refresh applications</button>
+      </div>
+      <pre id="newCredential" class="output">No credential created in this browser session.</pre>
+      <pre id="applications" class="output">Enter the administrator API key and refresh.</pre>
+    </section>
+
+    <section class="panel">
       <h2>Administration</h2>
-      <pre id="admin" class="output">Enter the API key and refresh.</pre>
+      <pre id="admin" class="output">Enter the administrator API key and refresh.</pre>
     </section>
   </main>
 
