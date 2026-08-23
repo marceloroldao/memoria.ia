@@ -28,8 +28,34 @@ def item(number: int, name: str, status: str, evidence: str) -> dict:
     return {"id": number, "criterion": name, "status": status, "evidence": evidence}
 
 
-def run_gate(*, tests_passed: bool, container_validated: bool, benchmark_file: Path | None) -> dict:
+def _valid_live_provider_evidence(path: Path | None) -> tuple[bool, dict | None]:
+    if path is None or not path.exists():
+        return False, None
+    try:
+        data = json.loads(path.read_text("utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False, None
+    required = (
+        data.get("validation") == "memoria.ia-live-gemini-v1"
+        and data.get("provider") == "gemini"
+        and data.get("memory_hits") == 1
+        and data.get("external_calls") == 1
+        and data.get("response_nonempty") is True
+        and data.get("response_mentions_expected_fact") is True
+        and data.get("secret_recorded") is False
+    )
+    return bool(required), data
+
+
+def run_gate(
+    *,
+    tests_passed: bool,
+    container_validated: bool,
+    benchmark_file: Path | None,
+    live_provider_file: Path | None = None,
+) -> dict:
     results: list[dict] = []
+    live_provider_ok, live_provider = _valid_live_provider_evidence(live_provider_file)
 
     with TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -61,8 +87,14 @@ def run_gate(*, tests_passed: bool, container_validated: bool, benchmark_file: P
         results.append(item(4, "access the web interface", STATUS_PASS if ui.status_code == 200 and "Memoria.ia Enterprise" in ui.text else STATUS_FAIL,
                             "Web UI is served from the same FastAPI product service."))
 
-        results.append(item(5, "configure one LLM provider", STATUS_PARTIAL,
-                            "Mock adapter is validated end-to-end; OpenAI adapter is implemented/configurable but live external credentials are not exercised in CI."))
+        if live_provider_ok:
+            provider = live_provider.get("provider") if live_provider else "external"
+            model = live_provider.get("model") if live_provider else "unknown"
+            provider_evidence = f"Sanitized live-provider evidence passed for {provider}/{model}."
+            results.append(item(5, "configure one LLM provider", STATUS_PASS, provider_evidence))
+        else:
+            results.append(item(5, "configure one LLM provider", STATUS_PARTIAL,
+                                "Mock adapter is validated end-to-end; external provider code exists but no valid live-provider evidence was supplied to this gate."))
 
         stored = client.post("/api/v1/memories", headers=headers, json={
             "knowledge_id": "acceptance-memory",
@@ -74,8 +106,16 @@ def run_gate(*, tests_passed: bool, container_validated: bool, benchmark_file: P
             "mode": "memoria",
             "memory_keys": ["customer.plan"],
         })
-        results.append(item(6, "send messages through Memoria.ia", STATUS_PARTIAL if chat.status_code == 200 else STATUS_FAIL,
-                            "Chat path is validated with deterministic mock; live external provider remains operator-dependent."))
+        if chat.status_code != 200:
+            chat_status = STATUS_FAIL
+            chat_evidence = "The provider-neutral chat path failed even with deterministic mock."
+        elif live_provider_ok:
+            chat_status = STATUS_PASS
+            chat_evidence = "Provider-neutral chat path passes locally and sanitized evidence proves one live Gemini call through ProductChatService."
+        else:
+            chat_status = STATUS_PARTIAL
+            chat_evidence = "Chat path is validated with deterministic mock; no valid live external-provider evidence was supplied."
+        results.append(item(6, "send messages through Memoria.ia", chat_status, chat_evidence))
 
         snapshot_ok = (root / "memory.snapshot").exists() and (root / "enterprise.manifest.json").exists()
         results.append(item(7, "persist memory", STATUS_PASS if stored.status_code == 201 and snapshot_ok else STATUS_FAIL,
@@ -140,9 +180,10 @@ def run_gate(*, tests_passed: bool, container_validated: bool, benchmark_file: P
         "overall": overall,
         "counts": counts,
         "criteria": results,
+        "live_provider_evidence": live_provider if live_provider_ok else None,
         "notes": [
-            "PARTIAL is not treated as a production guarantee.",
-            "Mock adapter proves the boundary and instrumentation, not external LLM quality or availability.",
+            "PASS means the product-alpha acceptance criterion has reproducible evidence; it is not a production guarantee.",
+            "A single live-provider validation proves integration, not ongoing provider availability or general answer quality.",
             "Semantic routing v0.96 remains experimental and is not required for exact-key product-alpha acceptance.",
             "Security status remains not-security-reviewed.",
         ],
@@ -155,6 +196,7 @@ def main() -> None:
     parser.add_argument("--tests-passed", action="store_true")
     parser.add_argument("--container-validated", action="store_true")
     parser.add_argument("--benchmark-file", type=Path)
+    parser.add_argument("--live-provider-file", type=Path)
     parser.add_argument("--fail-on-fail", action="store_true")
     args = parser.parse_args()
 
@@ -162,6 +204,7 @@ def main() -> None:
         tests_passed=args.tests_passed,
         container_validated=args.container_validated,
         benchmark_file=args.benchmark_file,
+        live_provider_file=args.live_provider_file,
     )
     rendered = json.dumps(report, indent=2, sort_keys=True)
     print(rendered)
