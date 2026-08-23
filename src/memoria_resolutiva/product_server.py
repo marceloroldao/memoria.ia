@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import os
 
+from .llm_adapter import MockLLMAdapter
+from .product_chat import ProductChatService
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
 from .product_service import EnterpriseMemoryService
@@ -14,6 +16,15 @@ def _env(name: str, default: str | None = None, *, required: bool = False) -> st
         raise RuntimeError(f"required environment variable {name} is not configured")
     assert value is not None
     return value
+
+
+def _build_chat_service(memory: EnterpriseMemoryService) -> ProductChatService | None:
+    provider = os.getenv("MEMORIA_LLM_PROVIDER", "").strip().lower()
+    if not provider:
+        return None
+    if provider == "mock":
+        return ProductChatService(memory, MockLLMAdapter())
+    raise RuntimeError(f"unsupported MEMORIA_LLM_PROVIDER: {provider}")
 
 
 def build_app():
@@ -41,7 +52,13 @@ def build_app():
         capabilities=frozenset(filter(None, os.getenv("MEMORIA_CAPABILITIES", "memory.read,memory.write").split(","))),
     )
 
-    return create_app(service, api_key=api_key, data_dir=data_dir, node_identity=node_identity)
+    return create_app(
+        service,
+        api_key=api_key,
+        data_dir=data_dir,
+        node_identity=node_identity,
+        chat_service=_build_chat_service(service),
+    )
 
 
 app = build_app()
