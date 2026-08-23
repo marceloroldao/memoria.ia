@@ -61,7 +61,6 @@ def run_gate(*, tests_passed: bool, container_validated: bool, benchmark_file: P
         results.append(item(4, "access the web interface", STATUS_PASS if ui.status_code == 200 and "Memoria.ia Enterprise" in ui.text else STATUS_FAIL,
                             "Web UI is served from the same FastAPI product service."))
 
-        # Mock validates the provider-neutral boundary but is intentionally not claimed as a real LLM.
         results.append(item(5, "configure one LLM provider", STATUS_PARTIAL,
                             "Mock adapter is validated end-to-end; OpenAI adapter is implemented/configurable but live external credentials are not exercised in CI."))
 
@@ -94,7 +93,7 @@ def run_gate(*, tests_passed: bool, container_validated: bool, benchmark_file: P
                             "Previously stored key resolves after reload."))
 
         metrics = chat.json().get("metrics", {}) if chat.status_code == 200 else {}
-        metric_fields = {"memory_hits", "memory_misses", "context_retrieved_chars", "context_sent_chars", "input_tokens", "output_tokens", "memory_latency_ms", "llm_latency_ms", "external_calls", "provider"}
+        metric_fields = {"memory_hits", "memory_misses", "retrieved_context_chars", "context_sent_chars", "input_tokens", "output_tokens", "memory_latency_ms", "llm_latency_ms", "external_calls", "provider"}
         results.append(item(10, "observe memory/context metrics", STATUS_PASS if metric_fields.issubset(metrics) else STATUS_FAIL,
                             "Chat response exposes memory, context, token, latency, call, and provider measurements."))
 
@@ -108,7 +107,6 @@ def run_gate(*, tests_passed: bool, container_validated: bool, benchmark_file: P
                             "Compare endpoint executes both modes and reports observed token reduction."))
 
         other = EnterpriseMemoryService(OrganizationIdentity("other-org"))
-        # The external key may be identical, but each organization has an independent service and namespace.
         from memoria_resolutiva.product_identity import MemoryScope
         other_scope = MemoryScope("other-org")
         other.remember(other_scope, "acceptance-memory", {"plan": "other"}, ("key", "customer.plan"))
