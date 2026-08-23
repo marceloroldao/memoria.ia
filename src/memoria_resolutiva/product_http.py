@@ -10,7 +10,7 @@ except ImportError as exc:  # pragma: no cover
     raise RuntimeError("install memoria-resolutiva[product] for the HTTP product API") from exc
 
 from .product_identity import MemoryScope, NodeIdentity
-from .product_service import EnterpriseMemoryService, OrganizationMismatch
+from .product_service import EnterpriseMemoryService, MemoryRevoked, OrganizationMismatch
 
 API_PREFIX = "/api/v1"
 
@@ -30,9 +30,18 @@ class StoreMemoryRequest(BaseModel):
     scope: ScopeModel = ScopeModel()
 
 
+class UpdateMemoryRequest(BaseModel):
+    payload: object
+    modality: str = Field(default="text", min_length=1, max_length=64)
+    provenance: str = Field(default="api-update", min_length=1, max_length=256)
+    scope: ScopeModel = ScopeModel()
+
+
 class ResolveMemoryRequest(BaseModel):
     key: str = Field(min_length=1, max_length=512)
     scope: ScopeModel = ScopeModel()
+    include_revoked: bool = False
+    version: int | None = Field(default=None, ge=1)
 
 
 def create_app(
@@ -65,6 +74,10 @@ def create_app(
             user_id=model.user_id,
         )
 
+    def persist() -> None:
+        if persist_root is not None:
+            service.save(persist_root)
+
     @app.get(f"{API_PREFIX}/health")
     def health():
         return {"status": "ok", "product": "memoria.ia-enterprise", "maturity": "product-alpha"}
@@ -95,7 +108,7 @@ def create_app(
     def store_memory(request: StoreMemoryRequest):
         scope = scope_from(request.scope)
         try:
-            service.remember(
+            record = service.remember(
                 scope,
                 request.knowledge_id,
                 request.payload,
@@ -103,16 +116,58 @@ def create_app(
                 modality=request.modality,
                 provenance=request.provenance,
             )
-            if persist_root is not None:
-                service.save(persist_root)
+            persist()
         except (ValueError, OrganizationMismatch) as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        return {"stored": True, "knowledge_id": request.knowledge_id, "key": request.key}
+        return {
+            "stored": True,
+            "knowledge_id": request.knowledge_id,
+            "key": request.key,
+            "version": record.version,
+        }
+
+    @app.put(f"{API_PREFIX}/memories/{{key}}", dependencies=[Depends(require_api_key)])
+    def update_memory(key: str, request: UpdateMemoryRequest):
+        scope = scope_from(request.scope)
+        try:
+            record = service.update(
+                scope,
+                ("key", key),
+                request.payload,
+                modality=request.modality,
+                provenance=request.provenance,
+            )
+            persist()
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except MemoryRevoked as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {"updated": True, "key": key, "version": record.version}
+
+    @app.delete(f"{API_PREFIX}/memories/{{key}}", dependencies=[Depends(require_api_key)])
+    def revoke_memory(key: str, application_id: str | None = None, agent_id: str | None = None, user_id: str | None = None):
+        scope = MemoryScope(
+            service.organization.organization_id,
+            application_id=application_id,
+            agent_id=agent_id,
+            user_id=user_id,
+        )
+        try:
+            service.revoke(scope, ("key", key))
+            persist()
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        return {"revoked": True, "key": key}
 
     @app.post(f"{API_PREFIX}/memories/resolve", dependencies=[Depends(require_api_key)])
     def resolve_memory(request: ResolveMemoryRequest):
         scope = scope_from(request.scope)
-        record = service.recall(scope, ("key", request.key))
+        record = service.recall(
+            scope,
+            ("key", request.key),
+            include_revoked=request.include_revoked,
+            version=request.version,
+        )
         if record is None:
             return {"hit": False, "record": None}
         return {
@@ -124,6 +179,8 @@ def create_app(
                 "modality": record.modality,
                 "provenance": list(record.provenance),
                 "accesses": record.accesses,
+                "version": record.version,
+                "revoked": record.revoked,
             },
         }
 
