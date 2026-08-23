@@ -1,0 +1,36 @@
+name: product application credentials
+
+on:
+  push:
+    branches:
+      - product/enterprise-alpha
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  application-credentials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install product dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Application registry tests
+        run: python -m pytest -q tests/test_product_applications.py
+      - name: Application HTTP isolation tests
+        run: python -m pytest -q tests/test_product_application_http.py
+      - name: Web UI application administration tests
+        run: python -m pytest -q tests/test_product_webui.py
+      - name: Full regression suite
+        run: python -m pytest -q
