@@ -1,0 +1,26 @@
+{
+  "validation": "memoria.ia-live-gemini-v1",
+  "validated_at_utc": "2026-08-23T20:28:27Z",
+  "workflow_run_id": 32664501653,
+  "source_commit": "d2f14eb7637e1f12cd0d0b2d3e262c6e8af8e155",
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "memory_hits": 1,
+  "memory_misses": 0,
+  "retrieved_context_chars": 31,
+  "context_sent_chars": 31,
+  "input_tokens": 49,
+  "output_tokens": 2,
+  "memory_latency_ms": 0.023995999995918282,
+  "llm_latency_ms": 581.6558830000033,
+  "external_calls": 1,
+  "response_nonempty": true,
+  "response_mentions_expected_fact": true,
+  "secret_recorded": false,
+  "artifact_zip_sha256": "c234c29f2471ba2e25a5b6df0f97c0ceff39b9527009918164844f8d71fba2fe",
+  "limitations": [
+    "This is a single live-provider validation, not a provider availability guarantee.",
+    "The result demonstrates adapter integration and measured usage, not answer quality across general tasks.",
+    "Provider pricing/cost was not asserted because no current pricing values were configured."
+  ]
+}
