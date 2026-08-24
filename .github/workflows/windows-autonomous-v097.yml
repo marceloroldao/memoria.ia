@@ -1,0 +1,92 @@
+name: windows autonomous v0.97 validation
+
+on:
+  push:
+    branches:
+      - product/windows-autonomous-v097
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-autonomous:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Native installer
+        shell: cmd
+        run: install-windows.bat
+      - name: Install tests
+        shell: cmd
+        run: .venv\Scripts\python.exe -m pip install -e ".[product,test]"
+      - name: Full regression plus autonomous integration tests
+        shell: cmd
+        run: .venv\Scripts\python.exe -m pytest -q
+      - name: Configure clean local mock instance
+        shell: powershell
+        run: |
+          @'
+          MEMORIA_ORGANIZATION_ID=ci-windows-auto
+          MEMORIA_ORGANIZATION_NAME=CI Windows Autonomous
+          MEMORIA_NODE_ID=memoria:ci-windows-auto:primary
+          MEMORIA_API_KEY=ci-windows-autonomous-key
+          MEMORIA_DATA_DIR=/data
+          MEMORIA_LLM_PROVIDER=mock
+          MEMORIA_LLM_MODEL=
+          MEMORIA_LICENSE_STATUS=not_configured
+          MEMORIA_LICENSE_PLAN=early_access
+          MEMORIA_LICENSE_MAX_NODES=1
+          MEMORIA_LICENSE_CAPABILITIES=memory.read,memory.write,chat.use
+          '@ | Set-Content -Encoding ascii .env
+      - name: Start native server
+        shell: powershell
+        run: |
+          $p = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c start-memoria.bat' -PassThru
+          $p.Id | Set-Content server.pid
+          for ($i=0; $i -lt 40; $i++) {
+            try {
+              $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/health' -TimeoutSec 2
+              if ($health.status -eq 'ok') { exit 0 }
+            } catch { Start-Sleep -Seconds 1 }
+          }
+          throw 'native server did not become ready'
+      - name: Autonomous chat without memory keys
+        shell: powershell
+        run: |
+          $headers = @{ 'X-Memoria-Key' = 'ci-windows-autonomous-key' }
+          $fact = @{ message = 'Meu carro de teste se chama Orion e a cor dele é verde.'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $first = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $fact
+          if ($first.metrics.autonomous_memories_created -ne 1) { throw 'fact was not autonomously stored' }
+          if (-not (Test-Path 'data\autonomous-memory-v097.json')) { throw 'autonomous snapshot missing' }
+
+          $question = @{ message = 'Qual é o nome e a cor do meu carro de teste?'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $second = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $question
+          if ($second.metrics.memory_hits -lt 1) { throw 'autonomous memory did not hit' }
+          if ($second.metrics.autonomous_selected -lt 1) { throw 'autonomous router selected nothing' }
+          if (($second.context -join ' ') -notmatch 'Orion') { throw 'Orion context was not recovered' }
+          if (($second.context -join ' ') -notmatch 'verde') { throw 'color context was not recovered' }
+      - name: Restart and verify autonomous persistence
+        shell: powershell
+        run: |
+          if (Test-Path server.pid) { Stop-Process -Id (Get-Content server.pid) -Force -ErrorAction SilentlyContinue }
+          Start-Sleep -Seconds 2
+          $p = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c start-memoria.bat' -PassThru
+          $p.Id | Set-Content server.pid
+          for ($i=0; $i -lt 40; $i++) {
+            try { $h = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/health' -TimeoutSec 2; if ($h.status -eq 'ok') { break } } catch { Start-Sleep -Seconds 1 }
+          }
+          $headers = @{ 'X-Memoria-Key' = 'ci-windows-autonomous-key' }
+          $question = @{ message = 'Qual é a cor do meu carro de teste?'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $r = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $question
+          if ($r.metrics.memory_hits -lt 1) { throw 'autonomous memory did not survive restart' }
+          if (($r.context -join ' ') -notmatch 'verde') { throw 'restored context is wrong' }
+      - name: Stop server
+        if: always()
+        shell: powershell
+        run: |
+          if (Test-Path server.pid) { Stop-Process -Id (Get-Content server.pid) -Force -ErrorAction SilentlyContinue }
