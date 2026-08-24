@@ -157,6 +157,29 @@ jobs:
           assert body['hit'] is True, body
           assert body['record']['payload'] == {'value': 'survives-restart'}, body
           PY
+      - name: Operator backup and clean restore
+        run: |
+          mkdir -p benchmark-results/backup-source benchmark-results/backup-restored
+          docker cp memoria-ci:/data/memory.snapshot benchmark-results/backup-source/memory.snapshot
+          docker cp memoria-ci:/data/enterprise.manifest.json benchmark-results/backup-source/enterprise.manifest.json
+          python scripts/product_backup.py create \
+            --data-dir benchmark-results/backup-source \
+            --output benchmark-results/product-alpha-backup.zip
+          python scripts/product_backup.py validate \
+            --backup benchmark-results/product-alpha-backup.zip
+          python scripts/product_backup.py restore \
+            --backup benchmark-results/product-alpha-backup.zip \
+            --data-dir benchmark-results/backup-restored \
+            --organization-id ci-org
+          python - <<'PY'
+          from memoria_resolutiva.product_service import EnterpriseMemoryService
+          from memoria_resolutiva.product_identity import MemoryScope
+
+          service = EnterpriseMemoryService.load('benchmark-results/backup-restored')
+          record = service.recall(MemoryScope('ci-org'), ('key', 'ci.persistence'))
+          assert record is not None
+          assert record.payload == {'value': 'survives-restart'}
+          PY
       - name: Product alpha acceptance gate
         run: |
           python experiments/product_alpha_acceptance.py \
