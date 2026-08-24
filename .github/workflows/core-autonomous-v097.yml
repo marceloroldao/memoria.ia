@@ -23,7 +23,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[product,test]'
-      - name: Autonomous v0.97 gate
+      - name: Autonomous v0.97 unit gate
         run: python -m pytest -q tests/test_autonomous_memory_v097.py
-      - name: Existing core regression suite
+      - name: Autonomous v0.97 acceptance benchmark
+        run: |
+          python experiments/autonomous_memory_v097_gate.py \
+            --scale 2000 \
+            --output benchmark-results/autonomous-v097-gate.json \
+            --fail-on-fail
+      - name: Upload autonomous gate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: autonomous-v097-gate
+          path: benchmark-results/autonomous-v097-gate.json
+          if-no-files-found: error
+      - name: Existing full regression suite
         run: python -m pytest -q
