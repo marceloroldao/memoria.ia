@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - experiment/core-autonomous-v098
+      - product/windows-autonomous-v098
   workflow_dispatch:
 
 permissions:
@@ -31,5 +32,7 @@ jobs:
         run: python -m pytest -q
       - name: v0.97 baseline gate
         run: python -m pytest -q tests/test_autonomous_memory_v097.py tests/test_product_chat_autonomous_v097.py
-      - name: v0.98 candidate gate
+      - name: v0.98 core gate
         run: python -m pytest -q tests/test_autonomous_memory_v098.py
+      - name: v0.98 product and migration gate
+        run: python -m pytest -q tests/test_product_chat_autonomous_v098.py tests/test_autonomous_upgrade_v098.py
