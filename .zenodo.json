@@ -1,0 +1,21 @@
+{
+  "creators": [
+    {
+      "name": "Matos, Marcelo Roldão",
+      "orcid": "0009-0003-6075-4680"
+    }
+  ],
+  "title": "memoria.ia: Resolutive Memory — First PC/Server Product Alpha",
+  "version": "0.99.0-alpha.1",
+  "upload_type": "software",
+  "access_right": "open",
+  "language": "eng",
+  "keywords": [
+    "resolutive memory",
+    "continual memory",
+    "deterministic memory",
+    "AI memory",
+    "PC server",
+    "local-first AI"
+  ]
+}
