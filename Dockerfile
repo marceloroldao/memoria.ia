@@ -10,6 +10,7 @@ RUN useradd --create-home --uid 10001 memoria && mkdir -p /data && chown memoria
 
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
+COPY scripts ./scripts
 
 RUN python -m pip install --upgrade pip && \
     python -m pip install ".[product]"
