@@ -6,12 +6,14 @@ from pathlib import Path
 from time import perf_counter
 from typing import Iterable, Literal, Sequence
 
+from .autonomous_memory_v097 import AutonomousTextMemoryV097
 from .autonomous_memory_v098 import AutonomousTextMemoryV098
 from .llm_adapter import LLMAdapter, estimate_tokens
 from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
 
 ChatMode = Literal["baseline", "memoria"]
+AutonomousMemory = AutonomousTextMemoryV097 | AutonomousTextMemoryV098
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +71,7 @@ class ProductChatService:
         memory: EnterpriseMemoryService,
         adapter: LLMAdapter,
         *,
-        autonomous_memory: AutonomousTextMemoryV098 | None = None,
+        autonomous_memory: AutonomousMemory | None = None,
         autonomous_snapshot: str | Path | None = None,
     ):
         self.memory = memory
@@ -114,8 +116,6 @@ class ProductChatService:
                 hits += 1
                 retrieved.append(_materialize(record.payload))
 
-            # Autonomous routing is used only when the caller did not supply
-            # explicit keys. This keeps the validated exact-key contract intact.
             if not explicit_keys and self.autonomous_memory is not None:
                 query = self.autonomous_memory.query(message, top_k=3)
                 auto_candidates = query.metrics.candidate_count
@@ -123,8 +123,8 @@ class ProductChatService:
                 auto_decision = query.metrics.decision
                 auto_best = query.metrics.best_score
                 auto_abstentions = query.metrics.abstentions
-                auto_indexed = query.metrics.indexed_count
-                auto_raw_candidates = query.metrics.raw_candidate_count
+                auto_indexed = int(getattr(query.metrics, 'indexed_count', len(self.autonomous_memory)))
+                auto_raw_candidates = int(getattr(query.metrics, 'raw_candidate_count', query.metrics.candidate_count))
                 if query.hits:
                     hits += len(query.hits)
                     retrieved.extend(hit.text for hit in query.hits)
@@ -138,12 +138,10 @@ class ProductChatService:
         response = self.adapter.generate(message=message, context=context)
         llm_ms = (perf_counter() - llm_start) * 1000.0
 
-        # Observe user statements after answering so the current message is not
-        # retrieved as its own context. Questions are not memorized by default.
         if mode == 'memoria' and not explicit_keys and self.autonomous_memory is not None and _should_observe(message):
             decision = self.autonomous_memory.observe(message, provenance='product-chat:user')
             auto_created += decision.metrics.memories_created
-            auto_indexed = decision.metrics.indexed_count
+            auto_indexed = int(getattr(decision.metrics, 'indexed_count', len(self.autonomous_memory)))
             self._persist_autonomous()
             if auto_decision is None or auto_decision == 'unresolved':
                 auto_decision = decision.decision
