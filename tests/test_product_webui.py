@@ -15,19 +15,23 @@ def test_web_ui_is_served_from_product_app(tmp_path):
 
     assert root.status_code == 200
     assert "Memoria.ia Enterprise" in root.text
-    assert "Configuration" in root.text
-    assert "LLM provider" in root.text
-    assert "License" in root.text
-    assert "Applications" in root.text
-    assert "Create application credential" in root.text
+    assert 'data-page="chat"' in root.text
+    assert 'data-page="settings"' in root.text
+    assert 'data-page="diagnostics"' in root.text
+    assert "Configurações" in root.text
+    assert "Diagnóstico" in root.text
+    assert "Baixar relatório TXT" in root.text
+    assert "Chave de administrador" in root.text
+    assert "Chave do provedor" in root.text
     assert css.status_code == 200
-    assert "chat-panel" in css.text
+    assert ".chatbox" in css.text
+    assert ".conversation" in css.text
     assert js.status_code == 200
-    assert "/api/v1/chat/compare" in js.text
+    assert "/api/v1/chat" in js.text
     assert "/api/v1/admin/configuration/llm" in js.text
-    assert "/api/v1/admin/configuration/license" in js.text
-    assert "/api/v1/admin/applications" in js.text
-    assert "SAVE THIS CREDENTIAL NOW" in js.text
+    assert "localStorage" in js.text
+    assert "memoria-report-" in js.text
+    assert "API keys and provider secrets are intentionally excluded" in js.text
 
 
 def test_web_ui_does_not_embed_server_secret(tmp_path):
