@@ -1,0 +1,29 @@
+name: core autonomous memory v0.97
+
+on:
+  push:
+    branches:
+      - experiment/core-autonomous-memory-v097
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  autonomous-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[test]'
+      - name: Autonomous v0.97 gate
+        run: python -m pytest -q tests/test_autonomous_memory_v097.py
+      - name: Existing core regression suite
+        run: python -m pytest -q
