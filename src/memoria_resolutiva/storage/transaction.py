@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import uuid
 from dataclasses import dataclass
@@ -17,24 +18,49 @@ class StorageIntegrityError(RuntimeError):
 
 
 @dataclass(frozen=True, slots=True)
+class TxEntry:
+    key: str
+    previous: bytes | None
+
+    def to_json(self) -> dict:
+        return {
+            "key": self.key,
+            "previous": None if self.previous is None else base64.b64encode(self.previous).decode("ascii"),
+        }
+
+    @classmethod
+    def from_json(cls, data: dict) -> "TxEntry":
+        raw = data.get("previous")
+        return cls(str(data["key"]), None if raw is None else base64.b64decode(raw))
+
+
+@dataclass(frozen=True, slots=True)
 class TxManifest:
     tx_id: str
-    keys: tuple[str, ...]
+    entries: tuple[TxEntry, ...]
+
+    @property
+    def keys(self) -> tuple[str, ...]:
+        return tuple(entry.key for entry in self.entries)
 
     def encode(self) -> bytes:
-        return json.dumps({"tx_id": self.tx_id, "keys": list(self.keys)}, sort_keys=True, separators=(",", ":")).encode()
+        return json.dumps(
+            {"tx_id": self.tx_id, "entries": [entry.to_json() for entry in self.entries]},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
 
     @classmethod
     def decode(cls, raw: bytes) -> "TxManifest":
         data = json.loads(raw.decode())
-        return cls(str(data["tx_id"]), tuple(str(k) for k in data["keys"]))
+        return cls(str(data["tx_id"]), tuple(TxEntry.from_json(row) for row in data["entries"]))
 
 
 class TransactionWriter:
-    """Small external transaction protocol layered on durable KV operations.
+    """External transaction protocol layered on durable KV operations.
 
-    Commit is the visibility boundary. Incomplete transactions can be rolled
-    back from their manifest during recovery.
+    Commit is the visibility boundary. The manifest records previous values so
+    recovery can restore an interrupted update rather than deleting valid data.
     """
 
     def __init__(self, db: BinaryKV):
@@ -43,7 +69,13 @@ class TransactionWriter:
     def write(self, entries: Iterable[tuple[str, bytes]], *, tx_id: str | None = None) -> str:
         tx_id = tx_id or uuid.uuid4().hex
         rows = tuple(entries)
-        manifest = TxManifest(tx_id, tuple(key for key, _ in rows))
+        seen: set[str] = set()
+        if any(key in seen or seen.add(key) for key, _ in rows):
+            raise ValueError("transaction contains duplicate keys")
+        manifest = TxManifest(
+            tx_id,
+            tuple(TxEntry(key, self.db.get(key)) for key, _ in rows),
+        )
         prefix = f"tx:{tx_id}"
         self.db.put_sync(f"{prefix}:begin", b"1")
         self.db.put_sync(f"{prefix}:manifest", manifest.encode())
@@ -57,8 +89,11 @@ class TransactionWriter:
         raw = self.db.get(f"{prefix}:manifest")
         if raw is not None:
             manifest = TxManifest.decode(raw)
-            for key in manifest.keys:
-                self.db.delete_sync(key)
+            for entry in manifest.entries:
+                if entry.previous is None:
+                    self.db.delete_sync(entry.key)
+                else:
+                    self.db.put_sync(entry.key, entry.previous)
         for suffix in ("commit", "manifest", "begin"):
             self.db.delete_sync(f"{prefix}:{suffix}")
 
