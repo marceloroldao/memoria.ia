@@ -158,9 +158,9 @@ class AutonomousTextMemoryV098:
         q_weight = sum(self._idf(term) for term in q)
         shared_weight = sum(self._idf(term) for term in shared)
         weighted_query_coverage = shared_weight / q_weight if q_weight else 0.0
-        # Preserve most of the proven v0.97 score while allowing rare evidence to
-        # break common-token ties. This keeps thresholds comparable to v0.97.
-        return 0.70 * base + 0.30 * weighted_query_coverage
+        # Preserve the proven v0.97 score while giving rare evidence enough weight
+        # to defeat large groups of memories sharing only generic vocabulary.
+        return 0.60 * base + 0.40 * weighted_query_coverage
 
     def _rank(self, terms: tuple[str, ...], candidate_ids: set[str]) -> list[tuple[str, float]]:
         # v0.96 discriminative idea: rare shared terms decide candidate priority.
