@@ -14,14 +14,23 @@ if not exist ".env" (
 )
 
 for /f "usebackq tokens=1,* delims==" %%A in (".env") do (
-  set "_k=%%A"
-  set "_v=%%B"
   call :setenv "%%A" "%%B"
 )
 
 if not defined MEMORIA_DATA_DIR set "MEMORIA_DATA_DIR=%CD%\data"
 if "%MEMORIA_DATA_DIR%"=="/data" set "MEMORIA_DATA_DIR=%CD%\data"
 if not exist "%MEMORIA_DATA_DIR%" mkdir "%MEMORIA_DATA_DIR%"
+
+rem Native Windows rule: once the UI has persisted an LLM configuration,
+rem that local product configuration becomes authoritative on restart.
+rem Docker/server deployments keep their existing environment-override behavior.
+if exist "%MEMORIA_DATA_DIR%\product-config.json" (
+  set "MEMORIA_LLM_PROVIDER="
+  set "MEMORIA_LLM_MODEL="
+  set "OPENAI_API_KEY="
+  set "GEMINI_API_KEY="
+  echo Using persisted local LLM configuration.
+)
 
 if not defined MEMORIA_API_KEY (
   echo ERROR: MEMORIA_API_KEY is empty in .env
