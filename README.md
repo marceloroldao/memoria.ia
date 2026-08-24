@@ -4,9 +4,9 @@ Experimental implementation of **Resolutive Memory**, a memory architecture buil
 
 ## Enterprise product alpha
 
-Active product branch: `product/enterprise-alpha`
+Current product release candidate: **v0.99.0-alpha.1** (`0.99.0a1` package version).
 
-The repository is being evolved incrementally into an installable PC/VPS/server product without replacing the validated research core. The current alpha layer includes:
+The first installable PC/VPS/server product alpha is now integrated into `main` while preserving the validated research core. The current alpha layer includes:
 
 - organization-scoped memory isolation;
 - node and entitlement metadata boundaries;
@@ -21,12 +21,15 @@ The repository is being evolved incrementally into an installable PC/VPS/server 
 - baseline-vs-Memoria context comparison;
 - live sanitized integration evidence for Gemini and OpenAI;
 - validated product-state backup/restore with SHA-256 integrity and organization checks;
-- dedicated product-alpha acceptance and CI workflows.
+- operator backup/restore CLI and clean deployment runbook;
+- dedicated product-alpha acceptance, security-negative and CI workflows.
 
 Semantic routing from v0.96 remains experimental and is not required for the exact-key product-alpha contract. MA2A federation/PKI also remains outside the local product-alpha boundary.
 
 Product-alpha documentation:
 
+- `docs/PRODUCT_ALPHA_RC1.md`
+- `docs/PRODUCT_ALPHA_OPERATIONS.md`
 - `docs/ENTERPRISE_ALPHA_GAP_ANALYSIS.md`
 - `docs/SECURITY_ALPHA.md`
 
@@ -34,10 +37,12 @@ The alpha must not be described as production-secure. The HTTP status surface in
 
 ## Archived release
 
-Latest archived release: **v0.95.1**  
+Latest already archived research release: **v0.95.1**  
 Zenodo DOI: **10.5281/zenodo.21973472**
 
-## Current maturity — v0.95 series
+The Product Alpha `v0.99.0-alpha.1` is the current release candidate and must not be tagged/published until the pre-release metadata gate passes.
+
+## Current maturity — v0.95 research series
 
 The v0.95 stable research line consolidates controlled experimental stages covering:
 
@@ -90,6 +95,8 @@ The v0.95 implementation was promoted from `v0.95.0rc1` after a clean Google Col
 
 The `v0.95.1` release is a metadata-only citation interoperability fix over the validated v0.95.0 implementation.
 
+The `v0.99.0-alpha.1` product candidate passed the product-alpha container, persistence/restart, backup/restore, application-isolation, security-negative, context-benchmark and acceptance gates before merge to `main`.
+
 ## Install and test
 
 Research baseline:
@@ -106,7 +113,7 @@ python -m pip install -e '.[product,test]'
 python -m pytest -q
 ```
 
-Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.example` on the product branch.
+Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.example`.
 
 Representative recent experiments:
 
@@ -135,7 +142,7 @@ The v0.95 facade exposes:
 
 See `docs/API_V090.md` and subsequent persistence/result notes.
 
-The product branch wraps the stable memory facade behind a versioned HTTP/service boundary; experimental semantic-router internals are intentionally not part of the product-alpha API contract.
+The product layer wraps the stable memory facade behind a versioned HTTP/service boundary; experimental semantic-router internals are intentionally not part of the product-alpha API contract.
 
 ## Research status
 
