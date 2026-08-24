@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "memoria-resolutiva"
-version = "0.95.0"
-description = "Experimental resolutive memory with online lifecycle, multitrajectory routing, distributed consensus, and persistence"
+version = "0.99.0a1"
+description = "Resolutive Memory research core with an installable PC/server product-alpha layer"
 requires-python = ">=3.10"
 license = {text = "Resolutive Research and Non-Commercial License (RRNCL) v1.0"}
 authors = [{name = "Marcelo Roldão Matos"}]
@@ -13,6 +13,14 @@ authors = [{name = "Marcelo Roldão Matos"}]
 [project.optional-dependencies]
 test = ["pytest>=8"]
 word2vec = ["gensim>=4.3"]
+product = [
+  "fastapi>=0.116,<1",
+  "uvicorn>=0.35,<1",
+  "httpx>=0.28,<1",
+]
+
+[tool.setuptools.package-data]
+memoria_resolutiva = ["webui/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

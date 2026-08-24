@@ -1,0 +1,44 @@
+name: live OpenAI provider validation
+
+on:
+  push:
+    branches:
+      - product/enterprise-alpha
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-openai:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'live(openai): validate')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_LIVE_MODEL: gpt-5.6-luna
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Verify secret is configured
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo 'OPENAI_API_KEY repository secret is not configured.'
+            exit 1
+          fi
+      - name: Install product dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product]'
+      - name: Run one live OpenAI call through Memoria.ia
+        run: python experiments/live_openai_validation.py
+      - name: Upload sanitized validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-openai-validation
+          path: benchmark-results/live-openai-v1.json
+          if-no-files-found: error
+          retention-days: 30

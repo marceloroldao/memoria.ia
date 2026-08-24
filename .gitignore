@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+
+# Local product configuration and data
+.env
+.env.*
+!.env.example
+memoria-data/
+/data/
+*.snapshot
+enterprise.manifest.json
+
+# Editor/OS
+.DS_Store
+.vscode/
+.idea/

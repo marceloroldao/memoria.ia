@@ -1,0 +1,204 @@
+name: product-alpha validation
+
+on:
+  push:
+    branches:
+      - product/enterprise-alpha
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Existing and product tests
+        run: python -m pytest -q
+      - name: Product identity boundary
+        run: python -m pytest -q tests/test_product_identity.py
+      - name: Product service boundary
+        run: python -m pytest -q tests/test_product_service.py
+      - name: Product HTTP API
+        run: python -m pytest -q tests/test_product_http.py
+      - name: Product web UI
+        run: python -m pytest -q tests/test_product_webui.py
+      - name: Product LLM adapter and metrics
+        run: python -m pytest -q tests/test_product_chat.py
+      - name: Product context benchmark
+        run: python experiments/product_context_benchmark.py --output benchmark-results/product-context-v1.json
+      - name: Upload product benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-context-benchmark
+          path: benchmark-results/product-context-v1.json
+          if-no-files-found: error
+      - name: Build container
+        run: docker build -t memoria-enterprise-alpha .
+      - name: Container smoke test with persistent restart
+        env:
+          MEMORIA_TEST_KEY: ci-only-not-a-secret
+        run: |
+          docker volume create memoria-ci-data
+          docker run -d --name memoria-ci \
+            -p 18080:8080 \
+            -e MEMORIA_ORGANIZATION_ID=ci-org \
+            -e MEMORIA_ORGANIZATION_NAME='CI Organization' \
+            -e MEMORIA_API_KEY="$MEMORIA_TEST_KEY" \
+            -e MEMORIA_DATA_DIR=/data \
+            -e MEMORIA_LLM_PROVIDER=mock \
+            -v memoria-ci-data:/data \
+            memoria-enterprise-alpha
+
+          python - <<'PY'
+          import json, time, urllib.request
+
+          def request(path, *, method='GET', body=None, key=None):
+              headers = {'Content-Type': 'application/json'}
+              if key:
+                  headers['X-Memoria-Key'] = key
+              data = None if body is None else json.dumps(body).encode()
+              req = urllib.request.Request('http://127.0.0.1:18080' + path, data=data, headers=headers, method=method)
+              with urllib.request.urlopen(req, timeout=5) as response:
+                  return response.status, json.loads(response.read().decode())
+
+          for _ in range(30):
+              try:
+                  status, body = request('/api/v1/health')
+                  if status == 200 and body.get('status') == 'ok':
+                      break
+              except Exception:
+                  time.sleep(1)
+          else:
+              raise SystemExit('container health endpoint did not become ready')
+
+          with urllib.request.urlopen('http://127.0.0.1:18080/', timeout=5) as response:
+              page = response.read().decode()
+              assert response.status == 200
+              assert 'Memoria.ia Enterprise' in page
+          with urllib.request.urlopen('http://127.0.0.1:18080/ui/app.js', timeout=5) as response:
+              script = response.read().decode()
+              assert response.status == 200
+              assert '/api/v1/chat/compare' in script
+
+          status, body = request('/api/v1/memories', method='POST', key='ci-only-not-a-secret', body={
+              'knowledge_id': 'ci-memory',
+              'key': 'ci.persistence',
+              'payload': {'value': 'survives-restart'},
+          })
+          assert status == 201, (status, body)
+
+          status, body = request('/api/v1/chat/compare', method='POST', key='ci-only-not-a-secret', body={
+              'message': 'what value is stored?',
+              'baseline_context': [
+                  'value survives restart',
+                  'irrelevant repeated baseline context ' * 20,
+              ],
+              'memory_keys': ['ci.persistence'],
+          })
+          assert status == 200, (status, body)
+          assert body['baseline']['metrics']['provider'] == 'mock', body
+          assert body['memoria']['metrics']['memory_hits'] == 1, body
+          assert body['token_reduction'] > 0, body
+          PY
+
+          docker stop memoria-ci
+          docker rm memoria-ci
+
+          docker run -d --name memoria-ci \
+            -p 18080:8080 \
+            -e MEMORIA_ORGANIZATION_ID=ci-org \
+            -e MEMORIA_ORGANIZATION_NAME='CI Organization' \
+            -e MEMORIA_API_KEY="$MEMORIA_TEST_KEY" \
+            -e MEMORIA_DATA_DIR=/data \
+            -e MEMORIA_LLM_PROVIDER=mock \
+            -v memoria-ci-data:/data \
+            memoria-enterprise-alpha
+
+          python - <<'PY'
+          import json, time, urllib.request
+
+          def request(path, *, method='GET', body=None, key=None):
+              headers = {'Content-Type': 'application/json'}
+              if key:
+                  headers['X-Memoria-Key'] = key
+              data = None if body is None else json.dumps(body).encode()
+              req = urllib.request.Request('http://127.0.0.1:18080' + path, data=data, headers=headers, method=method)
+              with urllib.request.urlopen(req, timeout=5) as response:
+                  return response.status, json.loads(response.read().decode())
+
+          for _ in range(30):
+              try:
+                  status, _ = request('/api/v1/health')
+                  if status == 200:
+                      break
+              except Exception:
+                  time.sleep(1)
+          else:
+              raise SystemExit('restarted container did not become ready')
+
+          status, body = request('/api/v1/memories/resolve', method='POST', key='ci-only-not-a-secret', body={
+              'key': 'ci.persistence'
+          })
+          assert status == 200, (status, body)
+          assert body['hit'] is True, body
+          assert body['record']['payload'] == {'value': 'survives-restart'}, body
+          PY
+      - name: Operator backup and clean restore
+        run: |
+          mkdir -p benchmark-results/backup-source benchmark-results/backup-restored
+          docker cp memoria-ci:/data/memory.snapshot benchmark-results/backup-source/memory.snapshot
+          docker cp memoria-ci:/data/enterprise.manifest.json benchmark-results/backup-source/enterprise.manifest.json
+          python scripts/product_backup.py create \
+            --data-dir benchmark-results/backup-source \
+            --output benchmark-results/product-alpha-backup.zip
+          python scripts/product_backup.py validate \
+            --backup benchmark-results/product-alpha-backup.zip
+          python scripts/product_backup.py restore \
+            --backup benchmark-results/product-alpha-backup.zip \
+            --data-dir benchmark-results/backup-restored \
+            --organization-id ci-org
+          python - <<'PY'
+          from memoria_resolutiva.product_service import EnterpriseMemoryService
+          from memoria_resolutiva.product_identity import MemoryScope
+
+          service = EnterpriseMemoryService.load('benchmark-results/backup-restored')
+          record = service.recall(MemoryScope('ci-org'), ('key', 'ci.persistence'))
+          assert record is not None
+          assert record.payload == {'value': 'survives-restart'}
+          PY
+      - name: Product alpha acceptance gate
+        run: |
+          python experiments/product_alpha_acceptance.py \
+            --tests-passed \
+            --container-validated \
+            --benchmark-file benchmark-results/product-context-v1.json \
+            --output benchmark-results/product-alpha-acceptance-v1.json \
+            --fail-on-fail
+      - name: Upload product alpha acceptance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-alpha-acceptance
+          path: benchmark-results/product-alpha-acceptance-v1.json
+          if-no-files-found: error
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs memoria-ci || true
+      - name: Cleanup container resources
+        if: always()
+        run: |
+          docker rm -f memoria-ci || true
+          docker volume rm memoria-ci-data || true

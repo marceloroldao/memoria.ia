@@ -1,0 +1,26 @@
+{
+  "validation": "memoria.ia-live-openai-v1",
+  "validated_at_utc": "2026-08-23T20:43:12Z",
+  "workflow_run_id": 32665259817,
+  "source_commit": "d1af5e21582c94ea8d4454525f016abd555450fb",
+  "provider": "openai",
+  "model": "gpt-5.6-luna",
+  "memory_hits": 1,
+  "memory_misses": 0,
+  "retrieved_context_chars": 31,
+  "context_sent_chars": 31,
+  "input_tokens": 50,
+  "output_tokens": 6,
+  "memory_latency_ms": 0.06753499997103063,
+  "llm_latency_ms": 2074.9739880000106,
+  "external_calls": 1,
+  "response_nonempty": true,
+  "response_mentions_expected_fact": true,
+  "secret_recorded": false,
+  "artifact_zip_sha256": "eb643d926f9aac4127a3ac097cadd51ec9339130f2728ae39a8a9f72a9ba13b8",
+  "limitations": [
+    "This is a single live-provider validation, not a provider availability guarantee.",
+    "The result demonstrates adapter integration and measured usage, not answer quality across general tasks.",
+    "No pricing/cost claim is inferred from this single call."
+  ]
+}
