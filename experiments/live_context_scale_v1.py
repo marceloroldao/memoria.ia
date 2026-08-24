@@ -20,7 +20,7 @@ DEFAULT_SIZES = (1000, 5000, 10000, 50000)
 
 
 def make_baseline_context(target_tokens: int) -> str:
-    # ProductChatService reports provider token counts when available.  This
+    # ProductChatService reports provider token counts when available. This
     # generator only targets an approximate scale before the live call; the
     # report records the provider's actual input-token count.
     target_chars = target_tokens * 4
@@ -140,6 +140,7 @@ def run(provider: str, sizes: tuple[int, ...]) -> dict:
 
     report = {
         "benchmark": "memoria.ia-live-context-scale-v1",
+        "experimental_isolation": True,
         "provider": provider,
         "sizes": list(sizes),
         "cases": cases,
