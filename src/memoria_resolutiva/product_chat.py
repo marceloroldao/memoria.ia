@@ -6,7 +6,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Iterable, Literal, Sequence
 
-from .autonomous_memory_v097 import AutonomousTextMemoryV097
+from .autonomous_memory_v098 import AutonomousTextMemoryV098
 from .llm_adapter import LLMAdapter, estimate_tokens
 from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
@@ -35,6 +35,8 @@ class ChatMetrics:
     autonomous_best_score: float = 0.0
     autonomous_memories_created: int = 0
     autonomous_abstentions: int = 0
+    autonomous_indexed: int = 0
+    autonomous_raw_candidates: int = 0
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -67,7 +69,7 @@ class ProductChatService:
         memory: EnterpriseMemoryService,
         adapter: LLMAdapter,
         *,
-        autonomous_memory: AutonomousTextMemoryV097 | None = None,
+        autonomous_memory: AutonomousTextMemoryV098 | None = None,
         autonomous_snapshot: str | Path | None = None,
     ):
         self.memory = memory
@@ -95,6 +97,7 @@ class ProductChatService:
         memory_ms = 0.0
         retrieved: list[str] = []
         auto_candidates = auto_selected = auto_created = auto_abstentions = 0
+        auto_indexed = auto_raw_candidates = 0
         auto_decision: str | None = None
         auto_best = 0.0
         explicit_keys = tuple(memory_keys)
@@ -120,6 +123,8 @@ class ProductChatService:
                 auto_decision = query.metrics.decision
                 auto_best = query.metrics.best_score
                 auto_abstentions = query.metrics.abstentions
+                auto_indexed = query.metrics.indexed_count
+                auto_raw_candidates = query.metrics.raw_candidate_count
                 if query.hits:
                     hits += len(query.hits)
                     retrieved.extend(hit.text for hit in query.hits)
@@ -138,6 +143,7 @@ class ProductChatService:
         if mode == 'memoria' and not explicit_keys and self.autonomous_memory is not None and _should_observe(message):
             decision = self.autonomous_memory.observe(message, provenance='product-chat:user')
             auto_created += decision.metrics.memories_created
+            auto_indexed = decision.metrics.indexed_count
             self._persist_autonomous()
             if auto_decision is None or auto_decision == 'unresolved':
                 auto_decision = decision.decision
@@ -165,6 +171,8 @@ class ProductChatService:
             autonomous_best_score=auto_best,
             autonomous_memories_created=auto_created,
             autonomous_abstentions=auto_abstentions,
+            autonomous_indexed=auto_indexed,
+            autonomous_raw_candidates=auto_raw_candidates,
         )
         return ChatResult(text=response.text, context=context, metrics=metrics)
 
