@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 
 from .autonomous_memory_v097 import AutonomousTextMemoryV097
+from .autonomous_memory_v098 import AutonomousTextMemoryV098
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
@@ -31,10 +32,26 @@ def _optional_float(name: str) -> float | None:
     return float(value)
 
 
-def _autonomous_state(data_dir: Path) -> tuple[AutonomousTextMemoryV097, Path]:
-    snapshot = data_dir / 'autonomous-memory-v097.json'
-    memory = AutonomousTextMemoryV097.load(snapshot) if snapshot.exists() else AutonomousTextMemoryV097()
-    return memory, snapshot
+def _autonomous_state(data_dir: Path) -> tuple[AutonomousTextMemoryV098, Path]:
+    snapshot_v098 = data_dir / 'autonomous-memory-v098.json'
+    if snapshot_v098.exists():
+        return AutonomousTextMemoryV098.load(snapshot_v098), snapshot_v098
+
+    # One-way, non-destructive migration from the validated v0.97 snapshot.
+    # The source file is retained so rollback remains possible during alpha.
+    snapshot_v097 = data_dir / 'autonomous-memory-v097.json'
+    if snapshot_v097.exists():
+        old = AutonomousTextMemoryV097.load(snapshot_v097)
+        migrated = AutonomousTextMemoryV098(
+            threshold=old.threshold,
+            ambiguity_margin=old.ambiguity_margin,
+        )
+        for record in old.records():
+            migrated.observe(record.text, provenance=record.provenance)
+        migrated.save(snapshot_v098)
+        return migrated, snapshot_v098
+
+    return AutonomousTextMemoryV098(), snapshot_v098
 
 
 def _build_chat_service(
