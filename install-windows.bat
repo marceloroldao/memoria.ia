@@ -1,28 +1,56 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 cd /d "%~dp0"
 
 echo ========================================
 echo Memoria.ia - Native Windows installer
 echo ========================================
 
-where py >nul 2>nul
-if %errorlevel%==0 (
-  set "PY=py"
-) else (
-  where python >nul 2>nul
-  if errorlevel 1 (
-    echo.
-    echo ERROR: Python 3.10 or newer was not found.
-    echo Install Python from https://www.python.org/downloads/windows/
-    echo Enable "Add python.exe to PATH" during installation.
-    exit /b 1
-  )
-  set "PY=python"
+set "PY="
+
+rem Prefer Python 3.12 because the product alpha and CI are validated on it.
+py -3.12 --version >nul 2>nul
+if not errorlevel 1 set "PY=py -3.12"
+
+if not defined PY (
+  py -3.11 --version >nul 2>nul
+  if not errorlevel 1 set "PY=py -3.11"
 )
 
-%PY% -c "import sys; assert sys.version_info >= (3,10), 'Python 3.10 or newer is required'"
-if errorlevel 1 exit /b 1
+if not defined PY (
+  py -3.10 --version >nul 2>nul
+  if not errorlevel 1 set "PY=py -3.10"
+)
+
+if not defined PY (
+  where python >nul 2>nul
+  if not errorlevel 1 (
+    for /f "tokens=2 delims= " %%V in ('python --version 2^>^&1') do set "PYVER=%%V"
+    python -c "import sys; raise SystemExit(0 if (3,10) <= sys.version_info[:2] <= (3,12) else 1)"
+    if not errorlevel 1 set "PY=python"
+  )
+)
+
+if not defined PY (
+  echo.
+  echo ERROR: A supported Python version was not found.
+  echo Memoria.ia native Windows alpha currently supports Python 3.10, 3.11, or 3.12.
+  echo Python 3.12 is recommended and used by CI.
+  echo Install it from https://www.python.org/downloads/windows/
+  echo Then run this installer again.
+  exit /b 1
+)
+
+for /f "delims=" %%V in ('%PY% --version 2^>^&1') do set "SELECTED_PY=%%V"
+echo Using %SELECTED_PY%
+
+if exist ".venv\Scripts\python.exe" (
+  ".venv\Scripts\python.exe" -c "import sys; raise SystemExit(0 if (3,10) <= sys.version_info[:2] <= (3,12) else 1)"
+  if errorlevel 1 (
+    echo Existing .venv uses an unsupported Python version. Recreating it...
+    rmdir /S /Q ".venv"
+  )
+)
 
 if not exist ".venv\Scripts\python.exe" (
   echo Creating isolated Python environment...
