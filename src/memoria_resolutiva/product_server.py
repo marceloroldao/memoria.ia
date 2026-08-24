@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import os
 
+from .autonomous_memory_v097 import AutonomousTextMemoryV097
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
@@ -30,16 +31,26 @@ def _optional_float(name: str) -> float | None:
     return float(value)
 
 
+def _autonomous_state(data_dir: Path) -> tuple[AutonomousTextMemoryV097, Path]:
+    snapshot = data_dir / 'autonomous-memory-v097.json'
+    memory = AutonomousTextMemoryV097.load(snapshot) if snapshot.exists() else AutonomousTextMemoryV097()
+    return memory, snapshot
+
+
 def _build_chat_service(
     memory: EnterpriseMemoryService,
     configuration: ProductConfigurationStore,
+    data_dir: Path,
 ) -> ProductChatService | None:
     persisted = configuration.llm()
     provider = os.getenv("MEMORIA_LLM_PROVIDER", persisted.provider or "").strip().lower()
     if not provider:
         return None
+
+    autonomous, autonomous_snapshot = _autonomous_state(data_dir)
+
     if provider == "mock":
-        return ProductChatService(memory, MockLLMAdapter())
+        return ProductChatService(memory, MockLLMAdapter(), autonomous_memory=autonomous, autonomous_snapshot=autonomous_snapshot)
 
     model = os.getenv("MEMORIA_LLM_MODEL", persisted.model or "").strip()
     if not model:
@@ -58,7 +69,7 @@ def _build_chat_service(
                 output_usd_per_million=_optional_float("MEMORIA_LLM_OUTPUT_USD_PER_MILLION"),
             ),
         )
-        return ProductChatService(memory, adapter)
+        return ProductChatService(memory, adapter, autonomous_memory=autonomous, autonomous_snapshot=autonomous_snapshot)
     if provider == "gemini":
         api_key = os.getenv("GEMINI_API_KEY", persisted.api_key or "")
         if not api_key:
@@ -72,7 +83,7 @@ def _build_chat_service(
                 output_usd_per_million=_optional_float("MEMORIA_LLM_OUTPUT_USD_PER_MILLION"),
             ),
         )
-        return ProductChatService(memory, adapter)
+        return ProductChatService(memory, adapter, autonomous_memory=autonomous, autonomous_snapshot=autonomous_snapshot)
     raise RuntimeError(f"unsupported MEMORIA_LLM_PROVIDER: {provider}")
 
 
@@ -102,17 +113,14 @@ def build_app():
         capabilities=frozenset(filter(None, os.getenv("MEMORIA_CAPABILITIES", "memory.read,memory.write").split(","))),
     )
 
-    application_registry = ApplicationRegistry(
-        organization_id,
-        data_dir / "applications.json",
-    )
+    application_registry = ApplicationRegistry(organization_id, data_dir / "applications.json")
 
     app = create_app(
         service,
         api_key=api_key,
         data_dir=data_dir,
         node_identity=node_identity,
-        chat_service=_build_chat_service(service, configuration),
+        chat_service=_build_chat_service(service, configuration, data_dir),
         application_registry=application_registry,
     )
     attach_configuration_routes(app, api_key=api_key, store=configuration)
