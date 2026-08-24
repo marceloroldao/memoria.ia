@@ -1,0 +1,115 @@
+name: windows autonomous v0.98 validation
+
+on:
+  push:
+    branches:
+      - product/windows-autonomous-v098
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-autonomous-v098:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Native installer
+        shell: cmd
+        run: install-windows.bat
+      - name: Install tests
+        shell: cmd
+        run: .venv\Scripts\python.exe -m pip install -e ".[product,test]"
+      - name: Configure clean local mock instance
+        shell: powershell
+        run: |
+          @'
+          MEMORIA_ORGANIZATION_ID=ci-windows-auto-v098
+          MEMORIA_ORGANIZATION_NAME=CI Windows Autonomous v098
+          MEMORIA_NODE_ID=memoria:ci-windows-auto-v098:primary
+          MEMORIA_API_KEY=ci-windows-autonomous-v098-key
+          MEMORIA_DATA_DIR=/data
+          MEMORIA_LLM_PROVIDER=mock
+          MEMORIA_LLM_MODEL=
+          MEMORIA_LICENSE_STATUS=not_configured
+          MEMORIA_LICENSE_PLAN=early_access
+          MEMORIA_LICENSE_MAX_NODES=1
+          MEMORIA_LICENSE_CAPABILITIES=memory.read,memory.write,chat.use
+          '@ | Set-Content -Encoding ascii .env
+      - name: Seed a real v0.97 snapshot for migration
+        shell: powershell
+        run: |
+          @'
+          from pathlib import Path
+          from memoria_resolutiva.autonomous_memory_v097 import AutonomousTextMemoryV097
+          root = Path('data')
+          root.mkdir(exist_ok=True)
+          memory = AutonomousTextMemoryV097()
+          memory.observe('Meu carro de teste se chama Orion e a cor dele é verde.')
+          memory.observe('O equipamento Atlas usa marcador Quasar.')
+          memory.save(root / 'autonomous-memory-v097.json')
+          '@ | Set-Content -Encoding utf8 seed_v097.py
+          .venv\Scripts\python.exe seed_v097.py
+          if (-not (Test-Path 'data\autonomous-memory-v097.json')) { throw 'v0.97 seed snapshot missing' }
+      - name: Start v0.98 native server and migrate state
+        shell: powershell
+        run: |
+          $p = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c start-memoria.bat' -PassThru
+          $p.Id | Set-Content server.pid
+          for ($i=0; $i -lt 40; $i++) {
+            try {
+              $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/health' -TimeoutSec 2
+              if ($health.status -eq 'ok') { break }
+            } catch { Start-Sleep -Seconds 1 }
+          }
+          if (-not (Test-Path 'data\autonomous-memory-v097.json')) { throw 'migration deleted rollback snapshot' }
+          if (-not (Test-Path 'data\autonomous-memory-v098.json')) { throw 'v0.98 migrated snapshot missing' }
+      - name: Verify migrated recall and v0.98 metrics
+        shell: powershell
+        run: |
+          $headers = @{ 'X-Memoria-Key' = 'ci-windows-autonomous-v098-key' }
+          $question = @{ message = 'Qual é o nome e a cor do meu carro de teste?'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $r = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $question
+          if ($r.metrics.memory_hits -lt 1) { throw 'migrated v0.97 memory was not recalled by v0.98' }
+          if (($r.context -join ' ') -notmatch 'Orion') { throw 'Orion was not recovered after migration' }
+          if (($r.context -join ' ') -notmatch 'verde') { throw 'color was not recovered after migration' }
+          if ($null -eq $r.metrics.autonomous_indexed) { throw 'v0.98 indexed metric missing' }
+          if ($null -eq $r.metrics.autonomous_raw_candidates) { throw 'v0.98 raw candidate metric missing' }
+      - name: Add and retrieve a new v0.98 memory
+        shell: powershell
+        run: |
+          $headers = @{ 'X-Memoria-Key' = 'ci-windows-autonomous-v098-key' }
+          $fact = @{ message = 'O módulo Vega usa o identificador raro Nebulon para sincronização.'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $first = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $fact
+          if ($first.metrics.autonomous_memories_created -ne 1) { throw 'new v0.98 fact was not stored' }
+          $q = @{ message = 'Qual módulo usa o identificador Nebulon?'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $second = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $q
+          if ($second.metrics.memory_hits -lt 1) { throw 'new v0.98 fact was not recalled' }
+          if (($second.context -join ' ') -notmatch 'Vega') { throw 'Vega was not recovered' }
+          if (($second.context -join ' ') -notmatch 'Nebulon') { throw 'Nebulon was not recovered' }
+      - name: Restart and verify migrated and new state
+        shell: powershell
+        run: |
+          if (Test-Path server.pid) { Stop-Process -Id (Get-Content server.pid) -Force -ErrorAction SilentlyContinue }
+          Start-Sleep -Seconds 2
+          $p = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c start-memoria.bat' -PassThru
+          $p.Id | Set-Content server.pid
+          for ($i=0; $i -lt 40; $i++) {
+            try { $h = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/health' -TimeoutSec 2; if ($h.status -eq 'ok') { break } } catch { Start-Sleep -Seconds 1 }
+          }
+          $headers = @{ 'X-Memoria-Key' = 'ci-windows-autonomous-v098-key' }
+          $q1 = @{ message = 'Qual é a cor do meu carro de teste?'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $r1 = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $q1
+          if (($r1.context -join ' ') -notmatch 'verde') { throw 'migrated state did not survive restart' }
+          $q2 = @{ message = 'Qual módulo usa Nebulon?'; mode = 'memoria'; memory_keys = @(); scope = @{ application_id = 'web' } } | ConvertTo-Json -Depth 5
+          $r2 = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8080/api/v1/chat' -Headers $headers -ContentType 'application/json' -Body $q2
+          if (($r2.context -join ' ') -notmatch 'Vega') { throw 'new v0.98 state did not survive restart' }
+      - name: Stop server
+        if: always()
+        shell: powershell
+        run: |
+          if (Test-Path server.pid) { Stop-Process -Id (Get-Content server.pid) -Force -ErrorAction SilentlyContinue }
