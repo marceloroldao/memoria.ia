@@ -6,6 +6,10 @@ on:
       - experiment/core-autonomous-v100
   workflow_dispatch:
 
+concurrency:
+  group: autonomous-v100-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
