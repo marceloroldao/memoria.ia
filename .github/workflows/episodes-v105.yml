@@ -1,0 +1,39 @@
+name: episodes v1.05 regression
+
+on:
+  push:
+    branches:
+      - experiment/episodes-v105
+  workflow_dispatch:
+
+concurrency:
+  group: episodes-v105-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Full regression
+        run: python -m pytest -q
+      - name: v1.04 event baseline
+        run: python -m pytest -q tests/test_events_v104.py
+      - name: v1.05 episodic gate
+        run: python -m pytest -q tests/test_episodes_v105.py
