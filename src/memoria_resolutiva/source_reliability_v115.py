@@ -26,6 +26,7 @@ class ReliableCorroboratedEdgeV115:
     accepted_origins: tuple[str, ...]
     origin_reliabilities: tuple[tuple[str, float], ...]
     reliability_floor: float
+    accepted_best_confidence: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,6 +163,7 @@ class SourceReliabilityCorroborationMemoryV115(IndependentCorroborationMemoryV11
         )
         out: list[ReliableCorroboratedEdgeV115] = []
         for wrapped in baseline_edges:
+            confidence_by_origin = dict(wrapped.origin_confidences)
             accepted: list[tuple[str, float]] = []
             for origin in wrapped.independent_origins:
                 reliability = self.origin_reliability(origin, metric=reliability_metric)
@@ -172,12 +174,16 @@ class SourceReliabilityCorroborationMemoryV115(IndependentCorroborationMemoryV11
             if len(accepted) < min_independent_origins:
                 continue
             accepted.sort(key=lambda pair: pair[0])
+            accepted_origins = tuple(origin for origin, _ in accepted)
             out.append(
                 ReliableCorroboratedEdgeV115(
                     edge=wrapped,
-                    accepted_origins=tuple(origin for origin, _ in accepted),
+                    accepted_origins=accepted_origins,
                     origin_reliabilities=tuple(accepted),
                     reliability_floor=min(score for _, score in accepted),
+                    accepted_best_confidence=max(
+                        confidence_by_origin[origin] for origin in accepted_origins
+                    ),
                 )
             )
         return tuple(out)
@@ -232,7 +238,7 @@ class SourceReliabilityCorroborationMemoryV115(IndependentCorroborationMemoryV11
                 key=lambda item: (
                     -len(item.accepted_origins),
                     -item.reliability_floor,
-                    -item.edge.best_confidence,
+                    -item.accepted_best_confidence,
                     self._key(item.edge.edge.object),
                     item.edge.edge.predicate,
                 ),
@@ -257,7 +263,9 @@ class SourceReliabilityCorroborationMemoryV115(IndependentCorroborationMemoryV11
                     paths.append(
                         ReliableCorroboratedPathV115(
                             path=base_path,
-                            confidence=min(item.edge.best_confidence for item in new_wrappers),
+                            confidence=min(
+                                item.accepted_best_confidence for item in new_wrappers
+                            ),
                             independent_origin_floor=min(
                                 len(item.accepted_origins) for item in new_wrappers
                             ),
@@ -266,7 +274,7 @@ class SourceReliabilityCorroborationMemoryV115(IndependentCorroborationMemoryV11
                             ),
                             origins_by_edge=tuple(item.accepted_origins for item in new_wrappers),
                             edge_confidences=tuple(
-                                item.edge.best_confidence for item in new_wrappers
+                                item.accepted_best_confidence for item in new_wrappers
                             ),
                             edge_reliabilities=tuple(
                                 item.reliability_floor for item in new_wrappers
