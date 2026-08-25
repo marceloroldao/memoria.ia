@@ -59,18 +59,35 @@ def test_v100_prefilter_removes_generic_posting_mass_at_100k():
     assert pre.used
     assert pre.complement_upper_bound < memory.threshold
     assert pre.posting_pool_count < 100
+    assert pre.scoring_mode == 'adaptive'
     assert adaptive.exact_scored <= 8
 
 
 def test_v100_falls_back_to_broad_pool_when_query_is_too_generic():
-    memory = AutonomousTextMemoryV100()
+    memory = AutonomousTextMemoryV100(one_shot_threshold=16)
     for i in range(30):
         memory.observe(f'O sensor unidade {i} mede temperatura na sala comum.')
     result = memory.query('Qual sensor mede temperatura na sala comum?')
     pre = memory.prefilter_stats()
     assert result.abstained
     assert pre.certified
+    assert pre.scoring_mode == 'one_shot'
     assert memory.adaptive_stats().certified
+    assert memory.adaptive_stats().exact_scored == pre.posting_pool_count
+
+
+def test_v100_one_shot_generic_path_matches_v098():
+    baseline = AutonomousTextMemoryV098(ambiguity_margin=0.20)
+    candidate = AutonomousTextMemoryV100(ambiguity_margin=0.20, one_shot_threshold=8)
+    for i in range(80):
+        text = f'O sensor unidade {i} mede temperatura na sala comum.'
+        baseline.observe(text)
+        candidate.observe(text)
+    expected = baseline.query('Qual sensor mede temperatura na sala comum?', top_k=5)
+    actual = candidate.query('Qual sensor mede temperatura na sala comum?', top_k=5)
+    assert _signature(actual) == _signature(expected)
+    assert candidate.prefilter_stats().scoring_mode == 'one_shot'
+    assert candidate.adaptive_stats().certified
 
 
 def test_v100_prefilter_does_not_change_observe_conflict_path():
