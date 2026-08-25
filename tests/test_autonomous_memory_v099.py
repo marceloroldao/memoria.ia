@@ -40,28 +40,31 @@ def test_v099_matches_v098_on_representative_corpus():
     ]
     for query in queries:
         assert _signature(adaptive.query(query)) == _signature(baseline.query(query))
+        assert adaptive.adaptive_stats().certified
 
 
 def test_v099_reduces_exact_scoring_for_rare_discriminative_term():
     memory = AutonomousTextMemoryV099(candidate_ladder=(8, 16, 32, 64, 128))
-    # Bulk index is intentional here: this gate measures retrieval scaling, not
-    # ingestion throughput. All 100k distractors share generic query vocabulary.
+    # All 100k distractors share one generic query term, so they are candidates,
+    # but their mathematically safe upper bound stays below the acceptance threshold.
     total = 100_000
     for i in range(total):
-        text = f'Projeto protocolo status ativo unidade sensor{i}'
+        text = f'Projeto unidade sensor{i} rotina estável'
         record = AutonomousRecordV098(f'bulk:{i:08d}', text, _terms(text), i + 1, 'scale-gate')
         memory._index(record)
-    target_text = 'Projeto protocolo status Quasar ativo unidade central'
+    target_text = 'Projeto Quasar telemetria orbital canal alfa pressão térmica central'
     target = AutonomousRecordV098('bulk:target', target_text, _terms(target_text), total + 1, 'scale-gate')
     memory._index(target)
     memory._sequence = total + 1
 
-    result = memory.query('Qual é o status do protocolo Quasar do projeto?')
+    result = memory.query('Projeto Quasar telemetria orbital canal alfa pressão térmica?')
     stats = memory.adaptive_stats()
     assert result.hits and 'Quasar' in result.hits[0].text
     assert stats.raw_candidates == total + 1
     assert stats.exact_scored <= 8
     assert stats.retained_fraction < 0.0001
+    assert stats.certified
+    assert stats.max_unseen_upper_bound < memory.threshold
     assert result.metrics.candidate_count == stats.exact_scored
     assert result.metrics.raw_candidate_count == stats.raw_candidates
 
@@ -76,6 +79,31 @@ def test_v099_expands_conservatively_when_small_prefix_is_ambiguous():
     assert result.metrics.decision == 'unresolved'
     assert stats.expanded
     assert stats.exact_scored == stats.raw_candidates
+    assert stats.certified
+
+
+def test_v099_certificate_prevents_heuristic_prefix_misranking():
+    # Same shared query terms give equal cheap priority, while record lengths make
+    # exact v0.98 scores different. A heuristic prefix can stop on the wrong item;
+    # the upper-bound certificate must continue until the true v0.98 winner is fixed.
+    baseline = AutonomousTextMemoryV098()
+    adaptive = AutonomousTextMemoryV099(candidate_ladder=(2, 4, 8), ambiguity_margin=0.01)
+    records = [
+        ('a-long', 'projeto quasar extra um dois três quatro cinco seis sete oito nove dez'),
+        ('b-long', 'projeto quasar extra um dois três quatro cinco seis sete oito'),
+        ('z-short', 'projeto quasar'),
+    ]
+    for seq, (mid, text) in enumerate(records, 1):
+        for memory in (baseline, adaptive):
+            record = AutonomousRecordV098(mid, text, _terms(text), seq, 'certificate-gate')
+            memory._index(record)
+            memory._sequence = seq
+    query = 'projeto quasar'
+    expected = baseline.query(query, top_k=1)
+    actual = adaptive.query(query, top_k=1)
+    assert _signature(actual) == _signature(expected)
+    assert actual.hits and actual.hits[0].memory_id == 'z-short'
+    assert adaptive.adaptive_stats().certified
 
 
 def test_v099_exact_lookup_contract_is_unchanged():
