@@ -12,6 +12,7 @@ class StructuralEdgeV111:
     object: str
     memory_id: str
     source_text: str
+    namespace: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,13 +44,22 @@ class StructuralInferenceMemoryV111:
     navigation such as Delta --powers--> controlador --belongs_to--> Orion
     without claiming that Delta itself ``belongs_to`` Orion or that any edge is
     causal, taxonomic, or universally true.
+
+    Structural traversal is namespace-scoped. A path may only use frames that
+    were observed in the namespace selected by ``infer_path``. ``None`` is a
+    real scope for observations made without an explicit namespace; it is not a
+    wildcard. This prevents a path from being assembled across independent
+    memory contexts.
     """
 
     def __init__(self, **kwargs) -> None:
         self.guided = OntologyGuidedMemoryV110(**kwargs)
+        self._memory_namespaces: dict[str, set[str | None]] = {}
 
     def observe(self, text: str, *, provenance: str = "conversation", namespace: str | None = None):
-        return self.guided.observe(text, provenance=provenance, namespace=namespace)
+        observed = self.guided.observe(text, provenance=provenance, namespace=namespace)
+        self._memory_namespaces.setdefault(observed.memory_id, set()).add(namespace)
+        return observed
 
     def query(self, text: str, *, top_k: int = 3):
         return self.guided.query(text, top_k=top_k)
@@ -66,21 +76,25 @@ class StructuralInferenceMemoryV111:
     def consolidate_ontology(self):
         return self.guided.consolidate_ontology()
 
-    def _frames(self):
+    def _frames(self, *, namespace: str | None = None):
         convergent = (
             self.guided.ontology.relational.abstraction_memory.pattern_memory
             .episodic.events_memory.temporal.convergent
         )
-        return tuple(convergent._frames.values())
+        return tuple(
+            frame
+            for frame in convergent._frames.values()
+            if namespace in self._memory_namespaces.get(frame.memory_id, set())
+        )
 
     @staticmethod
     def _key(value: str) -> str:
         return " ".join(value.strip().split()).casefold()
 
-    def edges(self) -> tuple[StructuralEdgeV111, ...]:
+    def edges(self, *, namespace: str | None = None) -> tuple[StructuralEdgeV111, ...]:
         out: list[StructuralEdgeV111] = []
         seen: set[tuple[str, str, str, str]] = set()
-        for frame in self._frames():
+        for frame in self._frames(namespace=namespace):
             for relation in frame.relations:
                 key = (
                     self._key(relation.subject),
@@ -98,6 +112,7 @@ class StructuralInferenceMemoryV111:
                         object=relation.object,
                         memory_id=frame.memory_id,
                         source_text=frame.source_text,
+                        namespace=namespace,
                     )
                 )
         return tuple(out)
@@ -109,6 +124,7 @@ class StructuralInferenceMemoryV111:
         *,
         max_hops: int = 3,
         max_paths: int = 5,
+        namespace: str | None = None,
     ) -> StructuralInferenceResultV111:
         if max_hops < 1:
             raise ValueError("max_hops must be >= 1")
@@ -119,7 +135,7 @@ class StructuralInferenceMemoryV111:
         target_key = self._key(target)
         adjacency: dict[str, list[StructuralEdgeV111]] = {}
         canonical: dict[str, str] = {}
-        for edge in self.edges():
+        for edge in self.edges(namespace=namespace):
             s, o = self._key(edge.subject), self._key(edge.object)
             adjacency.setdefault(s, []).append(edge)
             canonical.setdefault(s, edge.subject)
