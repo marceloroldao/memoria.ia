@@ -51,6 +51,17 @@ def test_v112_multivalued_powers_relation_is_not_false_conflict():
     assert mem.infer_path("Delta", "sensor").inferred
 
 
+def test_v112_multivalued_relations_accumulate_across_epochs():
+    mem = TemporalStructuralInferenceMemoryV112()
+    mem.observe("A fonte Delta alimenta o controlador.", epoch=0)
+    mem.observe("A fonte Delta alimenta o módulo.", epoch=1)
+
+    assert mem.infer_path("Delta", "controlador").inferred
+    assert mem.infer_path("Delta", "módulo").inferred
+    assert mem.infer_path("Delta", "controlador", epoch=0).inferred
+    assert not mem.infer_path("Delta", "módulo", epoch=0).inferred
+
+
 def test_v112_temporal_state_is_namespace_scoped():
     mem = TemporalStructuralInferenceMemoryV112()
     mem.observe("O controlador Delta pertence ao Orion.", namespace="alpha", epoch=0)
