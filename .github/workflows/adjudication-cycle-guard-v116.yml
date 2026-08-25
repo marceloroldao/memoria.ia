@@ -1,0 +1,39 @@
+name: adjudication cycle guard v1.16 regression
+
+on:
+  push:
+    branches:
+      - experiment/adjudication-cycle-guard-v116
+  workflow_dispatch:
+
+concurrency:
+  group: adjudication-cycle-guard-v116-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Full regression
+        run: python -m pytest -q
+      - name: v1.15 source reliability baseline
+        run: python -m pytest -q tests/test_source_reliability_v115.py tests/test_source_reliability_v115_filtered_confidence.py tests/test_source_reliability_v23.py
+      - name: v1.16 adjudication cycle gate
+        run: python -m pytest -q tests/test_adjudication_cycle_guard_v116.py
