@@ -32,16 +32,19 @@ class StructuralConflictV112:
 class TemporalStructuralInferenceMemoryV112(StructuralInferenceMemoryV111):
     """v1.11 structural inference plus temporal state and conflict abstention.
 
-    Observations are append-only. For each (subject, predicate, namespace) slot,
-    only evidence from the latest epoch visible to the query is active. A later
-    epoch therefore represents a state transition rather than a contradiction.
+    Observations are append-only. Single-valued relation slots use only evidence
+    from the latest epoch visible to the query, so a later observation represents
+    a state transition rather than a contradiction with older state.
 
     Some predicates are single-valued by contract (currently has_voltage,
-    belongs_to and located_at). If the latest visible epoch contains multiple
-    different values for one of these slots, the slot is conflicted and every
-    edge from that slot is withheld from structural traversal. Multi-valued
-    predicates such as powers and measures remain usable when several values are
-    observed in the same epoch.
+    belongs_to and located_at). If their latest visible epoch contains multiple
+    different values, the slot is conflicted and every edge from that slot is
+    withheld from structural traversal.
+
+    Multi-valued predicates such as powers and measures accumulate visible,
+    source-backed edges across epochs. A later additional target does not retract
+    an earlier target. Explicit retraction semantics are intentionally outside
+    this version's contract.
     """
 
     def __init__(self, **kwargs) -> None:
@@ -117,7 +120,10 @@ class TemporalStructuralInferenceMemoryV112(StructuralInferenceMemoryV111):
                 continue
             latest_epoch = max(edge.epoch for edge in slot)
             active = [edge for edge in slot if edge.epoch == latest_epoch]
-            values = sorted({self._key(edge.object): edge.object for edge in active}.values(), key=str.casefold)
+            values = sorted(
+                {self._key(edge.object): edge.object for edge in active}.values(),
+                key=str.casefold,
+            )
             if len(values) <= 1:
                 continue
             out.append(
@@ -152,10 +158,11 @@ class TemporalStructuralInferenceMemoryV112(StructuralInferenceMemoryV111):
         for (subject_key, predicate), slot in grouped.items():
             latest_epoch = max(edge.epoch for edge in slot)
             for edge in slot:
-                if edge.epoch != latest_epoch:
-                    continue
-                if (subject_key, predicate, latest_epoch) in conflicted:
-                    continue
+                if predicate in _SINGLE_VALUE_PREDICATES:
+                    if edge.epoch != latest_epoch:
+                        continue
+                    if (subject_key, predicate, latest_epoch) in conflicted:
+                        continue
                 key = (
                     subject_key,
                     predicate,
