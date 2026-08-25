@@ -46,10 +46,10 @@ class ConflictAwareStructuralMemoryV112:
     """Structural inference that rejects conflicted/stale evidence.
 
     v1.12 keeps the v1.11 source-backed graph, but qualifies every edge against
-    the v1.03 temporal predicate state. Stable current edges receive confidence
-    1.0. The current edge of an explicit temporal transition receives 0.9.
-    Historical values from a changed predicate are considered stale and are not
-    admissible. Any predicate currently marked conflict is also inadmissible.
+    the same v1.03 temporal state that owns the convergent frames used by that
+    graph. Stable current edges receive confidence 1.0. The current edge of an
+    explicit temporal transition receives 0.9. Historical values from a changed
+    predicate are stale and inadmissible; conflicted predicates are inadmissible.
 
     Path confidence is the minimum confidence of its constituent edges. No new
     factual predicate is synthesized from a path.
@@ -81,9 +81,13 @@ class ConflictAwareStructuralMemoryV112:
         return " ".join(value.strip().split()).casefold()
 
     def _temporal(self):
+        # StructuralInferenceMemoryV111._frames() reads from
+        # ...episodic.events_memory.temporal.convergent.  Qualifying edges must
+        # therefore consult that exact TemporalSemanticMemoryV103 instance,
+        # not the outer TemporalEventMemoryV104 wrapper.
         return (
             self.structural.guided.ontology.relational.abstraction_memory.pattern_memory
-            .episodic.events_memory.temporal
+            .episodic.events_memory.temporal.convergent
         )
 
     def qualify_edge(self, edge: StructuralEdgeV111) -> QualifiedEdgeV112:
