@@ -70,3 +70,35 @@ def test_v111_preserves_original_autonomous_query_path():
     mem.observe("Meu carro de teste se chama Orion e a cor dele é verde.")
     result = mem.query("Qual é o nome e a cor do meu carro de teste?")
     assert result.hits
+
+
+def test_v111_namespace_scope_blocks_cross_namespace_path():
+    mem = StructuralInferenceMemoryV111()
+    mem.observe("A fonte Delta alimenta o controlador.", namespace="alpha")
+    mem.observe("O controlador controlador pertence ao Orion.", namespace="beta")
+
+    assert not mem.infer_path("Delta", "Orion", namespace="alpha").inferred
+    assert not mem.infer_path("Delta", "Orion", namespace="beta").inferred
+    assert not mem.infer_path("Delta", "Orion").inferred
+
+
+def test_v111_namespace_scope_allows_path_inside_same_namespace():
+    mem = StructuralInferenceMemoryV111()
+    mem.observe("A fonte Delta alimenta o controlador.", namespace="alpha")
+    mem.observe("O controlador controlador pertence ao Orion.", namespace="alpha")
+    mem.observe("A fonte Vega alimenta o sensor.", namespace="beta")
+
+    result = mem.infer_path("Delta", "Orion", namespace="alpha")
+    assert result.inferred
+    assert result.paths[0].nodes == ("Delta", "controlador", "Orion")
+    assert all(edge.namespace == "alpha" for edge in mem.edges(namespace="alpha"))
+
+
+def test_v111_default_scope_is_not_namespace_wildcard():
+    mem = StructuralInferenceMemoryV111()
+    mem.observe("A fonte Delta alimenta o controlador.")
+    mem.observe("O controlador controlador pertence ao Orion.", namespace="alpha")
+
+    assert mem.infer_path("Delta", "controlador").inferred
+    assert not mem.infer_path("Delta", "Orion").inferred
+    assert not mem.infer_path("Delta", "controlador", namespace="alpha").inferred
