@@ -8,12 +8,13 @@ from typing import Iterable, Literal, Sequence
 
 from .autonomous_memory_v097 import AutonomousTextMemoryV097
 from .autonomous_memory_v098 import AutonomousTextMemoryV098
+from .autonomous_memory_v099 import AutonomousTextMemoryV099
 from .llm_adapter import LLMAdapter, estimate_tokens
 from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
 
 ChatMode = Literal["baseline", "memoria"]
-AutonomousMemory = AutonomousTextMemoryV097 | AutonomousTextMemoryV098
+AutonomousMemory = AutonomousTextMemoryV097 | AutonomousTextMemoryV098 | AutonomousTextMemoryV099
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +40,9 @@ class ChatMetrics:
     autonomous_abstentions: int = 0
     autonomous_indexed: int = 0
     autonomous_raw_candidates: int = 0
+    autonomous_pruning_certified: bool = False
+    autonomous_retained_fraction: float = 0.0
+    autonomous_max_unseen_upper_bound: float = 0.0
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -100,6 +104,9 @@ class ProductChatService:
         retrieved: list[str] = []
         auto_candidates = auto_selected = auto_created = auto_abstentions = 0
         auto_indexed = auto_raw_candidates = 0
+        auto_pruning_certified = False
+        auto_retained_fraction = 0.0
+        auto_max_unseen_upper_bound = 0.0
         auto_decision: str | None = None
         auto_best = 0.0
         explicit_keys = tuple(memory_keys)
@@ -125,6 +132,12 @@ class ProductChatService:
                 auto_abstentions = query.metrics.abstentions
                 auto_indexed = int(getattr(query.metrics, 'indexed_count', len(self.autonomous_memory)))
                 auto_raw_candidates = int(getattr(query.metrics, 'raw_candidate_count', query.metrics.candidate_count))
+                adaptive_stats = getattr(self.autonomous_memory, 'adaptive_stats', None)
+                if callable(adaptive_stats):
+                    stats = adaptive_stats()
+                    auto_pruning_certified = bool(getattr(stats, 'certified', False))
+                    auto_retained_fraction = float(getattr(stats, 'retained_fraction', 0.0))
+                    auto_max_unseen_upper_bound = float(getattr(stats, 'max_unseen_upper_bound', 0.0))
                 if query.hits:
                     hits += len(query.hits)
                     retrieved.extend(hit.text for hit in query.hits)
@@ -171,6 +184,9 @@ class ProductChatService:
             autonomous_abstentions=auto_abstentions,
             autonomous_indexed=auto_indexed,
             autonomous_raw_candidates=auto_raw_candidates,
+            autonomous_pruning_certified=auto_pruning_certified,
+            autonomous_retained_fraction=auto_retained_fraction,
+            autonomous_max_unseen_upper_bound=auto_max_unseen_upper_bound,
         )
         return ChatResult(text=response.text, context=context, metrics=metrics)
 
