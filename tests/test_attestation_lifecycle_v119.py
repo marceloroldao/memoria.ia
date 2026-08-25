@@ -86,20 +86,20 @@ def test_expired_authority_cannot_satisfy_verified_authority_gate():
         expires_at_epoch=2,
     )
     m.observe(
-        "Alpha powers Beta",
+        "A fonte Delta alimenta o controlador.",
         provenance="sensor-a",
         origin="origin-a",
         confidence=0.9,
     )
     assert m.infer_path(
-        "Alpha",
-        "Beta",
+        "Delta",
+        "controlador",
         require_verified_authorities=True,
         authority_epoch=1,
     ).inferred
     assert not m.infer_path(
-        "Alpha",
-        "Beta",
+        "Delta",
+        "controlador",
         require_verified_authorities=True,
         authority_epoch=2,
     ).inferred
@@ -110,14 +110,14 @@ def test_v118_behavior_is_preserved_when_lifecycle_has_no_expiry_or_revocation()
     m.register_origin_authority("origin-a", "authority-a")
     m.attest_authority("authority-a", issuer_id="root", attestation_id="att-1")
     m.observe(
-        "Alpha powers Beta",
+        "A fonte Delta alimenta o controlador.",
         provenance="sensor-a",
         origin="origin-a",
         confidence=0.9,
     )
     result = m.infer_path(
-        "Alpha",
-        "Beta",
+        "Delta",
+        "controlador",
         require_verified_authorities=True,
         min_verified_authorities=1,
     )
