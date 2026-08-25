@@ -1,0 +1,39 @@
+name: temporal state v1.03 regression
+
+on:
+  push:
+    branches:
+      - experiment/temporal-state-v103
+  workflow_dispatch:
+
+concurrency:
+  group: temporal-state-v103-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Full regression
+        run: python -m pytest -q
+      - name: v1.02 convergence baseline
+        run: python -m pytest -q tests/test_semantic_convergence_v102.py
+      - name: v1.03 temporal state gate
+        run: python -m pytest -q tests/test_temporal_state_v103.py
