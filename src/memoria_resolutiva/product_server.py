@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 
 from .autonomous_memory_v099 import AutonomousTextMemoryV099
-from .autonomous_upgrade_v098 import load_or_migrate_autonomous_v098
+from .autonomous_upgrade_v099 import load_autonomous_v099
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
@@ -33,11 +33,7 @@ def _optional_float(name: str) -> float | None:
 
 
 def _autonomous_state(data_dir: Path) -> tuple[AutonomousTextMemoryV099, Path]:
-    # Ensure older v0.97 state is first migrated into the backward-compatible
-    # v0.98 snapshot format. v0.99 intentionally keeps that exact on-disk format,
-    # so rollback to v0.98 remains possible without rewriting user data.
-    _legacy_memory, snapshot, _migrated = load_or_migrate_autonomous_v098(data_dir)
-    memory = AutonomousTextMemoryV099.load(snapshot) if snapshot.exists() else AutonomousTextMemoryV099()
+    memory, snapshot, _migrated = load_autonomous_v099(data_dir)
     return memory, snapshot
 
 
