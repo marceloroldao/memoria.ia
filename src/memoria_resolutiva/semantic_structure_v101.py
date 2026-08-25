@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from typing import Iterable
 
 from .autonomous_memory_v100 import AutonomousTextMemoryV100
 
-_WORD = re.compile(r"[\wÀ-ÿ.-]+", re.UNICODE)
 _VOLT = re.compile(r"\b(\d+(?:[.,]\d+)?)\s*(V|kV|mV)\b", re.IGNORECASE)
 _CURRENT = re.compile(r"\b(\d+(?:[.,]\d+)?)\s*(A|mA)\b", re.IGNORECASE)
 
@@ -43,33 +41,13 @@ class StructuredObservationV101:
 
 
 class DeterministicSemanticExtractorV101:
-    """Conservative Portuguese-first semantic structure extractor.
+    """Conservative Portuguese-first semantic structure extractor."""
 
-    This layer deliberately extracts only patterns that can be justified by the
-    surface text. It does not invoke an LLM, embeddings, or a neural model. When
-    a sentence does not match a supported pattern it returns an unresolved frame
-    rather than inventing a relation.
-    """
-
-    _TYPE_PATTERNS = (
-        re.compile(r"\b(?:a|o)\s+(fonte|sensor|controlador|inversor|módulo|modulo|estação|estacao|robô|robo)\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][\wÀ-ÿ.-]*)", re.IGNORECASE),
-    )
-    _PROVIDES = re.compile(
-        r"\b(?:a|o)\s+(?P<kind>fonte|módulo|modulo|inversor)\s+(?P<name>[\wÀ-ÿ.-]+)\s+(?:fornece|entrega)\s+(?P<value>\d+(?:[.,]\d+)?\s*(?:mV|V|kV))\s+(?:ao|à|a)\s+(?P<target>[\wÀ-ÿ.-]+)",
-        re.IGNORECASE,
-    )
-    _POWERS = re.compile(
-        r"\b(?:a|o)\s+(?P<kind>fonte|módulo|modulo|inversor)\s+(?P<name>[\wÀ-ÿ.-]+)\s+(?:alimenta|energiza)\s+(?:o|a)?\s*(?P<target>[\wÀ-ÿ.-]+)",
-        re.IGNORECASE,
-    )
-    _MEASURES = re.compile(
-        r"\b(?:o|a)\s+(?P<kind>sensor)\s+(?P<name>[\wÀ-ÿ.-]+)\s+(?:mede|monitora)\s+(?P<quantity>[\wÀ-ÿ.-]+)(?:\s+(?:na|no)\s+(?P<place>.+?))?[.!?]?$",
-        re.IGNORECASE,
-    )
-    _BELONGS = re.compile(
-        r"\b(?:o|a)\s+(?P<kind>[\wÀ-ÿ.-]+)\s+(?P<name>[\wÀ-ÿ.-]+)\s+pertence\s+(?:ao|à|a)\s+(?P<target>[\wÀ-ÿ.-]+)",
-        re.IGNORECASE,
-    )
+    _TYPE_PATTERNS = (re.compile(r"\b(?:a|o)\s+(fonte|sensor|controlador|inversor|módulo|modulo|estação|estacao|robô|robo)\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][\wÀ-ÿ.-]*)", re.IGNORECASE),)
+    _PROVIDES = re.compile(r"\b(?:a|o)\s+(?P<kind>fonte|módulo|modulo|inversor)\s+(?P<name>[\wÀ-ÿ.-]+)\s+(?:fornece|entrega)\s+(?P<value>\d+(?:[.,]\d+)?\s*(?:mV|V|kV))\s+(?:ao|à|a)\s+(?P<target>[\wÀ-ÿ.-]+)", re.IGNORECASE)
+    _POWERS = re.compile(r"\b(?:a|o)\s+(?P<kind>fonte|módulo|modulo|inversor)\s+(?P<name>[\wÀ-ÿ.-]+)\s+(?:alimenta|energiza)\s+(?:o|a)?\s*(?P<target>[\wÀ-ÿ.-]+)", re.IGNORECASE)
+    _MEASURES = re.compile(r"\b(?:o|a)\s+(?P<kind>sensor)\s+(?P<name>[\wÀ-ÿ.-]+)\s+(?:mede|monitora)\s+(?P<quantity>[\wÀ-ÿ.-]+)(?:\s+(?:na|no)\s+(?P<place>.+?))?[.!?]?$", re.IGNORECASE)
+    _BELONGS = re.compile(r"\b(?:o|a)\s+(?P<kind>[\wÀ-ÿ.-]+)\s+(?P<name>[\wÀ-ÿ.-]+)\s+pertence\s+(?:ao|à|a)\s+(?P<target>[\wÀ-ÿ.-]+)", re.IGNORECASE)
 
     @staticmethod
     def _norm(value: str) -> str:
@@ -94,57 +72,29 @@ class DeterministicSemanticExtractorV101:
         for pattern in self._TYPE_PATTERNS:
             for match in pattern.finditer(text):
                 entity(match.group(2), match.group(1))
-
         m = self._PROVIDES.search(text)
         if m:
-            src = entity(m.group("name"), m.group("kind"))
-            target = entity(m.group("target"))
-            value = self._norm(m.group("value"))
+            src, target, value = entity(m.group("name"), m.group("kind")), entity(m.group("target")), self._norm(m.group("value"))
             concepts.update({"tensão", "alimentação"})
-            relations.extend((
-                RelationV101(src, "has_voltage", value, 1.0),
-                RelationV101(src, "powers", target, 0.95),
-            ))
-
+            relations.extend((RelationV101(src, "has_voltage", value, 1.0), RelationV101(src, "powers", target, 0.95)))
         m = self._POWERS.search(text)
         if m:
-            src = entity(m.group("name"), m.group("kind"))
-            target = entity(m.group("target"))
+            src, target = entity(m.group("name"), m.group("kind")), entity(m.group("target"))
             concepts.add("alimentação")
             relations.append(RelationV101(src, "powers", target, 1.0))
-
         m = self._MEASURES.search(text)
         if m:
-            src = entity(m.group("name"), m.group("kind"))
-            quantity = self._norm(m.group("quantity"))
+            src, quantity = entity(m.group("name"), m.group("kind")), self._norm(m.group("quantity"))
             concepts.add(quantity.casefold())
             relations.append(RelationV101(src, "measures", quantity, 1.0))
             if m.group("place"):
-                place = entity(self._norm(m.group("place")))
-                relations.append(RelationV101(src, "located_at", place, 0.9))
-
+                relations.append(RelationV101(src, "located_at", entity(self._norm(m.group("place"))), 0.9))
         m = self._BELONGS.search(text)
         if m:
-            src = entity(m.group("name"), m.group("kind"))
-            target = entity(m.group("target"))
-            relations.append(RelationV101(src, "belongs_to", target, 1.0))
-
-        voltage = _VOLT.search(text)
-        if voltage:
-            concepts.add("tensão")
-        current = _CURRENT.search(text)
-        if current:
-            concepts.add("corrente")
-
-        unresolved = not relations
-        return SemanticFrameV101(
-            source_text=text,
-            memory_id=memory_id,
-            entities=tuple(sorted(entities.values(), key=lambda e: (e.name.casefold(), e.kind))),
-            relations=tuple(relations),
-            concepts=tuple(sorted(concepts)),
-            unresolved=unresolved,
-        )
+            relations.append(RelationV101(entity(m.group("name"), m.group("kind")), "belongs_to", entity(m.group("target")), 1.0))
+        if _VOLT.search(text): concepts.add("tensão")
+        if _CURRENT.search(text): concepts.add("corrente")
+        return SemanticFrameV101(text, memory_id, tuple(sorted(entities.values(), key=lambda e: (e.name.casefold(), e.kind))), tuple(relations), tuple(sorted(concepts)), not relations)
 
 
 class StructuredAutonomousMemoryV101:
@@ -155,8 +105,10 @@ class StructuredAutonomousMemoryV101:
         self.extractor = DeterministicSemanticExtractorV101()
         self._frames: dict[str, SemanticFrameV101] = {}
 
-    def observe(self, text: str, *, namespace: str = "default") -> StructuredObservationV101:
-        observed = self.memory.observe(text, namespace=namespace)
+    def observe(self, text: str, *, provenance: str = "conversation", namespace: str | None = None) -> StructuredObservationV101:
+        # v1.00 inherits the v0.98 contract (provenance, not namespace).
+        effective_provenance = provenance if namespace is None else f"{provenance}:{namespace}"
+        observed = self.memory.observe(text, provenance=effective_provenance)
         frame = self.extractor.extract(text, memory_id=observed.memory_id)
         self._frames[observed.memory_id] = frame
         return StructuredObservationV101(observed.memory_id, observed.decision, frame)
@@ -169,11 +121,7 @@ class StructuredAutonomousMemoryV101:
 
     def frames_for_entity(self, name: str) -> tuple[SemanticFrameV101, ...]:
         needle = name.casefold()
-        return tuple(
-            frame
-            for frame in self._frames.values()
-            if any(entity.name.casefold() == needle for entity in frame.entities)
-        )
+        return tuple(frame for frame in self._frames.values() if any(entity.name.casefold() == needle for entity in frame.entities))
 
     def relations_for(self, name: str) -> tuple[RelationV101, ...]:
         needle = name.casefold()
