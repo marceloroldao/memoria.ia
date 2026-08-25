@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
-from .autonomous_memory_v099 import AutonomousTextMemoryV099
+from .autonomous_memory_v098 import AutonomousTextMemoryV098, _terms
+from .autonomous_memory_v099 import AdaptiveCandidateStatsV099, AutonomousTextMemoryV099
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,10 +15,11 @@ class PostingPrefilterStatsV100:
     complement_upper_bound: float
     certified: bool
     used: bool
+    scoring_mode: str = 'adaptive'
 
 
 class AutonomousTextMemoryV100(AutonomousTextMemoryV099):
-    """Experimental certified postings prefilter before v0.99 scoring.
+    """Certified postings prefilter plus adaptive/one-shot scoring selection.
 
     v0.99 proves when exact scoring can stop, but it still builds a bound for each
     candidate in the union of all query postings. v1.00 first proves that every
@@ -26,11 +28,11 @@ class AutonomousTextMemoryV100(AutonomousTextMemoryV099):
     the candidate pool from union(posting(term) for term in R), without visiting
     postings for the remaining generic terms.
 
-    Certificate: assume a record contains every query term outside R and none in
-    R. This is the best possible record excluded by union(postings(R)). Applying
-    the same safe v0.98 score upper bound used by v0.99, if that complement bound
-    is below threshold, no excluded record can be eligible. The v0.99 certificate
-    then handles ranking/top-k inside the retained pool.
+    For selective pools, the certified v0.99 progressive scorer is retained. For
+    large/generic pools, v1.00 intentionally falls back to one v0.98-style exact
+    ranking pass over the already-certified posting pool. This avoids repeated
+    expansion/sorting in the v0.99 worst case while preserving exactly the same
+    score, threshold, ambiguity and conflict rules.
 
     Semantic discovery is still not O(1); this is a postings-level reduction.
     """
@@ -41,13 +43,18 @@ class AutonomousTextMemoryV100(AutonomousTextMemoryV099):
         threshold: float = 0.42,
         ambiguity_margin: float = 0.04,
         candidate_ladder: Iterable[int] = (8, 16, 32, 64, 128),
+        one_shot_threshold: int = 2048,
     ) -> None:
         super().__init__(
             threshold=threshold,
             ambiguity_margin=ambiguity_margin,
             candidate_ladder=candidate_ladder,
         )
+        if one_shot_threshold < 2:
+            raise ValueError('one_shot_threshold must be >= 2')
+        self.one_shot_threshold = int(one_shot_threshold)
         self._query_prefilter_active = False
+        self._query_prefilter_pool: set[str] | None = None
         self._prefilter_stats = PostingPrefilterStatsV100(0, (), 0, 0.0, True, False)
 
     def prefilter_stats(self) -> PostingPrefilterStatsV100:
@@ -72,8 +79,6 @@ class AutonomousTextMemoryV100(AutonomousTextMemoryV099):
             self._prefilter_stats = PostingPrefilterStatsV100(0, (), 0, 0.0, True, False)
             return set()
 
-        # Prefer terms that remove much possible score mass while touching few
-        # records. Deterministic tie-breaking keeps repeated runs identical.
         weighted_terms = []
         total_weight = sum(self._idf(term) for term in unique)
         for term in unique:
@@ -92,13 +97,11 @@ class AutonomousTextMemoryV100(AutonomousTextMemoryV099):
             bound = self._complement_bound(terms, required_any)
 
         if bound >= self.threshold:
-            # Defensive fallback. With all terms excluded the true maximum is 0,
-            # so this branch should not normally be reachable.
             pool: set[str] = set()
             for term in unique:
                 pool.update(self._inverted.get(term, ()))
             self._prefilter_stats = PostingPrefilterStatsV100(
-                len(unique), tuple(sorted(unique)), len(pool), bound, False, False
+                len(unique), tuple(sorted(unique)), len(pool), bound, False, False, 'one_shot'
             )
             return pool
 
@@ -106,6 +109,7 @@ class AutonomousTextMemoryV100(AutonomousTextMemoryV099):
         for term in required_any:
             pool.update(self._inverted.get(term, ()))
         used = required_any != unique
+        mode = 'one_shot' if len(pool) > self.one_shot_threshold else 'adaptive'
         self._prefilter_stats = PostingPrefilterStatsV100(
             query_terms=len(unique),
             required_any_terms=tuple(sorted(required_any)),
@@ -113,17 +117,64 @@ class AutonomousTextMemoryV100(AutonomousTextMemoryV099):
             complement_upper_bound=bound,
             certified=True,
             used=used,
+            scoring_mode=mode,
         )
         return pool
 
     def _candidate_ids(self, terms: tuple[str, ...]) -> set[str]:
         if self._query_prefilter_active:
+            if self._query_prefilter_pool is not None:
+                return set(self._query_prefilter_pool)
             return self._certified_posting_pool(terms)
         return super()._candidate_ids(terms)
 
     def query(self, text: str, *, top_k: int = 3):
+        clean = ' '.join(text.strip().split())
+        terms = _terms(clean)
+        if not clean or not terms:
+            raise ValueError('query must contain meaningful text')
+        if top_k < 1:
+            raise ValueError('top_k must be >= 1')
+
+        pool = self._certified_posting_pool(terms)
+        self._query_prefilter_pool = pool
         self._query_prefilter_active = True
         try:
-            return super().query(text, top_k=top_k)
+            if len(pool) > self.one_shot_threshold:
+                # One exact ranking pass is faster and simpler than repeated
+                # progressive expansions for a broad/generic certified pool.
+                result = AutonomousTextMemoryV098.query(self, clean, top_k=top_k)
+                self._last_adaptive_stats = AdaptiveCandidateStatsV099(
+                    raw_candidates=len(pool),
+                    exact_scored=len(pool),
+                    attempted_limits=(len(pool),) if pool else (),
+                    final_limit=len(pool),
+                    expanded=False,
+                    retained_fraction=1.0 if pool else 0.0,
+                    max_unseen_upper_bound=0.0,
+                    certified=True,
+                )
+                self._prefilter_stats = PostingPrefilterStatsV100(
+                    query_terms=self._prefilter_stats.query_terms,
+                    required_any_terms=self._prefilter_stats.required_any_terms,
+                    posting_pool_count=self._prefilter_stats.posting_pool_count,
+                    complement_upper_bound=self._prefilter_stats.complement_upper_bound,
+                    certified=self._prefilter_stats.certified,
+                    used=self._prefilter_stats.used,
+                    scoring_mode='one_shot',
+                )
+                return result
+            result = AutonomousTextMemoryV099.query(self, clean, top_k=top_k)
+            self._prefilter_stats = PostingPrefilterStatsV100(
+                query_terms=self._prefilter_stats.query_terms,
+                required_any_terms=self._prefilter_stats.required_any_terms,
+                posting_pool_count=self._prefilter_stats.posting_pool_count,
+                complement_upper_bound=self._prefilter_stats.complement_upper_bound,
+                certified=self._prefilter_stats.certified,
+                used=self._prefilter_stats.used,
+                scoring_mode='adaptive',
+            )
+            return result
         finally:
             self._query_prefilter_active = False
+            self._query_prefilter_pool = None
