@@ -1,0 +1,39 @@
+name: ontology guided v1.10 regression
+
+on:
+  push:
+    branches:
+      - experiment/ontology-guided-retrieval-v110
+  workflow_dispatch:
+
+concurrency:
+  group: ontology-guided-v110-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Full regression
+        run: python -m pytest -q
+      - name: v1.09 candidate ontology baseline
+        run: python -m pytest -q tests/test_candidate_ontology_v109.py
+      - name: v1.10 ontology guided retrieval gate
+        run: python -m pytest -q tests/test_ontology_guided_retrieval_v110.py
