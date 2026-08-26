@@ -5,9 +5,7 @@ on:
     branches:
       - experiment/recovery-quorum-v122
       - experiment/guardian-independence-v123
-  pull_request:
-    branches:
-      - experiment/structural-inference-v111
+  workflow_dispatch:
 
 jobs:
   regression:
@@ -33,5 +31,5 @@ jobs:
       - name: v1.22 recovery quorum gate
         run: python -m pytest -q tests/test_recovery_quorum_v122.py
       - name: v1.23 guardian independence gate
-        if: github.ref_name == 'experiment/guardian-independence-v123' || github.head_ref == 'experiment/guardian-independence-v123'
+        if: github.ref_name == 'experiment/guardian-independence-v123'
         run: python -m pytest -q tests/test_guardian_independence_v123.py
