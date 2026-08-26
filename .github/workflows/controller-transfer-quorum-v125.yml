@@ -1,10 +1,9 @@
 name: controller transfer quorum v1.25 regression
 
 on:
-  push:
-    branches: [experiment/controller-transfer-quorum-v125]
   pull_request:
     branches: [experiment/structural-inference-v111]
+  workflow_dispatch:
 
 jobs:
   regression:
