@@ -100,6 +100,14 @@ def test_approval_cannot_be_revoked_twice():
         )
 
 
+def test_unknown_approval_cannot_be_revoked():
+    m = _memory()
+    with pytest.raises(ValueError, match="does not exist"):
+        m.revoke_controller_transfer_approval(
+            "missing", approver_id="g1", revocation_id="r1"
+        )
+
+
 def test_revocation_cannot_be_back_applied_after_effective_epoch():
     m = _memory()
     _approve(m, "g1", "a1")
