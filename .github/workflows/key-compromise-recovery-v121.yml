@@ -1,0 +1,33 @@
+name: key compromise recovery v1.21 regression
+
+on:
+  push:
+    branches:
+      - experiment/key-compromise-recovery-v121
+  pull_request:
+    branches:
+      - experiment/structural-inference-v111
+
+jobs:
+  regression:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Full regression
+        run: python -m pytest -q
+      - name: v1.20 authority key rotation baseline
+        run: python -m pytest -q tests/test_authority_key_rotation_v120.py
+      - name: v1.21 key compromise recovery gate
+        run: python -m pytest -q tests/test_key_compromise_recovery_v121.py
