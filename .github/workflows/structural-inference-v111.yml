@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - experiment/structural-inference-v111
+  pull_request:
+    branches:
+      - experiment/controller-transfer-quorum-v125
   workflow_dispatch:
 
 concurrency:
@@ -37,3 +40,9 @@ jobs:
         run: python -m pytest -q tests/test_ontology_guided_retrieval_v110.py
       - name: v1.11 structural inference gate
         run: python -m pytest -q tests/test_structural_inference_v111.py
+      - name: v1.25 controller transfer quorum baseline
+        if: github.event_name == 'pull_request' && github.head_ref == 'experiment/controller-transfer-revocation-v126'
+        run: python -m pytest -q tests/test_controller_transfer_quorum_v125.py
+      - name: v1.26 controller transfer revocation gate
+        if: github.event_name == 'pull_request' && github.head_ref == 'experiment/controller-transfer-revocation-v126'
+        run: python -m pytest -q tests/test_controller_transfer_revocation_v126.py
