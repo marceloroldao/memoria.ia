@@ -5,7 +5,7 @@ from memoria_resolutiva.guardian_independence_v123 import GuardianIndependenceMe
 
 def _memory():
     m = GuardianIndependenceMemoryV123()
-    m.add_trusted_attestation_issuer("root")
+    m.add_trusted_issuer("root")
     m.attest_authority("authority", issuer_id="root", attestation_id="att-1")
     m.bind_initial_authority_key(
         "authority", key_id="key-1", issuer_id="root", binding_id="bind-1"
@@ -102,7 +102,7 @@ def test_v122_raw_guardian_quorum_remains_available_on_base_class():
     from memoria_resolutiva.recovery_quorum_v122 import RecoveryQuorumMemoryV122
 
     m = RecoveryQuorumMemoryV122()
-    m.add_trusted_attestation_issuer("root")
+    m.add_trusted_issuer("root")
     m.attest_authority("authority", issuer_id="root", attestation_id="att-1")
     m.bind_initial_authority_key("authority", key_id="key-1", issuer_id="root", binding_id="bind-1")
     m.configure_recovery_quorum("authority", approver_ids=["g1", "g2"], threshold=2)
