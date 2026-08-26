@@ -36,5 +36,5 @@ jobs:
       - name: v1.26 controller transfer revocation gate
         run: python -m pytest -q tests/test_controller_transfer_revocation_v126.py
 
-# PR execution is also exposed from the validated v1.25 base workflow so a
-# newly-added head workflow never becomes the only source of acceptance evidence.
+# Acceptance is also exposed through the validated structural bridge on the
+# v1.25 base, so the new head workflow is not the only source of evidence.
