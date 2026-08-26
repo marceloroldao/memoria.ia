@@ -128,6 +128,22 @@ def test_revocation_is_final_for_same_approver_transfer_tuple():
         _approve(m, "g1", "a2")
 
 
+def test_revocation_log_is_deterministically_sorted():
+    m = _memory()
+    _approve(m, "g1", "a1")
+    _approve(m, "g2", "a2")
+    m.revoke_controller_transfer_approval(
+        "a2", approver_id="g2", revocation_id="r2"
+    )
+    m.revoke_controller_transfer_approval(
+        "a1", approver_id="g1", revocation_id="r1"
+    )
+    assert [item.revocation_id for item in m.controller_transfer_approval_revocations()] == [
+        "r1",
+        "r2",
+    ]
+
+
 def test_v125_behavior_remains_available_on_base_class():
     from memoria_resolutiva.controller_transfer_quorum_v125 import (
         ControllerTransferQuorumMemoryV125,
