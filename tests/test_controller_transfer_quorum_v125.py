@@ -58,6 +58,19 @@ def test_independent_controllers_authorize_transfer():
     assert m.guardian_controller("target") == "org-new"
 
 
+def test_transfer_cannot_replace_initial_binding_in_same_epoch():
+    m = _memory()
+    m.configure_controller_transfer_quorum("target", approver_ids=["g1", "g2"], threshold=2)
+    _approve(m, "g1", "a1", epoch=0)
+    _approve(m, "g2", "a2", epoch=0)
+    with pytest.raises(ValueError, match="only one controller state"):
+        m.transfer_guardian_controller(
+            "target", new_controller_id="org-new", authorized_by_controller_id="org-owner",
+            transfer_id="t1", transfer_evidence_id="ev-1", effective_epoch=0,
+        )
+    assert m.guardian_controller("target") == "org-owner"
+
+
 def test_threshold_cannot_exceed_independent_approver_controllers():
     m = _memory()
     with pytest.raises(ValueError, match="independent approver controllers"):
