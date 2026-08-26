@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - experiment/key-compromise-recovery-v121
-  pull_request:
-    branches:
-      - experiment/structural-inference-v111
+  workflow_dispatch:
 
 jobs:
   regression:
