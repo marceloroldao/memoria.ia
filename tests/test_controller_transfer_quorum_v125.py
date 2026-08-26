@@ -48,11 +48,12 @@ def test_same_controller_approvals_count_once():
 def test_independent_controllers_authorize_transfer():
     m = _memory()
     m.configure_controller_transfer_quorum("target", approver_ids=["g1", "g2"], threshold=2)
-    _approve(m, "g1", "a1")
-    _approve(m, "g2", "a2")
+    m.set_policy_epoch(1)
+    _approve(m, "g1", "a1", epoch=1)
+    _approve(m, "g2", "a2", epoch=1)
     m.transfer_guardian_controller(
         "target", new_controller_id="org-new", authorized_by_controller_id="org-owner",
-        transfer_id="t1", transfer_evidence_id="ev-1", effective_epoch=0,
+        transfer_id="t1", transfer_evidence_id="ev-1", effective_epoch=1,
     )
     assert m.guardian_controller("target") == "org-new"
 
@@ -94,8 +95,9 @@ def test_v124_direct_transfer_remains_available_on_base_class():
 
     m = ControllerTransferMemoryV124()
     m.bind_guardian_controller("target", controller_id="org-owner")
+    m.set_policy_epoch(1)
     m.transfer_guardian_controller(
         "target", new_controller_id="org-new", authorized_by_controller_id="org-owner",
-        transfer_id="t1", transfer_evidence_id="ev-1", effective_epoch=0,
+        transfer_id="t1", transfer_evidence_id="ev-1", effective_epoch=1,
     )
     assert m.guardian_controller("target") == "org-new"
