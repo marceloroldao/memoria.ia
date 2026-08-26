@@ -1,9 +1,8 @@
-name: recovery quorum v1.22 regression
+name: guardian independence v1.23 regression
 
 on:
   push:
     branches:
-      - experiment/recovery-quorum-v122
       - experiment/guardian-independence-v123
   pull_request:
     branches:
@@ -11,6 +10,7 @@ on:
 
 jobs:
   regression:
+    timeout-minutes: 20
     strategy:
       fail-fast: true
       matrix:
@@ -28,10 +28,10 @@ jobs:
           python -m pip install -e '.[product,test]'
       - name: Full regression
         run: python -m pytest -q
-      - name: v1.21 key compromise recovery baseline
-        run: python -m pytest -q tests/test_key_compromise_recovery_v121.py
-      - name: v1.22 recovery quorum gate
+      - name: v1.22 recovery quorum baseline
         run: python -m pytest -q tests/test_recovery_quorum_v122.py
       - name: v1.23 guardian independence gate
-        if: github.ref_name == 'experiment/guardian-independence-v123' || github.head_ref == 'experiment/guardian-independence-v123'
         run: python -m pytest -q tests/test_guardian_independence_v123.py
+
+# The structural experimental base also carries a PR-level v1.23 gate so
+# GitHub evaluates this branch even when newly-added head workflows are not run.
