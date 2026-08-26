@@ -11,6 +11,7 @@ on:
 jobs:
   regression:
     strategy:
+      fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -18,12 +19,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+          cache: pip
       - name: Install
-        run: pip install -e . pytest
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
       - name: Full regression
-        run: pytest -q
+        run: python -m pytest -q
       - name: v1.21 key compromise recovery baseline
-        run: pytest -q tests/test_key_compromise_recovery_v121.py
+        run: python -m pytest -q tests/test_key_compromise_recovery_v121.py
       - name: v1.22 recovery quorum gate
-        run: pytest -q tests/test_recovery_quorum_v122.py
+        run: python -m pytest -q tests/test_recovery_quorum_v122.py
