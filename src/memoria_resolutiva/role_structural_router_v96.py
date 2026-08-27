@@ -38,9 +38,9 @@ class RoleStructuralRouterV96:
     """Experimental abstraction layer: lexical tokens -> semantic roles -> structure.
 
     Exact anchors are deterministic. Context-only words keep several candidate
-    roles until the phrase structure is evaluated, so locally ambiguous words can
-    be disambiguated by the globally coherent ordered role signature. No neural
-    model or embedding is used.
+    roles until the phrase structure is evaluated. Once a candidate is expressed
+    in canonical roles, intent selection is exact against registered role patterns.
+    No neural model or embedding is used.
     """
 
     def __init__(
@@ -78,6 +78,7 @@ class RoleStructuralRouterV96:
         self.candidate_floor = candidate_floor
         self._exact_roles: dict[str, str] = {}
         self._patterns_by_concept: dict[str, list[tuple[str, ...]]] = {}
+        self._concepts_by_pattern: dict[tuple[str, ...], set[str]] = {}
 
     def observe(self, sentences: Iterable[str]) -> None:
         self.roles.observe(sentences)
@@ -101,25 +102,11 @@ class RoleStructuralRouterV96:
         patterns = self._patterns_by_concept.setdefault(concept_id, [])
         if roles not in patterns:
             patterns.append(roles)
+        self._concepts_by_pattern.setdefault(roles, set()).add(concept_id)
 
     def register_intent_many(self, concept_id: str, patterns: Iterable[Iterable[str]]) -> None:
         for pattern in patterns:
             self.register_intent_pattern(concept_id, pattern)
-
-    @staticmethod
-    def _role_inventory(role_ids: Iterable[str]) -> tuple[str, ...]:
-        return tuple(sorted(role_ids))
-
-    def _matches_registered_inventory(self, concept_id: str, canonical: tuple[str, ...]) -> bool:
-        patterns = self._patterns_by_concept.get(concept_id)
-        if not patterns:
-            return True
-        inventory = self._role_inventory(canonical)
-        return any(
-            len(pattern) == len(canonical)
-            and self._role_inventory(pattern) == inventory
-            for pattern in patterns
-        )
 
     def _rank_role_candidates(self, token: str) -> list[RoleTokenEvidence]:
         exact = self._exact_roles.get(token)
@@ -210,10 +197,12 @@ class RoleStructuralRouterV96:
         for canonical, evidence, lexical_sum in beams:
             if len(canonical) < 2:
                 continue
-            structural = self.structure.resolve_text(" ".join(canonical))
-            if structural.concept_id is None:
+            matching_concepts = self._concepts_by_pattern.get(canonical, set())
+            if len(matching_concepts) != 1:
                 continue
-            if not self._matches_registered_inventory(structural.concept_id, canonical):
+            concept_id = next(iter(matching_concepts))
+            structural = self.structure.resolve_text(" ".join(canonical))
+            if structural.concept_id != concept_id:
                 continue
             lexical_mean = lexical_sum / max(1, len(evidence))
             combined = structural.score * lexical_mean
