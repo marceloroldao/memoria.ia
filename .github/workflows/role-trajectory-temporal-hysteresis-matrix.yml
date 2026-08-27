@@ -20,9 +20,11 @@ jobs:
         env:
           PYTHONPATH: .:src
         run: |
+          set -o pipefail
           mkdir -p benchmark-results
           python benchmarks/role_trajectory_temporal_hysteresis_matrix.py | tee benchmark-results/role-trajectory-temporal-hysteresis-matrix.json
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: role-trajectory-temporal-hysteresis-matrix
           path: benchmark-results/role-trajectory-temporal-hysteresis-matrix.json
