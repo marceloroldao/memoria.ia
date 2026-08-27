@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -78,5 +78,30 @@ def test_bdr_deferred_batch_is_flushed_on_close(tmp_path):
         assert reopened.stats()["memories"] == 5
         for i in range(5):
             assert reopened.reconstruct(f"m{i}") == bytes([i]) * 96
+    finally:
+        reopened.close()
+
+
+def test_bdr_serializes_concurrent_logical_writes(tmp_path):
+    root = tmp_path / "bdr-concurrent"
+    db = BDRResolutiveMemory(root, max_layer=3)
+    payloads = {f"m{i}": bytes(((i + j) * 31) % 256 for j in range(128)) for i in range(32)}
+    try:
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures = [pool.submit(db.add, memory_id, payload) for memory_id, payload in payloads.items()]
+            for future in futures:
+                future.result()
+
+        assert db.stats()["memories"] == len(payloads)
+        for memory_id, payload in payloads.items():
+            assert db.reconstruct(memory_id) == payload
+    finally:
+        db.close()
+
+    reopened = BDRResolutiveMemory(root, max_layer=3)
+    try:
+        assert reopened.stats()["memories"] == len(payloads)
+        for memory_id, payload in payloads.items():
+            assert reopened.reconstruct(memory_id) == payload
     finally:
         reopened.close()
