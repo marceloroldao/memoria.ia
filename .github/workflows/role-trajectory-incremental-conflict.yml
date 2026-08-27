@@ -1,0 +1,29 @@
+name: Role trajectory incremental conflict
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_trajectory_incremental_conflict.py'
+      - '.github/workflows/role-trajectory-incremental-conflict.yml'
+      - 'src/memoria_resolutiva/trajectory_policy_gate_experimental.py'
+  workflow_dispatch:
+
+jobs:
+  stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run incremental conflict stress
+        env:
+          PYTHONPATH: .:src
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_incremental_conflict.py | tee benchmark-results/role-trajectory-incremental-conflict.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-incremental-conflict
+          path: benchmark-results/role-trajectory-incremental-conflict.json
