@@ -39,8 +39,12 @@ def test_provider_secret_is_write_only_and_file_is_owner_only(tmp_path):
     assert status_response.status_code == 200
     assert "provider-secret" not in status_response.text
 
-    mode = stat.S_IMODE(os.stat(store.secrets_path).st_mode)
-    assert mode == 0o600
+    # POSIX permission bits are meaningful on Unix. Windows does not expose
+    # chmod(0600) semantics through st_mode in the same way, so the security
+    # invariant there is that the secret remains write-only through the API.
+    if os.name != "nt":
+        mode = stat.S_IMODE(os.stat(store.secrets_path).st_mode)
+        assert mode == 0o600
     assert store.llm().api_key == "provider-secret"
 
 
