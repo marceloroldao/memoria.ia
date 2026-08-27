@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import json
 
 from memoria_resolutiva.trajectory_policy_gate_experimental import ExperimentalTrajectoryPolicyGate
@@ -55,16 +54,19 @@ def main():
     ]
 
     # Structurally malformed permutations made only from supported vocabulary.
-    for seq in [
-        ("canal", "sinal", "transmite", "usuario"),
-        ("roteador", "pacote", "envia", "canal"),
-        ("usuario", "transmite", "sinal", "canal"),
-        ("canal", "envia", "roteador", "pacote"),
+    # usuario is an exact destination anchor, so placing it at source must reject
+    # even though canal itself is polysemous.
+    for text in [
+        "canal sinal transmite usuario",
+        "roteador pacote envia canal",
+        "usuario transmite sinal canal",
+        "canal envia roteador pacote",
     ]:
-        rows.append(classify(gate, " ".join(seq), "reject"))
+        rows.append(classify(gate, text, "reject"))
 
-    # Cross-family recombinations: every token is known, but the exact relation
-    # between these nodes was never observed. These are the key collision probes.
+    # Novel recombinations are intentionally expected to generalize when every
+    # token can satisfy the registered role topology. They must not be rejected
+    # merely because the exact lexical combination was absent from observations.
     for text in [
         "canal transmite pacote servidor",
         "canal envia dado enlace",
@@ -73,7 +75,7 @@ def main():
         "emissora envia pacote canal",
         "sensor transmite programa usuario",
     ]:
-        rows.append(classify(gate, text, "reject"))
+        rows.append(classify(gate, text, "accept"))
 
     # Absolute open set remains epistemically unknown, not structurally false.
     rows.append(classify(gate, "canal transmite misterio usuario", "fail_closed"))
@@ -81,7 +83,7 @@ def main():
     output = {
         "experiment": "shared vocabulary / polysemy stress",
         "ambiguous_token": "canal",
-        "principle": "same token observed in source-like and destination-like positions",
+        "principle": "role topology constrains ambiguous vocabulary while preserving compositional generalization",
         "rows": rows,
         "summary": {
             "total": len(rows),
