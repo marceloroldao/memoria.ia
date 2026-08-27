@@ -35,18 +35,23 @@ class BDRPolicy:
 
 
 class BDRResolutiveMemory:
-    """Resolutive memory persisted through the BDR v1.1 atomic path.
+    """Resolutive memory persisted through the direct BDR v1.1 atomic path.
 
-    On the BDR path, one logical add crosses Python/C++ once. Fragmentation,
-    BLAKE2b node addressing, deduplication, occurrence construction, metadata
-    updates and physical record materialization remain fused inside the native
-    extension. The v1.1 compatibility layer commits the resulting pending unit
-    through BDR AtomicDatabase/BDW4.
+    One logical add crosses Python/C++ once. Fragmentation, BLAKE2b node
+    addressing, deduplication, occurrence construction, metadata updates and
+    physical record materialization remain fused inside the native extension.
 
-    With the default ``sync_every_memories=1``, one Memoria.ia logical memory
-    maps to one durable atomic BDR batch. Values greater than one are an explicit
-    deferred-durability mode: pending logical memories remain visible in-process
-    and cross one durable all-or-nothing boundary when the policy syncs.
+    Every logical Memoria.ia add is submitted as its own BDR AtomicDatabase
+    batch/sequence. With ``sync_every_memories=1`` that batch uses BatchSync and
+    is immediately durable. Values greater than one are an explicit deferred
+    durability policy: intermediate logical memories are still distinct atomic
+    Async batches, while ``sync()``/the next durability boundary advances the
+    durable sequence. Atomicity is therefore per memory and does not depend on
+    the durability cadence.
+
+    ``reserve_bytes`` and ``wal_batch`` remain in BDRPolicy for Python API
+    compatibility with the earlier v1.0 adapter; BDR v1.1 AtomicDatabase does
+    not currently consume those tuning parameters directly.
 
     Writes are serialized inside one Python process. Cross-process multi-writer
     use remains intentionally unsupported by this Memoria.ia adapter.
