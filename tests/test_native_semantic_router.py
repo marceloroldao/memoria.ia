@@ -21,8 +21,13 @@ CONCEPTS = {
 }
 
 
-def build(use_native: bool) -> SemanticRouterV96:
-    router = SemanticRouterV96(threshold=0.0, min_margin=0.0, use_native=use_native)
+def build(use_native: bool, *, native_authoritative: bool = False) -> SemanticRouterV96:
+    router = SemanticRouterV96(
+        threshold=0.0,
+        min_margin=0.0,
+        use_native=use_native,
+        native_authoritative=native_authoritative,
+    )
     router.observe(CORPUS)
     for concept_id, anchors in CONCEPTS.items():
         router.register_concept(concept_id, anchors)
@@ -40,6 +45,28 @@ def test_native_router_matches_python_top_two_decision():
         assert actual.source == expected.source
         assert actual.score == pytest.approx(expected.score, abs=1e-12)
         assert actual.margin == pytest.approx(expected.margin, abs=1e-12)
+
+
+@pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
+def test_native_authoritative_router_matches_python_reference():
+    py = build(False)
+    authoritative = build(True, native_authoritative=True)
+    assert authoritative.native_authoritative
+    assert not authoritative.memory.python_mirror_enabled
+    assert not authoritative.memory.associator.profiles
+    for query in ["gato", "cachorro", "carro", "moto", "maçã", "banana", "servidor", "roteador", "animal", "rede"]:
+        expected = py.resolve_token(query)
+        actual = authoritative.resolve_token(query)
+        assert actual.concept_id == expected.concept_id
+        assert actual.source == expected.source
+        assert actual.score == pytest.approx(expected.score, abs=1e-12)
+        assert actual.margin == pytest.approx(expected.margin, abs=1e-12)
+
+
+@pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
+def test_native_authoritative_rejects_python_index_dependency():
+    with pytest.raises(ValueError, match="indexed=False"):
+        SemanticRouterV96(use_native=True, native_authoritative=True, indexed=True)
 
 
 @pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
