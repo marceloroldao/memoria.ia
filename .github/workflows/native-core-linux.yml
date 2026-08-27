@@ -51,6 +51,7 @@ jobs:
       - name: Discriminative router benchmark
         run: python benchmarks/native_discriminative_router.py | tee benchmark-results/native-discriminative-router.json
       - name: Router scale matrix
+        if: github.event_name == 'workflow_dispatch'
         run: python benchmarks/native_router_scale_matrix.py | tee benchmark-results/native-router-scale-matrix.json
       - uses: actions/upload-artifact@v4
         with:
