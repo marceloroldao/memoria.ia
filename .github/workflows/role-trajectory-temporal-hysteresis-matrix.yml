@@ -1,0 +1,28 @@
+name: Role trajectory temporal hysteresis matrix
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_trajectory_temporal_hysteresis_matrix.py'
+      - '.github/workflows/role-trajectory-temporal-hysteresis-matrix.yml'
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run temporal hysteresis matrix
+        env:
+          PYTHONPATH: .:src
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_temporal_hysteresis_matrix.py | tee benchmark-results/role-trajectory-temporal-hysteresis-matrix.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-temporal-hysteresis-matrix
+          path: benchmark-results/role-trajectory-temporal-hysteresis-matrix.json
