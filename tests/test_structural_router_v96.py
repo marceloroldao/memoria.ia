@@ -64,6 +64,7 @@ def test_native_structural_matches_python_reference():
         assert actual.concept_id == expected.concept_id
         assert actual.score == pytest.approx(expected.score, abs=1e-12)
         assert actual.margin == pytest.approx(expected.margin, abs=1e-12)
-        assert [(e.concept_id, e.score) for e in actual.evidence] == pytest.approx(
-            [(e.concept_id, e.score) for e in expected.evidence], abs=1e-12
-        )
+        assert len(actual.evidence) == len(expected.evidence)
+        for got, want in zip(actual.evidence, expected.evidence):
+            assert got.concept_id == want.concept_id
+            assert got.score == pytest.approx(want.score, abs=1e-12)
