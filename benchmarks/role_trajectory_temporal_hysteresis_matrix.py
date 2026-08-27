@@ -48,64 +48,87 @@ def build(length: int, base_repeat: int, conflict_repeat: int):
     return gate, tuple(probe), tuple(reversed(probe))
 
 
-def temporal_state(delta: float, margin: float) -> str:
-    if delta > margin:
+def temporal_state(delta: float, deadband: float) -> str:
+    if delta > deadband:
         return "stable"
-    if delta < -margin:
+    if delta < -deadband:
         return "regime_shift"
     return "uncertain"
 
 
 def run_case(length: int, base_repeat: int):
-    baseline, forward_tokens, reverse_tokens = build(length, base_repeat, 0)
+    baseline, _forward_tokens, _reverse_tokens = build(length, base_repeat, 0)
     if not baseline.calibrate():
         return {"length": length, "base_repeat": base_repeat, "calibrated": False}
-    margin = baseline._margin
+
+    # `gate._margin` is the full gap between the closest valid and invalid
+    # calibration examples. Because the calibrated threshold is the midpoint
+    # of that gap, the confidence distance to either class frontier is half it.
+    separation_gap = baseline._margin
+    deadband = separation_gap / 2.0
+
+    raw_conflicts = (
+        0,
+        max(1, base_repeat // 4),
+        max(1, base_repeat // 2),
+        base_repeat,
+        base_repeat * 2,
+        base_repeat * 4,
+    )
+    conflict_points = sorted(set(raw_conflicts))
     points = []
-    for conflict_repeat in (0, max(1, base_repeat // 4), max(1, base_repeat // 2), base_repeat, base_repeat * 2, base_repeat * 4):
+    for conflict_repeat in conflict_points:
         gate, forward_tokens, reverse_tokens = build(length, base_repeat, conflict_repeat)
-        f = purity_score(gate, forward_tokens)
-        r = purity_score(gate, reverse_tokens)
-        delta = f - r
+        forward = purity_score(gate, forward_tokens)
+        reverse = purity_score(gate, reverse_tokens)
+        delta = forward - reverse
         points.append({
             "conflict_repeat": conflict_repeat,
             "ratio": conflict_repeat / base_repeat,
-            "forward": f,
-            "reverse": r,
+            "forward": forward,
+            "reverse": reverse,
             "delta": delta,
-            "state": temporal_state(delta, margin),
+            "state": temporal_state(delta, deadband),
         })
-    states = [p["state"] for p in points]
-    monotonic = all(states.index(s) <= states.index(t) for s, t in zip(states, states[1:])) if False else True
-    # Stronger, explicit ordering: stable may be followed by uncertain, then regime_shift, never backwards.
+
     rank = {"stable": 0, "uncertain": 1, "regime_shift": 2}
-    monotonic = all(rank[points[i]["state"]] <= rank[points[i+1]["state"]] for i in range(len(points)-1))
+    monotonic = all(rank[points[i]["state"]] <= rank[points[i + 1]["state"]] for i in range(len(points) - 1))
+    equal_point = next(point for point in points if point["ratio"] == 1.0)
+    strongest = points[-1]
     return {
         "length": length,
         "base_repeat": base_repeat,
         "calibrated": True,
-        "margin": margin,
+        "separation_gap": separation_gap,
+        "temporal_deadband": deadband,
         "points": points,
         "state_progression_monotonic": monotonic,
         "starts_stable": points[0]["state"] == "stable",
-        "equal_support_uncertain": next(p for p in points if p["ratio"] == 1.0)["state"] == "uncertain",
-        "strong_reverse_regime_shift": points[-1]["state"] == "regime_shift",
+        "equal_support_uncertain": equal_point["state"] == "uncertain",
+        "strong_reverse_regime_shift": strongest["state"] == "regime_shift",
     }
+
+
+def case_passes(row: dict) -> bool:
+    return bool(
+        row.get("calibrated")
+        and row.get("state_progression_monotonic")
+        and row.get("starts_stable")
+        and row.get("equal_support_uncertain")
+        and row.get("strong_reverse_regime_shift")
+    )
 
 
 def main():
     rows = [run_case(length, base) for length in (4, 5, 6) for base in (2, 4, 8, 16)]
-    passed = all(
-        row.get("calibrated") and row.get("state_progression_monotonic") and row.get("starts_stable")
-        and row.get("equal_support_uncertain") and row.get("strong_reverse_regime_shift")
-        for row in rows
-    )
+    passed = all(case_passes(row) for row in rows)
     print(json.dumps({
         "experiment": "temporal hysteresis scale matrix",
+        "principle": "use half of the calibrated structural separation gap as the temporal confidence dead-band",
         "rows": rows,
         "summary": {
             "cases": len(rows),
-            "passed": sum(1 for row in rows if row.get("calibrated") and row.get("state_progression_monotonic") and row.get("starts_stable") and row.get("equal_support_uncertain") and row.get("strong_reverse_regime_shift")),
+            "passed": sum(1 for row in rows if case_passes(row)),
             "all_passed": passed,
         },
     }, ensure_ascii=False, indent=2))
