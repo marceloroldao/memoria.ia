@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import shutil
 import sqlite3
 import struct
 import subprocess
@@ -55,6 +54,7 @@ def directory_bytes(root: Path) -> int:
 
 
 def bench_sqlite_logical(root: Path, records: list[tuple[str, bytes]]) -> dict:
+    root.mkdir(parents=True, exist_ok=True)
     path = root / "logical.sqlite3"
     db = sqlite3.connect(path)
     db.execute("PRAGMA journal_mode=WAL")
@@ -95,6 +95,7 @@ def bench_sqlite_logical(root: Path, records: list[tuple[str, bytes]]) -> dict:
 
 
 def bench_memoria_sqlite(root: Path, memories: list[tuple[str, bytes]], max_layer: int) -> dict:
+    root.mkdir(parents=True, exist_ok=True)
     path = root / "memoria.sqlite3"
     store = SQLiteResolutiveMemory(path, max_layer=max_layer)
     started = time.perf_counter()
