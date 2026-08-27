@@ -1,0 +1,28 @@
+name: Role trajectory polysemy stress
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_trajectory_polysemy_stress.py'
+      - 'src/memoria_resolutiva/trajectory_policy_gate_experimental.py'
+      - '.github/workflows/role-trajectory-polysemy-stress.yml'
+  workflow_dispatch:
+
+jobs:
+  stress:
+    runs-on: ubuntu-24.04
+    env:
+      PYTHONPATH: .:src
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run polysemy stress
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_polysemy_stress.py | tee benchmark-results/role-trajectory-polysemy-stress.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-polysemy-stress
+          path: benchmark-results/role-trajectory-polysemy-stress.json

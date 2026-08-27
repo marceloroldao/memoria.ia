@@ -1,0 +1,32 @@
+name: Role trajectory coverage stress
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_trajectory_coverage_stress.py'
+      - 'benchmarks/role_trajectory_direction_stress.py'
+      - 'benchmarks/role_joint_boundary_trajectory_edges.py'
+      - '.github/workflows/role-trajectory-coverage-stress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .:src
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Stress trajectory coverage gate
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_coverage_stress.py | tee benchmark-results/role-trajectory-coverage-stress.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-coverage-stress
+          path: benchmark-results/role-trajectory-coverage-stress.json

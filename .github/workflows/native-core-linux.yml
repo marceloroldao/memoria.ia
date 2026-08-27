@@ -1,0 +1,93 @@
+name: Native core semantic regression
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'native/core_pybind.cpp'
+      - 'src/memoria_resolutiva/contextual.py'
+      - 'src/memoria_resolutiva/textual.py'
+      - 'src/memoria_resolutiva/semantic_router_v96.py'
+      - 'src/memoria_resolutiva/structural_router_v96.py'
+      - 'src/memoria_resolutiva/role_structural_router_v96.py'
+      - 'src/memoria_resolutiva/hybrid_text_router_v96.py'
+      - 'src/memoria_resolutiva/discriminative_router_v96.py'
+      - 'src/memoria_resolutiva/__init__.py'
+      - 'tests/test_native_context.py'
+      - 'tests/test_native_semantic_router.py'
+      - 'tests/test_discriminative_router_v96.py'
+      - 'tests/test_adaptive_router_noise.py'
+      - 'tests/test_adaptive_router_natural_language.py'
+      - 'tests/test_structural_router_v96.py'
+      - 'tests/test_structural_paraphrase_v96.py'
+      - 'tests/test_role_structural_router_v96.py'
+      - 'tests/test_hybrid_text_router_v96.py'
+      - 'benchmarks/native_context_scaling.py'
+      - 'benchmarks/native_semantic_router.py'
+      - 'benchmarks/native_discriminative_router.py'
+      - 'benchmarks/native_adaptive_router.py'
+      - 'benchmarks/native_relational_phrase.py'
+      - 'benchmarks/structural_router_scaling.py'
+      - 'benchmarks/role_structural_generalization.py'
+      - 'benchmarks/role_relabel_budget.py'
+      - 'benchmarks/role_multidomain_generalization.py'
+      - 'benchmarks/role_relabel_cost_probe.py'
+      - 'benchmarks/hybrid_text_router.py'
+      - 'benchmarks/native_router_scale_matrix.py'
+      - 'setup.py'
+      - '.github/workflows/native-core-linux.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-core-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-core-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: .:src
+      MEMORIA_BUILD_NATIVE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build/install native core
+        run: python -m pip install -e '.[product,test]'
+      - name: Native parity gates
+        run: pytest -q tests/test_native_context.py tests/test_native_semantic_router.py tests/test_discriminative_router_v96.py tests/test_adaptive_router_noise.py tests/test_adaptive_router_natural_language.py tests/test_structural_router_v96.py tests/test_structural_paraphrase_v96.py tests/test_role_structural_router_v96.py tests/test_hybrid_text_router_v96.py
+      - name: Full regression
+        run: pytest -q
+      - name: Contextual relabel cost probe
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/role_relabel_cost_probe.py | tee benchmark-results/role-relabel-cost-probe.json
+      - name: Context scoring benchmark
+        run: python benchmarks/native_context_scaling.py | tee benchmark-results/native-context.json
+      - name: Full semantic router benchmark
+        run: python benchmarks/native_semantic_router.py | tee benchmark-results/native-router.json
+      - name: Discriminative router benchmark
+        run: python benchmarks/native_discriminative_router.py | tee benchmark-results/native-discriminative-router.json
+      - name: Adaptive router benchmark
+        run: python benchmarks/native_adaptive_router.py | tee benchmark-results/native-adaptive-router.json
+      - name: Relational phrase benchmark
+        run: python benchmarks/native_relational_phrase.py | tee benchmark-results/native-relational-phrase.json
+      - name: Structural signature benchmark
+        run: python benchmarks/structural_router_scaling.py | tee benchmark-results/structural-router.json
+      - name: Role structural generalization benchmark
+        run: python benchmarks/role_structural_generalization.py | tee benchmark-results/role-structural-generalization.json
+      - name: Role relabel budget calibration
+        run: python benchmarks/role_relabel_budget.py | tee benchmark-results/role-relabel-budget.json
+      - name: Role multidomain generalization
+        run: python benchmarks/role_multidomain_generalization.py | tee benchmark-results/role-multidomain-generalization.json
+      - name: Hybrid text benchmark
+        run: python benchmarks/hybrid_text_router.py | tee benchmark-results/hybrid-text-router.json
+      - name: Router scale matrix
+        if: github.event_name == 'workflow_dispatch'
+        run: python benchmarks/native_router_scale_matrix.py | tee benchmark-results/native-router-scale-matrix.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: memoria-native-core-results
+          path: benchmark-results/

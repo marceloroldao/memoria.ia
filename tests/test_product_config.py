@@ -39,8 +39,13 @@ def test_provider_secret_is_write_only_and_file_is_owner_only(tmp_path):
     assert status_response.status_code == 200
     assert "provider-secret" not in status_response.text
 
-    mode = stat.S_IMODE(os.stat(store.secrets_path).st_mode)
-    assert mode == 0o600
+    # chmod(0o600) is a POSIX owner-permission contract. Windows/NTFS does not
+    # expose an equivalent st_mode value, so the exact mode assertion is only
+    # meaningful on POSIX platforms; write-only API behavior is verified above
+    # on every platform.
+    if os.name == "posix":
+        mode = stat.S_IMODE(os.stat(store.secrets_path).st_mode)
+        assert mode == 0o600
     assert store.llm().api_key == "provider-secret"
 
 

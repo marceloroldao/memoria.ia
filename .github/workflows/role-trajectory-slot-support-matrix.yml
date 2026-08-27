@@ -1,0 +1,26 @@
+name: Role trajectory slot support matrix
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_trajectory_slot_support_matrix.py'
+      - '.github/workflows/role-trajectory-slot-support-matrix.yml'
+  workflow_dispatch:
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m pip install -e '.[product]'
+      - name: Run matrix
+        env: {PYTHONPATH: '.:src'}
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_slot_support_matrix.py | tee benchmark-results/role-trajectory-slot-support-matrix.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: role-trajectory-slot-support-matrix
+          path: benchmark-results/role-trajectory-slot-support-matrix.json

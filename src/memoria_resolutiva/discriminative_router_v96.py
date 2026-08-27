@@ -18,12 +18,9 @@ class CandidateStats:
 class DiscriminativeSemanticRouterV96(SemanticRouterV96):
     """Experimental candidate pruning using inverse concept frequency.
 
-    The acceptance rule is inherited unchanged from SemanticRouterV96. Only the
-    candidate set is reduced before exact scoring. Context tokens that occur in
-    many concepts contribute little; rare tokens contribute more.
-
-    This class remains experimental until recall parity with full scan is shown
-    on broader corpora.
+    When the native core is available, both discriminative candidate selection
+    and exact top-two scoring are performed authoritatively in C++. The Python
+    implementation remains the reference/fallback path.
     """
 
     def __init__(
@@ -33,12 +30,15 @@ class DiscriminativeSemanticRouterV96(SemanticRouterV96):
         threshold: float = 0.60,
         min_margin: float = 0.08,
         candidate_limit: int = 32,
+        use_native: bool | None = None,
     ) -> None:
         super().__init__(
             radius=radius,
             threshold=threshold,
             min_margin=min_margin,
             indexed=False,
+            use_native=use_native,
+            native_authoritative=None if use_native is not False else False,
         )
         if candidate_limit < 2:
             raise ValueError("candidate_limit must be >= 2")
@@ -70,6 +70,11 @@ class DiscriminativeSemanticRouterV96(SemanticRouterV96):
         self._disc_dirty = False
 
     def _discriminative_candidates(self, query: str) -> list[str]:
+        native = self.memory.discriminative_candidates(query, self.candidate_limit)
+        if native is not None:
+            self._last_candidate_count = len(native)
+            return native
+
         if self._disc_dirty:
             self._rebuild_discriminative_index()
         profile = self.memory.associator.profiles.get(query)
@@ -110,12 +115,15 @@ class DiscriminativeSemanticRouterV96(SemanticRouterV96):
         if not candidate_ids:
             return SemanticResolution(q, None, 0.0, 0.0, "unresolved")
 
-        ranked: list[tuple[str, float]] = []
-        for concept_id in candidate_ids:
-            anchors = self._concepts[concept_id]
-            best = max((self._score(q, anchor) for anchor in anchors), default=0.0)
-            ranked.append((concept_id, best))
-        ranked.sort(key=lambda item: (-item[1], item[0]))
+        ranked = self.memory.rank_registered(q, candidate_ids, top_k=2)
+        if ranked is None:
+            ranked = []
+            for concept_id in candidate_ids:
+                anchors = self._concepts[concept_id]
+                best = max((self._score(q, anchor) for anchor in anchors), default=0.0)
+                ranked.append((concept_id, best))
+            ranked.sort(key=lambda item: (-item[1], item[0]))
+            ranked = ranked[:2]
 
         best_id, best_score = ranked[0]
         second_score = ranked[1][1] if len(ranked) > 1 else 0.0

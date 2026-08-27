@@ -1,0 +1,27 @@
+name: Role trajectory asynchronous slot drift
+
+on:
+  push:
+    branches:
+      - experiment/bdr-primary-linux
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run asynchronous slot drift matrix
+        shell: bash
+        env:
+          PYTHONPATH: .:src
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_async_slot_drift.py | tee benchmark-results/role-trajectory-async-slot-drift.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-async-slot-drift
+          path: benchmark-results/role-trajectory-async-slot-drift.json
