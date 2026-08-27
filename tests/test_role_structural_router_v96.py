@@ -101,6 +101,24 @@ def test_role_structural_router_rejects_reordered_or_duplicated_role_sequences()
         assert result.concept_id is None, (text, result.canonical_roles, result.concept_id, result.score)
 
 
+def test_role_structural_router_rejects_context_alias_reordering_without_relabeling_to_fit():
+    router = _router()
+    adversarial = [
+        "depositante quantia remete agencia",
+        "agencia quantia remete depositante",
+        "quantia remete depositante agencia",
+    ]
+    for text in adversarial:
+        result = router.resolve_text(text)
+        assert result.concept_id is None, (
+            text,
+            result.canonical_roles,
+            result.concept_id,
+            result.score,
+            result.role_evidence,
+        )
+
+
 def test_role_structural_router_rejects_known_entities_with_wrong_relation():
     router = _router()
     adversarial = [
