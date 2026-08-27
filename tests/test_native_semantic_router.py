@@ -21,7 +21,7 @@ CONCEPTS = {
 }
 
 
-def build(use_native: bool, *, native_authoritative: bool = False) -> SemanticRouterV96:
+def build(use_native: bool, *, native_authoritative: bool | None = False) -> SemanticRouterV96:
     router = SemanticRouterV96(
         threshold=0.0,
         min_margin=0.0,
@@ -64,6 +64,32 @@ def test_native_authoritative_router_matches_python_reference():
 
 
 @pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
+def test_native_full_scan_defaults_to_authoritative_mode():
+    router = SemanticRouterV96(use_native=True)
+    assert router.native_authoritative
+    assert router.memory.native_enabled
+    assert not router.memory.python_mirror_enabled
+
+
+@pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
+def test_native_mirror_can_be_forced_for_debug_or_profile_consumers():
+    router = SemanticRouterV96(use_native=True, native_authoritative=False)
+    router.observe(["q a b"])
+    assert not router.native_authoritative
+    assert router.memory.python_mirror_enabled
+    assert router.memory.associator.profiles
+
+
+@pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
+def test_indexed_native_mode_keeps_python_mirror_by_default():
+    router = SemanticRouterV96(use_native=True, indexed=True)
+    router.observe(["q a b"])
+    assert not router.native_authoritative
+    assert router.memory.python_mirror_enabled
+    assert router.memory.associator.profiles
+
+
+@pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
 def test_native_authoritative_rejects_python_index_dependency():
     with pytest.raises(ValueError, match="indexed=False"):
         SemanticRouterV96(use_native=True, native_authoritative=True, indexed=True)
@@ -72,7 +98,7 @@ def test_native_authoritative_rejects_python_index_dependency():
 @pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
 def test_native_router_preserves_lexicographic_tie_break():
     py = SemanticRouterV96(threshold=0.0, min_margin=0.0, use_native=False)
-    native = SemanticRouterV96(threshold=0.0, min_margin=0.0, use_native=True)
+    native = SemanticRouterV96(threshold=0.0, min_margin=0.0, use_native=True, native_authoritative=False)
     corpus = ["q a b", "q c d"] * 20
     for router in (py, native):
         router.observe(corpus)
