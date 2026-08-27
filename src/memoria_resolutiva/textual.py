@@ -63,6 +63,9 @@ class TextContextMemory:
         if self._native is None:return None
         ids=[] if candidate_ids is None else sorted(candidate_ids)
         return list(self._native.rank_registered(query.lower(),ids,top_k))
+    def discriminative_candidates(self,query:str,limit:int)->list[str]|None:
+        if self._native is None:return None
+        return list(self._native.discriminative_candidates(query.lower(),limit))
     def nearest(self,token:str,top_k:int=5)->list[tuple[str,float]]:
         token=token.lower()
         if self._native is not None and not self._mirror_python:return list(self._native.nearest(token,top_k))
