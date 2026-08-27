@@ -1,0 +1,34 @@
+name: Role joint boundary unseen domains
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_joint_boundary_unseen_domains.py'
+      - 'benchmarks/role_joint_boundary_lodo.py'
+      - 'benchmarks/role_joint_cost_direction_boundary.py'
+      - 'benchmarks/role_permutation_cost_matrix.py'
+      - 'benchmarks/role_directional_relation_matrix.py'
+      - '.github/workflows/role-joint-unseen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .:src
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Validate unseen domains
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/role_joint_boundary_unseen_domains.py | tee benchmark-results/role-joint-boundary-unseen.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-joint-boundary-unseen
+          path: benchmark-results/role-joint-boundary-unseen.json
