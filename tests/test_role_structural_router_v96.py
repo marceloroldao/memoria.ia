@@ -71,6 +71,22 @@ def test_role_canonicalization_inherits_unregistered_roles_from_context():
     assert any(item.source == "context_joint" for item in forward.role_evidence)
 
 
+def test_context_aliases_keep_expected_role_as_top_candidate():
+    router = _router()
+    expected = {
+        "depositante": "customer",
+        "quantia": "money",
+        "agencia": "bank",
+    }
+    rankings = {
+        token: [(item.role_id, item.score) for item in router._rank_role_candidates(token)]
+        for token in expected
+    }
+    for token, role_id in expected.items():
+        assert rankings[token], rankings
+        assert rankings[token][0][0] == role_id, rankings
+
+
 def test_role_canonicalization_abstains_when_action_role_is_missing():
     router = _router()
     result = router.resolve_text("cliente visita banco")
