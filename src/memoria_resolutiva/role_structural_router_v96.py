@@ -77,7 +77,7 @@ class RoleStructuralRouterV96:
         self.beam_width = beam_width
         self.candidate_floor = candidate_floor
         self._exact_roles: dict[str, str] = {}
-        self._registered_pattern_lengths: set[int] = set()
+        self._pattern_lengths_by_concept: dict[str, set[int]] = {}
 
     def observe(self, sentences: Iterable[str]) -> None:
         self.roles.observe(sentences)
@@ -98,7 +98,7 @@ class RoleStructuralRouterV96:
         if len(roles) < 2:
             raise ValueError("intent pattern must contain at least two roles")
         self.structure.register_pattern(concept_id, " ".join(roles), repeat=repeat)
-        self._registered_pattern_lengths.add(len(roles))
+        self._pattern_lengths_by_concept.setdefault(concept_id, set()).add(len(roles))
 
     def register_intent_many(self, concept_id: str, patterns: Iterable[Iterable[str]]) -> None:
         for pattern in patterns:
@@ -193,10 +193,11 @@ class RoleStructuralRouterV96:
         for canonical, evidence, lexical_sum in beams:
             if len(canonical) < 2:
                 continue
-            if self._registered_pattern_lengths and len(canonical) not in self._registered_pattern_lengths:
-                continue
             structural = self.structure.resolve_text(" ".join(canonical))
             if structural.concept_id is None:
+                continue
+            allowed_lengths = self._pattern_lengths_by_concept.get(structural.concept_id)
+            if allowed_lengths and len(canonical) not in allowed_lengths:
                 continue
             lexical_mean = lexical_sum / max(1, len(evidence))
             combined = structural.score * lexical_mean
