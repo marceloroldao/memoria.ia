@@ -24,6 +24,27 @@ def build_gate():
     return gate
 
 
+def build_polysemy_gate():
+    gate = ExperimentalTrajectoryPolicyGate(use_native=False)
+    gate.observe([
+        "canal transmite sinal usuario",
+        "emissora envia programa publico",
+        "estacao transmite alerta cliente",
+        "canal envia programa cliente",
+        "roteador envia pacote canal",
+        "sensor transmite dado servidor",
+        "terminal envia quadro enlace",
+        "roteador transmite dado canal",
+    ])
+    gate.register_role("source", ["emissora", "estacao", "roteador", "sensor", "terminal"])
+    gate.register_role("action", ["transmite", "envia"])
+    gate.register_role("payload", ["sinal", "programa", "alerta", "pacote", "dado", "quadro"])
+    gate.register_role("destination", ["usuario", "publico", "cliente", "servidor", "enlace"])
+    gate.register_pattern(("source", "action", "payload", "destination"))
+    assert gate.calibrate()
+    return gate
+
+
 def test_gate_accepts_context_supported_valid_trajectory():
     gate = build_gate()
     result = gate.resolve("profissional recebe registro privado centro")
@@ -36,6 +57,26 @@ def test_gate_rejects_wrong_arity_with_supported_tokens():
     result = gate.resolve("profissional recebe registro privado")
     assert result.decision == "reject"
     assert result.reason == "trajectory arity mismatch"
+
+
+def test_gate_rejects_role_topology_mismatch_even_when_edge_coverage_is_high():
+    gate = build_polysemy_gate()
+    result = gate.resolve("usuario transmite sinal canal")
+    assert result.coverage > (result.threshold or 0.0)
+    assert result.decision == "reject"
+    assert result.reason == "role topology mismatch"
+
+
+def test_gate_allows_polysemous_token_in_multiple_supported_positions():
+    gate = build_polysemy_gate()
+    assert gate.resolve("canal transmite sinal usuario").decision == "accept"
+    assert gate.resolve("roteador envia pacote canal").decision == "accept"
+
+
+def test_gate_preserves_compositional_generalization_with_polysemy():
+    gate = build_polysemy_gate()
+    assert gate.resolve("canal transmite pacote servidor").decision == "accept"
+    assert gate.resolve("sensor transmite programa usuario").decision == "accept"
 
 
 def test_gate_fails_closed_for_absolute_open_set():
