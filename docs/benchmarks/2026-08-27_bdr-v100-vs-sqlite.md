@@ -98,8 +98,10 @@ Two important costs are also consistent and must be preserved in any integration
 1. **Delete batches are slower in BDR** in these workloads, roughly 1.5–1.6x slower than SQLite.
 2. **BDR checkpoint is dramatically more expensive.** It grows from about 3.06 s at 647k records to 20.54 s at 4.79M records, while SQLite WAL checkpoint remains tens of milliseconds in this benchmark.
 
-This suggests that BDR is attractive for the Memoria.ia access pattern when reads, reopen/recovery loading and storage footprint dominate, but a Memoria.ia integration must not checkpoint frequently on the foreground path. Checkpoint scheduling should be treated as a background/maintenance policy and validated separately.
+This suggests that BDR is attractive for the Memoria.ia access pattern when reads, reopen/recovery loading and storage footprint dominate, but a Memoria.ia integration must not checkpoint frequently on the foreground path. Checkpoint scheduling should be treated as a maintenance policy and validated separately.
 
 ## Status
 
-The direct native performance experiment is successful and reproducible. It does **not** replace the current SQLite backend yet. Remaining integration gates include per-operation durable-write testing, explicit process-crash testing under a Memoria.ia-shaped workload, repeated checkpoint-churn policy tests and cross-platform validation. The frozen BDR v1.0.0 source remains unchanged throughout this experiment.
+The heavy direct native performance validation is complete for the three recorded scales and the intermediate adapters have been removed from the experiment branch. The branch now contains only the direct native benchmark, its direct-native CI workflow and this evidence report.
+
+This experiment does **not** replace the current SQLite backend yet. Separate resilience gates still remain for per-operation fsync durability, explicit forced-process-crash behavior, repeated checkpoint churn and cross-platform validation. Those are correctness/durability investigations rather than prerequisites for accepting the direct performance numbers above. The frozen BDR v1.0.0 source remains unchanged throughout the experiment.
