@@ -56,9 +56,15 @@ PHRASES = {
     "boleto para pagamento": "financeiro",
     "banco de madeira": "mobiliario",
     "pagamento no banco": "financeiro",
+    # Same ambiguous token, different contextual evidence.
+    "banco usado como assento": "mobiliario",
+    "banco confirmou a fatura": "financeiro",
+    "madeira do banco na praca": "mobiliario",
+    "pagamento da fatura no banco": "financeiro",
 }
 
 AMBIGUOUS_OR_OPEN = ("banco", "casa", "tecnico", "galaxia", "fotossintese")
+STOPWORDS = {"a", "da", "de", "do", "na", "no", "para", "sem"}
 
 
 def _build_pair(*, threshold: float = 0.0, min_margin: float = 0.0):
@@ -121,6 +127,7 @@ def test_phrase_resolution_uses_resolved_tokens_as_conservative_evidence():
         assert actual.score == pytest.approx(expected.score, abs=1e-12)
         assert actual.margin == pytest.approx(expected.margin, abs=1e-12)
         assert actual.evidence
+        assert not ({item.query for item in actual.evidence} & STOPWORDS)
 
     assert full.resolve_text("galaxia distante").concept_id is None
     assert adaptive.resolve_text("galaxia distante").concept_id is None
