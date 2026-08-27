@@ -20,7 +20,7 @@ class SemanticRouterV96:
     def register_concept(self,concept_id:str,anchors:Iterable[str])->None:
         normalized={a.strip().lower() for a in anchors if a.strip()}
         if not normalized:raise ValueError("concept must have at least one anchor")
-        self._concepts.setdefault(concept_id,set()).update(normalized);self._index_dirty=True
+        self._concepts.setdefault(concept_id,set()).update(normalized);self.memory.register_concept(concept_id,normalized);self._index_dirty=True
     def _score(self,q,a):return max(self.memory.similarity(q,a),self.memory.unordered_similarity(q,a))
     @staticmethod
     def _profile_tokens(profile):return set() if not profile else {token for (_offset,token) in profile}
@@ -42,8 +42,7 @@ class SemanticRouterV96:
         if not q:raise ValueError("query must not be empty")
         candidate_ids=self._candidate_ids(q)
         if not candidate_ids:return SemanticResolution(q,None,0.0,0.0,"unresolved")
-        candidate_concepts={cid:self._concepts[cid] for cid in candidate_ids}
-        ranked=self.memory.rank_concepts(q,candidate_concepts,top_k=2)
+        ranked=self.memory.rank_registered(q,candidate_ids,top_k=2)
         if ranked is None:
             ranked=[]
             for cid in candidate_ids:ranked.append((cid,max((self._score(q,a) for a in self._concepts[cid]),default=0.0)))
