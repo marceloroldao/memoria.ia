@@ -5,8 +5,6 @@ on:
     branches: [experiment/bdr-primary-linux]
     paths:
       - 'native/bdr_atomic_pybind.cpp'
-      - 'native/bdr_pybind.cpp'
-      - 'native/bdr_v11_shim/**'
       - 'src/memoria_resolutiva/bdr_store.py'
       - 'src/memoria_resolutiva/sqlite_store.py'
       - 'tests/test_bdr_store.py'
