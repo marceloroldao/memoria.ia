@@ -77,7 +77,7 @@ class RoleStructuralRouterV96:
         self.beam_width = beam_width
         self.candidate_floor = candidate_floor
         self._exact_roles: dict[str, str] = {}
-        self._pattern_lengths_by_concept: dict[str, set[int]] = {}
+        self._patterns_by_concept: dict[str, list[tuple[str, ...]]] = {}
 
     def observe(self, sentences: Iterable[str]) -> None:
         self.roles.observe(sentences)
@@ -94,15 +94,32 @@ class RoleStructuralRouterV96:
             self._exact_roles[anchor] = role_id
 
     def register_intent_pattern(self, concept_id: str, role_ids: Iterable[str], *, repeat: int = 1) -> None:
-        roles = [role.strip().lower() for role in role_ids if role.strip()]
+        roles = tuple(role.strip().lower() for role in role_ids if role.strip())
         if len(roles) < 2:
             raise ValueError("intent pattern must contain at least two roles")
         self.structure.register_pattern(concept_id, " ".join(roles), repeat=repeat)
-        self._pattern_lengths_by_concept.setdefault(concept_id, set()).add(len(roles))
+        patterns = self._patterns_by_concept.setdefault(concept_id, [])
+        if roles not in patterns:
+            patterns.append(roles)
 
     def register_intent_many(self, concept_id: str, patterns: Iterable[Iterable[str]]) -> None:
         for pattern in patterns:
             self.register_intent_pattern(concept_id, pattern)
+
+    @staticmethod
+    def _role_inventory(role_ids: Iterable[str]) -> tuple[str, ...]:
+        return tuple(sorted(role_ids))
+
+    def _matches_registered_inventory(self, concept_id: str, canonical: tuple[str, ...]) -> bool:
+        patterns = self._patterns_by_concept.get(concept_id)
+        if not patterns:
+            return True
+        inventory = self._role_inventory(canonical)
+        return any(
+            len(pattern) == len(canonical)
+            and self._role_inventory(pattern) == inventory
+            for pattern in patterns
+        )
 
     def _rank_role_candidates(self, token: str) -> list[RoleTokenEvidence]:
         exact = self._exact_roles.get(token)
@@ -196,8 +213,7 @@ class RoleStructuralRouterV96:
             structural = self.structure.resolve_text(" ".join(canonical))
             if structural.concept_id is None:
                 continue
-            allowed_lengths = self._pattern_lengths_by_concept.get(structural.concept_id)
-            if allowed_lengths and len(canonical) not in allowed_lengths:
+            if not self._matches_registered_inventory(structural.concept_id, canonical):
                 continue
             lexical_mean = lexical_sum / max(1, len(evidence))
             combined = structural.score * lexical_mean
