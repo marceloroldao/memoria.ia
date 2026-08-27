@@ -51,7 +51,7 @@ class RoleStructuralRouterV96:
         structural_threshold: float = 0.45,
         structural_min_margin: float = 0.08,
         relation_window: int = 5,
-        role_top_k: int = 3,
+        role_top_k: int = 4,
         beam_width: int = 64,
         candidate_floor: float = 0.02,
         use_native: bool | None = None,
@@ -209,8 +209,6 @@ class RoleStructuralRouterV96:
         best_combined, canonical, evidence, structural = ranked_global[0]
         second_combined = ranked_global[1][0] if len(ranked_global) > 1 else 0.0
         global_margin = max(0.0, best_combined - second_combined)
-        # The structural scorer already enforces its own threshold/margin. The
-        # global score is used only to choose among alternate role assignments.
         return RoleStructuralResolution(
             normalized,
             structural.concept_id,
