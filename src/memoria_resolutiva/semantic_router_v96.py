@@ -44,6 +44,11 @@ class SemanticRouterV96:
         candidates=set()
         for feature in self._profile_tokens(self.memory.associator.profiles.get(q)):candidates.update(self._feature_to_concepts.get(feature,()))
         return candidates
+    def _resolution_from_ranked(self,q,ranked):
+        if not ranked:return SemanticResolution(q,None,0.0,0.0,"unresolved")
+        best_id,best_score=ranked[0];second_score=ranked[1][1] if len(ranked)>1 else 0.0;margin=best_score-second_score
+        if best_score>=self.threshold and margin>=self.min_margin:return SemanticResolution(q,best_id,best_score,margin,"memory")
+        return SemanticResolution(q,None,best_score,margin,"unresolved")
     def resolve_token(self,query:str)->SemanticResolution:
         q=query.strip().lower()
         if not q:raise ValueError("query must not be empty")
@@ -58,11 +63,43 @@ class SemanticRouterV96:
             ranked=[]
             for cid in candidate_ids:ranked.append((cid,max((self._score(q,a) for a in self._concepts[cid]),default=0.0)))
             ranked.sort(key=lambda item:(-item[1],item[0]));ranked=ranked[:2]
-        best_id,best_score=ranked[0];second_score=ranked[1][1] if len(ranked)>1 else 0.0;margin=best_score-second_score
-        if best_score>=self.threshold and margin>=self.min_margin:return SemanticResolution(q,best_id,best_score,margin,"memory")
-        return SemanticResolution(q,None,best_score,margin,"unresolved")
+        return self._resolution_from_ranked(q,ranked)
     def resolve_or_fallback(self,query:str,fallback:Callable[[str],str|None])->SemanticResolution:
         self._total_queries+=1;direct=self.resolve_token(query)
         if direct.concept_id is not None:self._memory_resolved+=1;return direct
         self._fallback_calls+=1;cid=fallback(query);return SemanticResolution(query.strip().lower(),cid,direct.score,direct.margin,"fallback")
     def metrics(self)->DeflectionMetrics:return DeflectionMetrics(self._total_queries,self._memory_resolved,self._fallback_calls)
+
+class AdaptiveSemanticRouterV96(SemanticRouterV96):
+    """Experimental native policy that switches from full scan to discriminative pruning as concept count grows.
+
+    The default 32-candidate cap is intentionally conservative: the v0.96 scale matrix
+    retained full-scan recall at 1k, 5k and 10k concepts while still providing large
+    speedups. Python-only execution remains full-scan.
+    """
+    def __init__(self,*,adaptive_threshold:int=512,candidate_limit:int=32,**kwargs)->None:
+        if adaptive_threshold<2:raise ValueError("adaptive_threshold must be >= 2")
+        if candidate_limit<2:raise ValueError("candidate_limit must be >= 2")
+        kwargs.setdefault("indexed",False)
+        super().__init__(**kwargs)
+        if self.indexed:raise ValueError("AdaptiveSemanticRouterV96 requires indexed=False")
+        self.adaptive_threshold=adaptive_threshold
+        self.candidate_limit=candidate_limit
+        self._last_route_mode="full"
+        self._last_candidate_count=0
+    @property
+    def last_route_mode(self)->str:return self._last_route_mode
+    @property
+    def last_candidate_count(self)->int:return self._last_candidate_count
+    def resolve_token(self,query:str)->SemanticResolution:
+        q=query.strip().lower()
+        if not q:raise ValueError("query must not be empty")
+        if not self._concepts:return SemanticResolution(q,None,0.0,0.0,"unresolved")
+        if self.memory.native_enabled and len(self._concepts)>=self.adaptive_threshold:
+            candidate_ids=self.memory.discriminative_candidates(q,self.candidate_limit)
+            if candidate_ids:
+                self._last_route_mode="discriminative";self._last_candidate_count=len(candidate_ids)
+                ranked=self.memory.rank_registered(q,candidate_ids,top_k=2)
+                return self._resolution_from_ranked(q,ranked)
+        self._last_route_mode="full";self._last_candidate_count=len(self._concepts)
+        return super().resolve_token(q)
