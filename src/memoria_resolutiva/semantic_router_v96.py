@@ -79,7 +79,9 @@ class SemanticRouterV96:
         for token in tokens:
             resolution=self.resolve_token(token)
             if resolution.concept_id is None:continue
-            evidence.append(resolution);weights[resolution.concept_id]=weights.get(resolution.concept_id,0.0)+max(0.0,resolution.score)
+            weight=max(0.0,resolution.score)*max(0.0,resolution.margin)
+            if weight<=0.0:continue
+            evidence.append(resolution);weights[resolution.concept_id]=weights.get(resolution.concept_id,0.0)+weight
         if not weights:return TextResolution(normalized,None,0.0,0.0,"unresolved",tuple(evidence))
         ranked=sorted(weights.items(),key=lambda item:(-item[1],item[0]));total=sum(score for _,score in ranked)
         if total<=0:return TextResolution(normalized,None,0.0,0.0,"unresolved",tuple(evidence))
