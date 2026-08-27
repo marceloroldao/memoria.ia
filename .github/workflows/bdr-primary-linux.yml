@@ -1,13 +1,15 @@
-name: BDR primary Linux backend
+name: BDR v1.1 atomic Linux backend
 
 on:
   push:
-    branches: [experiment/bdr-primary-linux]
+    branches: [experiment/bdr-v110-atomic]
     paths:
       - 'native/bdr_pybind.cpp'
+      - 'native/bdr_v11_shim/**'
       - 'src/memoria_resolutiva/bdr_store.py'
       - 'src/memoria_resolutiva/sqlite_store.py'
       - 'tests/test_bdr_store.py'
+      - 'tests/test_bdr_v11_atomic.py'
       - 'tests/test_sqlite_store.py'
       - 'benchmarks/bdr_end_to_end.py'
       - 'setup.py'
@@ -18,11 +20,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: bdr-primary-linux-${{ github.ref }}
+  group: bdr-v110-atomic-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  bdr-primary-linux:
+  bdr-v110-atomic:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -31,31 +33,31 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libsqlite3-dev
-      - name: Checkout exact frozen Resolutive-DB v1.0.0
+      - name: Checkout exact Resolutive-DB v1.1.0
         run: |
-          git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
-          test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
-      - name: Build PIC BDR v1.0.0 static library
+          git clone --depth 1 --branch v1.1.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v110-src
+          test "$(git -C bdr-v110-src describe --tags --exact-match)" = "v1.1.0"
+      - name: Build PIC BDR v1.1.0 static library
         run: |
-          cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-          cmake --build bdr-v100-build --config Release --target bdr_v1_candidate -j2
-      - name: Build/install Memoria.ia with direct BDR extension
+          cmake -S bdr-v110-src -B bdr-v110-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          cmake --build bdr-v110-build --config Release --target bdr_v1_candidate -j2
+      - name: Build/install Memoria.ia with BDR v1.1 atomic extension
         env:
           MEMORIA_BUILD_BDR: "1"
-          BDR_INCLUDE_DIR: ${{ github.workspace }}/bdr-v100-src/experimental/api_v86/include
-          BDR_LIBRARY_FILE: ${{ github.workspace }}/bdr-v100-build/experimental/api_v86/libbdr.a
+          BDR_INCLUDE_DIR: ${{ github.workspace }}/bdr-v110-src/experimental/api_v86/include
+          BDR_LIBRARY_FILE: ${{ github.workspace }}/bdr-v110-build/experimental/api_v86/libbdr.a
         run: python -m pip install -e '.[product,test]'
-      - name: BDR equivalence and reopen tests
-        run: pytest -q tests/test_bdr_store.py tests/test_sqlite_store.py
+      - name: BDR equivalence, atomicity and reopen tests
+        run: pytest -q tests/test_bdr_store.py tests/test_bdr_v11_atomic.py tests/test_sqlite_store.py
       - name: Full Memoria.ia regression
         run: pytest -q
       - name: End-to-end benchmark - durable every memory
         run: |
           mkdir -p benchmark-results
           python benchmarks/bdr_end_to_end.py --memories 256 --payload-bytes 512 --sync-every 1 | tee benchmark-results/e2e-sync1.json
-      - name: End-to-end benchmark - high performance batching
+      - name: End-to-end benchmark - deferred durable group
         run: python benchmarks/bdr_end_to_end.py --memories 1024 --payload-bytes 1024 --sync-every 16 | tee benchmark-results/e2e-sync16.json
       - uses: actions/upload-artifact@v4
         with:
-          name: memoria-bdr-primary-linux-results
+          name: memoria-bdr-v110-atomic-results
           path: benchmark-results/

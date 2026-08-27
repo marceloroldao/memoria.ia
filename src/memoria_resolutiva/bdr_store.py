@@ -35,23 +35,28 @@ class BDRPolicy:
 
 
 class BDRResolutiveMemory:
-    """Resolutive memory persisted directly in frozen BDR v1.0.0.
+    """Resolutive memory persisted through the BDR v1.1 atomic path.
 
     On the BDR path, one logical add crosses Python/C++ once. Fragmentation,
     BLAKE2b node addressing, deduplication, occurrence construction, metadata
-    updates and BDR puts are fused inside the native extension. Python remains
-    the public API/orchestration layer.
+    updates and physical record materialization remain fused inside the native
+    extension. The v1.1 compatibility layer commits the resulting pending unit
+    through BDR AtomicDatabase/BDW4.
+
+    With the default ``sync_every_memories=1``, one Memoria.ia logical memory
+    maps to one durable atomic BDR batch. Values greater than one are an explicit
+    deferred-durability mode: pending logical memories remain visible in-process
+    and cross one durable all-or-nothing boundary when the policy syncs.
 
     Writes are serialized inside one Python process. Cross-process multi-writer
-    use remains intentionally unsupported until the storage layer exposes an
-    atomic logical batch primitive.
+    use remains intentionally unsupported by this Memoria.ia adapter.
     """
 
     def __init__(self, path: str | Path, max_layer: int = 3, *, policy: BDRPolicy | None = None):
         if _NativeDatabase is None:
             raise RuntimeError(
                 "BDR native extension is unavailable; build with MEMORIA_BUILD_BDR=1 "
-                "against frozen Resolutive-DB v1.0.0"
+                "against Resolutive-DB v1.1.0"
             ) from _NATIVE_IMPORT_ERROR
 
         self.path = str(path)
