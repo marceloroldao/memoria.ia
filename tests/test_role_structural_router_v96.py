@@ -68,7 +68,7 @@ def test_role_canonicalization_inherits_unregistered_roles_from_context():
     assert reverse.canonical_roles == ("bank", "transfer", "money", "customer")
     assert forward.concept_id == "customer_to_bank"
     assert reverse.concept_id == "bank_to_customer"
-    assert any(item.source == "context" for item in forward.role_evidence)
+    assert any(item.source == "context_joint" for item in forward.role_evidence)
 
 
 def test_role_canonicalization_abstains_when_action_role_is_missing():
