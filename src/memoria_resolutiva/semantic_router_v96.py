@@ -71,22 +71,21 @@ class SemanticRouterV96:
     def metrics(self)->DeflectionMetrics:return DeflectionMetrics(self._total_queries,self._memory_resolved,self._fallback_calls)
 
 class AdaptiveSemanticRouterV96(SemanticRouterV96):
-    """Experimental native policy that switches from full scan to discriminative pruning as concept count grows.
+    """Experimental native policy choosing full scan or discriminative pruning.
 
-    The default 32-candidate cap is intentionally conservative: the v0.96 scale matrix
-    retained full-scan recall at 1k, 5k and 10k concepts while still providing large
-    speedups. Python-only execution remains full-scan.
+    Candidate pruning is accepted only for sufficiently separated Top-2 results.
+    Ambiguous/pruned ties are verified with full scan so pruning cannot silently
+    change deterministic tie resolution or abstention semantics.
     """
-    def __init__(self,*,adaptive_threshold:int=512,candidate_limit:int=32,**kwargs)->None:
+    def __init__(self,*,adaptive_threshold:int=512,candidate_limit:int=32,verification_epsilon:float=1e-12,**kwargs)->None:
         if adaptive_threshold<2:raise ValueError("adaptive_threshold must be >= 2")
         if candidate_limit<2:raise ValueError("candidate_limit must be >= 2")
+        if verification_epsilon<0:raise ValueError("verification_epsilon must be >= 0")
         kwargs.setdefault("indexed",False)
         super().__init__(**kwargs)
         if self.indexed:raise ValueError("AdaptiveSemanticRouterV96 requires indexed=False")
-        self.adaptive_threshold=adaptive_threshold
-        self.candidate_limit=candidate_limit
-        self._last_route_mode="full"
-        self._last_candidate_count=0
+        self.adaptive_threshold=adaptive_threshold;self.candidate_limit=candidate_limit;self.verification_epsilon=verification_epsilon
+        self._last_route_mode="full";self._last_candidate_count=0
     @property
     def last_route_mode(self)->str:return self._last_route_mode
     @property
@@ -98,8 +97,15 @@ class AdaptiveSemanticRouterV96(SemanticRouterV96):
         if self.memory.native_enabled and len(self._concepts)>=self.adaptive_threshold:
             candidate_ids=self.memory.discriminative_candidates(q,self.candidate_limit)
             if candidate_ids:
-                self._last_route_mode="discriminative";self._last_candidate_count=len(candidate_ids)
+                self._last_candidate_count=len(candidate_ids)
                 ranked=self.memory.rank_registered(q,candidate_ids,top_k=2)
-                return self._resolution_from_ranked(q,ranked)
+                second=ranked[1][1] if ranked and len(ranked)>1 else 0.0
+                margin=(ranked[0][1]-second) if ranked else 0.0
+                verify_margin=max(self.min_margin,self.verification_epsilon)
+                if ranked and margin>verify_margin:
+                    self._last_route_mode="discriminative"
+                    return self._resolution_from_ranked(q,ranked)
+                self._last_route_mode="full_verify"
+                return super().resolve_token(q)
         self._last_route_mode="full";self._last_candidate_count=len(self._concepts)
         return super().resolve_token(q)
