@@ -28,6 +28,7 @@ on:
       - 'benchmarks/native_adaptive_router.py'
       - 'benchmarks/native_relational_phrase.py'
       - 'benchmarks/structural_router_scaling.py'
+      - 'benchmarks/role_structural_generalization.py'
       - 'benchmarks/hybrid_text_router.py'
       - 'benchmarks/native_router_scale_matrix.py'
       - 'setup.py'
@@ -70,6 +71,8 @@ jobs:
         run: python benchmarks/native_relational_phrase.py | tee benchmark-results/native-relational-phrase.json
       - name: Structural signature benchmark
         run: python benchmarks/structural_router_scaling.py | tee benchmark-results/structural-router.json
+      - name: Role structural generalization benchmark
+        run: python benchmarks/role_structural_generalization.py | tee benchmark-results/role-structural-generalization.json
       - name: Hybrid text benchmark
         run: python benchmarks/hybrid_text_router.py | tee benchmark-results/hybrid-text-router.json
       - name: Router scale matrix
