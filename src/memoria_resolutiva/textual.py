@@ -53,9 +53,10 @@ class TextContextMemory:
         for (_o,t),c in pb.items():cb[t]+=c
         dot=sum(ca[t]*cb[t] for t in set(ca)&set(cb));na=sqrt(sum(v*v for v in ca.values()));nb=sqrt(sum(v*v for v in cb.values()))
         return dot/(na*nb) if na and nb else 0.0
-    def rank_registered(self,query:str,candidate_ids,top_k:int=2)->list[tuple[str,float]]|None:
+    def rank_registered(self,query:str,candidate_ids=None,top_k:int=2)->list[tuple[str,float]]|None:
         if self._native is None:return None
-        return list(self._native.rank_registered(query.lower(), sorted(candidate_ids), top_k))
+        ids=[] if candidate_ids is None else sorted(candidate_ids)
+        return list(self._native.rank_registered(query.lower(),ids,top_k))
     def nearest(self,token:str,top_k:int=5)->list[tuple[str,float]]:return self.associator.nearest(token.lower(),top_k=top_k)
     def ambiguity_probe(self,token:str,top_k:int=5)->AmbiguityProbe:
         ranked=self.nearest(token,top_k=top_k);positive=[(n,max(0.0,s)) for n,s in ranked if s>0];total=sum(s for _,s in positive)
