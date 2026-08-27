@@ -84,3 +84,83 @@ jobs:
         with:
           name: bdr-v100-native-direct-${{ matrix.name }}
           path: benchmark-results/
+
+  resilience-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev zlib1g-dev
+      - name: Checkout exact frozen Resolutive-DB v1.0.0
+        run: |
+          git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
+          test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
+      - name: Build direct resilience executable
+        run: |
+          cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build bdr-v100-build --config Release --target bdr_v1_candidate -j2
+          BDR_LIB="$(find bdr-v100-build -name 'libbdr.a' -print -quit)"
+          test -n "$BDR_LIB"
+          c++ -std=c++17 -O3 -DNDEBUG benchmarks/bdr_v100_resilience.cpp \
+            -I bdr-v100-src/experimental/api_v86/include "$BDR_LIB" \
+            -lsqlite3 -lz -pthread -o bdr_v100_resilience
+      - name: Per-operation fsync gate
+        run: |
+          mkdir -p resilience-results
+          ./bdr_v100_resilience fsync resilience-fsync 5000 256 | tee resilience-results/fsync.json
+      - name: Checkpoint churn gate
+        run: |
+          ./bdr_v100_resilience churn resilience-churn 40 5000 20000 | tee resilience-results/checkpoint-churn.json
+      - name: Forced crash recovery - BDR
+        shell: bash
+        run: |
+          set +e
+          ./bdr_v100_resilience crash-write bdr resilience-crash-bdr 20000 10000
+          rc=$?
+          set -e
+          test "$rc" -eq 99
+          ./bdr_v100_resilience crash-verify bdr resilience-crash-bdr 20000 10000 | tee resilience-results/crash-bdr.json
+      - name: Forced crash recovery - SQLite control
+        shell: bash
+        run: |
+          set +e
+          ./bdr_v100_resilience crash-write sqlite resilience-crash-sqlite 20000 10000
+          rc=$?
+          set -e
+          test "$rc" -eq 99
+          ./bdr_v100_resilience crash-verify sqlite resilience-crash-sqlite 20000 10000 | tee resilience-results/crash-sqlite.json
+      - name: Summarize resilience gates
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          print('## BDR v1.0.0 resilience gates')
+          for p in sorted(pathlib.Path('resilience-results').glob('*.json')):
+              d=json.loads(p.read_text())
+              print(f"- **{p.stem}**: {d.get('status')} — {d}")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bdr-v100-resilience-linux
+          path: resilience-results/
+
+  frozen-v1-cross-platform:
+    name: frozen-v1-contract-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout frozen Resolutive-DB v1.0.0
+        shell: bash
+        run: |
+          git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
+          test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
+      - name: Configure frozen BDR
+        run: cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release
+      - name: Build frozen v1 contract
+        run: cmake --build bdr-v100-build --config Release --target v1_candidate_contract
+      - name: Run frozen v1 contract
+        run: ctest --test-dir bdr-v100-build -C Release -R v1_candidate_contract --output-on-failure
