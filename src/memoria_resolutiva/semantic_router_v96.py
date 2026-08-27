@@ -11,16 +11,21 @@ class DeflectionMetrics:
     total_queries:int; memory_resolved:int; fallback_calls:int
     @property
     def deflection_rate(self)->float:return 0.0 if self.total_queries==0 else self.memory_resolved/self.total_queries
+@dataclass(frozen=True, slots=True)
+class AdaptiveRoutingStats:
+    total:int; full:int; discriminative:int; full_verify:int
+    @property
+    def verification_fraction(self)->float:return 0.0 if self.total==0 else self.full_verify/self.total
+    @property
+    def discriminative_fraction(self)->float:return 0.0 if self.total==0 else self.discriminative/self.total
 
 class SemanticRouterV96:
     """Conservative non-neural semantic router with optional native top-two ranking."""
     def __init__(self,*,radius:int=3,threshold:float=.60,min_margin:float=.08,indexed:bool=False,use_native:bool|None=None,native_authoritative:bool|None=None)->None:
         if native_authoritative is True and indexed:raise ValueError("native_authoritative currently requires indexed=False")
         if native_authoritative is True and use_native is False:raise ValueError("native_authoritative requires native execution")
-        if native_authoritative is None:
-            authoritative=(not indexed) and (use_native is not False) and native_context_available()
-        else:
-            authoritative=native_authoritative
+        if native_authoritative is None:authoritative=(not indexed) and (use_native is not False) and native_context_available()
+        else:authoritative=native_authoritative
         self.memory=TextContextMemory(radius=radius,use_native=True if authoritative else use_native,mirror_python=not authoritative)
         self.native_authoritative=authoritative;self.threshold=threshold;self.min_margin=min_margin;self.indexed=indexed;self._concepts={};self._feature_to_concepts={};self._index_dirty=True;self._total_queries=0;self._memory_resolved=0;self._fallback_calls=0
     def observe(self,sentences:Iterable[str])->None:self.memory.observe_many(sentences);self._index_dirty=True
@@ -81,31 +86,32 @@ class AdaptiveSemanticRouterV96(SemanticRouterV96):
         if adaptive_threshold<2:raise ValueError("adaptive_threshold must be >= 2")
         if candidate_limit<2:raise ValueError("candidate_limit must be >= 2")
         if verification_epsilon<0:raise ValueError("verification_epsilon must be >= 0")
-        kwargs.setdefault("indexed",False)
-        super().__init__(**kwargs)
+        kwargs.setdefault("indexed",False);super().__init__(**kwargs)
         if self.indexed:raise ValueError("AdaptiveSemanticRouterV96 requires indexed=False")
         self.adaptive_threshold=adaptive_threshold;self.candidate_limit=candidate_limit;self.verification_epsilon=verification_epsilon
-        self._last_route_mode="full";self._last_candidate_count=0
+        self._last_route_mode="full";self._last_candidate_count=0;self._route_counts={"full":0,"discriminative":0,"full_verify":0}
     @property
     def last_route_mode(self)->str:return self._last_route_mode
     @property
     def last_candidate_count(self)->int:return self._last_candidate_count
+    def _mark_route(self,mode:str,count:int)->None:
+        self._last_route_mode=mode;self._last_candidate_count=count;self._route_counts[mode]+=1
+    def routing_stats(self)->AdaptiveRoutingStats:
+        total=sum(self._route_counts.values())
+        return AdaptiveRoutingStats(total,self._route_counts["full"],self._route_counts["discriminative"],self._route_counts["full_verify"])
+    def reset_routing_stats(self)->None:
+        for key in self._route_counts:self._route_counts[key]=0
     def resolve_token(self,query:str)->SemanticResolution:
         q=query.strip().lower()
         if not q:raise ValueError("query must not be empty")
-        if not self._concepts:return SemanticResolution(q,None,0.0,0.0,"unresolved")
+        if not self._concepts:
+            self._mark_route("full",0);return SemanticResolution(q,None,0.0,0.0,"unresolved")
         if self.memory.native_enabled and len(self._concepts)>=self.adaptive_threshold:
             candidate_ids=self.memory.discriminative_candidates(q,self.candidate_limit)
             if candidate_ids:
-                self._last_candidate_count=len(candidate_ids)
-                ranked=self.memory.rank_registered(q,candidate_ids,top_k=2)
-                second=ranked[1][1] if ranked and len(ranked)>1 else 0.0
-                margin=(ranked[0][1]-second) if ranked else 0.0
+                ranked=self.memory.rank_registered(q,candidate_ids,top_k=2);second=ranked[1][1] if ranked and len(ranked)>1 else 0.0;margin=(ranked[0][1]-second) if ranked else 0.0
                 verify_margin=max(self.min_margin,self.verification_epsilon)
                 if ranked and margin>verify_margin:
-                    self._last_route_mode="discriminative"
-                    return self._resolution_from_ranked(q,ranked)
-                self._last_route_mode="full_verify"
-                return super().resolve_token(q)
-        self._last_route_mode="full";self._last_candidate_count=len(self._concepts)
-        return super().resolve_token(q)
+                    self._mark_route("discriminative",len(candidate_ids));return self._resolution_from_ranked(q,ranked)
+                self._mark_route("full_verify",len(candidate_ids));return super().resolve_token(q)
+        self._mark_route("full",len(self._concepts));return super().resolve_token(q)
