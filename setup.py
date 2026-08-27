@@ -41,8 +41,8 @@ def native_extensions():
         extensions.append(
             Pybind11Extension(
                 "memoria_resolutiva._bdr_native",
-                ["native/bdr_pybind.cpp"],
-                include_dirs=["native/bdr_v11_shim", include_dir],
+                ["native/bdr_atomic_pybind.cpp"],
+                include_dirs=[include_dir],
                 extra_objects=[str(library_path)],
                 libraries=["z"],
                 cxx_std=17,
