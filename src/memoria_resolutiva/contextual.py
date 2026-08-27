@@ -65,7 +65,7 @@ class ContextAssociator:
             for other in self.profiles
             if other != node_id
         ]
-        scores.sort(key=lambda item: item[1], reverse=True)
+        scores.sort(key=lambda item: (-item[1], item[0]))
         return scores[:top_k]
 
     def footprint(self) -> dict[str, int]:
