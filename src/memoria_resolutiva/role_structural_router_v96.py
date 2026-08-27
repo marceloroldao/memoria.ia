@@ -38,8 +38,10 @@ class RoleStructuralRouterV96:
     """Experimental abstraction layer: lexical tokens -> semantic roles -> structure.
 
     Exact anchors are deterministic. Context-only words keep several candidate
-    roles until the phrase structure is evaluated. Once a candidate is expressed
-    in canonical roles, intent selection is exact against registered role patterns.
+    roles until the phrase structure is evaluated. A bounded relabel budget lets
+    global structure correct a small number of locally ambiguous assignments, but
+    prevents the beam from arbitrarily relabeling an entire phrase merely to fit a
+    known intent. Once expressed in canonical roles, intent selection is exact.
     No neural model or embedding is used.
     """
 
@@ -54,6 +56,7 @@ class RoleStructuralRouterV96:
         role_top_k: int = 4,
         beam_width: int = 64,
         candidate_floor: float = 0.02,
+        max_context_relabels: int = 2,
         use_native: bool | None = None,
     ) -> None:
         if role_top_k < 1:
@@ -62,6 +65,8 @@ class RoleStructuralRouterV96:
             raise ValueError("beam_width must be >= 1")
         if candidate_floor < 0.0:
             raise ValueError("candidate_floor must be >= 0")
+        if max_context_relabels < 0:
+            raise ValueError("max_context_relabels must be >= 0")
         self.roles = AdaptiveSemanticRouterV96(
             threshold=role_threshold,
             min_margin=role_min_margin,
@@ -76,6 +81,7 @@ class RoleStructuralRouterV96:
         self.role_top_k = role_top_k
         self.beam_width = beam_width
         self.candidate_floor = candidate_floor
+        self.max_context_relabels = max_context_relabels
         self._exact_roles: dict[str, str] = {}
         self._patterns_by_concept: dict[str, list[tuple[str, ...]]] = {}
         self._concepts_by_pattern: dict[tuple[str, ...], set[str]] = {}
@@ -169,7 +175,9 @@ class RoleStructuralRouterV96:
         return tuple(canonical), tuple(evidence)
 
     def _joint_candidates(self, text: str):
-        beams: list[tuple[tuple[str, ...], tuple[RoleTokenEvidence, ...], float]] = [((), (), 0.0)]
+        beams: list[
+            tuple[tuple[str, ...], tuple[RoleTokenEvidence, ...], float, int]
+        ] = [((), (), 0.0, 0)]
         for token in tokenize(text.strip().lower()):
             if token in _ROLE_STOPWORDS:
                 continue
@@ -177,16 +185,21 @@ class RoleStructuralRouterV96:
             if not options:
                 continue
             expanded = []
-            for roles, evidence, lexical_sum in beams:
-                for option in options:
+            for roles, evidence, lexical_sum, relabels in beams:
+                for option_index, option in enumerate(options):
+                    added_relabels = 0 if option.source == "exact" or option_index == 0 else 1
+                    next_relabels = relabels + added_relabels
+                    if next_relabels > self.max_context_relabels:
+                        continue
                     expanded.append(
                         (
                             roles + (option.role_id,),
                             evidence + (option,),
                             lexical_sum + option.score,
+                            next_relabels,
                         )
                     )
-            expanded.sort(key=lambda item: (-item[2], item[0]))
+            expanded.sort(key=lambda item: (item[3], -item[2], item[0]))
             beams = expanded[: self.beam_width]
         return beams
 
@@ -194,7 +207,7 @@ class RoleStructuralRouterV96:
         normalized = text.strip().lower()
         beams = self._joint_candidates(normalized)
         ranked_global = []
-        for canonical, evidence, lexical_sum in beams:
+        for canonical, evidence, lexical_sum, relabels in beams:
             if len(canonical) < 2:
                 continue
             matching_concepts = self._concepts_by_pattern.get(canonical, set())
@@ -206,7 +219,7 @@ class RoleStructuralRouterV96:
                 continue
             lexical_mean = lexical_sum / max(1, len(evidence))
             combined = structural.score * lexical_mean
-            ranked_global.append((combined, canonical, evidence, structural))
+            ranked_global.append((combined, relabels, canonical, evidence, structural))
 
         if not ranked_global:
             canonical, evidence = self.canonicalize(normalized)
@@ -215,8 +228,10 @@ class RoleStructuralRouterV96:
                 normalized, None, 0.0, 0.0, "unresolved", canonical, evidence, empty
             )
 
-        ranked_global.sort(key=lambda item: (-item[0], item[3].concept_id or "", item[1]))
-        best_combined, canonical, evidence, structural = ranked_global[0]
+        ranked_global.sort(
+            key=lambda item: (-item[0], item[1], item[4].concept_id or "", item[2])
+        )
+        best_combined, _best_relabels, canonical, evidence, structural = ranked_global[0]
         second_combined = ranked_global[1][0] if len(ranked_global) > 1 else 0.0
         global_margin = max(0.0, best_combined - second_combined)
         return RoleStructuralResolution(
