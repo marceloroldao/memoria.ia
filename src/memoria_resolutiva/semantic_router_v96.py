@@ -1,11 +1,14 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterable
-from .textual import TextContextMemory, native_context_available
+from .textual import TextContextMemory, native_context_available, tokenize
 
 @dataclass(frozen=True, slots=True)
 class SemanticResolution:
     query:str; concept_id:str|None; score:float; margin:float; source:str
+@dataclass(frozen=True, slots=True)
+class TextResolution:
+    text:str; concept_id:str|None; score:float; margin:float; source:str; evidence:tuple[SemanticResolution,...]
 @dataclass(frozen=True, slots=True)
 class DeflectionMetrics:
     total_queries:int; memory_resolved:int; fallback_calls:int
@@ -69,6 +72,20 @@ class SemanticRouterV96:
             for cid in candidate_ids:ranked.append((cid,max((self._score(q,a) for a in self._concepts[cid]),default=0.0)))
             ranked.sort(key=lambda item:(-item[1],item[0]));ranked=ranked[:2]
         return self._resolution_from_ranked(q,ranked)
+    def resolve_text(self,text:str)->TextResolution:
+        normalized=text.strip().lower();tokens=tokenize(normalized)
+        if not tokens:raise ValueError("text must contain at least one token")
+        evidence=[];weights={}
+        for token in tokens:
+            resolution=self.resolve_token(token)
+            if resolution.concept_id is None:continue
+            evidence.append(resolution);weights[resolution.concept_id]=weights.get(resolution.concept_id,0.0)+max(0.0,resolution.score)
+        if not weights:return TextResolution(normalized,None,0.0,0.0,"unresolved",tuple(evidence))
+        ranked=sorted(weights.items(),key=lambda item:(-item[1],item[0]));total=sum(score for _,score in ranked)
+        if total<=0:return TextResolution(normalized,None,0.0,0.0,"unresolved",tuple(evidence))
+        best_id,best_weight=ranked[0];best_score=best_weight/total;second_score=(ranked[1][1]/total) if len(ranked)>1 else 0.0;margin=best_score-second_score
+        if best_score>=self.threshold and margin>=self.min_margin:return TextResolution(normalized,best_id,best_score,margin,"memory",tuple(evidence))
+        return TextResolution(normalized,None,best_score,margin,"unresolved",tuple(evidence))
     def resolve_or_fallback(self,query:str,fallback:Callable[[str],str|None])->SemanticResolution:
         self._total_queries+=1;direct=self.resolve_token(query)
         if direct.concept_id is not None:self._memory_resolved+=1;return direct
