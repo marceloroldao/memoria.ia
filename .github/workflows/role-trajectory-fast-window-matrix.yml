@@ -1,0 +1,30 @@
+name: Role trajectory fast temporal window matrix
+
+on:
+  push:
+    branches:
+      - experiment/bdr-primary-linux
+    paths:
+      - 'benchmarks/role_trajectory_fast_window_matrix.py'
+      - 'src/memoria_resolutiva/trajectory_policy_gate_experimental.py'
+      - '.github/workflows/role-trajectory-fast-window-matrix.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run fast temporal window matrix
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-results
+          PYTHONPATH=.:src python benchmarks/role_trajectory_fast_window_matrix.py | tee benchmark-results/role-trajectory-fast-window-matrix.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: role-trajectory-fast-window-matrix
+          path: benchmark-results/role-trajectory-fast-window-matrix.json
