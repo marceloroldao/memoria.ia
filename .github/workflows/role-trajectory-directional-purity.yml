@@ -1,0 +1,28 @@
+name: Role trajectory directional purity
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_trajectory_directional_purity.py'
+      - '.github/workflows/role-trajectory-directional-purity.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run directional purity probe
+        env:
+          PYTHONPATH: .:src
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_directional_purity.py | tee benchmark-results/role-trajectory-directional-purity.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-directional-purity
+          path: benchmark-results/role-trajectory-directional-purity.json
