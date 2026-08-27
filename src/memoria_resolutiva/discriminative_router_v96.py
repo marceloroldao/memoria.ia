@@ -34,11 +34,14 @@ class DiscriminativeSemanticRouterV96(SemanticRouterV96):
         min_margin: float = 0.08,
         candidate_limit: int = 32,
     ) -> None:
+        # Candidate pruning currently reads Python contextual profiles directly,
+        # so retain the mirror even when the native extension is available.
         super().__init__(
             radius=radius,
             threshold=threshold,
             min_margin=min_margin,
             indexed=False,
+            native_authoritative=False,
         )
         if candidate_limit < 2:
             raise ValueError("candidate_limit must be >= 2")
