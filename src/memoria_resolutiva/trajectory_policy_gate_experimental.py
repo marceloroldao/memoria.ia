@@ -31,7 +31,7 @@ class ExperimentalTrajectoryPolicyGate:
     states:
 
     * accept: enough evidence exists and the learned trajectory is covered;
-    * reject: enough evidence exists but trajectory topology/coverage is wrong;
+    * reject: enough evidence exists but role topology or trajectory coverage is wrong;
     * fail_closed: evidence or calibration is insufficient/contradictory.
 
     Calibration is deterministic and uses only registered role anchors/patterns.
@@ -46,9 +46,6 @@ class ExperimentalTrajectoryPolicyGate:
             max_context_relabels=8,
             use_native=use_native,
         )
-        # ContextAssociator radius is currently owned by the underlying textual
-        # memory. Keep the argument explicit for forward compatibility and reject
-        # unsupported values rather than silently pretending it changed.
         actual_radius = self.router.roles.memory.associator.radius
         if radius != actual_radius:
             raise ValueError(f"experimental gate currently requires radius={actual_radius}")
@@ -115,6 +112,29 @@ class ExperimentalTrajectoryPolicyGate:
         if token not in self.router.roles.memory.associator.profiles:
             return False
         return bool(self.router._rank_role_candidates(token))
+
+    def _candidate_roles(self, token: str) -> frozenset[str]:
+        token = token.lower()
+        exact = self.router._exact_roles.get(token)
+        if exact is not None:
+            return frozenset((exact,))
+        return frozenset(candidate.role_id for candidate in self.router._rank_role_candidates(token))
+
+    def _role_topology_matches(self, tokens: tuple[str, ...]) -> bool:
+        """Return true when at least one registered role trajectory is feasible.
+
+        Exact anchors remain single-role constraints. Context-supported ambiguous
+        tokens may participate through any currently supported role candidate.
+        This keeps polysemy possible while preventing the union of lexical edge
+        memories from accepting a sequence whose role order is impossible.
+        """
+        candidates = tuple(self._candidate_roles(token) for token in tokens)
+        for pattern in self._patterns:
+            if len(pattern) != len(tokens):
+                continue
+            if all(expected_role in token_roles for expected_role, token_roles in zip(pattern, candidates)):
+                return True
+        return False
 
     def calibrate(self) -> bool:
         if not self._patterns:
@@ -183,6 +203,12 @@ class ExperimentalTrajectoryPolicyGate:
             return TrajectoryPolicyResolution(
                 normalized, "reject", self._coverage(tokens), self._threshold, self._margin,
                 "trajectory arity mismatch", len(tokens),
+            )
+
+        if not self._role_topology_matches(tokens):
+            return TrajectoryPolicyResolution(
+                normalized, "reject", self._coverage(tokens), self._threshold, self._margin,
+                "role topology mismatch", len(tokens),
             )
 
         coverage = self._coverage(tokens)
