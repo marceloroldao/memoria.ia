@@ -3,6 +3,7 @@ from .bdr_store import BDRPolicy, BDRResolutiveMemory, native_bdr_available
 from .distributed_consensus import ConsensusDecision, KnowledgeDescriptor
 from .hybrid_text_router_v96 import HybridRoutingStats, HybridTextResolution, HybridTextRouterV96
 from .layers import LayerSpec, layer_bits
+from .role_structural_router_v96 import RoleStructuralResolution, RoleStructuralRouterV96, RoleTokenEvidence
 from .semantic_router_v96 import AdaptiveRoutingStats, AdaptiveSemanticRouterV96, SemanticRouterV96, TextResolution
 from .storage_backend import open_resolutive_memory, preferred_backend
 from .store import ResolutiveMemory
@@ -33,5 +34,8 @@ __all__ = [
     "HybridTextRouterV96",
     "HybridTextResolution",
     "HybridRoutingStats",
+    "RoleStructuralRouterV96",
+    "RoleStructuralResolution",
+    "RoleTokenEvidence",
     "__version__",
 ]
