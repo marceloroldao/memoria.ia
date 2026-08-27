@@ -1,21 +1,19 @@
 # BDR v1.1 backend for Memoria.ia
 
-This document records the measured and validated differences between SQLite and Resolutive-DB (BDR) v1.1.0 in the current Memoria.ia experimental Linux backend work. It is intentionally evidence-bound: the performance numbers below refer to the exact CI workloads described here and should not be generalized to unrelated workloads without new measurement.
+This document records the measured and validated differences between SQLite and Resolutive-DB (BDR) v1.1.0 in the current Memoria.ia experimental Linux backend work. Performance numbers are tied to the exact CI workloads below and should not be generalized without new measurements.
 
 ## Current backend policy
 
 - **Linux:** BDR v1.1.0 is the preferred experimental persistence backend when the native extension is available.
 - **Fallback/control:** SQLite remains the behavioral reference and fallback backend.
-- **Windows/macOS:** SQLite remains the practical fallback until the native BDR integration is portable and packaged for those platforms.
-- **Main branch:** this policy is still staged through experimental PRs; it is not a blanket production claim.
+- **Windows/macOS:** SQLite remains the practical fallback until native BDR portability and packaging are completed.
+- **Main branch:** adoption is still staged through PR #31; this document does not itself promote the backend to `main`.
 
-## Correctness difference that motivated v1.1
+## Correctness contract
 
 A single logical Memoria.ia memory is materialized as several physical records: payload, nodes, occurrences and metadata.
 
-BDR v1.0.0 had durable `sync()` semantics but no atomic multi-key batch. A crash during one logical add could therefore leave partial logical state.
-
-BDR v1.1.0 adds `AtomicDatabase`, BDW4 and atomic `write_batch`/bulk operations. The accepted Memoria.ia contract is now:
+BDR v1.0.0 had durable `sync()` semantics but no atomic multi-key batch. BDR v1.1.0 adds `AtomicDatabase`, BDW4 and atomic batch operations. The accepted contract is:
 
 ```text
 1 logical Memoria.ia memory
@@ -25,51 +23,66 @@ BDR v1.1.0 adds `AtomicDatabase`, BDW4 and atomic `write_batch`/bulk operations.
 all committed or all absent after recovery
 ```
 
-Atomicity and durability are separate:
+Atomicity and durability are deliberately separate:
 
-- `BatchSync`: atomic + durable at the batch boundary;
-- `Async`: atomic logical batch, durability may lag;
-- later `sync()`: advances durability without changing the already established logical batch boundaries.
+- `BatchSync`: one atomic logical batch that is durable at return;
+- `Async`: one atomic logical batch whose durability may lag;
+- later `sync()`: advances durability without merging or changing the already established logical batch boundaries.
 
-The safe default remains one durability boundary per logical memory. Deferred durability is an explicit performance policy.
+Therefore `sync_every_memories > 1` means deferred durability, **not** grouped logical atomicity. Each memory still receives its own atomic sequence.
 
-## End-to-end measured results
+## Current direct-binding results
+
+The compatibility shim used for the first v1.1 acceptance has been replaced by a direct pybind11 binding to `bdr::AtomicDatabase` after passing correctness, crash-recovery and performance gates.
 
 ### Durable after every logical memory
 
 Workload: 256 memories × 512-byte payloads.
 
-| Metric | SQLite | BDR v1.1 | Observed difference |
+| Metric | SQLite | BDR v1.1 direct | Observed difference |
 |---|---:|---:|---:|
-| Write | 9.847 s | 0.693 s | BDR 14.20× faster |
-| Reconstruct/read pass | 3.393 ms | 0.363 ms | BDR 9.35× faster |
+| Write | 9.856 s | 0.488 s | BDR **20.22× faster** |
+| Reconstruct/read pass | 2.907 ms | 0.336 ms | BDR **8.66× faster** |
 
 Logical statistics matched exactly.
 
 ### Deferred durability (`sync_every_memories=16`)
 
-Workload: 1,024 memories × 1,024-byte payloads.
+Workload: 1,024 memories × 1,024-byte payloads. Each of the 16 logical memories remains a separate atomic batch; only durability is grouped.
 
-| Metric | SQLite | BDR v1.1 | Observed difference |
+| Metric | SQLite | BDR v1.1 direct | Observed difference |
 |---|---:|---:|---:|
-| Write | 107.458 s | 5.560 s | BDR 19.33× faster |
-| Reconstruct/read pass | 13.917 ms | 1.808 ms | BDR 7.70× faster |
+| Write | 107.934 s | 3.073 s | BDR **35.12× faster** |
+| Reconstruct/read pass | 11.725 ms | 1.532 ms | BDR **7.65× faster** |
 
 Logical statistics matched exactly.
 
+## Direct binding vs initial v1.1 compatibility shim
+
+The initial shim was intentionally conservative and accumulated pending writes before translating them to `AtomicDatabase`. The direct binding removes that compatibility layer and preserves one sequence per logical memory even when durability is deferred.
+
+| Workload | v1.1 shim BDR write | v1.1 direct BDR write | Direct-binding gain |
+|---|---:|---:|---:|
+| sync/1, 256 × 512 B | 0.693 s | 0.488 s | **~1.42×** |
+| sync/16, 1,024 × 1,024 B | 5.560 s | 3.073 s | **~1.81×** |
+
+Read/reconstruct also improved modestly in these runs (0.363 → 0.336 ms for sync/1 and 1.808 → 1.532 ms for sync/16), but runner variation means write-path and semantic improvements are the stronger conclusions.
+
 ## Validation gates passed
 
-The BDR v1.1 native workflow validated:
+The direct BDR v1.1 native workflow validated:
 
-- exact checkout/build of the published `v1.1.0` tag;
-- native Memoria.ia extension build;
+- exact checkout/build of published BDR `v1.1.0`;
+- direct `AtomicDatabase` pybind extension build;
 - BDR/SQLite behavioral equivalence;
-- one logical-memory add advancing one atomic sequence under the default policy;
+- one logical-memory add advancing one atomic sequence;
+- deferred durability with **distinct atomic sequences per memory** and lagging durable sequence until the sync boundary;
 - torn final `atomic.bdw4` recovery dropping the entire incomplete logical memory while preserving the previously committed memory and metadata;
 - reopen and durable-sequence preservation;
-- full Memoria.ia regression: **431 passed** in the native BDR workflow.
+- full Memoria.ia regression: **432 passed**;
+- both end-to-end benchmark workloads passed and produced exact logical statistics.
 
-The generic experimental regression also passed on Ubuntu and Windows after making the POSIX-only `0600` file-mode assertion platform-correct.
+The generic experimental regression also passes on Ubuntu and Windows; Windows currently exercises the fallback/non-BDR path.
 
 ## Operational differences
 
@@ -82,41 +95,41 @@ Advantages:
 - useful control backend for equivalence testing;
 - no native BDR build dependency.
 
-Current role in Memoria.ia:
+Current role:
 
 - fallback;
 - portability path;
 - behavioral reference/control.
 
-### BDR v1.1
+### BDR v1.1 direct
 
 Advantages demonstrated in the measured Memoria.ia workloads:
 
-- substantially lower write and read latency;
-- atomic logical-memory batch persistence;
-- explicit atomicity/durability separation;
-- native key/value storage aligned with Memoria.ia's record model.
+- substantially lower write/read latency;
+- atomic logical-memory persistence;
+- atomicity independent from durability cadence;
+- native key/value model aligned with Memoria.ia's physical records;
+- no compatibility shim in the hot path.
 
 Current caveats:
 
-- native integration is Linux-first;
-- installable/stable consumer packaging still needs improvement;
+- native integration remains Linux-first;
+- stable/installable consumer packaging still needs improvement (tracked on the BDR side);
 - cross-process multi-writer mode is intentionally not enabled by Memoria.ia;
 - checkpoint/maintenance telemetry remains a BDR roadmap item;
-- delete-heavy performance and memory telemetry remain follow-up areas.
+- delete-heavy performance and memory telemetry remain follow-up areas;
+- the direct binding currently maps Memoria.ia `checkpoint()` to a durable sync because `AtomicDatabase` v1.1 does not expose a checkpoint primitive.
 
-## Direct-binding follow-up
-
-The first v1.1 integration used a compatibility shim so the existing v1.0-oriented pybind layer could be validated with minimal risk. The next experiment removes that shim and binds directly to `AtomicDatabase`.
-
-The desired direct contract is:
+## Current direct integration shape
 
 ```text
-logical add #1 -> atomic sequence N     (Async or BatchSync)
-logical add #2 -> atomic sequence N+1   (Async or BatchSync)
-logical add #3 -> atomic sequence N+2   (Async or BatchSync)
+logical add #1 -> atomic sequence N     -> Async or BatchSync
+logical add #2 -> atomic sequence N+1   -> Async or BatchSync
+logical add #3 -> atomic sequence N+2   -> Async or BatchSync
+                                   \
+                                    later sync() advances durable_sequence
 ```
 
-With deferred durability, the durable sequence may lag until `sync()`, but the logical batch boundaries must remain distinct. This is preferable to grouping several logical memories into one larger atomic transaction merely because durability is deferred.
+This is now the preferred experimental BDR integration shape for Memoria.ia.
 
-Related tracking: issue #30, issue #33, PR #29, PR #31 and merged PR #32.
+Related tracking: issue #30, issue #33, PR #29, PR #31, merged PR #32, and Resolutive-DB issues #9/#14.
