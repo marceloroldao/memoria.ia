@@ -1,9 +1,10 @@
-name: BDR v1.1 atomic Linux backend
+name: BDR v1.1 direct atomic Linux backend
 
 on:
   push:
-    branches: [experiment/bdr-v110-atomic]
+    branches: [experiment/bdr-primary-linux]
     paths:
+      - 'native/bdr_atomic_pybind.cpp'
       - 'native/bdr_pybind.cpp'
       - 'native/bdr_v11_shim/**'
       - 'src/memoria_resolutiva/bdr_store.py'
@@ -12,6 +13,7 @@ on:
       - 'tests/test_bdr_v11_atomic.py'
       - 'tests/test_sqlite_store.py'
       - 'benchmarks/bdr_end_to_end.py'
+      - 'docs/BDR_V11_BACKEND.md'
       - 'setup.py'
       - '.github/workflows/bdr-primary-linux.yml'
   workflow_dispatch:
@@ -20,11 +22,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: bdr-v110-atomic-${{ github.ref }}
+  group: bdr-v110-direct-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  bdr-v110-atomic:
+  bdr-v110-direct:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -41,13 +43,13 @@ jobs:
         run: |
           cmake -S bdr-v110-src -B bdr-v110-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON
           cmake --build bdr-v110-build --config Release --target bdr_v1_candidate -j2
-      - name: Build/install Memoria.ia with BDR v1.1 atomic extension
+      - name: Build/install Memoria.ia with direct BDR v1.1 AtomicDatabase extension
         env:
           MEMORIA_BUILD_BDR: "1"
           BDR_INCLUDE_DIR: ${{ github.workspace }}/bdr-v110-src/experimental/api_v86/include
           BDR_LIBRARY_FILE: ${{ github.workspace }}/bdr-v110-build/experimental/api_v86/libbdr.a
         run: python -m pip install -e '.[product,test]'
-      - name: BDR equivalence, atomicity and reopen tests
+      - name: BDR equivalence, per-memory atomicity and reopen tests
         run: pytest -q tests/test_bdr_store.py tests/test_bdr_v11_atomic.py tests/test_sqlite_store.py
       - name: Full Memoria.ia regression
         run: pytest -q
@@ -55,9 +57,9 @@ jobs:
         run: |
           mkdir -p benchmark-results
           python benchmarks/bdr_end_to_end.py --memories 256 --payload-bytes 512 --sync-every 1 | tee benchmark-results/e2e-sync1.json
-      - name: End-to-end benchmark - deferred durable group
+      - name: End-to-end benchmark - deferred durability, atomic per memory
         run: python benchmarks/bdr_end_to_end.py --memories 1024 --payload-bytes 1024 --sync-every 16 | tee benchmark-results/e2e-sync16.json
       - uses: actions/upload-artifact@v4
         with:
-          name: memoria-bdr-v110-atomic-results
+          name: memoria-bdr-v110-direct-results
           path: benchmark-results/
