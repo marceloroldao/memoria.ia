@@ -1,0 +1,31 @@
+name: Role trajectory slot support
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_trajectory_slot_support.py'
+      - 'benchmarks/role_trajectory_partial_drift.py'
+      - '.github/workflows/role-trajectory-slot-support.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run slot support probe
+        env:
+          PYTHONPATH: .:src
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_slot_support.py | tee benchmark-results/role-trajectory-slot-support.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: role-trajectory-slot-support
+          path: benchmark-results/role-trajectory-slot-support.json
