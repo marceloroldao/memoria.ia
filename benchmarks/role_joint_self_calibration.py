@@ -25,31 +25,30 @@ def point(router, tokens, patterns):
     }
 
 
-def complete_contextual_role_scores(router, token):
-    """Calibration-only complete role score vector using existing router scoring.
+def complete_contextual_role_scores_loo(router, token, own_role):
+    """Complete contextual role vector with leave-one-anchor-out validation.
 
-    This is the same deterministic Python fallback semantics already used when a
-    native rank is unavailable: each role receives the maximum sparse-context
-    similarity to any of its registered anchors. Zero remains zero evidence.
+    When scoring the token against its own registered role, the token itself is
+    removed from that role's anchor set. This prevents calibration positives from
+    receiving a privileged self-similarity advantage and makes anchors behave like
+    context-only novel terms. Other roles keep their full anchor sets.
     """
     rows = []
     for role_id, anchors in router.roles._concepts.items():
-        score = max((router.roles._score(token, anchor) for anchor in anchors), default=0.0)
+        usable = [anchor for anchor in anchors if not (role_id == own_role and anchor == token)]
+        if role_id == own_role and not usable:
+            return None
+        score = max((router.roles._score(token, anchor) for anchor in usable), default=0.0)
         rows.append((role_id, float(score)))
     rows.sort(key=lambda item: (-item[1], item[0]))
     return rows
 
 
-def contextual_assignment_cost(router, tokens, pattern):
-    """Calibration-only contradiction cost over the complete contextual role space.
-
-    Normal inference keeps exact-anchor semantics. Calibration bypasses only the
-    exact lexical shortcut and measures how costly every counterfactual role would
-    be according to the already-existing sparse contextual similarity function.
-    """
+def contextual_assignment_cost_loo(router, tokens, pattern, role_by_anchor):
     total = 0.0
     for token, target_role in zip(tokens, pattern):
-        ranked = complete_contextual_role_scores(router, token)
+        own_role = role_by_anchor[token]
+        ranked = complete_contextual_role_scores_loo(router, token, own_role)
         if not ranked:
             return None
         top_score = ranked[0][1]
@@ -60,10 +59,10 @@ def contextual_assignment_cost(router, tokens, pattern):
     return total
 
 
-def calibration_point(router, tokens, patterns):
+def calibration_point(router, tokens, patterns, role_by_anchor):
     fits = []
     for pattern in patterns:
-        cost = contextual_assignment_cost(router, tokens, pattern)
+        cost = contextual_assignment_cost_loo(router, tokens, pattern, role_by_anchor)
         if cost is not None:
             fits.append(cost)
     if not fits:
@@ -75,7 +74,6 @@ def calibration_point(router, tokens, patterns):
 
 
 def representative_anchor_tuples(spec):
-    """Bounded deterministic positives built only from registered anchors."""
     roles = spec["roles"]
     patterns = [tuple(p) for p in spec["patterns"]]
     max_anchors = max(len(roles[role]) for pattern in patterns for role in pattern)
@@ -102,7 +100,7 @@ def calibration_rows(router, spec):
     for positive_tokens, _pattern in representative_anchor_tuples(spec):
         for perm in itertools.permutations(positive_tokens):
             roles = tuple(role_by_anchor[token] for token in perm)
-            measured = calibration_point(router, perm, patterns)
+            measured = calibration_point(router, perm, patterns, role_by_anchor)
             if measured is None:
                 continue
             rows.append({
@@ -133,6 +131,7 @@ def fit_boundary(rows):
                 "threshold": (min(vs) + max(ins)) / 2.0,
                 "margin": margin,
                 "separable": margin > 0.0,
+                "hit_lambda_scan_edge": lam in (0.0, 10.0),
             }
     return best
 
@@ -227,15 +226,18 @@ def main():
             "results": results,
             "all_calibrated": all(r["boundary"].get("separable", False) for r in results),
             "all_novel_perfect": all(r["novel_test"].get("accuracy") == 1.0 for r in results),
+            "no_scan_edge_optimum": all(not r["boundary"].get("hit_lambda_scan_edge", True) for r in results if r["boundary"].get("separable")),
         })
 
     print(json.dumps({
-        "method": "per-router deterministic self-calibration from registered anchors; complete counterfactual role scores use existing sparse contextual _score fallback",
+        "method": "per-router deterministic leave-one-anchor-out self-calibration",
         "normal_inference_keeps_exact_anchor_semantics": True,
-        "zero_similarity_remains_zero_evidence": True,
         "uses_novel_test_tokens_for_calibration": False,
         "suites": suites,
-        "all_suites_perfect": all(s["all_calibrated"] and s["all_novel_perfect"] for s in suites),
+        "all_suites_perfect": all(
+            s["all_calibrated"] and s["all_novel_perfect"] and s["no_scan_edge_optimum"]
+            for s in suites
+        ),
     }, ensure_ascii=False, indent=2))
 
 
