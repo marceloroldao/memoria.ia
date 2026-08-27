@@ -52,7 +52,7 @@ def snapshot(base_repeat: int, conflict_repeat: int):
         "conflict_repeat": conflict_repeat,
         "calibrated": calibrated,
         "threshold": gate.threshold,
-        "margin": gate.margin,
+        "margin": gate._margin,
         "results": results,
     }
 
