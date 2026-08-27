@@ -49,6 +49,15 @@ IDENTIFIABLE = {
     "boleto": "financeiro",
 }
 
+PHRASES = {
+    "automovel na oficina": "veiculo",
+    "cao no quintal": "animal",
+    "fibra sem sinal": "conectividade",
+    "boleto para pagamento": "financeiro",
+    "banco de madeira": "mobiliario",
+    "pagamento no banco": "financeiro",
+}
+
 AMBIGUOUS_OR_OPEN = ("banco", "casa", "tecnico", "galaxia", "fotossintese")
 
 
@@ -96,6 +105,22 @@ def test_adaptive_preserves_full_scan_on_polysemy_noise_and_open_set():
     # it must verify against the authoritative full scan.
     adaptive.resolve_token("banco")
     assert adaptive.last_route_mode in {"full_verify", "discriminative"}
+
+
+@pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
+def test_phrase_resolution_uses_resolved_tokens_as_conservative_evidence():
+    full, adaptive = _build_pair(threshold=0.55, min_margin=0.08)
+    for text, expected_concept in PHRASES.items():
+        expected = full.resolve_text(text)
+        actual = adaptive.resolve_text(text)
+        assert expected.concept_id == expected_concept
+        assert actual.concept_id == expected.concept_id
+        assert actual.score == pytest.approx(expected.score, abs=1e-12)
+        assert actual.margin == pytest.approx(expected.margin, abs=1e-12)
+        assert actual.evidence
+
+    assert full.resolve_text("galaxia distante").concept_id is None
+    assert adaptive.resolve_text("galaxia distante").concept_id is None
 
 
 @pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
