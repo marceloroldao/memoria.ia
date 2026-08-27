@@ -3,6 +3,11 @@ from dataclasses import dataclass
 from typing import Callable, Iterable
 from .textual import TextContextMemory, native_context_available, tokenize
 
+_PHRASE_STOPWORDS = {
+    "a", "ao", "aos", "as", "com", "da", "das", "de", "do", "dos", "e",
+    "em", "na", "nas", "no", "nos", "o", "os", "para", "por", "sem", "um", "uma",
+}
+
 @dataclass(frozen=True, slots=True)
 class SemanticResolution:
     query:str; concept_id:str|None; score:float; margin:float; source:str
@@ -77,6 +82,7 @@ class SemanticRouterV96:
         if not tokens:raise ValueError("text must contain at least one token")
         evidence=[];weights={}
         for token in tokens:
+            if token in _PHRASE_STOPWORDS:continue
             resolution=self.resolve_token(token)
             if resolution.concept_id is None:continue
             weight=max(0.0,resolution.score)*max(0.0,resolution.margin)
