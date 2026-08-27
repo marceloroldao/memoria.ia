@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 import json
+import traceback
 
 from memoria_resolutiva.trajectory_policy_gate_experimental import ExperimentalTrajectoryPolicyGate
 from role_trajectory_slot_support import slot_support
@@ -31,7 +32,8 @@ def build_gate() -> ExperimentalTrajectoryPolicyGate:
     gate.register_role("quality", ["seguro", "cifrado", "protegido"])
     gate.register_role("destination", ["destino", "servidor", "receptor"])
     gate.register_pattern(("source", "action", "payload", "quality", "destination"))
-    assert gate.calibrate()
+    if not gate.calibrate():
+        raise RuntimeError("trajectory gate calibration failed")
     return gate
 
 
@@ -76,7 +78,7 @@ def observe_phase(gate, recent, tokens: tuple[str, ...], repeats: int) -> None:
         recent.append(tokens)
 
 
-def main() -> None:
+def run() -> bool:
     gate = build_gate()
     recent: deque[tuple[str, ...]] = deque(maxlen=FAST_WINDOW)
     for _ in range(BASE):
@@ -91,7 +93,6 @@ def main() -> None:
 
     b_rows = [row for row in rows if row["label"].endswith("_B")]
     a_rows = [row for row in rows if row["label"].endswith("_A")]
-
     fast_tracks_present = all(row["fast_state"] == "regime_shift" and row["fast_delta"] < 0 for row in b_rows) and all(
         row["fast_state"] == "stable" and row["fast_delta"] > 0 for row in a_rows
     )
@@ -116,7 +117,21 @@ def main() -> None:
         },
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if not all_passed:
+    return all_passed
+
+
+def main() -> None:
+    try:
+        passed = run()
+    except Exception as exc:
+        print(json.dumps({
+            "experiment": "dual temporal scales under recurrent cycles",
+            "error": type(exc).__name__,
+            "message": str(exc),
+            "traceback": traceback.format_exc(),
+        }, ensure_ascii=False, indent=2))
+        raise
+    if not passed:
         raise SystemExit(1)
 
 
