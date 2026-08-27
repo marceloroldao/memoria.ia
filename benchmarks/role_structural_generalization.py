@@ -34,6 +34,10 @@ def build_router() -> RoleStructuralRouterV96:
     router.register_role("bank", ["banco", "instituicao"])
     router.register_intent_pattern("customer_to_bank", ["customer", "transfer", "money", "bank"])
     router.register_intent_pattern("bank_to_customer", ["bank", "transfer", "money", "customer"])
+    router.register_intent_pattern(
+        "bank_to_customer_with_receipt",
+        ["bank", "transfer", "money", "customer", "money"],
+    )
     return router
 
 
@@ -46,12 +50,14 @@ def main() -> None:
         ("agencia remete quantia para depositante", "bank_to_customer", "context_alias"),
         ("hoje cliente realmente transfere dinheiro com cuidado para o banco", "customer_to_bank", "surface_noise"),
         ("ontem o banco calmamente transfere dinheiro de volta para o cliente", "bank_to_customer", "surface_noise"),
+        ("banco transfere dinheiro cliente pagamento", "bank_to_customer_with_receipt", "mixed_cardinality_valid"),
         ("cliente visita banco", None, "wrong_relation"),
         ("cliente consulta saldo banco", None, "wrong_relation"),
         ("cliente dinheiro transfere banco", None, "reordered"),
         ("cliente transfere banco dinheiro", None, "reordered"),
         ("cliente cliente transfere dinheiro banco", None, "role_supersequence"),
         ("cliente transfere dinheiro banco cliente", None, "role_supersequence"),
+        ("cliente cliente transfere dinheiro banco", None, "cross_intent_cardinality"),
         ("astronauta observa planeta distante", None, "open_set"),
         ("sensor mede temperatura ambiente", None, "open_set"),
         ("motor gira eixo lentamente", None, "open_set"),
