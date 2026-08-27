@@ -40,9 +40,15 @@ class SemanticRouterV96:
     def resolve_token(self,query:str)->SemanticResolution:
         q=query.strip().lower()
         if not q:raise ValueError("query must not be empty")
-        candidate_ids=self._candidate_ids(q)
-        if not candidate_ids:return SemanticResolution(q,None,0.0,0.0,"unresolved")
-        ranked=self.memory.rank_registered(q,candidate_ids,top_k=2)
+        # Native all-concept routing needs no Python candidate materialization.
+        if self.memory.native_enabled and not self.indexed:
+            if not self._concepts:return SemanticResolution(q,None,0.0,0.0,"unresolved")
+            ranked=self.memory.rank_registered(q,None,top_k=2)
+            candidate_ids=None
+        else:
+            candidate_ids=self._candidate_ids(q)
+            if not candidate_ids:return SemanticResolution(q,None,0.0,0.0,"unresolved")
+            ranked=self.memory.rank_registered(q,candidate_ids,top_k=2)
         if ranked is None:
             ranked=[]
             for cid in candidate_ids:ranked.append((cid,max((self._score(q,a) for a in self._concepts[cid]),default=0.0)))
