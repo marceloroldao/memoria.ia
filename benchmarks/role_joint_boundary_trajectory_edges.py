@@ -3,7 +3,6 @@ from __future__ import annotations
 import itertools
 import json
 
-from benchmarks.role_joint_boundary_length_normalized import rows_for_spec
 from benchmarks.role_joint_boundary_robustness import long_sequence_spec
 from benchmarks.role_permutation_cost_matrix import DOMAINS, assignment_cost
 from memoria_resolutiva.role_structural_router_v96 import RoleStructuralRouterV96
@@ -13,7 +12,7 @@ EOS = "__eos__"
 
 
 def edge_directional_score(router: RoleStructuralRouterV96, tokens):
-    assoc = router.roles.memory.context
+    assoc = router.roles.memory.associator
     seq = (BOS,) + tuple(tokens) + (EOS,)
     total = 0.0
     pairs = 0
@@ -43,7 +42,7 @@ def build_edge_router(spec, *, role_top_k, beam_width, max_context_relabels):
         beam_width=beam_width,
         max_context_relabels=max_context_relabels,
     )
-    # The same sparse ContextAssociator gets explicit trajectory boundaries.
+    # Use the same sparse signed ContextAssociator with explicit trajectory boundaries.
     router.observe([f"{BOS} {sentence} {EOS}" for sentence in spec["observe"]])
     for role_id, anchors in spec["roles"].items():
         router.register_role(role_id, anchors)
@@ -107,15 +106,24 @@ def evaluate(rows, boundary):
     for r in usable:
         joint = r["edge_direction"] - boundary["lambda"] * r["mean_cost"]
         pred = joint > boundary["threshold"]
-        if r["valid"] and pred: tp += 1
-        elif r["valid"] and not pred: fn += 1
-        elif not r["valid"] and pred: fp += 1
-        else: tn += 1
+        if r["valid"] and pred:
+            tp += 1
+        elif r["valid"] and not pred:
+            fn += 1
+        elif not r["valid"] and pred:
+            fp += 1
+        else:
+            tn += 1
         if pred != r["valid"]:
             errors.append({**r, "joint": joint, "predicted_valid": pred})
     return {
-        "usable": len(usable), "tp": tp, "fn": fn, "fp": fp, "tn": tn,
-        "accuracy": (tp + tn) / max(1, len(usable)), "errors": errors,
+        "usable": len(usable),
+        "tp": tp,
+        "fn": fn,
+        "fp": fp,
+        "tn": tn,
+        "accuracy": (tp + tn) / max(1, len(usable)),
+        "errors": errors,
     }
 
 
