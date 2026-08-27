@@ -1,0 +1,31 @@
+name: Role trajectory recurrent temporal cycles
+
+on:
+  push:
+    branches:
+      - experiment/bdr-primary-linux
+    paths:
+      - 'benchmarks/role_trajectory_recurrence_cycles.py'
+      - 'benchmarks/role_trajectory_slot_support.py'
+      - 'benchmarks/role_trajectory_partial_drift.py'
+      - 'src/memoria_resolutiva/trajectory_policy_gate_experimental.py'
+      - '.github/workflows/role-trajectory-recurrence-cycles.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run recurrent temporal cycle probe
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-results
+          PYTHONPATH=.:src python benchmarks/role_trajectory_recurrence_cycles.py | tee benchmark-results/role-trajectory-recurrence-cycles.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-recurrence-cycles
+          path: benchmark-results/role-trajectory-recurrence-cycles.json
