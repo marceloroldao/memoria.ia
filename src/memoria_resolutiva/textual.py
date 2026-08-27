@@ -7,12 +7,21 @@ from math import log2, sqrt
 
 from .contextual import ContextAssociator
 
+try:
+    from ._core_native import ContextScorer as _NativeContextScorer
+except ImportError:  # pragma: no cover - pure-Python fallback environments
+    _NativeContextScorer = None
+
 _TOKEN_RE = re.compile(r"[\wÀ-ÿ]+", re.UNICODE)
 
 
 def tokenize(text: str) -> list[str]:
     """Small deterministic tokenizer for v0.7 natural-language experiments."""
     return [token.lower() for token in _TOKEN_RE.findall(text)]
+
+
+def native_context_available() -> bool:
+    return _NativeContextScorer is not None
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,15 +33,31 @@ class AmbiguityProbe:
 
 
 class TextContextMemory:
-    """Natural-language adapter over sparse resolutive contextual association."""
+    """Natural-language adapter over sparse resolutive contextual association.
 
-    def __init__(self, radius: int = 3):
+    The Python ContextAssociator remains the canonical introspectable structure.
+    When the optional native core is built, query-time similarity scoring is
+    mirrored in C++ while observation still updates the Python structure so all
+    existing indexing/inspection semantics remain available.
+    """
+
+    def __init__(self, radius: int = 3, *, use_native: bool | None = None):
         self.associator = ContextAssociator(radius=radius)
+        if use_native is True and _NativeContextScorer is None:
+            raise RuntimeError("native contextual scorer is unavailable")
+        enabled = _NativeContextScorer is not None if use_native is None else use_native
+        self._native = _NativeContextScorer(radius) if enabled and _NativeContextScorer is not None else None
+
+    @property
+    def native_enabled(self) -> bool:
+        return self._native is not None
 
     def observe_sentence(self, sentence: str) -> None:
         tokens = tokenize(sentence)
         if tokens:
             self.associator.observe(tokens)
+            if self._native is not None:
+                self._native.observe(tokens)
 
     def observe_many(self, sentences) -> None:
         for sentence in sentences:
@@ -40,18 +65,21 @@ class TextContextMemory:
 
     def similarity(self, a: str, b: str) -> float:
         """Position-sensitive contextual similarity used by trajectory experiments."""
-        return self.associator.similarity(a.lower(), b.lower())
+        a = a.lower()
+        b = b.lower()
+        if self._native is not None:
+            return self._native.similarity(a, b)
+        return self.associator.similarity(a, b)
 
     def unordered_similarity(self, a: str, b: str) -> float:
-        """Compare contextual neighborhoods while ignoring relative offsets.
+        """Compare contextual neighborhoods while ignoring relative offsets."""
+        a = a.lower()
+        b = b.lower()
+        if self._native is not None:
+            return self._native.unordered_similarity(a, b)
 
-        This is intended for lexical/ontology grouping, where small grammatical
-        shifts (article choice, inflection, or one-position displacement) should
-        not erase otherwise strong contextual evidence. The original
-        position-sensitive similarity remains unchanged for trajectory work.
-        """
-        pa = self.associator.profiles.get(a.lower())
-        pb = self.associator.profiles.get(b.lower())
+        pa = self.associator.profiles.get(a)
+        pb = self.associator.profiles.get(b)
         if not pa or not pb:
             return 0.0
 
@@ -71,6 +99,9 @@ class TextContextMemory:
         return dot / (norm_a * norm_b)
 
     def nearest(self, token: str, top_k: int = 5) -> list[tuple[str, float]]:
+        # Keep canonical Python ordering semantics for now. The expensive scoring
+        # primitives used by routing are already native; nearest can be ported
+        # after an explicit ordering-parity benchmark.
         return self.associator.nearest(token.lower(), top_k=top_k)
 
     def ambiguity_probe(self, token: str, top_k: int = 5) -> AmbiguityProbe:
