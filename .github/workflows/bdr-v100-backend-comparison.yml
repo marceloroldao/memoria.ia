@@ -1,0 +1,98 @@
+name: BDR v1.0.0 backend comparison
+
+on:
+  push:
+    branches: [experiment/bdr-v100-backend-comparison]
+  workflow_dispatch:
+    inputs:
+      memories:
+        description: Number of deterministic memories
+        required: false
+        default: '256'
+      payload_bytes:
+        description: Bytes per memory
+        required: false
+        default: '256'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bdr-v100-backend-comparison-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Memoria.ia
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+
+      - name: Checkout frozen Resolutive-DB v1.0.0
+        run: |
+          git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
+          test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
+
+      - name: Build frozen BDR v1.0.0
+        run: |
+          cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build bdr-v100-build --config Release --target bdr_v1_candidate -j2
+          BDR_LIB="$(find bdr-v100-build -name 'libbdr.a' -print -quit)"
+          test -n "$BDR_LIB"
+          c++ -std=c++17 -O3 \
+            benchmarks/bdr_v100_driver.cpp \
+            -I bdr-v100-src/experimental/api_v86/include \
+            "$BDR_LIB" -lz -pthread \
+            -o bdr_v100_driver
+
+      - name: Run equivalent Memoria.ia persistence workload
+        env:
+          MEMORIES: ${{ inputs.memories || '256' }}
+          PAYLOAD_BYTES: ${{ inputs.payload_bytes || '256' }}
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/bdr_v100_vs_sqlite_memoria.py \
+            --bdr-driver "$PWD/bdr_v100_driver" \
+            --memories "$MEMORIES" \
+            --payload-bytes "$PAYLOAD_BYTES" \
+            --max-layer 3 \
+            --output benchmark-results/bdr-v100-vs-sqlite.json
+
+      - name: Summarize comparison
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          r = json.loads(Path('benchmark-results/bdr-v100-vs-sqlite.json').read_text())
+          s = r['storage_only']['sqlite']
+          b = r['storage_only']['bdr_v1_0_0']
+          m = r['current_memoria_sqlite']
+          print('## Memoria.ia persistence comparison')
+          print()
+          print(f"Frozen external baseline: **{r['bdr']['repository']} {r['bdr']['version']}**")
+          print(f"Logical records: **{r['workload']['logical_records']}**")
+          print()
+          print('| Metric | Current Memoria SQLite | SQLite logical-only | BDR v1.0.0 logical-only |')
+          print('|---|---:|---:|---:|')
+          print(f"| write ms | {m['write_ms']:.3f} | {s['write_ms']:.3f} | {b['write_ms']:.3f} |")
+          print(f"| read ms | {m['read_ms']:.3f} | {s['read_ms']:.3f} | {b['read_ms']:.3f} |")
+          print(f"| reopen+verify ms | {m['reopen_verify_ms']:.3f} | {s['reopen_verify_ms']:.3f} | {b['reopen_verify_ms']:.3f} |")
+          print(f"| disk bytes | {m['disk_bytes']} | {s['disk_bytes']} | {b['disk_bytes']} |")
+          print()
+          print('Performance values are evidence, not pass/fail thresholds. Correctness and complete reopen verification are hard gates.')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bdr-v100-vs-sqlite-results
+          path: benchmark-results/bdr-v100-vs-sqlite.json
