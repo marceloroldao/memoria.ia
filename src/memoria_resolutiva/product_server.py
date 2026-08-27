@@ -136,6 +136,16 @@ def build_app():
         chat_service=_build_chat_service(service, configuration),
         application_registry=application_registry,
     )
+
+    @app.get("/api/v1/storage/health")
+    def storage_health():
+        stats = service.statistics
+        return {
+            "status": "ok",
+            "backend": stats.get("persistence_backend", "unknown"),
+            "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
+        }
+
     attach_configuration_routes(app, api_key=api_key, store=configuration)
     return app
 
