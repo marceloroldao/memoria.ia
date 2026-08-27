@@ -31,7 +31,7 @@ def native_extensions():
         if not include_dir or not library_file:
             raise RuntimeError(
                 "MEMORIA_BUILD_BDR=1 requires BDR_INCLUDE_DIR and BDR_LIBRARY_FILE "
-                "pointing to frozen Resolutive-DB v1.0.0 build artifacts"
+                "pointing to Resolutive-DB v1.1.0 build artifacts"
             )
 
         library_path = Path(library_file)
@@ -42,7 +42,7 @@ def native_extensions():
             Pybind11Extension(
                 "memoria_resolutiva._bdr_native",
                 ["native/bdr_pybind.cpp"],
-                include_dirs=[include_dir],
+                include_dirs=["native/bdr_v11_shim", include_dir],
                 extra_objects=[str(library_path)],
                 libraries=["z"],
                 cxx_std=17,
