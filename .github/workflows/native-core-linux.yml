@@ -31,6 +31,7 @@ on:
       - 'benchmarks/role_structural_generalization.py'
       - 'benchmarks/role_relabel_budget.py'
       - 'benchmarks/role_multidomain_generalization.py'
+      - 'benchmarks/role_relabel_cost_probe.py'
       - 'benchmarks/hybrid_text_router.py'
       - 'benchmarks/native_router_scale_matrix.py'
       - 'setup.py'
@@ -59,10 +60,12 @@ jobs:
         run: pytest -q tests/test_native_context.py tests/test_native_semantic_router.py tests/test_discriminative_router_v96.py tests/test_adaptive_router_noise.py tests/test_adaptive_router_natural_language.py tests/test_structural_router_v96.py tests/test_structural_paraphrase_v96.py tests/test_role_structural_router_v96.py tests/test_hybrid_text_router_v96.py
       - name: Full regression
         run: pytest -q
-      - name: Context scoring benchmark
+      - name: Contextual relabel cost probe
         run: |
           mkdir -p benchmark-results
-          python benchmarks/native_context_scaling.py | tee benchmark-results/native-context.json
+          python benchmarks/role_relabel_cost_probe.py | tee benchmark-results/role-relabel-cost-probe.json
+      - name: Context scoring benchmark
+        run: python benchmarks/native_context_scaling.py | tee benchmark-results/native-context.json
       - name: Full semantic router benchmark
         run: python benchmarks/native_semantic_router.py | tee benchmark-results/native-router.json
       - name: Discriminative router benchmark
