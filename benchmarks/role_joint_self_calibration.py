@@ -25,21 +25,31 @@ def point(router, tokens, patterns):
     }
 
 
-def contextual_assignment_cost(router, tokens, pattern):
-    """Calibration-only contradiction cost from raw contextual rankings.
+def complete_contextual_role_scores(router, token):
+    """Calibration-only complete role score vector using existing router scoring.
 
-    Registered anchors remain exact during normal inference. For counterfactual
-    calibration we deliberately bypass that lexical shortcut and ask the sparse
-    contextual memory how strongly each anchor supports every registered role.
-    This yields finite negative examples without weakening production semantics.
+    This is the same deterministic Python fallback semantics already used when a
+    native rank is unavailable: each role receives the maximum sparse-context
+    similarity to any of its registered anchors. Zero remains zero evidence.
     """
-    role_count = max(1, len(router.roles._concepts))
+    rows = []
+    for role_id, anchors in router.roles._concepts.items():
+        score = max((router.roles._score(token, anchor) for anchor in anchors), default=0.0)
+        rows.append((role_id, float(score)))
+    rows.sort(key=lambda item: (-item[1], item[0]))
+    return rows
+
+
+def contextual_assignment_cost(router, tokens, pattern):
+    """Calibration-only contradiction cost over the complete contextual role space.
+
+    Normal inference keeps exact-anchor semantics. Calibration bypasses only the
+    exact lexical shortcut and measures how costly every counterfactual role would
+    be according to the already-existing sparse contextual similarity function.
+    """
     total = 0.0
     for token, target_role in zip(tokens, pattern):
-        ranked = router.roles.memory.rank_registered(token, None, top_k=role_count)
-        if ranked is None:
-            return None
-        ranked = [(role, float(score)) for role, score in ranked]
+        ranked = complete_contextual_role_scores(router, token)
         if not ranked:
             return None
         top_score = ranked[0][1]
@@ -220,8 +230,9 @@ def main():
         })
 
     print(json.dumps({
-        "method": "per-router deterministic self-calibration from registered anchors; counterfactual costs use raw sparse contextual rankings",
+        "method": "per-router deterministic self-calibration from registered anchors; complete counterfactual role scores use existing sparse contextual _score fallback",
         "normal_inference_keeps_exact_anchor_semantics": True,
+        "zero_similarity_remains_zero_evidence": True,
         "uses_novel_test_tokens_for_calibration": False,
         "suites": suites,
         "all_suites_perfect": all(s["all_calibrated"] and s["all_novel_perfect"] for s in suites),
