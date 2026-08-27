@@ -21,6 +21,38 @@ using RankedPair=std::pair<std::string,double>;
 using ConceptMap=std::unordered_map<std::string,std::vector<std::string>>;
 using ConceptSet=std::unordered_set<std::string>;
 
+struct RelationFeature {
+ std::string left; int offset; std::string right;
+ bool operator==(const RelationFeature& o) const noexcept { return offset==o.offset && left==o.left && right==o.right; }
+};
+struct RelationFeatureHash {
+ std::size_t operator()(const RelationFeature& f) const noexcept {
+  std::size_t h=std::hash<std::string>{}(f.left);
+  auto mix=[&](std::size_t v){h^=v+0x9e3779b97f4a7c15ULL+(h<<6)+(h>>2);};
+  mix(std::hash<int>{}(f.offset));mix(std::hash<std::string>{}(f.right));return h;
+ }
+};
+using RelationProfile=std::unordered_map<RelationFeature,std::uint64_t,RelationFeatureHash>;
+
+class StructuralScorer {
+public:
+ explicit StructuralScorer(int window=3):window_(window){if(window_<1)throw py::value_error("window must be >= 1");}
+ void register_pattern(const std::string&id,const std::vector<std::string>&tokens,std::uint64_t repeat=1){
+  if(id.empty())throw py::value_error("concept_id must not be empty");if(tokens.size()<2)throw py::value_error("pattern must contain at least two tokens");if(repeat<1)throw py::value_error("repeat must be >= 1");
+  py::gil_scoped_release r;auto features=features_nogil(tokens,window_);auto& profile=profiles_[id];for(const auto&[f,count]:features)profile[f]+=count*repeat;norms_[id]=norm_nogil(profile);
+ }
+ std::vector<RankedPair> rank(const std::vector<std::string>&tokens,std::size_t top_k=2)const{
+  std::vector<RankedPair> ranked;py::gil_scoped_release r;auto query=features_nogil(tokens,window_);if(query.empty())return ranked;double qnorm=norm_nogil(query);if(!qnorm)return ranked;ranked.reserve(profiles_.size());
+  for(const auto&[id,profile]:profiles_){const RelationProfile*sm=&query,*lg=&profile;if(sm->size()>lg->size())std::swap(sm,lg);double dot=0.0;for(const auto&[f,v]:*sm){auto it=lg->find(f);if(it!=lg->end())dot+=double(v)*double(it->second);}auto nit=norms_.find(id);double pnorm=nit==norms_.end()?0.0:nit->second;ranked.emplace_back(id,pnorm?dot/(qnorm*pnorm):0.0);}
+  std::sort(ranked.begin(),ranked.end(),[](const RankedPair&a,const RankedPair&b){if(a.second!=b.second)return a.second>b.second;return a.first<b.first;});if(top_k&&ranked.size()>top_k)ranked.resize(top_k);return ranked;
+ }
+ std::size_t concepts()const noexcept{return profiles_.size();}
+private:
+ static RelationProfile features_nogil(const std::vector<std::string>&tokens,int window){RelationProfile out;for(std::size_t i=0;i<tokens.size();++i){auto hi=std::min(tokens.size(),i+static_cast<std::size_t>(window)+1);for(std::size_t j=i+1;j<hi;++j){int off=static_cast<int>(j-i);out[RelationFeature{tokens[i],off,tokens[j]}]+=1;out[RelationFeature{tokens[j],-off,tokens[i]}]+=1;}}return out;}
+ static double norm_nogil(const RelationProfile&p){double n2=0.0;for(const auto&[_,v]:p)n2+=double(v)*double(v);return std::sqrt(n2);}
+ int window_;std::unordered_map<std::string,RelationProfile>profiles_;std::unordered_map<std::string,double>norms_;
+};
+
 class ContextScorer {
 public:
  explicit ContextScorer(int radius=2):radius_(radius){ if(radius_<1) throw py::value_error("radius must be >= 1"); }
@@ -69,4 +101,8 @@ private:
  int radius_;std::unordered_map<std::string,Profile>profiles_;std::unordered_map<std::string,TokenCounts>unordered_;std::unordered_map<Feature,std::uint64_t,FeatureHash>feature_df_;std::unordered_map<std::string,std::uint64_t>observations_;ConceptMap concepts_;mutable bool norm_cache_valid_=false;mutable std::unordered_map<std::string,double>weighted_norms_;mutable std::unordered_map<std::string,double>unordered_norms_;mutable bool disc_index_dirty_=true;mutable std::unordered_map<std::string,ConceptSet>disc_feature_to_concepts_;mutable std::unordered_map<std::string,std::size_t>disc_feature_df_;
 };
 }
-PYBIND11_MODULE(_core_native,m){m.doc()="Native CPU hot paths for Memoria.ia resolutive core";py::class_<ContextScorer>(m,"ContextScorer").def(py::init<int>(),py::arg("radius")=2).def("observe",&ContextScorer::observe).def("prepare",&ContextScorer::prepare).def("register_concept",&ContextScorer::register_concept).def("similarity",&ContextScorer::similarity).def("unordered_similarity",&ContextScorer::unordered_similarity).def("relation_strength",&ContextScorer::relation_strength,py::arg("left"),py::arg("right"),py::arg("offset")).def("nearest",&ContextScorer::nearest,py::arg("node"),py::arg("top_k")=5).def("rank_concepts",&ContextScorer::rank_concepts,py::arg("query"),py::arg("concepts"),py::arg("top_k")=2).def("rank_registered",&ContextScorer::rank_registered,py::arg("query"),py::arg("candidate_ids"),py::arg("top_k")=2).def("discriminative_candidates",&ContextScorer::discriminative_candidates,py::arg("query"),py::arg("limit")).def_property_readonly("nodes",&ContextScorer::nodes).def_property_readonly("concepts",&ContextScorer::concepts);}
+PYBIND11_MODULE(_core_native,m){
+ m.doc()="Native CPU hot paths for Memoria.ia resolutive core";
+ py::class_<ContextScorer>(m,"ContextScorer").def(py::init<int>(),py::arg("radius")=2).def("observe",&ContextScorer::observe).def("prepare",&ContextScorer::prepare).def("register_concept",&ContextScorer::register_concept).def("similarity",&ContextScorer::similarity).def("unordered_similarity",&ContextScorer::unordered_similarity).def("relation_strength",&ContextScorer::relation_strength,py::arg("left"),py::arg("right"),py::arg("offset")).def("nearest",&ContextScorer::nearest,py::arg("node"),py::arg("top_k")=5).def("rank_concepts",&ContextScorer::rank_concepts,py::arg("query"),py::arg("concepts"),py::arg("top_k")=2).def("rank_registered",&ContextScorer::rank_registered,py::arg("query"),py::arg("candidate_ids"),py::arg("top_k")=2).def("discriminative_candidates",&ContextScorer::discriminative_candidates,py::arg("query"),py::arg("limit")).def_property_readonly("nodes",&ContextScorer::nodes).def_property_readonly("concepts",&ContextScorer::concepts);
+ py::class_<StructuralScorer>(m,"StructuralScorer").def(py::init<int>(),py::arg("window")=3).def("register_pattern",&StructuralScorer::register_pattern,py::arg("concept_id"),py::arg("tokens"),py::arg("repeat")=1).def("rank",&StructuralScorer::rank,py::arg("tokens"),py::arg("top_k")=2).def_property_readonly("concepts",&StructuralScorer::concepts);
+}
