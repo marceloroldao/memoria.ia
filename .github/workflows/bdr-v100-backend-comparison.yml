@@ -158,7 +158,16 @@ jobs:
         run: |
           git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
           test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
-      - name: Configure frozen BDR
+      - name: Install ZLIB on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: vcpkg install zlib:x64-windows
+      - name: Configure frozen BDR on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+      - name: Configure frozen BDR on Unix
+        if: runner.os != 'Windows'
         run: cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release
       - name: Build frozen v1 contract
         run: cmake --build bdr-v100-build --config Release --target v1_candidate_contract
