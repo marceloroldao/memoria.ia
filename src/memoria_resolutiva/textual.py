@@ -38,6 +38,7 @@ class TextContextMemory:
             if self._native is not None: self._native.observe(tokens)
     def observe_many(self, sentences) -> None:
         for sentence in sentences: self.observe_sentence(sentence)
+        if self._native is not None:self._native.prepare()
     def register_concept(self, concept_id: str, anchors) -> None:
         if self._native is not None:self._native.register_concept(concept_id, sorted(anchors))
     def similarity(self,a:str,b:str)->float:
