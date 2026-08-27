@@ -27,7 +27,9 @@ public:
  void observe(const std::vector<std::string>& t){ py::gil_scoped_release r; norm_cache_valid_=false;disc_index_dirty_=true; for(std::size_t i=0;i<t.size();++i){ const auto& node=t[i]; auto& p=profiles_[node]; auto& u=unordered_[node]; ++observations_[node]; const std::size_t lo=i>static_cast<std::size_t>(radius_)?i-radius_:0, hi=std::min(t.size(),i+static_cast<std::size_t>(radius_)+1); for(std::size_t j=lo;j<hi;++j){ if(j==i)continue; Feature f{static_cast<int>(j)-static_cast<int>(i),t[j]}; auto it=p.find(f); if(it==p.end()){feature_df_[f]+=1;p.emplace(std::move(f),1);}else ++it->second; ++u[t[j]]; } } }
  void prepare(){py::gil_scoped_release r;ensure_norm_cache_nogil();}
  void register_concept(const std::string& id,const std::vector<std::string>& anchors){auto& dst=concepts_[id];bool changed=false;for(const auto& anchor:anchors){if(std::find(dst.begin(),dst.end(),anchor)==dst.end()){dst.push_back(anchor);changed=true;}}if(changed)disc_index_dirty_=true;}
- double similarity(const std::string&a,const std::string&b)const{py::gil_scoped_release r;ensure_norm_cache_nogil();return similarity_nogil(a,b);} double unordered_similarity(const std::string&a,const std::string&b)const{py::gil_scoped_release r;ensure_norm_cache_nogil();return unordered_similarity_nogil(a,b);}
+ double similarity(const std::string&a,const std::string&b)const{py::gil_scoped_release r;ensure_norm_cache_nogil();return similarity_nogil(a,b);}
+ double unordered_similarity(const std::string&a,const std::string&b)const{py::gil_scoped_release r;ensure_norm_cache_nogil();return unordered_similarity_nogil(a,b);}
+ double relation_strength(const std::string&a,const std::string&b,int offset)const{py::gil_scoped_release r;return relation_strength_nogil(a,b,offset);}
  std::vector<RankedPair> nearest(const std::string& node,std::size_t top_k=5)const{std::vector<RankedPair> s;{py::gil_scoped_release r;ensure_norm_cache_nogil();if(profiles_.find(node)==profiles_.end())return s;s.reserve(profiles_.size()?profiles_.size()-1:0);for(const auto&[o,_]:profiles_){if(o!=node)s.emplace_back(o,similarity_nogil(node,o));}std::sort(s.begin(),s.end(),cmp);if(s.size()>top_k)s.resize(top_k);}return s;}
  std::vector<RankedPair> rank_concepts(const std::string& query,const ConceptMap& concepts,std::size_t top_k=2)const{py::gil_scoped_release r;ensure_norm_cache_nogil();return rank_map_nogil(query,concepts,nullptr,top_k);}
  std::vector<RankedPair> rank_registered(const std::string& query,const std::vector<std::string>& candidate_ids,std::size_t top_k=2)const{py::gil_scoped_release r;ensure_norm_cache_nogil();return rank_map_nogil(query,concepts_,candidate_ids.empty()?nullptr:&candidate_ids,top_k);}
@@ -46,39 +48,25 @@ private:
  void rebuild_discriminative_index_nogil()const{
   if(!disc_index_dirty_)return;
   disc_feature_to_concepts_.clear();disc_feature_df_.clear();
-  for(const auto&[id,anchors]:concepts_){
-   ConceptSet features;
-   for(const auto&anchor:anchors){auto it=unordered_.find(anchor);if(it==unordered_.end())continue;for(const auto&[token,_]:it->second)features.insert(token);}
-   for(const auto&feature:features)disc_feature_to_concepts_[feature].insert(id);
-  }
-  for(const auto&[feature,ids]:disc_feature_to_concepts_)disc_feature_df_[feature]=ids.size();
-  disc_index_dirty_=false;
+  for(const auto&[id,anchors]:concepts_){ConceptSet features;for(const auto&anchor:anchors){auto it=unordered_.find(anchor);if(it==unordered_.end())continue;for(const auto&[token,_]:it->second)features.insert(token);}for(const auto&feature:features)disc_feature_to_concepts_[feature].insert(id);}
+  for(const auto&[feature,ids]:disc_feature_to_concepts_)disc_feature_df_[feature]=ids.size();disc_index_dirty_=false;
  }
  std::vector<std::string> discriminative_candidates_nogil(const std::string& query,std::size_t limit)const{
-  rebuild_discriminative_index_nogil();
-  auto qit=unordered_.find(query);if(qit==unordered_.end()||qit->second.empty()||limit==0)return {};
-  const double n=static_cast<double>(std::max<std::size_t>(1,concepts_.size()));
-  std::unordered_map<std::string,double> scores;
-  for(const auto&[feature,_]:qit->second){
-   auto dfit=disc_feature_df_.find(feature);if(dfit==disc_feature_df_.end()||dfit->second==0)continue;
-   const double w=std::log((n+1.0)/(static_cast<double>(dfit->second)+1.0))+1.0;
-   auto fit=disc_feature_to_concepts_.find(feature);if(fit==disc_feature_to_concepts_.end())continue;
-   for(const auto&id:fit->second)scores[id]+=w;
-  }
-  std::vector<RankedPair> ranked;ranked.reserve(scores.size());for(const auto&[id,score]:scores)ranked.emplace_back(id,score);std::sort(ranked.begin(),ranked.end(),cmp);
-  if(ranked.size()>limit)ranked.resize(limit);std::vector<std::string> out;out.reserve(ranked.size());for(const auto&[id,_]:ranked)out.push_back(id);return out;
+  rebuild_discriminative_index_nogil();auto qit=unordered_.find(query);if(qit==unordered_.end()||qit->second.empty()||limit==0)return {};
+  const double n=static_cast<double>(std::max<std::size_t>(1,concepts_.size()));std::unordered_map<std::string,double> scores;
+  for(const auto&[feature,_]:qit->second){auto dfit=disc_feature_df_.find(feature);if(dfit==disc_feature_df_.end()||dfit->second==0)continue;const double w=std::log((n+1.0)/(static_cast<double>(dfit->second)+1.0))+1.0;auto fit=disc_feature_to_concepts_.find(feature);if(fit==disc_feature_to_concepts_.end())continue;for(const auto&id:fit->second)scores[id]+=w;}
+  std::vector<RankedPair> ranked;ranked.reserve(scores.size());for(const auto&[id,score]:scores)ranked.emplace_back(id,score);std::sort(ranked.begin(),ranked.end(),cmp);if(ranked.size()>limit)ranked.resize(limit);std::vector<std::string> out;out.reserve(ranked.size());for(const auto&[id,_]:ranked)out.push_back(id);return out;
+ }
+ double relation_strength_nogil(const std::string&a,const std::string&b,int offset)const{
+  if(offset==0||std::abs(offset)>radius_)return 0.0;auto it=profiles_.find(a);if(it==profiles_.end())return 0.0;std::uint64_t total=0,match=0;
+  for(const auto&[f,count]:it->second){if(f.offset!=offset)continue;total+=count;if(f.token==b)match+=count;}
+  return total?static_cast<double>(match)/static_cast<double>(total):0.0;
  }
  double weight(const Feature&f)const{double n=static_cast<double>(std::max<std::size_t>(1,profiles_.size()));auto it=feature_df_.find(f);double df=it==feature_df_.end()?0.0:static_cast<double>(it->second);return std::log((n+1.0)/(df+1.0))+1.0;}
- void ensure_norm_cache_nogil()const{
-  if(norm_cache_valid_)return;
-  weighted_norms_.clear();unordered_norms_.clear();weighted_norms_.reserve(profiles_.size());unordered_norms_.reserve(unordered_.size());
-  for(const auto&[node,p]:profiles_){double n2=0.0;for(const auto&[f,v]:p){double x=double(v)*weight(f);n2+=x*x;}weighted_norms_[node]=std::sqrt(n2);}
-  for(const auto&[node,p]:unordered_){double n2=0.0;for(const auto&[_,v]:p)n2+=double(v)*double(v);unordered_norms_[node]=std::sqrt(n2);}
-  norm_cache_valid_=true;
- }
+ void ensure_norm_cache_nogil()const{if(norm_cache_valid_)return;weighted_norms_.clear();unordered_norms_.clear();weighted_norms_.reserve(profiles_.size());unordered_norms_.reserve(unordered_.size());for(const auto&[node,p]:profiles_){double n2=0.0;for(const auto&[f,v]:p){double x=double(v)*weight(f);n2+=x*x;}weighted_norms_[node]=std::sqrt(n2);}for(const auto&[node,p]:unordered_){double n2=0.0;for(const auto&[_,v]:p)n2+=double(v)*double(v);unordered_norms_[node]=std::sqrt(n2);}norm_cache_valid_=true;}
  double similarity_nogil(const std::string&a,const std::string&b)const{auto ia=profiles_.find(a),ib=profiles_.find(b);if(ia==profiles_.end()||ib==profiles_.end()||ia->second.empty()||ib->second.empty())return 0.0;const Profile*sm=&ia->second,*lg=&ib->second;if(sm->size()>lg->size())std::swap(sm,lg);double dot=0;for(const auto&[f,av]:*sm){auto it=lg->find(f);if(it!=lg->end()){double w=weight(f);dot+=double(av)*double(it->second)*w*w;}}auto nait=weighted_norms_.find(a),nbit=weighted_norms_.find(b);double na=nait==weighted_norms_.end()?0.0:nait->second,nb=nbit==weighted_norms_.end()?0.0:nbit->second;return na&&nb?dot/(na*nb):0.0;}
  double unordered_similarity_nogil(const std::string&a,const std::string&b)const{auto ia=unordered_.find(a),ib=unordered_.find(b);if(ia==unordered_.end()||ib==unordered_.end()||ia->second.empty()||ib->second.empty())return 0.0;const TokenCounts*sm=&ia->second,*lg=&ib->second;if(sm->size()>lg->size())std::swap(sm,lg);double dot=0;for(const auto&[t,av]:*sm){auto it=lg->find(t);if(it!=lg->end())dot+=double(av)*double(it->second);}auto nait=unordered_norms_.find(a),nbit=unordered_norms_.find(b);double na=nait==unordered_norms_.end()?0.0:nait->second,nb=nbit==unordered_norms_.end()?0.0:nbit->second;return na&&nb?dot/(na*nb):0.0;}
  int radius_;std::unordered_map<std::string,Profile>profiles_;std::unordered_map<std::string,TokenCounts>unordered_;std::unordered_map<Feature,std::uint64_t,FeatureHash>feature_df_;std::unordered_map<std::string,std::uint64_t>observations_;ConceptMap concepts_;mutable bool norm_cache_valid_=false;mutable std::unordered_map<std::string,double>weighted_norms_;mutable std::unordered_map<std::string,double>unordered_norms_;mutable bool disc_index_dirty_=true;mutable std::unordered_map<std::string,ConceptSet>disc_feature_to_concepts_;mutable std::unordered_map<std::string,std::size_t>disc_feature_df_;
 };
 }
-PYBIND11_MODULE(_core_native,m){m.doc()="Native CPU hot paths for Memoria.ia resolutive core";py::class_<ContextScorer>(m,"ContextScorer").def(py::init<int>(),py::arg("radius")=2).def("observe",&ContextScorer::observe).def("prepare",&ContextScorer::prepare).def("register_concept",&ContextScorer::register_concept).def("similarity",&ContextScorer::similarity).def("unordered_similarity",&ContextScorer::unordered_similarity).def("nearest",&ContextScorer::nearest,py::arg("node"),py::arg("top_k")=5).def("rank_concepts",&ContextScorer::rank_concepts,py::arg("query"),py::arg("concepts"),py::arg("top_k")=2).def("rank_registered",&ContextScorer::rank_registered,py::arg("query"),py::arg("candidate_ids"),py::arg("top_k")=2).def("discriminative_candidates",&ContextScorer::discriminative_candidates,py::arg("query"),py::arg("limit")).def_property_readonly("nodes",&ContextScorer::nodes).def_property_readonly("concepts",&ContextScorer::concepts);}
+PYBIND11_MODULE(_core_native,m){m.doc()="Native CPU hot paths for Memoria.ia resolutive core";py::class_<ContextScorer>(m,"ContextScorer").def(py::init<int>(),py::arg("radius")=2).def("observe",&ContextScorer::observe).def("prepare",&ContextScorer::prepare).def("register_concept",&ContextScorer::register_concept).def("similarity",&ContextScorer::similarity).def("unordered_similarity",&ContextScorer::unordered_similarity).def("relation_strength",&ContextScorer::relation_strength,py::arg("left"),py::arg("right"),py::arg("offset")).def("nearest",&ContextScorer::nearest,py::arg("node"),py::arg("top_k")=5).def("rank_concepts",&ContextScorer::rank_concepts,py::arg("query"),py::arg("concepts"),py::arg("top_k")=2).def("rank_registered",&ContextScorer::rank_registered,py::arg("query"),py::arg("candidate_ids"),py::arg("top_k")=2).def("discriminative_candidates",&ContextScorer::discriminative_candidates,py::arg("query"),py::arg("limit")).def_property_readonly("nodes",&ContextScorer::nodes).def_property_readonly("concepts",&ContextScorer::concepts);}
