@@ -18,6 +18,7 @@ on:
       - 'benchmarks/native_semantic_router.py'
       - 'benchmarks/native_discriminative_router.py'
       - 'benchmarks/native_adaptive_router.py'
+      - 'benchmarks/native_relational_phrase.py'
       - 'benchmarks/native_router_scale_matrix.py'
       - 'setup.py'
       - '.github/workflows/native-core-linux.yml'
@@ -55,6 +56,8 @@ jobs:
         run: python benchmarks/native_discriminative_router.py | tee benchmark-results/native-discriminative-router.json
       - name: Adaptive router benchmark
         run: python benchmarks/native_adaptive_router.py | tee benchmark-results/native-adaptive-router.json
+      - name: Relational phrase benchmark
+        run: python benchmarks/native_relational_phrase.py | tee benchmark-results/native-relational-phrase.json
       - name: Router scale matrix
         if: github.event_name == 'workflow_dispatch'
         run: python benchmarks/native_router_scale_matrix.py | tee benchmark-results/native-router-scale-matrix.json
