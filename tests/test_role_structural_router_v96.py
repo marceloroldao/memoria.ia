@@ -14,8 +14,12 @@ def _router():
             "cliente envia pagamento banco",
             "comprador transfere dinheiro banco",
             "usuario remete valor instituicao",
+            "depositante envia quantia agencia",
+            "cliente transfere quantia agencia",
+            "depositante remete pagamento banco",
             "banco envia pagamento cliente",
             "instituicao transfere dinheiro comprador",
+            "agencia envia quantia depositante",
             "banco remete valor usuario",
         ]
     )
@@ -49,6 +53,22 @@ def test_role_canonicalization_generalizes_across_registered_synonyms():
     for text, expected in cases:
         result = router.resolve_text(text)
         assert result.concept_id == expected
+
+
+def test_role_canonicalization_inherits_unregistered_roles_from_context():
+    router = _router()
+    assert "depositante" not in router._exact_roles
+    assert "quantia" not in router._exact_roles
+    assert "agencia" not in router._exact_roles
+
+    forward = router.resolve_text("depositante remete quantia para agencia")
+    reverse = router.resolve_text("agencia remete quantia para depositante")
+
+    assert forward.canonical_roles == ("customer", "transfer", "money", "bank")
+    assert reverse.canonical_roles == ("bank", "transfer", "money", "customer")
+    assert forward.concept_id == "customer_to_bank"
+    assert reverse.concept_id == "bank_to_customer"
+    assert any(item.source == "context" for item in forward.role_evidence)
 
 
 def test_role_canonicalization_abstains_when_action_role_is_missing():
