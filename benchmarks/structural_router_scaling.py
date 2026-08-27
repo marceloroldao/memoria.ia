@@ -4,14 +4,14 @@ import json
 import random
 import time
 
-from memoria_resolutiva.structural_router_v96 import StructuralSemanticRouterV96
+from memoria_resolutiva.structural_router_v96 import StructuralSemanticRouterV96, native_structural_available
 
 CONCEPTS = 1200
 QUERIES = 3000
 
 
-def build():
-    router = StructuralSemanticRouterV96(relation_window=3, threshold=0.30, min_margin=0.04)
+def build(*, use_native: bool):
+    router = StructuralSemanticRouterV96(relation_window=3, threshold=0.30, min_margin=0.04, use_native=use_native)
     t0 = time.perf_counter()
     for i in range(CONCEPTS):
         cid = f"c{i:04d}"
@@ -21,25 +21,46 @@ def build():
     return router, time.perf_counter() - t0
 
 
+def run(router, queries):
+    t0 = time.perf_counter()
+    results = [router.resolve_text(q) for q in queries]
+    return time.perf_counter() - t0, results
+
+
 def main():
-    router, build_s = build()
+    if not native_structural_available():
+        raise SystemExit("native structural core unavailable")
     rng = random.Random(126)
     ids = [rng.randrange(CONCEPTS) for _ in range(QUERIES)]
     queries = [f"agent{i} action{i} object{i}" for i in ids]
-    t0 = time.perf_counter()
-    results = [router.resolve_text(q) for q in queries]
-    query_s = time.perf_counter() - t0
-    correct = sum(result.concept_id == f"c{i:04d}" for result, i in zip(results, ids))
-    if correct != QUERIES:
-        raise AssertionError((correct, QUERIES))
+
+    python_router, python_build = build(use_native=False)
+    native_router, native_build = build(use_native=True)
+    python_s, expected = run(python_router, queries)
+    native_s, actual = run(native_router, queries)
+
+    correct = 0
+    for expected_result, actual_result, i in zip(expected, actual, ids):
+        expected_id = f"c{i:04d}"
+        if expected_result.concept_id != expected_id or actual_result.concept_id != expected_id:
+            raise AssertionError((expected_result, actual_result, expected_id))
+        if abs(expected_result.score - actual_result.score) > 1e-12 or abs(expected_result.margin - actual_result.margin) > 1e-12:
+            raise AssertionError((expected_result, actual_result))
+        correct += 1
+
     print(json.dumps({
         "concepts": CONCEPTS,
         "patterns_per_concept": 3,
         "queries": QUERIES,
-        "build_s": build_s,
-        "query_s": query_s,
-        "queries_per_s": QUERIES / query_s if query_s else None,
+        "python": {"build_s": python_build, "query_s": python_s},
+        "native": {"build_s": native_build, "query_s": native_s},
+        "speedup": {
+            "build": python_build / native_build if native_build else None,
+            "query": python_s / native_s if native_s else None,
+        },
+        "native_queries_per_s": QUERIES / native_s if native_s else None,
         "accuracy": correct / QUERIES,
+        "parity": True,
     }, sort_keys=True))
 
 
