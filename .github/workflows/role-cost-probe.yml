@@ -6,6 +6,7 @@ on:
     paths:
       - 'benchmarks/role_relabel_cost_probe.py'
       - 'benchmarks/role_permutation_cost_matrix.py'
+      - 'benchmarks/role_directional_relation_matrix.py'
       - 'src/memoria_resolutiva/role_structural_router_v96.py'
       - '.github/workflows/role-cost-probe.yml'
   workflow_dispatch:
@@ -32,7 +33,9 @@ jobs:
         run: |
           mkdir -p benchmark-results
           python benchmarks/role_permutation_cost_matrix.py | tee benchmark-results/role-permutation-cost-matrix.json
+      - name: Probe signed directional relation support
+        run: python benchmarks/role_directional_relation_matrix.py | tee benchmark-results/role-directional-relation-matrix.json
       - uses: actions/upload-artifact@v4
         with:
-          name: role-permutation-cost-matrix
-          path: benchmark-results/role-permutation-cost-matrix.json
+          name: role-cost-and-direction-matrices
+          path: benchmark-results/*.json
