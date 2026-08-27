@@ -12,6 +12,7 @@ from .product_chat import ProductChatService
 from .product_config import ProductConfigurationStore
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
+from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
 from .product_service import EnterpriseMemoryService
 
 
@@ -28,6 +29,18 @@ def _optional_float(name: str) -> float | None:
     if value is None or value.strip() == "":
         return None
     return float(value)
+
+
+def _env_bool(name: str, default: bool = True) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise RuntimeError(f"environment variable {name} must be a boolean value")
 
 
 def _build_chat_service(
@@ -82,14 +95,22 @@ def build_app():
     api_key = _env("MEMORIA_API_KEY", required=True)
     data_dir = Path(_env("MEMORIA_DATA_DIR", "/data"))
     configuration = ProductConfigurationStore(data_dir)
+    persistence = ProductSnapshotPersistence(
+        data_dir / "persistence",
+        backend=os.getenv("MEMORIA_STORAGE_BACKEND"),
+        allow_fallback=_env_bool("MEMORIA_STORAGE_ALLOW_FALLBACK", True),
+    )
 
     manifest = data_dir / "enterprise.manifest.json"
     if manifest.exists():
-        service = EnterpriseMemoryService.load(data_dir)
+        service = PersistentEnterpriseMemoryService.load(data_dir, persistence=persistence)
         if service.organization.organization_id != organization_id:
             raise RuntimeError("persisted organization does not match MEMORIA_ORGANIZATION_ID")
     else:
-        service = EnterpriseMemoryService(OrganizationIdentity(organization_id, organization_name))
+        service = PersistentEnterpriseMemoryService(
+            OrganizationIdentity(organization_id, organization_name),
+            persistence=persistence,
+        )
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -115,6 +136,16 @@ def build_app():
         chat_service=_build_chat_service(service, configuration),
         application_registry=application_registry,
     )
+
+    @app.get("/api/v1/storage/health")
+    def storage_health():
+        stats = service.statistics
+        return {
+            "status": "ok",
+            "backend": stats.get("persistence_backend", "unknown"),
+            "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
+        }
+
     attach_configuration_routes(app, api_key=api_key, store=configuration)
     return app
 
