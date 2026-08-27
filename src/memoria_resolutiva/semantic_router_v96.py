@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterable
-from .textual import TextContextMemory
+from .textual import TextContextMemory, native_context_available
 
 @dataclass(frozen=True, slots=True)
 class SemanticResolution:
@@ -14,11 +14,15 @@ class DeflectionMetrics:
 
 class SemanticRouterV96:
     """Conservative non-neural semantic router with optional native top-two ranking."""
-    def __init__(self,*,radius:int=3,threshold:float=.60,min_margin:float=.08,indexed:bool=False,use_native:bool|None=None,native_authoritative:bool=False)->None:
-        if native_authoritative and indexed:raise ValueError("native_authoritative currently requires indexed=False")
-        if native_authoritative and use_native is False:raise ValueError("native_authoritative requires native execution")
-        self.memory=TextContextMemory(radius=radius,use_native=True if native_authoritative else use_native,mirror_python=not native_authoritative)
-        self.native_authoritative=native_authoritative;self.threshold=threshold;self.min_margin=min_margin;self.indexed=indexed;self._concepts={};self._feature_to_concepts={};self._index_dirty=True;self._total_queries=0;self._memory_resolved=0;self._fallback_calls=0
+    def __init__(self,*,radius:int=3,threshold:float=.60,min_margin:float=.08,indexed:bool=False,use_native:bool|None=None,native_authoritative:bool|None=None)->None:
+        if native_authoritative is True and indexed:raise ValueError("native_authoritative currently requires indexed=False")
+        if native_authoritative is True and use_native is False:raise ValueError("native_authoritative requires native execution")
+        if native_authoritative is None:
+            authoritative=(not indexed) and (use_native is not False) and native_context_available()
+        else:
+            authoritative=native_authoritative
+        self.memory=TextContextMemory(radius=radius,use_native=True if authoritative else use_native,mirror_python=not authoritative)
+        self.native_authoritative=authoritative;self.threshold=threshold;self.min_margin=min_margin;self.indexed=indexed;self._concepts={};self._feature_to_concepts={};self._index_dirty=True;self._total_queries=0;self._memory_resolved=0;self._fallback_calls=0
     def observe(self,sentences:Iterable[str])->None:self.memory.observe_many(sentences);self._index_dirty=True
     def register_concept(self,concept_id:str,anchors:Iterable[str])->None:
         normalized={a.strip().lower() for a in anchors if a.strip()}
