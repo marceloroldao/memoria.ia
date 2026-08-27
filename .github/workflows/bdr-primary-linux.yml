@@ -3,6 +3,15 @@ name: BDR primary Linux backend
 on:
   push:
     branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'native/bdr_pybind.cpp'
+      - 'src/memoria_resolutiva/bdr_store.py'
+      - 'src/memoria_resolutiva/sqlite_store.py'
+      - 'tests/test_bdr_store.py'
+      - 'tests/test_sqlite_store.py'
+      - 'benchmarks/bdr_end_to_end.py'
+      - 'setup.py'
+      - '.github/workflows/bdr-primary-linux.yml'
   workflow_dispatch:
 
 permissions:
@@ -20,77 +29,32 @@ jobs:
       PYTHONPATH: .:src
     steps:
       - uses: actions/checkout@v4
-
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libsqlite3-dev
-
       - name: Checkout exact frozen Resolutive-DB v1.0.0
         run: |
           git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
           test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
-
       - name: Build PIC BDR v1.0.0 static library
         run: |
-          cmake -S bdr-v100-src -B bdr-v100-build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON
           cmake --build bdr-v100-build --config Release --target bdr_v1_candidate -j2
-          find bdr-v100-build -name 'libbdr.a' -print
-
-      - name: Build/install Memoria.ia with native core and direct BDR extension
+      - name: Build/install Memoria.ia with direct BDR extension
         env:
           MEMORIA_BUILD_BDR: "1"
           BDR_INCLUDE_DIR: ${{ github.workspace }}/bdr-v100-src/experimental/api_v86/include
           BDR_LIBRARY_FILE: ${{ github.workspace }}/bdr-v100-build/experimental/api_v86/libbdr.a
         run: python -m pip install -e '.[product,test]'
-
-      - name: Native contextual parity
-        run: pytest -q tests/test_native_context.py
-
       - name: BDR equivalence and reopen tests
         run: pytest -q tests/test_bdr_store.py tests/test_sqlite_store.py
-
       - name: Full Memoria.ia regression
         run: pytest -q
-
-      - name: Native contextual scaling benchmark
-        run: |
-          mkdir -p benchmark-results
-          python benchmarks/native_context_scaling.py \
-            | tee benchmark-results/native-context.json
-
       - name: End-to-end benchmark - durable every memory
         run: |
-          python benchmarks/bdr_end_to_end.py --memories 256 --payload-bytes 512 --sync-every 1 \
-            | tee benchmark-results/e2e-sync1.json
-
+          mkdir -p benchmark-results
+          python benchmarks/bdr_end_to_end.py --memories 256 --payload-bytes 512 --sync-every 1 | tee benchmark-results/e2e-sync1.json
       - name: End-to-end benchmark - high performance batching
-        run: |
-          python benchmarks/bdr_end_to_end.py --memories 1024 --payload-bytes 1024 --sync-every 16 \
-            | tee benchmark-results/e2e-sync16.json
-
-      - name: Summarize benchmark
-        run: |
-          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import json, pathlib
-          p=pathlib.Path('benchmark-results/native-context.json')
-          if p.exists():
-              d=json.loads(p.read_text())
-              print('## Native contextual scoring')
-              print(f"- Python score: {d['python']['score_s']:.3f}s")
-              print(f"- C++ score: {d['native']['score_s']:.3f}s")
-              print(f"- Query speedup: {d['speedup']['score']:.2f}x")
-              print(f"- Build/observe ratio: {d['speedup']['build']:.2f}x (values <1 mean mirrored native observation costs more)")
-              print()
-          print('## Memoria.ia end-to-end — SQLite vs BDR v1.0.0')
-          print('| Case | SQLite write | BDR write | write speedup | SQLite read | BDR read | read speedup |')
-          print('|---|---:|---:|---:|---:|---:|---:|')
-          for p in sorted(pathlib.Path('benchmark-results').glob('e2e-*.json')):
-              d=json.loads(p.read_text())
-              s=d['sqlite']; b=d['bdr']; r=d['speedup']
-              print(f"| sync/{d['sync_every']} ({d['memories']}x{d['payload_bytes']}B) | {s['write_s']:.3f}s | {b['write_s']:.3f}s | {r['write']:.2f}x | {s['read_s']:.3f}s | {b['read_s']:.3f}s | {r['read']:.2f}x |")
-          PY
-
+        run: python benchmarks/bdr_end_to_end.py --memories 1024 --payload-bytes 1024 --sync-every 16 | tee benchmark-results/e2e-sync16.json
       - uses: actions/upload-artifact@v4
         with:
           name: memoria-bdr-primary-linux-results
