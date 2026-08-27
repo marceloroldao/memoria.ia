@@ -54,8 +54,7 @@ def slow_delta(gate: ExperimentalTrajectoryPolicyGate) -> float:
     return slot_support(gate, "transmite", 1, "sinal") - slot_support(gate, "transmite", 1, "pacote")
 
 
-def snapshot(gate, recent, label: str) -> dict:
-    deadband = gate._margin / 2.0
+def snapshot(gate, recent, label: str, deadband: float) -> dict:
     slow = slow_delta(gate)
     fast = fast_delta(recent)
     return {
@@ -80,16 +79,24 @@ def observe_phase(gate, recent, tokens: tuple[str, ...], repeats: int) -> None:
 
 def run() -> bool:
     gate = build_gate()
+    # Calibration describes the slow structural geometry. New temporal observations
+    # invalidate the gate's live calibration on purpose, so the temporal experiment
+    # keeps this initial structural reference frozen instead of recalibrating it.
+    structural_margin = gate._margin
+    if structural_margin is None:
+        raise RuntimeError("calibrated gate did not expose a structural margin")
+    deadband = structural_margin / 2.0
+
     recent: deque[tuple[str, ...]] = deque(maxlen=FAST_WINDOW)
     for _ in range(BASE):
         recent.append(OLD)
 
-    rows = [snapshot(gate, recent, "baseline")]
+    rows = [snapshot(gate, recent, "baseline", deadband)]
     for cycle in range(1, CYCLES + 1):
         observe_phase(gate, recent, ALT, PHASE)
-        rows.append(snapshot(gate, recent, f"cycle_{cycle}_B"))
+        rows.append(snapshot(gate, recent, f"cycle_{cycle}_B", deadband))
         observe_phase(gate, recent, OLD, PHASE)
-        rows.append(snapshot(gate, recent, f"cycle_{cycle}_A"))
+        rows.append(snapshot(gate, recent, f"cycle_{cycle}_A", deadband))
 
     b_rows = [row for row in rows if row["label"].endswith("_B")]
     a_rows = [row for row in rows if row["label"].endswith("_A")]
@@ -107,6 +114,8 @@ def run() -> bool:
         "cycles": CYCLES,
         "phase_repeats": PHASE,
         "fast_window": FAST_WINDOW,
+        "frozen_structural_margin": structural_margin,
+        "deadband": deadband,
         "rows": rows,
         "summary": {
             "fast_tracks_present": fast_tracks_present,
