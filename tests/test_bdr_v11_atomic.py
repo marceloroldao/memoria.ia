@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from memoria_resolutiva.bdr_store import BDRResolutiveMemory, native_bdr_available
+from memoria_resolutiva.bdr_store import (
+    BDRPolicy,
+    BDRResolutiveMemory,
+    native_bdr_available,
+)
 
 pytestmark = pytest.mark.skipif(
     not native_bdr_available(), reason="native BDR extension not built"
@@ -21,6 +25,39 @@ def test_one_logical_memory_advances_one_atomic_sequence(tmp_path):
         assert after_first == before + 1
         assert after_second == after_first + 1
         assert db.db.durable_sequence == after_second
+    finally:
+        db.close()
+
+
+def test_deferred_durability_keeps_one_atomic_sequence_per_memory(tmp_path):
+    db = BDRResolutiveMemory(
+        tmp_path / "atomic-deferred",
+        max_layer=3,
+        policy=BDRPolicy(sync_every_memories=3),
+    )
+    try:
+        initial_last = db.db.last_sequence
+        initial_durable = db.db.durable_sequence
+
+        db.add("m1", b"first" * 32)
+        seq1 = db.db.last_sequence
+        durable1 = db.db.durable_sequence
+
+        db.add("m2", b"second" * 32)
+        seq2 = db.db.last_sequence
+        durable2 = db.db.durable_sequence
+
+        assert seq1 == initial_last + 1
+        assert seq2 == seq1 + 1
+        assert durable1 == initial_durable
+        assert durable2 == initial_durable
+        assert db.reconstruct("m1") == b"first" * 32
+        assert db.reconstruct("m2") == b"second" * 32
+
+        db.add("m3", b"third" * 32)
+        seq3 = db.db.last_sequence
+        assert seq3 == seq2 + 1
+        assert db.db.durable_sequence == seq3
     finally:
         db.close()
 
