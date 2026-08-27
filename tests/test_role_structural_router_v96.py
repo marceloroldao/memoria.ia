@@ -125,3 +125,19 @@ def test_role_structural_router_does_not_force_fit_unseen_noise_into_known_patte
     for text in adversarial:
         result = router.resolve_text(text)
         assert result.concept_id is None, (text, result.canonical_roles, result.concept_id, result.score)
+
+
+def test_role_structural_router_does_not_borrow_length_from_another_intent():
+    router = _router()
+    router.register_intent_pattern(
+        "bank_to_customer_with_receipt",
+        ["bank", "transfer", "money", "customer", "money"],
+    )
+
+    result = router.resolve_text("cliente cliente transfere dinheiro banco")
+
+    assert result.concept_id is None, (
+        result.canonical_roles,
+        result.concept_id,
+        result.score,
+    )
