@@ -12,6 +12,7 @@ on:
       - 'tests/test_native_context.py'
       - 'tests/test_native_semantic_router.py'
       - 'tests/test_discriminative_router_v96.py'
+      - 'tests/test_adaptive_router_noise.py'
       - 'benchmarks/native_context_scaling.py'
       - 'benchmarks/native_semantic_router.py'
       - 'benchmarks/native_discriminative_router.py'
@@ -39,7 +40,7 @@ jobs:
       - name: Build/install native core
         run: python -m pip install -e '.[product,test]'
       - name: Native parity gates
-        run: pytest -q tests/test_native_context.py tests/test_native_semantic_router.py tests/test_discriminative_router_v96.py
+        run: pytest -q tests/test_native_context.py tests/test_native_semantic_router.py tests/test_discriminative_router_v96.py tests/test_adaptive_router_noise.py
       - name: Full regression
         run: pytest -q
       - name: Context scoring benchmark
