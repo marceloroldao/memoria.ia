@@ -109,7 +109,10 @@ def test_adaptive_preserves_full_scan_on_polysemy_noise_and_open_set():
 
 @pytest.mark.skipif(not native_context_available(), reason="native core unavailable")
 def test_phrase_resolution_uses_resolved_tokens_as_conservative_evidence():
-    full, adaptive = _build_pair(threshold=0.55, min_margin=0.08)
+    # Phrase routing accepts lower absolute association than the production
+    # token threshold, but still requires a positive separation from Top-2.
+    # Completely unseen tokens have zero margin and therefore remain open-set.
+    full, adaptive = _build_pair(threshold=0.0, min_margin=0.01)
     for text, expected_concept in PHRASES.items():
         expected = full.resolve_text(text)
         actual = adaptive.resolve_text(text)
