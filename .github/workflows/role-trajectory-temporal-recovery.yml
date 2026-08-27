@@ -1,0 +1,30 @@
+name: Role trajectory temporal recovery
+
+on:
+  push:
+    branches:
+      - experiment/bdr-primary-linux
+    paths:
+      - 'benchmarks/role_trajectory_temporal_recovery.py'
+      - '.github/workflows/role-trajectory-temporal-recovery.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Run temporal recovery probe
+        env:
+          PYTHONPATH: .:src
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p benchmark-results
+          python benchmarks/role_trajectory_temporal_recovery.py | tee benchmark-results/role-trajectory-temporal-recovery.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: role-trajectory-temporal-recovery
+          path: benchmark-results/role-trajectory-temporal-recovery.json
