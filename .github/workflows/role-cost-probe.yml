@@ -1,0 +1,29 @@
+name: Role relabel cost probe
+
+on:
+  push:
+    branches: [experiment/bdr-primary-linux]
+    paths:
+      - 'benchmarks/role_relabel_cost_probe.py'
+      - 'src/memoria_resolutiva/role_structural_router_v96.py'
+      - '.github/workflows/role-cost-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: role-cost-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .:src
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install package
+        run: python -m pip install -e '.[product]'
+      - name: Measure relabel costs
+        run: python benchmarks/role_relabel_cost_probe.py
