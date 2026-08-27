@@ -8,10 +8,13 @@ on:
       - 'src/memoria_resolutiva/contextual.py'
       - 'src/memoria_resolutiva/textual.py'
       - 'src/memoria_resolutiva/semantic_router_v96.py'
+      - 'src/memoria_resolutiva/discriminative_router_v96.py'
       - 'tests/test_native_context.py'
       - 'tests/test_native_semantic_router.py'
+      - 'tests/test_discriminative_router_v96.py'
       - 'benchmarks/native_context_scaling.py'
       - 'benchmarks/native_semantic_router.py'
+      - 'benchmarks/native_discriminative_router.py'
       - 'setup.py'
       - '.github/workflows/native-core-linux.yml'
   workflow_dispatch:
@@ -35,7 +38,7 @@ jobs:
       - name: Build/install native core
         run: python -m pip install -e '.[product,test]'
       - name: Native parity gates
-        run: pytest -q tests/test_native_context.py tests/test_native_semantic_router.py
+        run: pytest -q tests/test_native_context.py tests/test_native_semantic_router.py tests/test_discriminative_router_v96.py
       - name: Full regression
         run: pytest -q
       - name: Context scoring benchmark
@@ -44,6 +47,8 @@ jobs:
           python benchmarks/native_context_scaling.py | tee benchmark-results/native-context.json
       - name: Full semantic router benchmark
         run: python benchmarks/native_semantic_router.py | tee benchmark-results/native-router.json
+      - name: Discriminative router benchmark
+        run: python benchmarks/native_discriminative_router.py | tee benchmark-results/native-discriminative-router.json
       - uses: actions/upload-artifact@v4
         with:
           name: memoria-native-core-results
