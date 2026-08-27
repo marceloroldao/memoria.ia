@@ -14,8 +14,11 @@ class DeflectionMetrics:
 
 class SemanticRouterV96:
     """Conservative non-neural semantic router with optional native top-two ranking."""
-    def __init__(self,*,radius:int=3,threshold:float=.60,min_margin:float=.08,indexed:bool=False,use_native:bool|None=None)->None:
-        self.memory=TextContextMemory(radius=radius,use_native=use_native);self.threshold=threshold;self.min_margin=min_margin;self.indexed=indexed;self._concepts={};self._feature_to_concepts={};self._index_dirty=True;self._total_queries=0;self._memory_resolved=0;self._fallback_calls=0
+    def __init__(self,*,radius:int=3,threshold:float=.60,min_margin:float=.08,indexed:bool=False,use_native:bool|None=None,native_authoritative:bool=False)->None:
+        if native_authoritative and indexed:raise ValueError("native_authoritative currently requires indexed=False")
+        if native_authoritative and use_native is False:raise ValueError("native_authoritative requires native execution")
+        self.memory=TextContextMemory(radius=radius,use_native=True if native_authoritative else use_native,mirror_python=not native_authoritative)
+        self.native_authoritative=native_authoritative;self.threshold=threshold;self.min_margin=min_margin;self.indexed=indexed;self._concepts={};self._feature_to_concepts={};self._index_dirty=True;self._total_queries=0;self._memory_resolved=0;self._fallback_calls=0
     def observe(self,sentences:Iterable[str])->None:self.memory.observe_many(sentences);self._index_dirty=True
     def register_concept(self,concept_id:str,anchors:Iterable[str])->None:
         normalized={a.strip().lower() for a in anchors if a.strip()}
@@ -40,11 +43,9 @@ class SemanticRouterV96:
     def resolve_token(self,query:str)->SemanticResolution:
         q=query.strip().lower()
         if not q:raise ValueError("query must not be empty")
-        # Native all-concept routing needs no Python candidate materialization.
         if self.memory.native_enabled and not self.indexed:
             if not self._concepts:return SemanticResolution(q,None,0.0,0.0,"unresolved")
-            ranked=self.memory.rank_registered(q,None,top_k=2)
-            candidate_ids=None
+            ranked=self.memory.rank_registered(q,None,top_k=2);candidate_ids=None
         else:
             candidate_ids=self._candidate_ids(q)
             if not candidate_ids:return SemanticResolution(q,None,0.0,0.0,"unresolved")
