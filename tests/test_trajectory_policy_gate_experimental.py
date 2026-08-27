@@ -27,10 +27,8 @@ def build_gate():
 def test_gate_accepts_context_supported_valid_trajectory():
     gate = build_gate()
     result = gate.resolve("profissional recebe registro privado centro")
-    # This exact wording is structurally treated according to learned relations;
-    # use the direction seen in training to make the assertion deterministic.
-    assert result.decision in {"accept", "reject"}
-    assert result.decision != "fail_closed"
+    assert result.decision == "accept"
+    assert result.reason == "trajectory coverage accepted"
 
 
 def test_gate_rejects_wrong_arity_with_supported_tokens():
