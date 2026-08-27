@@ -14,8 +14,8 @@ class DeflectionMetrics:
 
 class SemanticRouterV96:
     """Conservative non-neural semantic router with optional native top-two ranking."""
-    def __init__(self,*,radius:int=3,threshold:float=.60,min_margin:float=.08,indexed:bool=False)->None:
-        self.memory=TextContextMemory(radius=radius);self.threshold=threshold;self.min_margin=min_margin;self.indexed=indexed;self._concepts={};self._feature_to_concepts={};self._index_dirty=True;self._total_queries=0;self._memory_resolved=0;self._fallback_calls=0
+    def __init__(self,*,radius:int=3,threshold:float=.60,min_margin:float=.08,indexed:bool=False,use_native:bool|None=None)->None:
+        self.memory=TextContextMemory(radius=radius,use_native=use_native);self.threshold=threshold;self.min_margin=min_margin;self.indexed=indexed;self._concepts={};self._feature_to_concepts={};self._index_dirty=True;self._total_queries=0;self._memory_resolved=0;self._fallback_calls=0
     def observe(self,sentences:Iterable[str])->None:self.memory.observe_many(sentences);self._index_dirty=True
     def register_concept(self,concept_id:str,anchors:Iterable[str])->None:
         normalized={a.strip().lower() for a in anchors if a.strip()}
