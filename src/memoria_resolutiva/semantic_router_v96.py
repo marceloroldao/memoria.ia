@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from math import sqrt
 from typing import Callable, Iterable
 from .textual import TextContextMemory, native_context_available, tokenize
 
@@ -14,6 +15,13 @@ class SemanticResolution:
 @dataclass(frozen=True, slots=True)
 class TextResolution:
     text:str; concept_id:str|None; score:float; margin:float; source:str; evidence:tuple[SemanticResolution,...]
+@dataclass(frozen=True, slots=True)
+class RelationEvidence:
+    left:str; right:str; concept_id:str; offset:int; strength:float; weight:float
+@dataclass(frozen=True, slots=True)
+class RelationalTextResolution:
+    text:str; concept_id:str|None; score:float; margin:float; source:str
+    evidence:tuple[SemanticResolution,...]; relations:tuple[RelationEvidence,...]; relation_score:float
 @dataclass(frozen=True, slots=True)
 class DeflectionMetrics:
     total_queries:int; memory_resolved:int; fallback_calls:int
@@ -94,6 +102,40 @@ class SemanticRouterV96:
         best_id,best_weight=ranked[0];best_score=best_weight/total;second_score=(ranked[1][1]/total) if len(ranked)>1 else 0.0;margin=best_score-second_score
         if best_score>=self.threshold and margin>=self.min_margin:return TextResolution(normalized,best_id,best_score,margin,"memory",tuple(evidence))
         return TextResolution(normalized,None,best_score,margin,"unresolved",tuple(evidence))
+    def resolve_text_relational(self,text:str,*,relation_window:int=3,relation_gain:float=1.0)->RelationalTextResolution:
+        if relation_window<1:raise ValueError("relation_window must be >= 1")
+        if relation_gain<0:raise ValueError("relation_gain must be >= 0")
+        normalized=text.strip().lower();tokens=tokenize(normalized)
+        if not tokens:raise ValueError("text must contain at least one token")
+        evidence=[];positioned=[];weights={}
+        for pos,token in enumerate(tokens):
+            if token in _PHRASE_STOPWORDS:continue
+            resolution=self.resolve_token(token)
+            if resolution.concept_id is None:continue
+            weight=max(0.0,resolution.score)*max(0.0,resolution.margin)
+            if weight<=0.0:continue
+            evidence.append(resolution);positioned.append((pos,resolution,weight));weights[resolution.concept_id]=weights.get(resolution.concept_id,0.0)+weight
+        relations=[];relation_score=0.0
+        for i in range(len(positioned)):
+            left_pos,left,left_weight=positioned[i]
+            for j in range(i+1,len(positioned)):
+                right_pos,right,right_weight=positioned[j];offset=right_pos-left_pos
+                if offset>relation_window:break
+                if left.concept_id!=right.concept_id:continue
+                forward=self.memory.relation_strength(left.query,right.query,offset)
+                reverse=self.memory.relation_strength(right.query,left.query,-offset)
+                strength=sqrt(max(0.0,forward)*max(0.0,reverse))
+                if strength<=0.0:continue
+                pair_weight=relation_gain*sqrt(left_weight*right_weight)*strength
+                if pair_weight<=0.0:continue
+                weights[left.concept_id]=weights.get(left.concept_id,0.0)+pair_weight;relation_score+=pair_weight
+                relations.append(RelationEvidence(left.query,right.query,left.concept_id,offset,strength,pair_weight))
+        if not weights:return RelationalTextResolution(normalized,None,0.0,0.0,"unresolved",tuple(evidence),tuple(relations),relation_score)
+        ranked=sorted(weights.items(),key=lambda item:(-item[1],item[0]));total=sum(score for _,score in ranked)
+        if total<=0:return RelationalTextResolution(normalized,None,0.0,0.0,"unresolved",tuple(evidence),tuple(relations),relation_score)
+        best_id,best_weight=ranked[0];best_score=best_weight/total;second_score=(ranked[1][1]/total) if len(ranked)>1 else 0.0;margin=best_score-second_score
+        if best_score>=self.threshold and margin>=self.min_margin:return RelationalTextResolution(normalized,best_id,best_score,margin,"memory_relational",tuple(evidence),tuple(relations),relation_score)
+        return RelationalTextResolution(normalized,None,best_score,margin,"unresolved",tuple(evidence),tuple(relations),relation_score)
     def resolve_or_fallback(self,query:str,fallback:Callable[[str],str|None])->SemanticResolution:
         self._total_queries+=1;direct=self.resolve_token(query)
         if direct.concept_id is not None:self._memory_resolved+=1;return direct
@@ -119,24 +161,20 @@ class AdaptiveSemanticRouterV96(SemanticRouterV96):
     def last_route_mode(self)->str:return self._last_route_mode
     @property
     def last_candidate_count(self)->int:return self._last_candidate_count
-    def _mark_route(self,mode:str,count:int)->None:
-        self._last_route_mode=mode;self._last_candidate_count=count;self._route_counts[mode]+=1
+    def _mark_route(self,mode:str,count:int)->None:self._last_route_mode=mode;self._last_candidate_count=count;self._route_counts[mode]+=1
     def routing_stats(self)->AdaptiveRoutingStats:
-        total=sum(self._route_counts.values())
-        return AdaptiveRoutingStats(total,self._route_counts["full"],self._route_counts["discriminative"],self._route_counts["full_verify"])
+        total=sum(self._route_counts.values());return AdaptiveRoutingStats(total,self._route_counts["full"],self._route_counts["discriminative"],self._route_counts["full_verify"])
     def reset_routing_stats(self)->None:
         for key in self._route_counts:self._route_counts[key]=0
     def resolve_token(self,query:str)->SemanticResolution:
         q=query.strip().lower()
         if not q:raise ValueError("query must not be empty")
-        if not self._concepts:
-            self._mark_route("full",0);return SemanticResolution(q,None,0.0,0.0,"unresolved")
+        if not self._concepts:self._mark_route("full",0);return SemanticResolution(q,None,0.0,0.0,"unresolved")
         if self.memory.native_enabled and len(self._concepts)>=self.adaptive_threshold:
             candidate_ids=self.memory.discriminative_candidates(q,self.candidate_limit)
             if candidate_ids:
                 ranked=self.memory.rank_registered(q,candidate_ids,top_k=2);second=ranked[1][1] if ranked and len(ranked)>1 else 0.0;margin=(ranked[0][1]-second) if ranked else 0.0
                 verify_margin=max(self.min_margin,self.verification_epsilon)
-                if ranked and margin>verify_margin:
-                    self._mark_route("discriminative",len(candidate_ids));return self._resolution_from_ranked(q,ranked)
+                if ranked and margin>verify_margin:self._mark_route("discriminative",len(candidate_ids));return self._resolution_from_ranked(q,ranked)
                 self._mark_route("full_verify",len(candidate_ids));return super().resolve_token(q)
         self._mark_route("full",len(self._concepts));return super().resolve_token(q)
