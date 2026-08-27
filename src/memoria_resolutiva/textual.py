@@ -28,8 +28,7 @@ class TextContextMemory:
         self.associator = ContextAssociator(radius=radius)
         if use_native is True and _NativeContextScorer is None: raise RuntimeError("native contextual scorer is unavailable")
         enabled = _NativeContextScorer is not None if use_native is None else use_native
-        if not mirror_python and not enabled:
-            raise ValueError("mirror_python=False requires the native contextual scorer")
+        if not mirror_python and not enabled: raise ValueError("mirror_python=False requires the native contextual scorer")
         self._mirror_python = mirror_python
         self._native = _NativeContextScorer(radius) if enabled and _NativeContextScorer is not None else None
     @property
@@ -59,6 +58,15 @@ class TextContextMemory:
         for (_o,t),c in pb.items():cb[t]+=c
         dot=sum(ca[t]*cb[t] for t in set(ca)&set(cb));na=sqrt(sum(v*v for v in ca.values()));nb=sqrt(sum(v*v for v in cb.values()))
         return dot/(na*nb) if na and nb else 0.0
+    def relation_strength(self,left:str,right:str,offset:int)->float:
+        left,right=left.lower(),right.lower()
+        if offset==0:return 0.0
+        if self._native is not None:return float(self._native.relation_strength(left,right,offset))
+        profile=self.associator.profiles.get(left)
+        if not profile:return 0.0
+        total=sum(c for (o,_token),c in profile.items() if o==offset)
+        if total<=0:return 0.0
+        return profile.get((offset,right),0)/total
     def rank_registered(self,query:str,candidate_ids=None,top_k:int=2)->list[tuple[str,float]]|None:
         if self._native is None:return None
         ids=[] if candidate_ids is None else sorted(candidate_ids)
