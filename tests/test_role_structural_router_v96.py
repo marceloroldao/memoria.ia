@@ -75,3 +75,53 @@ def test_role_canonicalization_abstains_when_action_role_is_missing():
     router = _router()
     result = router.resolve_text("cliente visita banco")
     assert result.concept_id is None
+
+
+def test_role_structural_router_tolerates_neutral_surface_noise_without_changing_direction():
+    router = _router()
+    forward = router.resolve_text("hoje cliente realmente transfere dinheiro com cuidado para o banco")
+    reverse = router.resolve_text("ontem o banco calmamente transfere dinheiro de volta para o cliente")
+    assert forward.concept_id == "customer_to_bank"
+    assert reverse.concept_id == "bank_to_customer"
+    assert forward.canonical_roles == ("customer", "transfer", "money", "bank")
+    assert reverse.canonical_roles == ("bank", "transfer", "money", "customer")
+
+
+def test_role_structural_router_rejects_reordered_or_duplicated_role_sequences():
+    router = _router()
+    adversarial = [
+        "cliente dinheiro transfere banco",
+        "cliente transfere banco dinheiro",
+        "cliente cliente transfere dinheiro banco",
+        "cliente transfere dinheiro banco cliente",
+        "banco dinheiro transfere cliente",
+    ]
+    for text in adversarial:
+        result = router.resolve_text(text)
+        assert result.concept_id is None, (text, result.canonical_roles, result.concept_id, result.score)
+
+
+def test_role_structural_router_rejects_known_entities_with_wrong_relation():
+    router = _router()
+    adversarial = [
+        "cliente consulta saldo banco",
+        "cliente visita banco com dinheiro",
+        "banco informa valor cliente",
+        "cliente guarda dinheiro perto banco",
+    ]
+    for text in adversarial:
+        result = router.resolve_text(text)
+        assert result.concept_id is None, (text, result.canonical_roles, result.concept_id, result.score)
+
+
+def test_role_structural_router_does_not_force_fit_unseen_noise_into_known_pattern():
+    router = _router()
+    adversarial = [
+        "astronauta observa planeta distante",
+        "sensor mede temperatura ambiente",
+        "motor gira eixo lentamente",
+        "professor explica conceito aluno",
+    ]
+    for text in adversarial:
+        result = router.resolve_text(text)
+        assert result.concept_id is None, (text, result.canonical_roles, result.concept_id, result.score)
