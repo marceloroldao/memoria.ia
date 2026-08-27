@@ -10,16 +10,16 @@ The final benchmark path is native C++ only. `benchmarks/bdr_v100_native_direct.
 
 Logical Memoria.ia-style records are materialized before the database timers start and the same records are supplied to both engines. The workload represents memory payloads, unique nodes and occurrence records. Materialization cost is reported separately and is not attributed to either database.
 
-Durability boundaries for the bulk write/update/delete phases are matched at batch level: SQLite uses explicit transactions with `synchronous=FULL`; BDR uses asynchronous puts/erases followed by `sync()`. The test therefore measures batch-durable persistence rather than one-fsync-per-operation durability.
+Durability boundaries for the bulk write/update/delete phases are matched at batch level: SQLite uses explicit transactions with `synchronous=FULL`; BDR uses asynchronous puts/erases followed by `sync()`. Separate resilience gates measure one-durable-write-per-operation behavior, forced process termination, repeated checkpoints and portability.
 
 ## Frozen dependency
 
 - Repository: `marceloroldao/resolutive-DB`
 - Exact version: `v1.0.0`
 - API: frozen C++ `bdr::Database`
-- BDR calls measured directly: `put`, `get`, `erase`, `sync`, `checkpoint`, `close`, reopen
+- BDR calls measured directly: `put`, `put_sync`, `get`, `erase`, `sync`, `checkpoint`, `close`, reopen
 - SQLite calls measured directly through `sqlite3`
-- Build: Release, C++17, `-O3 -DNDEBUG`
+- Build: Release, C++17
 
 CI verifies the exact `v1.0.0` tag before compiling.
 
@@ -48,8 +48,6 @@ Every case completed writes, full sequential verification, random reads, updates
 | Reopen + verify | 3,588.179 ms | 569.169 ms | 6.30x |
 | Disk | 51,654,656 B | 29,455,622 B | 1.75x |
 
-Maximum RSS for the complete combined benchmark process: 398,184 KiB. Exit status: 0.
-
 ### Heavy — 2,426,088 records
 
 | Metric | SQLite | BDR v1.0.0 | SQLite / BDR |
@@ -62,8 +60,6 @@ Maximum RSS for the complete combined benchmark process: 398,184 KiB. Exit statu
 | Checkpoint | 29.718 ms | 10,050.623 ms | 0.003x |
 | Reopen + verify | 10,944.767 ms | 1,777.453 ms | 6.16x |
 | Disk | 196,706,304 B | 110,743,314 B | 1.78x |
-
-Maximum RSS for the complete combined benchmark process: 1,533,020 KiB. Exit status: 0.
 
 ### Very heavy — 4,786,407 records
 
@@ -78,13 +74,71 @@ Maximum RSS for the complete combined benchmark process: 1,533,020 KiB. Exit sta
 | Reopen + verify | 22,238.764 ms | 3,668.320 ms | 6.06x |
 | Disk | 391,557,120 B | 219,519,962 B | 1.78x |
 
-Post-reopen verification checked 4,686,407 expected surviving records. Maximum RSS for the complete combined benchmark process: 3,030,436 KiB. No swap was used. Exit status: 0.
+Post-reopen verification checked 4,686,407 expected surviving records. No data mismatch was observed.
+
+## Resilience and durability gates
+
+### Per-operation durable writes
+
+The direct resilience executable performed 5,000 writes of 256-byte values with one durability boundary per operation.
+
+| Engine | Time | Relative |
+|---|---:|---:|
+| SQLite WAL + `synchronous=FULL` autocommit | 2,782.90 ms | 1.00x |
+| BDR `put_sync` | 7,405.04 ms | 2.66x slower |
+
+Both engines passed close/reopen and complete value verification. BDR also preserved the expected `durable_sequence`.
+
+This is an important negative result: BDR's strong performance in the heavy benchmark depends on batching durability. A Memoria.ia integration should not call `put_sync` for every logical record unless that latency is explicitly required.
+
+### Repeated checkpoint churn
+
+The churn gate executed 40 cycles × 5,000 operations = 200,000 accepted mutations over a 20,000-key space. Every cycle performed checkpoint, close/reopen and full oracle verification.
+
+| Metric | SQLite | BDR v1.0.0 |
+|---|---:|---:|
+| Cycles | 40 | 40 |
+| Accepted mutations | 200,000 | 200,000 |
+| Final live records | 14,993 | 14,993 |
+| Cumulative checkpoint time | 759.714 ms | 1,583.26 ms |
+
+Both engines passed all 40 reopen/oracle checks. BDR checkpoint cost was about 2.08x SQLite in this smaller repeatedly compacted workload. This is consistent with the earlier observation that checkpoint is a BDR cost center, although the absolute penalty is much smaller here than on the multi-million-record one-shot benchmark.
+
+### Forced process crash recovery
+
+The crash gate intentionally terminates the writer with `std::_Exit(99)` without `close()` or destructors.
+
+BDR test:
+
+- 20,000 records were written and explicitly `sync()`ed;
+- 10,000 additional records were submitted without the final explicit sync;
+- after hard termination and reopen, all 20,000 guaranteed-durable records were present and correct;
+- 6,079 of the 10,000 unsynced suffix records also survived, all with correct values;
+- no corruption of the durable prefix or surviving suffix was observed.
+
+SQLite control:
+
+- a 20,000-record committed prefix survived correctly;
+- a 10,000-record uncommitted transaction was terminated before commit;
+- zero records from the uncommitted suffix were exposed after reopen.
+
+The BDR result means the durability contract must be interpreted precisely: after `sync()`/`put_sync`, data is guaranteed by this gate; before that boundary, records may or may not survive because batching/background WAL persistence can make part of the suffix durable. Applications must not assume that unsynced writes are guaranteed to disappear.
+
+## Cross-platform frozen-v1 validation
+
+The exact frozen source was configured and compiled without source modification.
+
+| Platform | Result | Finding |
+|---|---|---|
+| Ubuntu 24.04 | PASS | `v1_candidate_contract` compiled and passed. |
+| macOS 26 ARM64 | FAIL to build | `database_v1.cpp` directly includes `<linux/falloc.h>`. |
+| Windows Server 2025 / MSVC | FAIL to build | After ZLIB was provisioned successfully and CMake configured, the same `<linux/falloc.h>` include stopped compilation. |
+
+Therefore BDR v1.0.0 is currently Linux-specific at source level. The Windows failure was re-tested after installing ZLIB through vcpkg, so it is not merely a missing dependency. Portability requires a future BDR change that abstracts Linux-specific allocation/filesystem calls instead of including Linux headers unconditionally.
 
 ## Interpretation
 
-The direct native results remove the main uncertainty in the original comparison: the measured BDR operations no longer pass through Python, a serialized workload file or a subprocess driver.
-
-Across all three sizes, BDR v1.0.0 consistently provides:
+Across all three heavy direct-native sizes, BDR v1.0.0 consistently provides:
 
 - about **1.33–1.42x faster batch-durable writes**;
 - about **12.7–14.0x faster full sequential reads**;
@@ -93,15 +147,18 @@ Across all three sizes, BDR v1.0.0 consistently provides:
 - about **6.1–6.3x faster reopen plus complete verification**;
 - about **43–44% lower measured disk footprint**.
 
-Two important costs are also consistent and must be preserved in any integration decision:
+The resilience gates refine that conclusion substantially:
 
-1. **Delete batches are slower in BDR** in these workloads, roughly 1.5–1.6x slower than SQLite.
-2. **BDR checkpoint is dramatically more expensive.** It grows from about 3.06 s at 647k records to 20.54 s at 4.79M records, while SQLite WAL checkpoint remains tens of milliseconds in this benchmark.
+1. **Linux durability/recovery behavior passed the tested gates.** Explicitly synchronized data survived hard process termination correctly.
+2. **Per-operation durability is expensive.** BDR `put_sync` was about 2.66x slower than SQLite FULL autocommit in the 5,000-operation gate.
+3. **Checkpoint remains a cost center.** Repeated churn passed, but cumulative BDR checkpoint time was about 2.08x SQLite; at multi-million-record scale the earlier one-shot checkpoint penalty was much larger.
+4. **Delete batches remain slower in BDR** in the heavy workload.
+5. **BDR v1.0.0 is not currently portable beyond Linux** because the frozen implementation contains an unconditional Linux header dependency.
 
-This suggests that BDR is attractive for the Memoria.ia access pattern when reads, reopen/recovery loading and storage footprint dominate, but a Memoria.ia integration must not checkpoint frequently on the foreground path. Checkpoint scheduling should be treated as a maintenance policy and validated separately.
+For Memoria.ia, the technically appropriate BDR usage pattern is therefore batch-oriented persistence with explicit durability boundaries and infrequent/background checkpoints. A one-fsync-per-logical-record policy would discard much of BDR's performance advantage.
 
 ## Status
 
-The heavy direct native performance validation is complete for the three recorded scales and the intermediate adapters have been removed from the experiment branch. The branch now contains only the direct native benchmark, its direct-native CI workflow and this evidence report.
+The direct-native performance, per-operation durability, forced-process-crash recovery and repeated checkpoint-churn gates are complete on Linux. Ubuntu contract validation passes. macOS and Windows portability gates correctly expose a source-level Linux dependency in frozen BDR v1.0.0.
 
-This experiment does **not** replace the current SQLite backend yet. Separate resilience gates still remain for per-operation fsync durability, explicit forced-process-crash behavior, repeated checkpoint churn and cross-platform validation. Those are correctness/durability investigations rather than prerequisites for accepting the direct performance numbers above. The frozen BDR v1.0.0 source remains unchanged throughout the experiment.
+This evidence is sufficient to continue toward a Linux-first experimental Memoria.ia BDR backend, while keeping SQLite as the control/fallback backend. Before any default-backend replacement, the remaining engineering work should include a common storage interface, integration-level crash tests inside Memoria.ia itself, checkpoint scheduling policy, and a future portable BDR release for Windows/macOS support.
