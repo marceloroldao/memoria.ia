@@ -29,6 +29,7 @@ on:
       - 'benchmarks/native_relational_phrase.py'
       - 'benchmarks/structural_router_scaling.py'
       - 'benchmarks/role_structural_generalization.py'
+      - 'benchmarks/role_relabel_budget.py'
       - 'benchmarks/hybrid_text_router.py'
       - 'benchmarks/native_router_scale_matrix.py'
       - 'setup.py'
@@ -73,6 +74,8 @@ jobs:
         run: python benchmarks/structural_router_scaling.py | tee benchmark-results/structural-router.json
       - name: Role structural generalization benchmark
         run: python benchmarks/role_structural_generalization.py | tee benchmark-results/role-structural-generalization.json
+      - name: Role relabel budget calibration
+        run: python benchmarks/role_relabel_budget.py | tee benchmark-results/role-relabel-budget.json
       - name: Hybrid text benchmark
         run: python benchmarks/hybrid_text_router.py | tee benchmark-results/hybrid-text-router.json
       - name: Router scale matrix
