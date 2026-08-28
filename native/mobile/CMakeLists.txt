@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(memoria_mobile LANGUAGES C CXX)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 enable_testing()
 
 set(MEMORIA_BDR_ROOT "" CACHE PATH "Path to the pinned Resolutive-DB checkout")
