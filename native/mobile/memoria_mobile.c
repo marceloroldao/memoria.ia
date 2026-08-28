@@ -1,6 +1,8 @@
 #include "memoria_mobile.h"
 #include "semantic_kernel.h"
 #include "episodic_kernel.h"
+#include "relation_extractor.h"
+#include "relation_adapter.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +10,7 @@
 
 #define MAX_TURNS 256
 #define MAX_EPISODES 256
+#define MAX_RELATIONS_PER_TURN 4
 
 typedef struct turn_row {
     char *memory_id;
@@ -17,6 +20,8 @@ typedef struct turn_row {
     char *ultimate_source_memory_id;
     double authority;
     long order;
+    memoria_relation relations[MAX_RELATIONS_PER_TURN];
+    size_t relation_count;
 } turn_row;
 
 typedef struct episode_row {
@@ -143,7 +148,7 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
 }
 
 memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json, *text, *role, *id, *source_type, *root, idbuf[64], resp[512]; turn_row *r;
+    char *json, *text, *role, *id, *source_type, *root, idbuf[64], relations_json[1536], resp[2304]; turn_row *r;
     long order; double authority;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     if (h->turn_count >= MAX_TURNS) return unresolved(out,"native turn capacity reached");
@@ -157,12 +162,16 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     if (authority < 0.0) authority=strcmp(source_type,"user_assertion")==0?1.0:0.35;
     if (!root) root=dup_string(id);
     r=&h->turns[h->turn_count++]; r->memory_id=id; r->text=text; r->role=role; r->source_type=source_type; r->ultimate_source_memory_id=root; r->authority=authority; r->order=order;
-    snprintf(resp,sizeof(resp),"{\"status\":\"OK\",\"stored_memory_ids\":[\"%s\"],\"relations\":[],\"unresolved\":true,\"native_relation_extraction\":false}",id);
+    r->relation_count=memoria_extract_relations(text,r->relations,MAX_RELATIONS_PER_TURN);
+    if (!memoria_relations_to_json(r->relations,r->relation_count,id,relations_json,sizeof(relations_json))) {
+        free(json); return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    snprintf(resp,sizeof(resp),"{\"status\":\"OK\",\"stored_memory_ids\":[\"%s\"],\"relations\":%s,\"unresolved\":%s,\"native_relation_extraction\":true}",id,relations_json,r->relation_count?"false":"true");
     free(json); return set_response(out,resp,MEMORIA_MOBILE_OK);
 }
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json,*query,*ctx,*st,*root,resp[2048]; memoria_semantic_source sources[MAX_TURNS]; memoria_semantic_result r; size_t i;
+    char *json,*query,*ctx,*st,*root,relations_json[1536],resp[3584]; memoria_semantic_source sources[MAX_TURNS]; memoria_semantic_result r; size_t i;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     json=buffer_to_string(req); if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR; query=json_string(json,"query");
     if (!query) { free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
@@ -171,9 +180,10 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     if (!r.hit) return unresolved(out,"no justified native semantic source");
     for (i=0;i<h->turn_count && strcmp(h->turns[i].memory_id,r.memory_id)!=0;++i) {}
     if (i==h->turn_count) return unresolved(out,"selected source missing from native state");
+    if (!memoria_relations_to_json(h->turns[i].relations,h->turns[i].relation_count,h->turns[i].memory_id,relations_json,sizeof(relations_json))) return MEMORIA_MOBILE_INTERNAL_ERROR;
     ctx=json_escape(h->turns[i].text); st=json_escape(r.source_type?r.source_type:""); root=json_escape(r.ultimate_source_memory_id?r.ultimate_source_memory_id:"");
     if (!ctx||!st||!root) { free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }
-    snprintf(resp,sizeof(resp),"{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":[],\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",r.confidence,r.memory_id,ctx,r.memory_id,st,r.source_authority,root);
+    snprintf(resp,sizeof(resp),"{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",r.confidence,r.memory_id,ctx,relations_json,r.memory_id,st,r.source_authority,root);
     free(ctx); free(st); free(root); return set_response(out,resp,MEMORIA_MOBILE_OK);
 }
 
