@@ -1,5 +1,6 @@
 #include "memoria_mobile.h"
 #include "semantic_kernel.h"
+#include "trajectory_json_adapter.h"
 #include "episodic_kernel.h"
 #include "relation_extractor.h"
 #include "relation_adapter.h"
@@ -251,10 +252,12 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *query, *ctx, *st, *root;
-    char relations_json[1536], resp[3584];
+    char relations_json[1536], resp[3840];
     memoria_semantic_source sources[MAX_TURNS];
     memoria_semantic_result r;
-    size_t i;
+    memoria_trajectory_result tr;
+    size_t i, window_count = 0;
+    int trajectory_mode;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -268,7 +271,30 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         sources[i].source_type = h->turns[i].source_type;
         sources[i].ultimate_source_memory_id = h->turns[i].ultimate_source_memory_id;
     }
-    r = memoria_semantic_resolve_sources(query, sources, h->turn_count);
+    trajectory_mode = memoria_trajectory_resolve_json(json, query, sources, h->turn_count, &tr, &window_count);
+    if (trajectory_mode < 0) {
+        free(query); free(json);
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    }
+    if (trajectory_mode == 1) {
+        if (!tr.hit) {
+            free(query); free(json);
+            return unresolved(out, "no justified active trajectory source");
+        }
+        for (i = 0; i < h->turn_count && strcmp(h->turns[i].memory_id, tr.memory_id) != 0; ++i) {}
+        if (i == h->turn_count) {
+            free(query); free(json);
+            return unresolved(out, "selected trajectory source missing from native state");
+        }
+        r.hit = 1;
+        r.memory_id = h->turns[i].memory_id;
+        r.confidence = tr.confidence;
+        r.source_type = h->turns[i].source_type;
+        r.source_authority = h->turns[i].authority;
+        r.ultimate_source_memory_id = h->turns[i].ultimate_source_memory_id;
+    } else {
+        r = memoria_semantic_resolve_sources(query, sources, h->turn_count);
+    }
     free(query); free(json);
     if (!r.hit) return unresolved(out, "no justified native semantic source");
     for (i = 0; i < h->turn_count && strcmp(h->turns[i].memory_id, r.memory_id) != 0; ++i) {}
@@ -281,8 +307,11 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     root = json_escape(r.ultimate_source_memory_id ? r.ultimate_source_memory_id : "");
     if (!ctx || !st || !root) { free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }
     snprintf(resp, sizeof(resp),
-             "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
-             r.confidence, r.memory_id, ctx, relations_json, r.memory_id, st, r.source_authority, root);
+             "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"trajectory_used\":%s,\"conversation_window_count\":%lu,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
+             r.confidence, r.memory_id, ctx, relations_json,
+             trajectory_mode == 1 && tr.used_window ? "true" : "false",
+             (unsigned long)(trajectory_mode == 1 ? window_count : 0),
+             r.memory_id, st, r.source_authority, root);
     free(ctx); free(st); free(root);
     return set_response(out, resp, MEMORIA_MOBILE_OK);
 }
