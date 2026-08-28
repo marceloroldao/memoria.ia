@@ -33,6 +33,23 @@ static size_t tokens(const char *s, char out[][64], size_t cap) {
     return n;
 }
 
+static size_t csv_item_count(const char *value) {
+    size_t count = 0;
+    int in_item = 0;
+    if (!value) return 0;
+    while (*value) {
+        if (*value == ',') {
+            if (in_item) ++count;
+            in_item = 0;
+        } else if (!isspace((unsigned char)*value)) {
+            in_item = 1;
+        }
+        ++value;
+    }
+    if (in_item) ++count;
+    return count;
+}
+
 static int csv_contains_all(const char *requested, const char *available, const char *text) {
     char req[32][64]; size_t nr, i;
     if (!requested || !*requested) return 1;
@@ -67,7 +84,7 @@ memoria_episode_result memoria_episode_recall_latest(const char *query, const ch
         if (event_type && *event_type && !eqi(event_type, e->event_type)) continue;
         if (!csv_contains_all(topics_csv, e->topics_csv, e->text)) continue;
         overlap = overlap_score(query, e);
-        explicit_score = (event_type && *event_type ? 2.0 : 0.0) + (topics_csv && *topics_csv ? 1.0 : 0.0);
+        explicit_score = (event_type && *event_type ? 2.0 : 0.0) + (double)csv_item_count(topics_csv);
         if (overlap <= 0.0 && explicit_score <= 0.0) continue;
         score = explicit_score + overlap;
         if (!found || score > best_score + 1e-12) {
