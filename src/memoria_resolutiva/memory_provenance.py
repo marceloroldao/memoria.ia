@@ -40,8 +40,8 @@ class MemoryProvenanceIndex:
     """Persisted provenance/authority metadata over EvidenceCore.
 
     Authority describes source quality and is deliberately independent from
-    confidence/similarity. Repeated generated/replayed memories never gain source
-    authority merely through repetition.
+    confidence/similarity. Derived memories inherit authority from their ultimate
+    source instead of becoming authoritative merely because a derivation exists.
     """
 
     META_SOURCE = "provenance_source_type"
@@ -125,14 +125,37 @@ class MemoryProvenanceIndex:
             superseded_by=by_predicate.get(self.META_SUPERSEDED),
         )
 
+    def ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
+        """Trace derivation/replay parents to the strongest non-derived root source."""
+        queue = [memory_id]
+        seen: set[str] = set()
+        roots: list[MemoryProvenance] = []
+        while queue:
+            current = queue.pop(0)
+            if current in seen:
+                continue
+            seen.add(current)
+            meta = self.inspect(current, namespace=namespace)
+            if meta.superseded_by is not None:
+                continue
+            if meta.source_type in {"derived_relation", "retrieved_replay"} and meta.parent_memory_ids:
+                queue.extend(meta.parent_memory_ids)
+            else:
+                roots.append(meta)
+        if not roots:
+            return self.inspect(memory_id, namespace=namespace)
+        roots.sort(key=lambda m: (-m.authority, -(m.created_order or 0), m.memory_id))
+        return roots[0]
+
     def select(self, candidates: list[ProvenanceCandidate], *, namespace: str | None = None) -> ProvenanceCandidate | None:
         eligible: list[tuple[float, float, int, ProvenanceCandidate]] = []
         for candidate in candidates:
-            provenance = self.inspect(candidate.memory_id, namespace=namespace)
-            if provenance.superseded_by is not None:
+            direct = self.inspect(candidate.memory_id, namespace=namespace)
+            if direct.superseded_by is not None:
                 continue
+            source = self.ultimate_source(candidate.memory_id, namespace=namespace)
             eligible.append((
-                provenance.authority,
+                source.authority,
                 float(candidate.confidence),
                 int(candidate.created_order),
                 candidate,
