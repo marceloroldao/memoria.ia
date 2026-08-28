@@ -16,7 +16,7 @@ add_subdirectory(
 
 add_library(memoria_mobile SHARED
   memoria_mobile.c
-  mobile_persistence.c
+  mobile_persistence_bdr.c
   semantic_kernel.c
   episodic_kernel.c
   relation_extractor.c
