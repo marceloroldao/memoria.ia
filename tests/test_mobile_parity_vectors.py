@@ -13,7 +13,9 @@ def test_mobile_reference_vectors_cover_first_native_slice():
     assert conflict["status"] == "UNRESOLVED"
     assert conflict["memory_ids"] == []
 
-    echo = vectors["assistant-echo-does-not-replace-root"]["expected"]
+    echo_vector = vectors["assistant-echo-does-not-replace-root"]
+    echo = echo_vector["expected"]
+    factual_root = echo_vector["learned_memory_ids"][0]
     assert echo["status"] == "HIT"
     assert echo["provenance"][0]["source_type"] == "user_assertion"
-    assert echo["provenance"][0]["ultimate_source_memory_id"] == echo["memory_ids"][0]
+    assert echo["provenance"][0]["ultimate_source_memory_id"] == factual_root
