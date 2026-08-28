@@ -10,6 +10,7 @@ from .product_admin_config import attach_configuration_routes
 from .product_applications import ApplicationRegistry
 from .product_chat import ProductChatService
 from .product_config import ProductConfigurationStore
+from .product_conversation import ConversationSemanticService, attach_conversation_routes
 from .product_evidence import ProductEvidenceService, attach_evidence_routes
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
@@ -120,6 +121,7 @@ def build_app():
         backend=storage_backend,
         allow_fallback=storage_allow_fallback,
     )
+    conversation_service = ConversationSemanticService(evidence_service)
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -158,6 +160,7 @@ def build_app():
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
+    attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_configuration_routes(app, api_key=api_key, store=configuration)
     return app
 
