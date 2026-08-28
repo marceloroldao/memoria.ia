@@ -53,6 +53,17 @@ def test_generic_relations_are_not_vehicle_or_color_specific(tmp_path: Path):
     assert "norte" in norte.selected_context.casefold()
 
 
+def test_unstructured_source_turn_is_still_recallable(tmp_path: Path):
+    service = _service(tmp_path / "evidence")
+    source = "a reunião de integração ficou marcada para quinta-feira"
+    ingested = service.ingest(role="user", text=source, session_id="chat")
+    assert ingested.unresolved is True
+
+    recalled = service.resolve(query="quando ficou marcada a reunião de integração?", session_id="chat")
+    assert recalled.status == "HIT"
+    assert recalled.selected_context == source
+
+
 def test_current_relation_update_selects_latest_state(tmp_path: Path):
     root = tmp_path / "evidence"
     service = _service(root)
