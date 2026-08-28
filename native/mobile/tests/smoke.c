@@ -19,13 +19,21 @@ int main(void) {
     assert(memoria_mobile_abi_version() == MEMORIA_MOBILE_ABI_VERSION);
     assert(memoria_mobile_open("./tmp-mobile","org-test",&h) == MEMORIA_MOBILE_OK);
 
-    assert(call(h,1,"{\"role\":\"user\",\"text\":\"project atlas code is 4729\",\"memory_id\":\"u1\",\"order\":1}",&out) == MEMORIA_MOBILE_OK);
+    assert(call(h,1,"{\"role\":\"user\",\"text\":\"atlas server is primary\",\"memory_id\":\"u1\",\"order\":1}",&out) == MEMORIA_MOBILE_OK);
+    assert(strstr((const char *)out.data,"\"native_relation_extraction\":true") != NULL);
+    assert(strstr((const char *)out.data,"\"subject\":\"atlas server\"") != NULL);
+    assert(strstr((const char *)out.data,"\"predicate\":\"is\"") != NULL);
+    assert(strstr((const char *)out.data,"\"object\":\"primary\"") != NULL);
+    assert(strstr((const char *)out.data,"\"source_memory_id\":\"u1\"") != NULL);
     memoria_mobile_free_buffer(out);
-    assert(call(h,1,"{\"role\":\"assistant\",\"text\":\"the atlas code is 4729\",\"memory_id\":\"a1\",\"order\":2,\"source_authority\":0.35,\"ultimate_source_memory_id\":\"u1\"}",&out) == MEMORIA_MOBILE_OK);
+
+    assert(call(h,1,"{\"role\":\"assistant\",\"text\":\"atlas server is primary\",\"memory_id\":\"a1\",\"order\":2,\"source_authority\":0.35,\"ultimate_source_memory_id\":\"u1\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out);
-    assert(call(h,2,"{\"query\":\"atlas code 4729\"}",&out) == MEMORIA_MOBILE_OK);
+    assert(call(h,2,"{\"query\":\"atlas server primary\"}",&out) == MEMORIA_MOBILE_OK);
     assert(strstr((const char *)out.data,"\"memory_ids\":[\"u1\"]") != NULL);
     assert(strstr((const char *)out.data,"\"source_type\":\"user_assertion\"") != NULL);
+    assert(strstr((const char *)out.data,"\"subject\":\"atlas server\"") != NULL);
+    assert(strstr((const char *)out.data,"\"source_memory_id\":\"u1\"") != NULL);
     memoria_mobile_free_buffer(out);
 
     assert(call(h,2,"{\"query\":\"unknown satellite frequency\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
