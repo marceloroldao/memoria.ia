@@ -218,6 +218,12 @@ class ConversationSemanticService:
     def _distinct_claims(scored: list[tuple[float, int, EvidenceEdge]]) -> set[tuple[str, str, str]]:
         return {(_key(edge.subject), edge.predicate, _key(edge.object)) for _score, _order, edge in scored}
 
+    def _ultimate_source_ids(self, scored: list[tuple[float, int, EvidenceEdge]], *, namespace: str | None) -> set[str]:
+        return {
+            self.provenance.ultimate_source(edge.evidence_id, namespace=namespace).memory_id
+            for _score, _order, edge in scored
+        }
+
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult:
         query = query.strip()
         if not query:
@@ -236,7 +242,7 @@ class ConversationSemanticService:
         if anchored:
             best_overlap = max(score for score, _order, _edge in anchored)
             exact_best = [row for row in anchored if row[0] == best_overlap]
-            if len(self._distinct_claims(exact_best)) > 1:
+            if len(self._distinct_claims(exact_best)) > 1 and len(self._ultimate_source_ids(exact_best, namespace=session_id)) > 1:
                 return self._result("UNRESOLVED", [])
         selected = self._select_authoritative(anchored, namespace=session_id)
         if selected is not None:
@@ -253,12 +259,9 @@ class ConversationSemanticService:
             best_score = max(score for score, _order, _edge in ranked)
             exact_best = [row for row in ranked if abs(row[0] - best_score) < 1e-12]
             if len(exact_best) > 1:
-                authorities = {
-                    self.provenance.ultimate_source(edge.evidence_id, namespace=session_id).authority
-                    for _score, _order, edge in exact_best
-                }
+                roots = self._ultimate_source_ids(exact_best, namespace=session_id)
                 contexts = {_key(edge.source_text) for _score, _order, edge in exact_best}
-                if len(authorities) == 1 and len(contexts) > 1:
+                if len(roots) > 1 and len(contexts) > 1:
                     return self._result("UNRESOLVED", [])
         selected = self._select_authoritative(ranked, namespace=session_id)
         if selected is None:
