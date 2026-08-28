@@ -15,28 +15,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configure host shim
-        run: cmake -S native/mobile -B build/mobile-host -DCMAKE_BUILD_TYPE=Release
-      - name: Build host shim
-        run: cmake --build build/mobile-host --config Release
-      - name: Run host smoke test
-        run: ctest --test-dir build/mobile-host --output-on-failure
+      - name: Checkout pinned Resolutive-DB
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+          path: deps/resolutive-DB
+      - name: Configure durable host runtime
+        run: >-
+          cmake -S native/mobile -B build/mobile-host
+          -DCMAKE_BUILD_TYPE=Release
+          -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
+      - name: Build durable host runtime
+        run: cmake --build build/mobile-host --config Release -j2
+      - name: Run host semantic + restart tests
+        run: ctest --test-dir build/mobile-host -R '^memoria_' --output-on-failure
 
   android-arm64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout pinned Resolutive-DB
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+          path: deps/resolutive-DB
       - uses: android-actions/setup-android@v3
       - name: Install Android NDK
         run: sdkmanager "ndk;27.2.12479018"
-      - name: Configure arm64-v8a
+      - name: Configure arm64-v8a with atomic BDR
         run: >-
           cmake -S native/mobile -B build/mobile-android
           -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
           -DANDROID_ABI=arm64-v8a
           -DANDROID_PLATFORM=android-26
           -DCMAKE_BUILD_TYPE=Release
+          -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
       - name: Build arm64-v8a shared library
-        run: cmake --build build/mobile-android --config Release
+        run: cmake --build build/mobile-android --target memoria_mobile --config Release -j2
       - name: Verify library artifact
         run: test -f build/mobile-android/libmemoria_mobile.so
+      - name: Verify Memoria mobile ABI symbols
+        run: |
+          NM="$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm"
+          "$NM" -g --defined-only build/mobile-android/libmemoria_mobile.so | tee memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_open" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_learn_turn_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_resolve_context_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_store_episode_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_recall_episode_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_flush" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_close" memoria-mobile-symbols.txt
