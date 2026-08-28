@@ -3,7 +3,7 @@ project(memoria_mobile C)
 
 enable_testing()
 
-add_library(memoria_mobile SHARED memoria_mobile.c semantic_kernel.c episodic_kernel.c relation_extractor.c)
+add_library(memoria_mobile SHARED memoria_mobile.c semantic_kernel.c episodic_kernel.c relation_extractor.c relation_adapter.c)
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
 set_target_properties(memoria_mobile PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
 
@@ -27,4 +27,9 @@ if(NOT ANDROID)
   target_include_directories(memoria_relation_extractor_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_relation_extractor_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_relation_extractor_test COMMAND memoria_relation_extractor_test)
+
+  add_executable(memoria_relation_adapter_test tests/relation_adapter.c relation_adapter.c relation_extractor.c)
+  target_include_directories(memoria_relation_adapter_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_relation_adapter_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_relation_adapter_test COMMAND memoria_relation_adapter_test)
 endif()
