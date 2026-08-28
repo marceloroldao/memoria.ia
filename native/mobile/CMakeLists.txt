@@ -3,7 +3,7 @@ project(memoria_mobile C)
 
 enable_testing()
 
-add_library(memoria_mobile SHARED memoria_mobile.c semantic_kernel.c)
+add_library(memoria_mobile SHARED memoria_mobile.c semantic_kernel.c episodic_kernel.c)
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
 set_target_properties(memoria_mobile PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
 
@@ -17,4 +17,9 @@ if(NOT ANDROID)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_semantic_kernel_test COMMAND memoria_semantic_kernel_test)
+
+  add_executable(memoria_episodic_kernel_test tests/episodic_kernel.c episodic_kernel.c)
+  target_include_directories(memoria_episodic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_episodic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_episodic_kernel_test COMMAND memoria_episodic_kernel_test)
 endif()
