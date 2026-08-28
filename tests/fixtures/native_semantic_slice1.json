@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "source_hit",
+      "sources": [
+        {"memory_id":"u1","role":"user","text":"primary supply voltage is 24 volts","order":1},
+        {"memory_id":"u2","role":"user","text":"meeting moved to friday","order":2}
+      ],
+      "query":"what is primary supply voltage",
+      "expected_status":"HIT",
+      "expected_context":"primary supply voltage is 24 volts"
+    },
+    {
+      "name": "authority_beats_echo",
+      "sources": [
+        {"memory_id":"user","role":"user","text":"project atlas code is 4729","order":1},
+        {"memory_id":"assistant","role":"assistant","text":"the atlas code is 4729","order":2,"parent_memory_ids":["user"]}
+      ],
+      "query":"atlas code 4729",
+      "expected_status":"HIT",
+      "expected_context":"project atlas code is 4729"
+    },
+    {
+      "name": "ambiguous_sources",
+      "sources": [
+        {"memory_id":"a","role":"user","text":"north laboratory server is atlas","order":1},
+        {"memory_id":"b","role":"user","text":"south laboratory server is orion","order":2}
+      ],
+      "query":"laboratory server",
+      "expected_status":"UNRESOLVED",
+      "expected_context":""
+    },
+    {
+      "name": "open_set",
+      "sources": [
+        {"memory_id":"u1","role":"user","text":"primary supply voltage is 24 volts","order":1}
+      ],
+      "query":"unknown satellite frequency",
+      "expected_status":"UNRESOLVED",
+      "expected_context":""
+    }
+  ]
+}
