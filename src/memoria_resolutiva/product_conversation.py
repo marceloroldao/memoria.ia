@@ -173,18 +173,21 @@ class ConversationSemanticService:
         for row in ordered:
             if row.source_text not in contexts:
                 contexts.append(row.source_text)
-        relation_rows = [row for row in ordered if row.predicate not in {"conversation_text"} and not row.predicate.startswith("provenance_")]
+        relation_rows = [row for row in ordered if row.predicate != "conversation_text" and not row.predicate.startswith("provenance_")]
         provenance_rows = []
         for row in ordered:
-            meta = self.provenance.inspect(row.evidence_id, namespace=namespace)
+            direct = self.provenance.inspect(row.evidence_id, namespace=namespace)
+            source = self.provenance.ultimate_source(row.evidence_id, namespace=namespace)
             provenance_rows.append({
-                "memory_id": meta.memory_id,
-                "source_type": meta.source_type,
-                "source_authority": meta.authority,
-                "parent_memory_ids": list(meta.parent_memory_ids),
-                "created_order": meta.created_order,
-                "created_time": meta.created_time,
-                "superseded_by": meta.superseded_by,
+                "memory_id": direct.memory_id,
+                "source_type": source.source_type,
+                "source_authority": source.authority,
+                "immediate_source_type": direct.source_type,
+                "parent_memory_ids": list(direct.parent_memory_ids),
+                "ultimate_source_memory_id": source.memory_id,
+                "created_order": direct.created_order,
+                "created_time": direct.created_time,
+                "superseded_by": direct.superseded_by,
             })
         return ConversationResolveResult(
             "HIT",
@@ -211,6 +214,10 @@ class ConversationSemanticService:
                 return score, edge
         return None
 
+    @staticmethod
+    def _distinct_claims(scored: list[tuple[float, int, EvidenceEdge]]) -> set[tuple[str, str, str]]:
+        return {(_key(edge.subject), edge.predicate, _key(edge.object)) for _score, _order, edge in scored}
+
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult:
         query = query.strip()
         if not query:
@@ -220,12 +227,17 @@ class ConversationSemanticService:
         if not qtokens:
             return self._result("UNRESOLVED", [])
 
-        relations = [e for e in active if e.predicate not in {"conversation_text"} and not e.predicate.startswith("provenance_")]
+        relations = [e for e in active if e.predicate != "conversation_text" and not e.predicate.startswith("provenance_")]
         anchored: list[tuple[float, int, EvidenceEdge]] = []
         for edge in relations:
             overlap = len(qtokens & (_tokens(edge.subject) | _tokens(edge.object)))
             if overlap:
                 anchored.append((float(overlap), edge.epoch, edge))
+        if anchored:
+            best_overlap = max(score for score, _order, _edge in anchored)
+            exact_best = [row for row in anchored if row[0] == best_overlap]
+            if len(self._distinct_claims(exact_best)) > 1:
+                return self._result("UNRESOLVED", [])
         selected = self._select_authoritative(anchored, namespace=session_id)
         if selected is not None:
             relevance, edge = selected
@@ -237,6 +249,17 @@ class ConversationSemanticService:
             overlap = len(qtokens & _tokens(edge.source_text))
             if overlap:
                 ranked.append((overlap / max(1, len(qtokens)), edge.epoch, edge))
+        if ranked:
+            best_score = max(score for score, _order, _edge in ranked)
+            exact_best = [row for row in ranked if abs(row[0] - best_score) < 1e-12]
+            if len(exact_best) > 1:
+                authorities = {
+                    self.provenance.ultimate_source(edge.evidence_id, namespace=session_id).authority
+                    for _score, _order, edge in exact_best
+                }
+                contexts = {_key(edge.source_text) for _score, _order, edge in exact_best}
+                if len(authorities) == 1 and len(contexts) > 1:
+                    return self._result("UNRESOLVED", [])
         selected = self._select_authoritative(ranked, namespace=session_id)
         if selected is None:
             return self._result("UNRESOLVED", [])
