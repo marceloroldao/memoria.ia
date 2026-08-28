@@ -131,7 +131,8 @@ class ConversationSemanticService:
         origin = "conversation-user" if role == "user" else "conversation-assistant"
         rows: list[EvidenceEdge] = []
 
-        # Persist the raw turn independently of any successful relation extraction.
+        # Each raw turn gets its own subject, so long conversations remain fully
+        # recoverable instead of collapsing to the latest turn in active_edges().
         turn_id = self._memory_id(role=role, text=text, session_id=session_id, order=order, index=-1)
         rows.append(self.evidence.core.observe_relation(
             f"turn:{turn_id}",
@@ -209,8 +210,6 @@ class ConversationSemanticService:
         if anchored:
             best_overlap = max(item[0] for item in anchored)
             best = [item for item in anchored if item[0] == best_overlap]
-            # A single relation anchor is safe. Multiple equally supported current
-            # relations are deliberately ambiguous rather than guessed.
             if len(best) == 1:
                 edge = best[0][2]
                 return self._result("HIT", [edge], confidence=min(1.0, 0.65 + 0.15 * best_overlap))
