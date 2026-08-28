@@ -8,9 +8,9 @@ from time import perf_counter
 
 from fastapi.testclient import TestClient
 
-from memoria_resolutiva.evidence_product import ProductEvidenceService, attach_evidence_routes
 from memoria_resolutiva.llm_adapter import MockLLMAdapter
 from memoria_resolutiva.product_chat import ProductChatService
+from memoria_resolutiva.product_evidence import ProductEvidenceService, attach_evidence_routes
 from memoria_resolutiva.product_http import create_app
 from memoria_resolutiva.product_identity import OrganizationIdentity
 from memoria_resolutiva.product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
@@ -27,9 +27,13 @@ def _check(name: str, ok: bool, evidence: dict | str) -> dict:
 def run_acceptance(*, backend: str = "sqlite", turns: int = 40) -> dict:
     with TemporaryDirectory() as tmp:
         root = Path(tmp)
-        persistence = ProductSnapshotPersistence(root / "persistence", backend=backend, allow_fallback=(backend != "bdr"))
-        service = PersistentEnterpriseMemoryService(OrganizationIdentity("v1-acceptance", "V1 Acceptance"), persistence=persistence)
-        evidence = ProductEvidenceService(root / "evidence", backend=backend, allow_fallback=(backend != "bdr"))
+        allow_fallback = backend != "bdr"
+        persistence = ProductSnapshotPersistence(root / "persistence", backend=backend, allow_fallback=allow_fallback)
+        service = PersistentEnterpriseMemoryService(
+            OrganizationIdentity("v1-acceptance", "V1 Acceptance"),
+            persistence=persistence,
+        )
+        evidence = ProductEvidenceService.open(root / "evidence", backend=backend, allow_fallback=allow_fallback)
         chat = ProductChatService(service, MockLLMAdapter())
         app = create_app(service, api_key="acceptance-key", data_dir=root, chat_service=chat)
         attach_evidence_routes(app, api_key="acceptance-key", service=evidence)
@@ -40,32 +44,35 @@ def run_acceptance(*, backend: str = "sqlite", turns: int = 40) -> dict:
         total_started = perf_counter()
         chat_metrics: list[dict] = []
 
-        # Long session: repeated facts, updates and retrievals.
         for turn in range(turns):
             key = f"asset.{turn % 8}.state"
             payload = {"turn": turn, "state": "active" if turn % 3 else "standby"}
             response = client.post("/api/v1/memories", headers=headers, json={
-                "knowledge_id": f"k-{turn}", "key": key, "payload": payload,
+                "knowledge_id": f"k-{turn}",
+                "key": key,
+                "payload": payload,
                 "provenance": f"acceptance-turn-{turn}",
             })
             if response.status_code == 409:
                 response = client.put(f"/api/v1/memories/{key}", headers=headers, json={
-                    "payload": payload, "provenance": f"acceptance-update-{turn}"
+                    "payload": payload,
+                    "provenance": f"acceptance-update-{turn}",
                 })
             if response.status_code not in (200, 201):
                 checks.append(_check("long-session writes", False, {"turn": turn, "status": response.status_code}))
                 break
-
             if turn % 4 == 0:
                 c = client.post("/api/v1/chat", headers=headers, json={
-                    "message": f"read {key}", "mode": "memoria", "memory_keys": [key]
+                    "message": f"read {key}",
+                    "mode": "memoria",
+                    "memory_keys": [key],
                 })
                 if c.status_code == 200:
                     chat_metrics.append(c.json().get("metrics", {}))
         else:
             checks.append(_check("long-session writes", True, {"turns": turns, "logical_keys": 8}))
 
-        final_expected = {}
+        final_expected: dict[str, object] = {}
         for i in range(8):
             key = f"asset.{i}.state"
             r = client.post("/api/v1/memories/resolve", headers=headers, json={"key": key})
@@ -73,7 +80,6 @@ def run_acceptance(*, backend: str = "sqlite", turns: int = 40) -> dict:
                 final_expected[key] = r.json()["record"]["payload"]
         checks.append(_check("long-session retrieval", len(final_expected) == 8, {"resolved_keys": len(final_expected)}))
 
-        # Evidence namespace isolation and conservative inference.
         evidence_rows = [
             ("Delta", "powers", "controller", "e1", "sensor-a", "lab-a"),
             ("controller", "belongs_to", "Orion", "e2", "registry-b", "lab-a"),
@@ -81,9 +87,14 @@ def run_acceptance(*, backend: str = "sqlite", turns: int = 40) -> dict:
         ]
         for subject, predicate, obj, eid, origin, namespace in evidence_rows:
             rr = client.post("/api/v1/evidence/relations", headers=headers, json={
-                "subject": subject, "predicate": predicate, "object": obj,
-                "evidence_id": eid, "source_text": f"{subject} {predicate} {obj}",
-                "origin": origin, "namespace": namespace, "confidence": 0.9,
+                "subject": subject,
+                "predicate": predicate,
+                "object": obj,
+                "evidence_id": eid,
+                "source_text": f"{subject} {predicate} {obj}",
+                "origin": origin,
+                "namespace": namespace,
+                "confidence": 0.9,
             })
             if rr.status_code != 201:
                 checks.append(_check("evidence ingest", False, {"status": rr.status_code, "body": rr.text[:200]}))
@@ -101,24 +112,39 @@ def run_acceptance(*, backend: str = "sqlite", turns: int = 40) -> dict:
             "evidence inference and namespace isolation",
             inferred.status_code == 200 and inferred.json().get("inferred") is True
             and isolated.status_code == 200 and isolated.json().get("inferred") is False,
-            {"lab_a": inferred.json() if inferred.status_code == 200 else None,
-             "lab_b": isolated.json() if isolated.status_code == 200 else None},
+            {
+                "lab_a": inferred.json() if inferred.status_code == 200 else None,
+                "lab_b": isolated.json() if isolated.status_code == 200 else None,
+            },
         ))
 
-        # Baseline vs Memoria token measurement.
         compare = client.post("/api/v1/chat/compare", headers=headers, json={
             "message": "summarize the current state of asset 0",
             "baseline_context": ["irrelevant historical context " * 80, json.dumps(final_expected, sort_keys=True)],
             "memory_keys": ["asset.0.state"],
         })
         compare_json = compare.json() if compare.status_code == 200 else {}
-        checks.append(_check("baseline-vs-memoria comparison", compare.status_code == 200 and compare_json.get("token_reduction") is not None, compare_json))
+        checks.append(_check(
+            "baseline-vs-memoria comparison",
+            compare.status_code == 200 and compare_json.get("token_reduction") is not None,
+            compare_json,
+        ))
 
-        # Product restart with the same durable backend.
-        restarted = PersistentEnterpriseMemoryService.load(root, persistence=ProductSnapshotPersistence(root / "persistence", backend=backend, allow_fallback=(backend != "bdr")))
-        restarted_evidence = ProductEvidenceService(root / "evidence", backend=backend, allow_fallback=(backend != "bdr"))
-        app2 = create_app(restarted, api_key="acceptance-key", data_dir=root,
-                          chat_service=ProductChatService(restarted, MockLLMAdapter()))
+        restarted = PersistentEnterpriseMemoryService.load(
+            root,
+            persistence=ProductSnapshotPersistence(root / "persistence", backend=backend, allow_fallback=allow_fallback),
+        )
+        restarted_evidence = ProductEvidenceService.open(
+            root / "evidence",
+            backend=backend,
+            allow_fallback=allow_fallback,
+        )
+        app2 = create_app(
+            restarted,
+            api_key="acceptance-key",
+            data_dir=root,
+            chat_service=ProductChatService(restarted, MockLLMAdapter()),
+        )
         attach_evidence_routes(app2, api_key="acceptance-key", service=restarted_evidence)
         client2 = TestClient(app2)
 
@@ -131,14 +157,22 @@ def run_acceptance(*, backend: str = "sqlite", turns: int = 40) -> dict:
         inferred2 = client2.post("/api/v1/evidence/infer", headers=headers, json={
             "source": "Delta", "target": "Orion", "namespace": "lab-a", "max_hops": 2
         })
-        checks.append(_check("evidence restart equivalence", inferred2.status_code == 200 and inferred2.json().get("inferred") is True, inferred2.json() if inferred2.status_code == 200 else {}))
+        checks.append(_check(
+            "evidence restart equivalence",
+            inferred2.status_code == 200 and inferred2.json().get("inferred") is True,
+            inferred2.json() if inferred2.status_code == 200 else {},
+        ))
 
-        # Health endpoints.
         health = client2.get("/api/v1/health")
         evidence_health = client2.get("/api/v1/evidence/health", headers=headers)
-        checks.append(_check("health endpoints", health.status_code == 200 and evidence_health.status_code == 200,
-                             {"product": health.json() if health.status_code == 200 else None,
-                              "evidence": evidence_health.json() if evidence_health.status_code == 200 else None}))
+        checks.append(_check(
+            "health endpoints",
+            health.status_code == 200 and evidence_health.status_code == 200,
+            {
+                "product": health.json() if health.status_code == 200 else None,
+                "evidence": evidence_health.json() if evidence_health.status_code == 200 else None,
+            },
+        ))
 
         totals = {
             "chat_calls": len(chat_metrics),
@@ -151,7 +185,10 @@ def run_acceptance(*, backend: str = "sqlite", turns: int = 40) -> dict:
             "memory_latency_ms": sum(float(m.get("memory_latency_ms", 0.0)) for m in chat_metrics),
             "llm_latency_ms": sum(float(m.get("llm_latency_ms", 0.0)) for m in chat_metrics),
         }
-        counts = {PASS: sum(1 for c in checks if c["status"] == PASS), FAIL: sum(1 for c in checks if c["status"] == FAIL)}
+        counts = {
+            PASS: sum(1 for c in checks if c["status"] == PASS),
+            FAIL: sum(1 for c in checks if c["status"] == FAIL),
+        }
         return {
             "acceptance": "memoria.ia-v1-candidate-product-acceptance",
             "backend": backend,
