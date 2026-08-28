@@ -19,6 +19,7 @@ add_library(memoria_mobile SHARED
   memoria_mobile.c
   mobile_persistence_bdr.c
   semantic_kernel.c
+  trajectory_kernel.c
   episodic_kernel.c
   relation_extractor.c
   relation_adapter.c
@@ -42,6 +43,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_semantic_kernel_test COMMAND memoria_semantic_kernel_test)
+
+  add_executable(memoria_trajectory_kernel_test tests/trajectory_kernel.c trajectory_kernel.c)
+  target_include_directories(memoria_trajectory_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_trajectory_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_trajectory_kernel_test COMMAND memoria_trajectory_kernel_test)
 
   add_executable(memoria_episodic_kernel_test tests/episodic_kernel.c episodic_kernel.c)
   target_include_directories(memoria_episodic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
