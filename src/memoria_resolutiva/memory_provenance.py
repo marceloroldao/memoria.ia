@@ -154,19 +154,38 @@ class MemoryProvenanceIndex:
         return roots[0]
 
     def select(self, candidates: list[ProvenanceCandidate], *, namespace: str | None = None) -> ProvenanceCandidate | None:
-        eligible: list[tuple[float, float, int, ProvenanceCandidate]] = []
+        """Select by root source authority, never by echo count.
+
+        Candidates sharing one ultimate source form a single factual lineage. If
+        the root source itself is present, return that source rather than a
+        generated/derived echo even when the echo has higher lexical similarity or
+        later order. If the root is not present, use the strongest representative
+        only as an access path to that same lineage.
+        """
+        lineages: dict[str, list[tuple[ProvenanceCandidate, MemoryProvenance]]] = {}
         for candidate in candidates:
             direct = self.inspect(candidate.memory_id, namespace=namespace)
             if direct.superseded_by is not None:
                 continue
             source = self.ultimate_source(candidate.memory_id, namespace=namespace)
-            eligible.append((
-                source.authority,
-                float(candidate.confidence),
-                int(candidate.created_order),
-                candidate,
-            ))
-        if not eligible:
+            lineages.setdefault(source.memory_id, []).append((candidate, source))
+        if not lineages:
             return None
-        eligible.sort(key=lambda row: (-row[0], -row[1], -row[2], row[3].memory_id))
-        return eligible[0][3]
+
+        ranked_lineages: list[tuple[float, float, int, str, ProvenanceCandidate]] = []
+        for source_id, rows in lineages.items():
+            source = rows[0][1]
+            explicit_root = next((candidate for candidate, _ in rows if candidate.memory_id == source_id), None)
+            if explicit_root is not None:
+                representative = explicit_root
+            else:
+                representative = sorted(
+                    (candidate for candidate, _ in rows),
+                    key=lambda c: (-float(c.confidence), -int(c.created_order), c.memory_id),
+                )[0]
+            best_confidence = max(float(candidate.confidence) for candidate, _ in rows)
+            best_order = max(int(candidate.created_order) for candidate, _ in rows)
+            ranked_lineages.append((source.authority, best_confidence, best_order, source_id, representative))
+
+        ranked_lineages.sort(key=lambda row: (-row[0], -row[1], -row[2], row[3]))
+        return ranked_lineages[0][4]
