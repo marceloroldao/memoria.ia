@@ -10,6 +10,7 @@ from .product_admin_config import attach_configuration_routes
 from .product_applications import ApplicationRegistry
 from .product_chat import ProductChatService
 from .product_config import ProductConfigurationStore
+from .product_evidence import ProductEvidenceService, attach_evidence_routes
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
 from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
@@ -95,10 +96,12 @@ def build_app():
     api_key = _env("MEMORIA_API_KEY", required=True)
     data_dir = Path(_env("MEMORIA_DATA_DIR", "/data"))
     configuration = ProductConfigurationStore(data_dir)
+    storage_backend = os.getenv("MEMORIA_STORAGE_BACKEND")
+    storage_allow_fallback = _env_bool("MEMORIA_STORAGE_ALLOW_FALLBACK", True)
     persistence = ProductSnapshotPersistence(
         data_dir / "persistence",
-        backend=os.getenv("MEMORIA_STORAGE_BACKEND"),
-        allow_fallback=_env_bool("MEMORIA_STORAGE_ALLOW_FALLBACK", True),
+        backend=storage_backend,
+        allow_fallback=storage_allow_fallback,
     )
 
     manifest = data_dir / "enterprise.manifest.json"
@@ -111,6 +114,12 @@ def build_app():
             OrganizationIdentity(organization_id, organization_name),
             persistence=persistence,
         )
+
+    evidence_service = ProductEvidenceService.open(
+        data_dir / "evidence",
+        backend=storage_backend,
+        allow_fallback=storage_allow_fallback,
+    )
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -144,8 +153,11 @@ def build_app():
             "status": "ok",
             "backend": stats.get("persistence_backend", "unknown"),
             "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
+            "evidence_backend": evidence_service.backend,
+            "evidence_persisted": evidence_service.receipt is not None,
         }
 
+    attach_evidence_routes(app, api_key=api_key, service=evidence_service)
     attach_configuration_routes(app, api_key=api_key, store=configuration)
     return app
 
