@@ -139,7 +139,7 @@ class ConversationSemanticService:
                     if entity:
                         add(entity, "has_color", match.group("color").casefold(), 1.0)
                         if _OWNERSHIP_SIGNAL.search(text):
-                            add("user", "owns", entity, 0.95)
+                            add(entity, "owned_by", "user", 0.95)
 
             # Handles elliptical conversational constructions such as
             # "o azul é Corsa, e o verde um Saveiro" conservatively.
@@ -148,7 +148,7 @@ class ConversationSemanticService:
                 if entity:
                     add(entity, "has_color", match.group("color").casefold(), 0.95)
                     if _OWNERSHIP_SIGNAL.search(text):
-                        add("user", "owns", entity, 0.95)
+                        add(entity, "owned_by", "user", 0.95)
 
         rows: list[EvidenceEdge] = []
         provenance = "conversation" if timestamp is None else f"conversation:{timestamp}"
@@ -218,7 +218,7 @@ class ConversationSemanticService:
         match = _QUERY_ENTITY_BY_COLOR.search(query)
         if match:
             color = _key(match.group("color"))
-            owned = {_key(e.object) for e in active if e.predicate == "owns" and _key(e.subject) == "user"}
+            owned = {_key(e.subject) for e in active if e.predicate == "owned_by" and _key(e.object) == "user"}
             rows = [e for e in active if e.predicate == "has_color" and _key(e.object) == color and (not owned or _key(e.subject) in owned)]
             subjects = {_key(e.subject) for e in rows}
             if len(subjects) == 1:
@@ -226,8 +226,8 @@ class ConversationSemanticService:
             return self._result("UNRESOLVED" if len(subjects) > 1 else "MISS", [])
 
         if _QUERY_OWNED_COLORS.search(query):
-            owned_edges = [e for e in active if e.predicate == "owns" and _key(e.subject) == "user"]
-            owned = {_key(e.object): e for e in owned_edges}
+            owned_edges = [e for e in active if e.predicate == "owned_by" and _key(e.object) == "user"]
+            owned = {_key(e.subject): e for e in owned_edges}
             if not owned:
                 return self._result("MISS", [])
             color_rows = [e for e in active if e.predicate == "has_color" and _key(e.subject) in owned]
