@@ -126,7 +126,12 @@ class MemoryProvenanceIndex:
         )
 
     def ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
-        """Trace derivation/replay parents to the strongest non-derived root source."""
+        """Trace derived/replayed/generated echoes to the strongest root source.
+
+        Assistant-generated content only inherits an upstream authority when its
+        lineage is explicit through parent_memory_ids. Generated content without
+        parents remains an assistant-generated root and therefore low-authority.
+        """
         queue = [memory_id]
         seen: set[str] = set()
         roots: list[MemoryProvenance] = []
@@ -138,7 +143,8 @@ class MemoryProvenanceIndex:
             meta = self.inspect(current, namespace=namespace)
             if meta.superseded_by is not None:
                 continue
-            if meta.source_type in {"derived_relation", "retrieved_replay"} and meta.parent_memory_ids:
+            traceable = meta.source_type in {"derived_relation", "retrieved_replay", "assistant_generated"}
+            if traceable and meta.parent_memory_ids:
                 queue.extend(meta.parent_memory_ids)
             else:
                 roots.append(meta)
