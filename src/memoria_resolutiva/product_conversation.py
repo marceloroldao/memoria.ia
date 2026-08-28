@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from .evidence_core import EvidenceEdge
+from .memory_provenance import MemoryProvenanceIndex, ProvenanceCandidate
 from .product_evidence import ProductEvidenceService
 
 _WORD_RE = re.compile(r"[\wÀ-ÿ.-]+", re.UNICODE)
@@ -36,11 +37,7 @@ def _key(value: str) -> str:
 
 
 def _tokens(value: str) -> set[str]:
-    return {
-        _key(token)
-        for token in _WORD_RE.findall(value)
-        if _key(token) and _key(token) not in _QUERY_STOPWORDS
-    }
+    return {_key(token) for token in _WORD_RE.findall(value) if _key(token) and _key(token) not in _QUERY_STOPWORDS}
 
 
 def _relation_term(value: str) -> str | None:
@@ -76,20 +73,15 @@ class ConversationResolveResult:
     memory_ids: tuple[str, ...]
     selected_context: str
     relations: tuple[dict, ...]
+    provenance: tuple[dict, ...] = ()
 
 
 class ConversationSemanticService:
-    """Domain-agnostic conversational recall adapter over the Evidence Core.
-
-    Domain examples belong in tests, not in the runtime ontology. Every turn is
-    retained as source evidence. The adapter may additionally extract only generic
-    surface relations (currently conservative copular/elliptical A-is-B forms).
-    Resolution first uses explicit relation anchors and then a lexical source-turn
-    fallback. Ties that cannot be justified are returned as UNRESOLVED.
-    """
+    """Domain-agnostic conversational recall with source-authority separation."""
 
     def __init__(self, evidence: ProductEvidenceService) -> None:
         self.evidence = evidence
+        self.provenance = MemoryProvenanceIndex(evidence.core)
 
     @staticmethod
     def _memory_id(*, role: str, text: str, session_id: str | None, order: int | None, index: int) -> str:
@@ -104,9 +96,13 @@ class ConversationSemanticService:
         session_id: str | None = None,
         order: int | None = None,
         timestamp: str | None = None,
+        parent_memory_ids: tuple[str, ...] | list[str] = (),
+        corrects_memory_ids: tuple[str, ...] | list[str] = (),
     ) -> ConversationIngestResult:
         if role not in {"user", "assistant"}:
             raise ValueError("role must be 'user' or 'assistant'")
+        if corrects_memory_ids and role != "user":
+            raise ValueError("only user turns may explicitly correct prior memories")
         text = text.strip()
         if not text:
             raise ValueError("text must be non-empty")
@@ -127,50 +123,46 @@ class ConversationSemanticService:
             for match in pattern.finditer(text):
                 add(match.group("left"), "is", match.group("right"), confidence)
 
-        provenance = "conversation" if timestamp is None else f"conversation:{timestamp}"
+        provenance_label = "conversation" if timestamp is None else f"conversation:{timestamp}"
         origin = "conversation-user" if role == "user" else "conversation-assistant"
-        rows: list[EvidenceEdge] = []
-
-        # Each raw turn gets its own subject, so long conversations remain fully
-        # recoverable instead of collapsing to the latest turn in active_edges().
         turn_id = self._memory_id(role=role, text=text, session_id=session_id, order=order, index=-1)
-        rows.append(self.evidence.core.observe_relation(
-            f"turn:{turn_id}",
-            "conversation_text",
-            text,
-            evidence_id=turn_id,
-            source_text=text,
-            provenance=provenance,
-            origin=origin,
-            confidence=1.0,
-            namespace=session_id,
-        ))
+        turn_edge = self.evidence.core.observe_relation(
+            f"turn:{turn_id}", "conversation_text", text,
+            evidence_id=turn_id, source_text=text, provenance=provenance_label,
+            origin=origin, confidence=1.0, namespace=session_id,
+        )
+        source_type = "user_correction" if corrects_memory_ids else ("user_assertion" if role == "user" else "assistant_generated")
+        parents = tuple(dict.fromkeys([*parent_memory_ids, *corrects_memory_ids]))
+        self.provenance.register(
+            turn_id, source_type=source_type, parent_memory_ids=parents,
+            created_order=order, created_time=timestamp, namespace=session_id,
+        )
+        for prior_id in corrects_memory_ids:
+            self.provenance.supersede(prior_id, by_memory_id=turn_id, namespace=session_id)
 
         relation_rows: list[EvidenceEdge] = []
         for index, (subject, predicate, obj, confidence) in enumerate(extracted):
             memory_id = self._memory_id(role=role, text=text, session_id=session_id, order=order, index=index)
-            relation_rows.append(self.evidence.core.observe_relation(
-                subject,
-                predicate,
-                obj,
-                evidence_id=memory_id,
-                source_text=text,
-                provenance=provenance,
-                origin=origin,
-                confidence=confidence,
+            row = self.evidence.core.observe_relation(
+                subject, predicate, obj, evidence_id=memory_id, source_text=text,
+                provenance=provenance_label, origin=origin, confidence=confidence,
                 namespace=session_id,
-            ))
-        rows.extend(relation_rows)
+            )
+            relation_rows.append(row)
+            self.provenance.register(
+                memory_id, source_type="derived_relation", parent_memory_ids=(turn_id,),
+                created_order=order, created_time=timestamp, namespace=session_id,
+            )
         self.evidence.save()
         return ConversationIngestResult(
-            tuple(row.evidence_id for row in rows),
+            (turn_edge.evidence_id, *(row.evidence_id for row in relation_rows)),
             tuple(_edge_payload(row) for row in relation_rows),
             not relation_rows,
         )
 
-    def _result(self, status: str, rows: list[EvidenceEdge], *, confidence: float | None = None) -> ConversationResolveResult:
+    def _result(self, status: str, rows: list[EvidenceEdge], *, confidence: float | None = None, namespace: str | None = None) -> ConversationResolveResult:
         if status != "HIT" or not rows:
-            return ConversationResolveResult(status, 0.0, (), "", ())
+            return ConversationResolveResult(status, 0.0, (), "", (), ())
         ordered: list[EvidenceEdge] = []
         seen_ids: set[str] = set()
         for row in rows:
@@ -181,14 +173,56 @@ class ConversationSemanticService:
         for row in ordered:
             if row.source_text not in contexts:
                 contexts.append(row.source_text)
-        relation_rows = [row for row in ordered if row.predicate != "conversation_text"]
+        relation_rows = [row for row in ordered if row.predicate != "conversation_text" and not row.predicate.startswith("provenance_")]
+        provenance_rows = []
+        for row in ordered:
+            direct = self.provenance.inspect(row.evidence_id, namespace=namespace)
+            source = self.provenance.ultimate_source(row.evidence_id, namespace=namespace)
+            provenance_rows.append({
+                "memory_id": direct.memory_id,
+                "source_type": source.source_type,
+                "source_authority": source.authority,
+                "immediate_source_type": direct.source_type,
+                "parent_memory_ids": list(direct.parent_memory_ids),
+                "ultimate_source_memory_id": source.memory_id,
+                "created_order": direct.created_order,
+                "created_time": direct.created_time,
+                "superseded_by": direct.superseded_by,
+            })
         return ConversationResolveResult(
             "HIT",
             float(confidence if confidence is not None else min(row.confidence for row in ordered)),
             tuple(row.evidence_id for row in ordered),
             "\n".join(contexts),
             tuple(_edge_payload(row) for row in relation_rows),
+            tuple(provenance_rows),
         )
+
+    def _select_authoritative(self, scored: list[tuple[float, int, EvidenceEdge]], *, namespace: str | None) -> tuple[float, EvidenceEdge] | None:
+        if not scored:
+            return None
+        best_relevance = max(score for score, _order, _edge in scored)
+        pool = [(score, order, edge) for score, order, edge in scored if score >= best_relevance - 0.15]
+        selected = self.provenance.select(
+            [ProvenanceCandidate(edge.evidence_id, score, order) for score, order, edge in pool],
+            namespace=namespace,
+        )
+        if selected is None:
+            return None
+        for score, _order, edge in pool:
+            if edge.evidence_id == selected.memory_id:
+                return score, edge
+        return None
+
+    @staticmethod
+    def _distinct_claims(scored: list[tuple[float, int, EvidenceEdge]]) -> set[tuple[str, str, str]]:
+        return {(_key(edge.subject), edge.predicate, _key(edge.object)) for _score, _order, edge in scored}
+
+    def _ultimate_source_ids(self, scored: list[tuple[float, int, EvidenceEdge]], *, namespace: str | None) -> set[str]:
+        return {
+            self.provenance.ultimate_source(edge.evidence_id, namespace=namespace).memory_id
+            for _score, _order, edge in scored
+        }
 
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult:
         query = query.strip()
@@ -199,41 +233,41 @@ class ConversationSemanticService:
         if not qtokens:
             return self._result("UNRESOLVED", [])
 
-        relations = [edge for edge in active if edge.predicate != "conversation_text"]
-        anchored: list[tuple[int, int, EvidenceEdge]] = []
+        relations = [e for e in active if e.predicate != "conversation_text" and not e.predicate.startswith("provenance_")]
+        anchored: list[tuple[float, int, EvidenceEdge]] = []
         for edge in relations:
-            subject_tokens = _tokens(edge.subject)
-            object_tokens = _tokens(edge.object)
-            overlap = len(qtokens & (subject_tokens | object_tokens))
+            overlap = len(qtokens & (_tokens(edge.subject) | _tokens(edge.object)))
             if overlap:
-                anchored.append((overlap, edge.epoch, edge))
+                anchored.append((float(overlap), edge.epoch, edge))
         if anchored:
-            best_overlap = max(item[0] for item in anchored)
-            best = [item for item in anchored if item[0] == best_overlap]
-            if len(best) == 1:
-                edge = best[0][2]
-                return self._result("HIT", [edge], confidence=min(1.0, 0.65 + 0.15 * best_overlap))
-            distinct = {(_key(item[2].subject), item[2].predicate, _key(item[2].object)) for item in best}
-            if len(distinct) > 1:
+            best_overlap = max(score for score, _order, _edge in anchored)
+            exact_best = [row for row in anchored if row[0] == best_overlap]
+            if len(self._distinct_claims(exact_best)) > 1 and len(self._ultimate_source_ids(exact_best, namespace=session_id)) > 1:
                 return self._result("UNRESOLVED", [])
+        selected = self._select_authoritative(anchored, namespace=session_id)
+        if selected is not None:
+            relevance, edge = selected
+            return self._result("HIT", [edge], confidence=min(1.0, 0.65 + 0.15 * relevance), namespace=session_id)
 
         turns = [edge for edge in active if edge.predicate == "conversation_text"]
         ranked: list[tuple[float, int, EvidenceEdge]] = []
         for edge in turns:
-            stokens = _tokens(edge.source_text)
-            overlap = len(qtokens & stokens)
-            if not overlap:
-                continue
-            score = overlap / max(1, len(qtokens))
-            ranked.append((score, edge.epoch, edge))
-        if not ranked:
+            overlap = len(qtokens & _tokens(edge.source_text))
+            if overlap:
+                ranked.append((overlap / max(1, len(qtokens)), edge.epoch, edge))
+        if ranked:
+            best_score = max(score for score, _order, _edge in ranked)
+            exact_best = [row for row in ranked if abs(row[0] - best_score) < 1e-12]
+            if len(exact_best) > 1:
+                roots = self._ultimate_source_ids(exact_best, namespace=session_id)
+                contexts = {_key(edge.source_text) for _score, _order, edge in exact_best}
+                if len(roots) > 1 and len(contexts) > 1:
+                    return self._result("UNRESOLVED", [])
+        selected = self._select_authoritative(ranked, namespace=session_id)
+        if selected is None:
             return self._result("UNRESOLVED", [])
-        ranked.sort(key=lambda item: (-item[0], -item[1], item[2].evidence_id))
-        best_score = ranked[0][0]
-        tied = [item for item in ranked if abs(item[0] - best_score) < 1e-12]
-        if len(tied) > 1:
-            return self._result("UNRESOLVED", [])
-        return self._result("HIT", [ranked[0][2]], confidence=min(0.8, 0.45 + 0.35 * best_score))
+        score, edge = selected
+        return self._result("HIT", [edge], confidence=min(0.8, 0.45 + 0.35 * score), namespace=session_id)
 
 
 class ConversationIngestRequest(BaseModel):
@@ -242,6 +276,8 @@ class ConversationIngestRequest(BaseModel):
     session_id: str | None = Field(default=None, max_length=256)
     timestamp: str | None = Field(default=None, max_length=128)
     order: int | None = Field(default=None, ge=0)
+    parent_memory_ids: list[str] = Field(default_factory=list)
+    corrects_memory_ids: list[str] = Field(default_factory=list)
 
 
 class ConversationResolveRequest(BaseModel):
@@ -249,12 +285,7 @@ class ConversationResolveRequest(BaseModel):
     session_id: str | None = Field(default=None, max_length=256)
 
 
-def attach_conversation_routes(
-    app: FastAPI,
-    *,
-    api_key: str,
-    service: ConversationSemanticService,
-) -> None:
+def attach_conversation_routes(app: FastAPI, *, api_key: str, service: ConversationSemanticService) -> None:
     def require_admin(x_memoria_key: str | None = Header(default=None)) -> None:
         if x_memoria_key is None or not hmac.compare_digest(x_memoria_key, api_key):
             raise HTTPException(status_code=401, detail="invalid API credentials")
@@ -263,19 +294,14 @@ def attach_conversation_routes(
     def ingest(request: ConversationIngestRequest):
         try:
             result = service.ingest(
-                role=request.role,
-                text=request.text,
-                session_id=request.session_id,
-                timestamp=request.timestamp,
-                order=request.order,
+                role=request.role, text=request.text, session_id=request.session_id,
+                timestamp=request.timestamp, order=request.order,
+                parent_memory_ids=request.parent_memory_ids,
+                corrects_memory_ids=request.corrects_memory_ids,
             )
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        return {
-            "stored_memory_ids": list(result.memory_ids),
-            "relations": list(result.relations),
-            "unresolved": result.unresolved,
-        }
+        return {"stored_memory_ids": list(result.memory_ids), "relations": list(result.relations), "unresolved": result.unresolved}
 
     @app.post("/api/v1/conversation/resolve", dependencies=[Depends(require_admin)])
     def resolve(request: ConversationResolveRequest):
@@ -289,4 +315,5 @@ def attach_conversation_routes(
             "memory_ids": list(result.memory_ids),
             "selected_context": result.selected_context,
             "relations": list(result.relations),
+            "provenance": list(result.provenance),
         }
