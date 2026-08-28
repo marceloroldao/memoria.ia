@@ -8,12 +8,17 @@ typedef struct memoria_semantic_source {
     const char *text;
     double authority;
     long order;
+    const char *source_type;
+    const char *ultimate_source_memory_id;
 } memoria_semantic_source;
 
 typedef struct memoria_semantic_result {
     int hit; /* 1 HIT, 0 UNRESOLVED */
     const char *memory_id;
     double confidence;
+    const char *source_type;
+    double source_authority;
+    const char *ultimate_source_memory_id;
 } memoria_semantic_result;
 
 memoria_semantic_result memoria_semantic_resolve_sources(
