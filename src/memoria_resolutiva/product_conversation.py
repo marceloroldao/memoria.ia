@@ -12,43 +12,21 @@ from pydantic import BaseModel, Field
 from .evidence_core import EvidenceEdge
 from .product_evidence import ProductEvidenceService
 
-
-_COLOR_WORDS = (
-    "verde", "azul", "vermelho", "vermelha", "preto", "preta", "branco", "branca",
-    "amarelo", "amarela", "cinza", "prata", "marrom", "laranja", "roxo", "roxa",
+_WORD_RE = re.compile(r"[\wÀ-ÿ.-]+", re.UNICODE)
+_COPULAR = re.compile(
+    r"(?:\bmeu\b|\bminha\b|\bo\b|\ba\b)?\s*(?P<left>[\wÀ-ÿ.-]+)\s*(?:é|eh|=)\s*(?:um\s+|uma\s+)?(?P<right>[\wÀ-ÿ.-]+)",
+    re.IGNORECASE,
 )
-_COLOR_ALT = "|".join(_COLOR_WORDS)
-_WORD = r"[A-Za-zÀ-ÿ0-9_.-]+"
-_RESERVED_ENTITY_WORDS = {
-    "e", "ou", "outro", "outra", "um", "uma", "carro", "carros", "veiculo", "veiculos",
-    "veículo", "veículos", "cor", "cores",
+_ELLIPTIC = re.compile(
+    r"(?:^|[,;.]|\be\b)\s*(?:o|a)\s+(?P<left>[\wÀ-ÿ.-]+)\s+(?:um\s+|uma\s+)(?P<right>[\wÀ-ÿ.-]+)",
+    re.IGNORECASE,
+)
+_QUERY_STOPWORDS = {
+    "a", "ao", "aos", "as", "da", "das", "de", "do", "dos", "e", "eh", "é", "em", "eu",
+    "foi", "me", "meu", "meus", "minha", "minhas", "o", "os", "para", "por", "que", "qual",
+    "quais", "um", "uma", "uns", "umas", "voce", "você",
 }
-
-_EXPLICIT_COLOR_NAME = re.compile(
-    rf"(?:\bo\b|\ba\b)?\s*(?P<color>{_COLOR_ALT})\s+(?:(?:é|eh|=)\s*)?(?:um\s+|uma\s+)?(?P<entity>{_WORD})",
-    re.IGNORECASE,
-)
-_ENTITY_COLOR = re.compile(
-    rf"(?:\bmeu\b|\bminha\b|\bo\b|\ba\b)?\s*(?P<entity>{_WORD})\s*(?:é|eh|=|tem\s+cor)\s*(?P<color>{_COLOR_ALT})\b",
-    re.IGNORECASE,
-)
-_COLOR_OF_ENTITY = re.compile(
-    rf"\bcor\s+(?:da|do)\s+(?:minha\s+|meu\s+)?(?P<entity>{_WORD})\s*(?:é|eh|=)\s*(?P<color>{_COLOR_ALT})\b",
-    re.IGNORECASE,
-)
-_QUERY_ENTITY_COLOR = (
-    re.compile(rf"\bcor\s+(?:da|do)\s+(?:minha\s+|meu\s+)?(?P<entity>{_WORD})\b", re.IGNORECASE),
-    re.compile(rf"\bde\s+que\s+cor\s+(?:é|eh|e)\s+(?:a\s+|o\s+|minha\s+|meu\s+)?(?P<entity>{_WORD})\b", re.IGNORECASE),
-)
-_QUERY_ENTITY_BY_COLOR = re.compile(
-    rf"\b(?:qual|que)\s+(?:é\s+|e\s+)?(?:o\s+|a\s+)?(?:meu\s+|minha\s+)?(?:carro|veiculo|veículo)\s+(?P<color>{_COLOR_ALT})\b",
-    re.IGNORECASE,
-)
-_QUERY_OWNED_COLORS = re.compile(
-    r"\b(?:qual|quais)\s+(?:é|são|sao|e)?\s*(?:a\s+)?cor(?:es)?\s+(?:dos|das)\s+(?:meus|minhas)\s+(?:carros|veiculos|veículos)\b",
-    re.IGNORECASE,
-)
-_OWNERSHIP_SIGNAL = re.compile(r"\b(?:eu\s+tenho|tenho|meu|meus|minha|minhas)\b", re.IGNORECASE)
+_RELATION_NOISE = _QUERY_STOPWORDS | {"outro", "outra"}
 
 
 def _key(value: str) -> str:
@@ -57,9 +35,17 @@ def _key(value: str) -> str:
     return " ".join(value.casefold().strip().split())
 
 
-def _clean_entity(value: str) -> str | None:
+def _tokens(value: str) -> set[str]:
+    return {
+        _key(token)
+        for token in _WORD_RE.findall(value)
+        if _key(token) and _key(token) not in _QUERY_STOPWORDS
+    }
+
+
+def _relation_term(value: str) -> str | None:
     value = value.strip().strip(".,;:!?\"")
-    if not value or _key(value) in {_key(x) for x in _RESERVED_ENTITY_WORDS}:
+    if not value or _key(value) in _RELATION_NOISE:
         return None
     return value
 
@@ -93,11 +79,13 @@ class ConversationResolveResult:
 
 
 class ConversationSemanticService:
-    """Conservative natural-language adapter over the stable Evidence Core.
+    """Domain-agnostic conversational recall adapter over the Evidence Core.
 
-    This adapter intentionally supports a small, explicit conversational relation
-    vocabulary. It must abstain when the query shape or relation is ambiguous.
-    The Evidence Core remains parser-free and stores the source-backed relations.
+    Domain examples belong in tests, not in the runtime ontology. Every turn is
+    retained as source evidence. The adapter may additionally extract only generic
+    surface relations (currently conservative copular/elliptical A-is-B forms).
+    Resolution first uses explicit relation anchors and then a lexical source-turn
+    fallback. Ties that cannot be justified are returned as UNRESOLVED.
     """
 
     def __init__(self, evidence: ProductEvidenceService) -> None:
@@ -127,55 +115,59 @@ class ConversationSemanticService:
         seen: set[tuple[str, str, str]] = set()
 
         def add(subject: str, predicate: str, obj: str, confidence: float) -> None:
-            key = (_key(subject), predicate, _key(obj))
+            left, right = _relation_term(subject), _relation_term(obj)
+            if left is None or right is None:
+                return
+            key = (_key(left), predicate, _key(right))
             if key not in seen:
                 seen.add(key)
-                extracted.append((subject, predicate, obj, confidence))
+                extracted.append((left, predicate, right, confidence))
 
-        if role == "user":
-            for pattern in (_COLOR_OF_ENTITY, _ENTITY_COLOR):
-                for match in pattern.finditer(text):
-                    entity = _clean_entity(match.group("entity"))
-                    if entity:
-                        add(entity, "has_color", match.group("color").casefold(), 1.0)
-                        if _OWNERSHIP_SIGNAL.search(text):
-                            add(entity, "owned_by", "user", 0.95)
+        for pattern, confidence in ((_COPULAR, 0.95), (_ELLIPTIC, 0.85)):
+            for match in pattern.finditer(text):
+                add(match.group("left"), "is", match.group("right"), confidence)
 
-            # Handles elliptical conversational constructions such as
-            # "o azul é Corsa, e o verde um Saveiro" conservatively.
-            for match in _EXPLICIT_COLOR_NAME.finditer(text):
-                entity = _clean_entity(match.group("entity"))
-                if entity:
-                    add(entity, "has_color", match.group("color").casefold(), 0.95)
-                    if _OWNERSHIP_SIGNAL.search(text):
-                        add(entity, "owned_by", "user", 0.95)
-
-        rows: list[EvidenceEdge] = []
         provenance = "conversation" if timestamp is None else f"conversation:{timestamp}"
+        origin = "conversation-user" if role == "user" else "conversation-assistant"
+        rows: list[EvidenceEdge] = []
+
+        # Persist the raw turn independently of any successful relation extraction.
+        turn_id = self._memory_id(role=role, text=text, session_id=session_id, order=order, index=-1)
+        rows.append(self.evidence.core.observe_relation(
+            f"turn:{turn_id}",
+            "conversation_text",
+            text,
+            evidence_id=turn_id,
+            source_text=text,
+            provenance=provenance,
+            origin=origin,
+            confidence=1.0,
+            namespace=session_id,
+        ))
+
+        relation_rows: list[EvidenceEdge] = []
         for index, (subject, predicate, obj, confidence) in enumerate(extracted):
-            memory_id = self._memory_id(
-                role=role, text=text, session_id=session_id, order=order, index=index
-            )
-            rows.append(self.evidence.core.observe_relation(
+            memory_id = self._memory_id(role=role, text=text, session_id=session_id, order=order, index=index)
+            relation_rows.append(self.evidence.core.observe_relation(
                 subject,
                 predicate,
                 obj,
                 evidence_id=memory_id,
                 source_text=text,
                 provenance=provenance,
-                origin="conversation-user" if role == "user" else "conversation-assistant",
+                origin=origin,
                 confidence=confidence,
                 namespace=session_id,
             ))
-        if rows:
-            self.evidence.save()
+        rows.extend(relation_rows)
+        self.evidence.save()
         return ConversationIngestResult(
             tuple(row.evidence_id for row in rows),
-            tuple(_edge_payload(row) for row in rows),
-            not rows,
+            tuple(_edge_payload(row) for row in relation_rows),
+            not relation_rows,
         )
 
-    def _result(self, status: str, rows: list[EvidenceEdge]) -> ConversationResolveResult:
+    def _result(self, status: str, rows: list[EvidenceEdge], *, confidence: float | None = None) -> ConversationResolveResult:
         if status != "HIT" or not rows:
             return ConversationResolveResult(status, 0.0, (), "", ())
         ordered: list[EvidenceEdge] = []
@@ -188,12 +180,13 @@ class ConversationSemanticService:
         for row in ordered:
             if row.source_text not in contexts:
                 contexts.append(row.source_text)
+        relation_rows = [row for row in ordered if row.predicate != "conversation_text"]
         return ConversationResolveResult(
             "HIT",
-            min(row.confidence for row in ordered),
+            float(confidence if confidence is not None else min(row.confidence for row in ordered)),
             tuple(row.evidence_id for row in ordered),
             "\n".join(contexts),
-            tuple(_edge_payload(row) for row in ordered),
+            tuple(_edge_payload(row) for row in relation_rows),
         )
 
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult:
@@ -201,42 +194,47 @@ class ConversationSemanticService:
         if not query:
             raise ValueError("query must be non-empty")
         active = list(self.evidence.core.active_edges(namespace=session_id))
+        qtokens = _tokens(query)
+        if not qtokens:
+            return self._result("UNRESOLVED", [])
 
-        entity: str | None = None
-        for pattern in _QUERY_ENTITY_COLOR:
-            match = pattern.search(query)
-            if match:
-                entity = _clean_entity(match.group("entity"))
-                break
-        if entity is not None:
-            rows = [e for e in active if e.predicate == "has_color" and _key(e.subject) == _key(entity)]
-            values = {_key(e.object) for e in rows}
-            if len(values) == 1:
-                return self._result("HIT", rows)
-            return self._result("UNRESOLVED" if len(values) > 1 else "MISS", [])
-
-        match = _QUERY_ENTITY_BY_COLOR.search(query)
-        if match:
-            color = _key(match.group("color"))
-            owned = {_key(e.subject) for e in active if e.predicate == "owned_by" and _key(e.object) == "user"}
-            rows = [e for e in active if e.predicate == "has_color" and _key(e.object) == color and (not owned or _key(e.subject) in owned)]
-            subjects = {_key(e.subject) for e in rows}
-            if len(subjects) == 1:
-                return self._result("HIT", rows)
-            return self._result("UNRESOLVED" if len(subjects) > 1 else "MISS", [])
-
-        if _QUERY_OWNED_COLORS.search(query):
-            owned_edges = [e for e in active if e.predicate == "owned_by" and _key(e.object) == "user"]
-            owned = {_key(e.subject): e for e in owned_edges}
-            if not owned:
-                return self._result("MISS", [])
-            color_rows = [e for e in active if e.predicate == "has_color" and _key(e.subject) in owned]
-            by_subject = {_key(e.subject) for e in color_rows}
-            if by_subject != set(owned):
+        relations = [edge for edge in active if edge.predicate != "conversation_text"]
+        anchored: list[tuple[int, int, EvidenceEdge]] = []
+        for edge in relations:
+            subject_tokens = _tokens(edge.subject)
+            object_tokens = _tokens(edge.object)
+            overlap = len(qtokens & (subject_tokens | object_tokens))
+            if overlap:
+                anchored.append((overlap, edge.epoch, edge))
+        if anchored:
+            best_overlap = max(item[0] for item in anchored)
+            best = [item for item in anchored if item[0] == best_overlap]
+            # A single relation anchor is safe. Multiple equally supported current
+            # relations are deliberately ambiguous rather than guessed.
+            if len(best) == 1:
+                edge = best[0][2]
+                return self._result("HIT", [edge], confidence=min(1.0, 0.65 + 0.15 * best_overlap))
+            distinct = {(_key(item[2].subject), item[2].predicate, _key(item[2].object)) for item in best}
+            if len(distinct) > 1:
                 return self._result("UNRESOLVED", [])
-            return self._result("HIT", [*owned_edges, *color_rows])
 
-        return self._result("UNRESOLVED", [])
+        turns = [edge for edge in active if edge.predicate == "conversation_text"]
+        ranked: list[tuple[float, int, EvidenceEdge]] = []
+        for edge in turns:
+            stokens = _tokens(edge.source_text)
+            overlap = len(qtokens & stokens)
+            if not overlap:
+                continue
+            score = overlap / max(1, len(qtokens))
+            ranked.append((score, edge.epoch, edge))
+        if not ranked:
+            return self._result("UNRESOLVED", [])
+        ranked.sort(key=lambda item: (-item[0], -item[1], item[2].evidence_id))
+        best_score = ranked[0][0]
+        tied = [item for item in ranked if abs(item[0] - best_score) < 1e-12]
+        if len(tied) > 1:
+            return self._result("UNRESOLVED", [])
+        return self._result("HIT", [ranked[0][2]], confidence=min(0.8, 0.45 + 0.35 * best_score))
 
 
 class ConversationIngestRequest(BaseModel):
