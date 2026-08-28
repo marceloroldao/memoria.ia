@@ -76,8 +76,8 @@ def build_vectors() -> dict:
 
         s3 = "semantic-ambiguous"
         conv.ingest(role="user", text="Atlas é Norte.", session_id=s3, order=1)
-        conv.ingest(role="user", text="Atlas é Sul.", session_id=s3, order=2)
-        semantic_ambiguous = conv.resolve(query="Atlas é qual?", session_id=s3)
+        conv.ingest(role="user", text="Beta é Norte.", session_id=s3, order=2)
+        semantic_ambiguous = conv.resolve(query="Qual é Norte?", session_id=s3)
 
         s4 = "episodic"
         episodes.record(Episode(
