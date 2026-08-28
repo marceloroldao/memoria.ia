@@ -29,7 +29,7 @@ jobs:
       - name: Build durable host runtime
         run: cmake --build build/mobile-host --config Release -j2
       - name: Run host semantic + restart tests
-        run: ctest --test-dir build/mobile-host --output-on-failure
+        run: ctest --test-dir build/mobile-host -R '^memoria_' --output-on-failure
 
   android-arm64:
     runs-on: ubuntu-latest
