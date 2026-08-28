@@ -25,6 +25,11 @@ static char *dup_range(const char *a, const char *b) {
     return out;
 }
 
+static char *dup_string_local(const char *s) {
+    if (!s) return NULL;
+    return dup_range(s, s + strlen(s));
+}
+
 static const char *skip_ws(const char *p) {
     while (p && *p && isspace((unsigned char)*p)) ++p;
     return p;
@@ -155,7 +160,12 @@ int memoria_trajectory_resolve_json(
             return -1;
         }
         if (!owned[count].session_id && session_id)
-            owned[count].session_id = strdup(session_id);
+            owned[count].session_id = dup_string_local(session_id);
+        if (session_id && !owned[count].session_id) {
+            for (i = 0; i <= count; ++i) free_owned(&owned[i]);
+            free(session_id);
+            return -1;
+        }
 
         turns[count].session_id = owned[count].session_id;
         turns[count].role = owned[count].role;
