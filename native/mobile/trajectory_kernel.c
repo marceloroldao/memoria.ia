@@ -38,9 +38,35 @@ static int same_session(const char *wanted, const char *actual) {
     return strcmp(wanted,actual)==0;
 }
 
+static int starts_word(const char *s, const char *word) {
+    size_t i=0,j=0;
+    if (!s || !word) return 0;
+    while (s[i] && isspace((unsigned char)s[i])) ++i;
+    while (word[j]) {
+        if (!s[i+j]) return 0;
+        if (tolower((unsigned char)s[i+j]) != tolower((unsigned char)word[j])) return 0;
+        ++j;
+    }
+    return s[i+j] == 0 || !isalnum((unsigned char)s[i+j]);
+}
+
+static int looks_like_question(const char *text) {
+    static const char *q[] = {
+        "qual","quais","quem","onde","quando","como","quanto","quantos","quantas",
+        "por que","porque","what","which","who","where","when","how","why",
+        "can","could","would","should","do","does","did"
+    };
+    size_t i;
+    if (!text) return 0;
+    if (strchr(text,'?')) return 1;
+    for (i=0;i<sizeof(q)/sizeof(q[0]);++i) if (starts_word(text,q[i])) return 1;
+    return 0;
+}
+
 static int retrievable(const memoria_semantic_source *s) {
     if (!s || !s->text || !s->memory_id) return 0;
     if (s->source_type && strcmp(s->source_type,"user_query")==0) return 0;
+    if (s->source_type && strcmp(s->source_type,"user_assertion")==0 && looks_like_question(s->text)) return 0;
     return 1;
 }
 
