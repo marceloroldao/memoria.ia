@@ -33,11 +33,15 @@ static double overlap_score(const char *query, const char *text) {
 }
 
 static int starts_word(const char *s, const char *word) {
-    size_t i = 0, n = strlen(word);
-    if (!s) return 0;
+    size_t i = 0, j = 0;
+    if (!s || !word) return 0;
     while (s[i] && isspace((unsigned char)s[i])) ++i;
-    if (strncasecmp(s + i, word, n) != 0) return 0;
-    return s[i + n] == 0 || !isalnum((unsigned char)s[i + n]);
+    while (word[j]) {
+        if (!s[i + j]) return 0;
+        if (tolower((unsigned char)s[i + j]) != tolower((unsigned char)word[j])) return 0;
+        ++j;
+    }
+    return s[i + j] == 0 || !isalnum((unsigned char)s[i + j]);
 }
 
 static int looks_like_question(const char *text) {
