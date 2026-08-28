@@ -1,6 +1,15 @@
 # Memoria.ia v1.0 Core Capability Manifest
 
-Status: candidate, pending final CI on the Product Evidence boundary.
+Status: validated v1.0 candidate.
+
+Final Product Evidence boundary validation completed on PR #46 head `1bcdcccf82c2656309762d98c8b9c99d5bb8a62c`:
+- Ubuntu full regression: success;
+- Windows full regression: success;
+- native Linux Resolutive-DB v1.1 integration: success;
+- portable Ubuntu regression: success;
+- portable Windows regression: success.
+
+Merged into `integration/v1.0-candidate` as `872c1db527515a5c8ccd6cd3dd32306d8e4940d7`.
 
 ## Stable Core responsibilities
 
