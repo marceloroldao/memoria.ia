@@ -12,6 +12,7 @@ from .product_chat import ProductChatService
 from .product_config import ProductConfigurationStore
 from .product_conversation import ConversationSemanticService, attach_conversation_routes
 from .product_evidence import ProductEvidenceService, attach_evidence_routes
+from .product_episodic import ProductEpisodicService, attach_episodic_routes
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
 from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
@@ -122,6 +123,7 @@ def build_app():
         allow_fallback=storage_allow_fallback,
     )
     conversation_service = ConversationSemanticService(evidence_service)
+    episodic_service = ProductEpisodicService(evidence_service)
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -161,6 +163,7 @@ def build_app():
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
+    attach_episodic_routes(app, api_key=api_key, service=episodic_service)
     attach_configuration_routes(app, api_key=api_key, store=configuration)
     return app
 
