@@ -314,6 +314,21 @@ static turn_row *find_turn(memoria_mobile_handle *h, const char *memory_id) {
     return NULL;
 }
 
+static int turn_namespace_matches(const turn_row *turn, const char *namespace_id) {
+    const char *stored = turn && turn->namespace_id ? turn->namespace_id : "";
+    const char *requested = namespace_id ? namespace_id : "";
+    return strcmp(stored, requested) == 0;
+}
+
+static turn_row *find_turn_in_namespace(memoria_mobile_handle *h, const char *memory_id, const char *namespace_id) {
+    size_t i;
+    if (!h || !memory_id) return NULL;
+    for (i = 0; i < h->turn_count; ++i)
+        if (h->turns[i].memory_id && strcmp(h->turns[i].memory_id, memory_id) == 0 &&
+            turn_namespace_matches(&h->turns[i], namespace_id)) return &h->turns[i];
+    return NULL;
+}
+
 static int turn_relations_to_json(const turn_row *turn, char *out, size_t out_size) {
     const char *ids[MAX_RELATIONS_PER_TURN];
     size_t i;
@@ -328,7 +343,7 @@ static int turn_factual_active(memoria_mobile_handle *h, const turn_row *turn) {
     turn_row *root;
     if (!h || !turn || turn->superseded) return 0;
     if (!turn->ultimate_source_memory_id || !*turn->ultimate_source_memory_id) return 1;
-    root = find_turn(h, turn->ultimate_source_memory_id);
+    root = find_turn_in_namespace(h, turn->ultimate_source_memory_id, turn->namespace_id);
     if (root && root->superseded) return 0;
     return 1;
 }
@@ -338,13 +353,13 @@ static int same_relation_key(const memoria_relation *a, const memoria_relation *
     return strcasecmp(a->subject, b->subject) == 0 && strcasecmp(a->predicate, b->predicate) == 0;
 }
 
-static int temporal_target_from_query(memoria_mobile_handle *h, const char *query, const memoria_relation **target) {
+static int temporal_target_from_query(memoria_mobile_handle *h, const char *query, const char *namespace_id, const memoria_relation **target) {
     size_t i, j;
     const memoria_relation *found = NULL;
     if (!h || !query || !target) return 0;
     for (i = 0; i < h->turn_count; ++i) {
         turn_row *turn = &h->turns[i];
-        if (!temporal_turn_eligible(turn)) continue;
+        if (!turn_namespace_matches(turn, namespace_id) || !temporal_turn_eligible(turn)) continue;
         for (j = 0; j < turn->relation_count; ++j) {
             const memoria_relation *rel = &turn->relations[j];
             if (!rel->subject[0] || !rel->predicate[0] || !contains_ci(query, rel->subject)) continue;
@@ -359,6 +374,7 @@ static int temporal_target_from_query(memoria_mobile_handle *h, const char *quer
 static int try_temporal_response(
     memoria_mobile_handle *h,
     const char *query,
+    const char *namespace_id,
     turn_row *fallback_turn,
     memoria_mobile_buffer *out,
     memoria_mobile_status *status_out
@@ -377,7 +393,7 @@ static int try_temporal_response(
     memoria_mobile_status response_status;
 
     if (!temporal_query_flags(query, &wants_previous, &wants_current)) return 0;
-    target_state = temporal_target_from_query(h, query, &target);
+    target_state = temporal_target_from_query(h, query, namespace_id, &target);
     if (target_state < 0) {
         if (status_out) *status_out = unresolved(out, "temporal state target is ambiguous");
         return 1;
@@ -391,7 +407,7 @@ static int try_temporal_response(
     }
     if (!target) return 0;
 
-    for (i = 0; i < h->turn_count; ++i) if (temporal_turn_eligible(&h->turns[i])) {
+    for (i = 0; i < h->turn_count; ++i) if (turn_namespace_matches(&h->turns[i], namespace_id) && temporal_turn_eligible(&h->turns[i])) {
         ++source_count;
         fact_capacity += h->turns[i].relation_count;
     }
@@ -409,7 +425,7 @@ static int try_temporal_response(
     source_count = 0;
     for (i = 0; i < h->turn_count; ++i) {
         turn_row *turn = &h->turns[i];
-        if (!temporal_turn_eligible(turn)) continue;
+        if (!turn_namespace_matches(turn, namespace_id) || !temporal_turn_eligible(turn)) continue;
         sources[source_count].memory_id = turn->memory_id;
         sources[source_count].relations = turn->relations;
         sources[source_count].relation_count = turn->relation_count;
@@ -428,8 +444,8 @@ static int try_temporal_response(
         if (status_out) *status_out = unresolved(out, "previous temporal state is unavailable");
         return 1;
     }
-    current_turn = find_turn(h, state.current_memory_id);
-    previous_turn = state.previous_memory_id ? find_turn(h, state.previous_memory_id) : NULL;
+    current_turn = find_turn_in_namespace(h, state.current_memory_id, namespace_id);
+    previous_turn = state.previous_memory_id ? find_turn_in_namespace(h, state.previous_memory_id, namespace_id) : NULL;
     if (!current_turn || (state.previous_memory_id && !previous_turn)) {
         if (status_out) *status_out = unresolved(out, "temporal source missing from native state");
         return 1;
@@ -525,7 +541,7 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
 }
 
 memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json, *text, *role, *id, *source_type, *root;
+    char *json, *text, *role, *id, *namespace_id, *source_type, *root;
     char *corrections[MAX_CORRECTIONS] = {0};
     char *relation_ids[MAX_RELATIONS_PER_TURN] = {0};
     const char *relation_id_ptrs[MAX_RELATIONS_PER_TURN] = {0};
@@ -546,14 +562,16 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     text = json_string(json, "text");
     role = json_string(json, "role");
     id = json_string(json, "memory_id");
+    namespace_id = json_string(json, "namespace");
+    if (!namespace_id) namespace_id = dup_string("");
     source_type = json_string(json, "source_type");
     root = json_string(json, "ultimate_source_memory_id");
     correction_count = json_string_array(json, "corrects_memory_ids", corrections, MAX_CORRECTIONS);
     order = json_long(json, "order", (long)h->turn_count + 1);
     authority = json_double(json, "source_authority", -1.0);
-    if (!text || !role || (correction_count && strcmp(role, "user") != 0)) {
+    if (!text || !role || !namespace_id || (correction_count && strcmp(role, "user") != 0)) {
         free_string_array(corrections, correction_count);
-        free(json); free(text); free(role); free(id); free(source_type); free(root);
+        free(json); free(text); free(role); free(id); free(namespace_id); free(source_type); free(root);
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
     }
     next_sequence = h->sequence;
@@ -571,21 +589,21 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     if (!root) root = dup_string(id);
     if (!id || !source_type || !root) {
         free_string_array(corrections, correction_count);
-        free(json); free(text); free(role); free(id); free(source_type); free(root);
+        free(json); free(text); free(role); free(id); free(namespace_id); free(source_type); free(root);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
     for (i = 0; i < correction_count; ++i) {
         size_t j;
-        turn_row *prior = find_turn(h, corrections[i]);
+        turn_row *prior = find_turn_in_namespace(h, corrections[i], namespace_id);
         if (!prior) {
             free_string_array(corrections, correction_count);
-            free(json); free(text); free(role); free(id); free(source_type); free(root);
+            free(json); free(text); free(role); free(id); free(namespace_id); free(source_type); free(root);
             return MEMORIA_MOBILE_INVALID_ARGUMENT;
         }
         for (j = 0; j < h->turn_count && &h->turns[j] != prior; ++j) {}
         if (j == h->turn_count) {
             free_string_array(corrections, correction_count);
-            free(json); free(text); free(role); free(id); free(source_type); free(root);
+            free(json); free(text); free(role); free(id); free(namespace_id); free(source_type); free(root);
             return MEMORIA_MOBILE_INTERNAL_ERROR;
         }
         for (size_t k = 0; k < unique_count; ++k) if (correction_slots[k] == j + 1u) break;
@@ -596,6 +614,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
         }
     }
     candidate.memory_id = id;
+    candidate.namespace_id = namespace_id;
     candidate.text = text;
     candidate.role = role;
     candidate.source_type = source_type;
@@ -655,7 +674,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
 }
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json, *query, *ctx, *st, *root;
+    char *json, *query, *namespace_id, *ctx, *st, *root;
     char relations_json[4096];
     memoria_semantic_source sources[MAX_TURNS];
     memoria_semantic_result r;
@@ -667,10 +686,12 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     query = json_string(json, "query");
-    if (!query) { free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    namespace_id = json_string(json, "namespace");
+    if (!namespace_id) namespace_id = dup_string("");
+    if (!query || !namespace_id) { free(query); free(namespace_id); free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
     size_t source_count = 0;
     for (i = 0; i < h->turn_count; ++i) {
-        if (!turn_factual_active(h, &h->turns[i])) continue;
+        if (!turn_namespace_matches(&h->turns[i], namespace_id) || !turn_factual_active(h, &h->turns[i])) continue;
         sources[source_count].memory_id = h->turns[i].memory_id;
         sources[source_count].text = h->turns[i].text;
         sources[source_count].authority = h->turns[i].authority;
@@ -679,18 +700,18 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         sources[source_count].ultimate_source_memory_id = h->turns[i].ultimate_source_memory_id;
         ++source_count;
     }
-    if (try_temporal_response(h, query, NULL, out, &response_status)) {
-        free(query); free(json);
+    if (try_temporal_response(h, query, namespace_id, NULL, out, &response_status)) {
+        free(namespace_id); free(query); free(json);
         return response_status;
     }
     trajectory_mode = memoria_trajectory_resolve_json(json, query, sources, source_count, &tr, &window_count);
     if (trajectory_mode < 0) {
-        free(query); free(json);
+        free(namespace_id); free(query); free(json);
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
     }
     if (trajectory_mode == 1 && tr.hit && tr.memory_count == 2) {
-        turn_row *first_turn = find_turn(h, tr.memory_ids[0]);
-        turn_row *second_turn = find_turn(h, tr.memory_ids[1]);
+        turn_row *first_turn = find_turn_in_namespace(h, tr.memory_ids[0], namespace_id);
+        turn_row *second_turn = find_turn_in_namespace(h, tr.memory_ids[1], namespace_id);
         char first_relations[4096], second_relations[4096];
         char *first_ctx = NULL, *second_ctx = NULL;
         char *first_id = NULL, *second_id = NULL;
@@ -698,14 +719,14 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         char *first_root = NULL, *second_root = NULL;
 
         if (!first_turn || !second_turn) {
-            free(query); free(json);
+            free(namespace_id); free(query); free(json);
             return unresolved(out, "selected multi-source trajectory memory missing from native state");
         }
         if (!memoria_relations_to_json(first_turn->relations, first_turn->relation_count,
                                        first_turn->memory_id, first_relations, sizeof(first_relations)) ||
             !memoria_relations_to_json(second_turn->relations, second_turn->relation_count,
                                        second_turn->memory_id, second_relations, sizeof(second_relations))) {
-            free(query); free(json);
+            free(namespace_id); free(query); free(json);
             return MEMORIA_MOBILE_INTERNAL_ERROR;
         }
 
@@ -720,7 +741,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         if (!first_ctx || !second_ctx || !first_id || !second_id || !first_type || !second_type || !first_root || !second_root) {
             free(first_ctx); free(second_ctx); free(first_id); free(second_id);
             free(first_type); free(second_type); free(first_root); free(second_root);
-            free(query); free(json);
+            free(namespace_id); free(query); free(json);
             return MEMORIA_MOBILE_INTERNAL_ERROR;
         }
 
@@ -734,18 +755,18 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
 
         free(first_ctx); free(second_ctx); free(first_id); free(second_id);
         free(first_type); free(second_type); free(first_root); free(second_root);
-        free(query); free(json);
+        free(namespace_id); free(query); free(json);
         return response_status;
     }
 
     if (trajectory_mode == 1) {
         if (!tr.hit) {
-            free(query); free(json);
+            free(namespace_id); free(query); free(json);
             return unresolved(out, "no justified active trajectory source");
         }
-        for (i = 0; i < h->turn_count && strcmp(h->turns[i].memory_id, tr.memory_id) != 0; ++i) {}
+        for (i = 0; i < h->turn_count && (strcmp(h->turns[i].memory_id, tr.memory_id) != 0 || !turn_namespace_matches(&h->turns[i], namespace_id)); ++i) {}
         if (i == h->turn_count) {
-            free(query); free(json);
+            free(namespace_id); free(query); free(json);
             return unresolved(out, "selected trajectory source missing from native state");
         }
         r.hit = 1;
@@ -758,19 +779,19 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         r = memoria_semantic_resolve_sources(query, sources, source_count);
     }
     if (!r.hit) {
-        free(query); free(json);
+        free(namespace_id); free(query); free(json);
         return unresolved(out, "no justified native semantic source");
     }
-    for (i = 0; i < h->turn_count && strcmp(h->turns[i].memory_id, r.memory_id) != 0; ++i) {}
+    for (i = 0; i < h->turn_count && (strcmp(h->turns[i].memory_id, r.memory_id) != 0 || !turn_namespace_matches(&h->turns[i], namespace_id)); ++i) {}
     if (i == h->turn_count) {
-        free(query); free(json);
+        free(namespace_id); free(query); free(json);
         return unresolved(out, "selected source missing from native state");
     }
-    if (try_temporal_response(h, query, &h->turns[i], out, &response_status)) {
-        free(query); free(json);
+    if (try_temporal_response(h, query, namespace_id, &h->turns[i], out, &response_status)) {
+        free(namespace_id); free(query); free(json);
         return response_status;
     }
-    free(query); free(json);
+    free(namespace_id); free(query); free(json);
     if (!turn_relations_to_json(&h->turns[i], relations_json, sizeof(relations_json)))
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     ctx = json_escape(h->turns[i].text);

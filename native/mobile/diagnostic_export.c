@@ -128,7 +128,9 @@ static int append_turn(json_builder *b, const memoria_persist_turn *t) {
     if (!append_json_string(b, t->source_type)) return 0;
     if (!append(b, ",\"ultimate_source_memory_id\":")) return 0;
     if (!append_json_string(b, t->ultimate_source_memory_id)) return 0;
-    if (!appendf(b, ",\"source_authority\":%.6f,\"order\":%ld,\"superseded\":%s,\"relations\":[", t->authority, t->order, t->superseded ? "true" : "false")) return 0;
+    if (!appendf(b, ",\"source_authority\":%.6f,\"order\":%ld,\"superseded\":%s,\"namespace\":", t->authority, t->order, t->superseded ? "true" : "false")) return 0;
+    if (!append_json_string(b, t->namespace_id)) return 0;
+    if (!append(b, ",\"relations\":[")) return 0;
     for (i = 0; i < t->relation_count; ++i) {
         if (i && !append(b, ",")) return 0;
         if (!append_relation(b, &t->relations[i], t->relation_memory_ids[i], t->memory_id)) return 0;
