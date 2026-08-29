@@ -47,14 +47,21 @@ def _relation_term(value: str) -> str | None:
     return value
 
 
-def _edge_payload(edge: EvidenceEdge) -> dict:
+def _edge_payload(edge: EvidenceEdge, *, epoch: int | None) -> dict:
+    """Public conversation relation metadata.
+
+    EvidenceCore.epoch is an internal graph sequence and also advances for
+    provenance bookkeeping. Conversation API `epoch` is therefore frozen as the
+    persisted conversational order so the value is reproducible across Python,
+    native/BDR and restart boundaries.
+    """
     return {
         "subject": edge.subject,
         "predicate": edge.predicate,
         "object": edge.object,
         "memory_id": edge.evidence_id,
         "confidence": edge.confidence,
-        "epoch": edge.epoch,
+        "epoch": epoch,
         "namespace": edge.namespace,
     }
 
@@ -156,7 +163,7 @@ class ConversationSemanticService:
         self.evidence.save()
         return ConversationIngestResult(
             (turn_edge.evidence_id, *(row.evidence_id for row in relation_rows)),
-            tuple(_edge_payload(row) for row in relation_rows),
+            tuple(_edge_payload(row, epoch=order) for row in relation_rows),
             not relation_rows,
         )
 
@@ -175,9 +182,11 @@ class ConversationSemanticService:
                 contexts.append(row.source_text)
         relation_rows = [row for row in ordered if row.predicate != "conversation_text" and not row.predicate.startswith("provenance_")]
         provenance_rows = []
+        created_order_by_id: dict[str, int | None] = {}
         for row in ordered:
             direct = self.provenance.inspect(row.evidence_id, namespace=namespace)
             source = self.provenance.ultimate_source(row.evidence_id, namespace=namespace)
+            created_order_by_id[row.evidence_id] = direct.created_order
             provenance_rows.append({
                 "memory_id": direct.memory_id,
                 "source_type": source.source_type,
@@ -194,7 +203,7 @@ class ConversationSemanticService:
             float(confidence if confidence is not None else min(row.confidence for row in ordered)),
             tuple(row.evidence_id for row in ordered),
             "\n".join(contexts),
-            tuple(_edge_payload(row) for row in relation_rows),
+            tuple(_edge_payload(row, epoch=created_order_by_id.get(row.evidence_id)) for row in relation_rows),
             tuple(provenance_rows),
         )
 
