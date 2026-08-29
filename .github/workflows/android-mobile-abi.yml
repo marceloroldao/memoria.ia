@@ -8,6 +8,7 @@ on:
       - "include/memoria_mobile.h"
       - "native/mobile/**"
       - "src/memoria_resolutiva/native_episodic.py"
+      - "src/memoria_resolutiva/product_episodic.py"
       - "src/memoria_resolutiva/product_server.py"
       - "tests/fixtures/native_semantic_slice1.json"
       - "tests/fixtures/native_semantic_slice2.json"
