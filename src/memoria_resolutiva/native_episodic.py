@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 import unicodedata
 
+from .episodic_contract import EpisodeRecallRequest, EpisodeStoreRequest
 from .episodic_recall import EpisodicRecallResult
 from .native_runtime import NativeRuntimeManager, default_native_runtime_manager
-from .product_episodic import EpisodeRecallRequest, EpisodeStoreRequest
 
 
 MEMORIA_MOBILE_OK = 0
