@@ -125,12 +125,14 @@ class MemoryProvenanceIndex:
             superseded_by=by_predicate.get(self.META_SUPERSEDED),
         )
 
-    def ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
-        """Trace derived/replayed/generated echoes to the strongest root source.
+    def active_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
+        """Return the strongest currently authoritative root, if one exists.
 
-        Assistant-generated content only inherits an upstream authority when its
-        lineage is explicit through parent_memory_ids. Generated content without
-        parents remains an assistant-generated root and therefore low-authority.
+        Historical/derived memories are retained after a correction, but a
+        derivation whose entire explicit lineage terminates in superseded sources
+        must not reappear as a fresh independent factual root. This distinction
+        preserves history for temporal reasoning while keeping current factual
+        resolution correction-aware.
         """
         queue = [memory_id]
         seen: set[str] = set()
@@ -149,25 +151,37 @@ class MemoryProvenanceIndex:
             else:
                 roots.append(meta)
         if not roots:
-            return self.inspect(memory_id, namespace=namespace)
+            return None
         roots.sort(key=lambda m: (-m.authority, -(m.created_order or 0), m.memory_id))
         return roots[0]
 
-    def select(self, candidates: list[ProvenanceCandidate], *, namespace: str | None = None) -> ProvenanceCandidate | None:
-        """Select by root source authority, never by echo count.
+    def ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
+        """Trace a memory to its strongest root source.
 
-        Candidates sharing one ultimate source form a single factual lineage. If
-        the root source itself is present, return that source rather than a
-        generated/derived echo even when the echo has higher lexical similarity or
-        later order. If the root is not present, use the strongest representative
-        only as an access path to that same lineage.
+        For backward-compatible inspection this method still returns the direct
+        record when no active root exists. Selection/ambiguity logic must use
+        active_ultimate_source() when deciding current factual authority.
+        """
+        source = self.active_ultimate_source(memory_id, namespace=namespace)
+        if source is not None:
+            return source
+        return self.inspect(memory_id, namespace=namespace)
+
+    def select(self, candidates: list[ProvenanceCandidate], *, namespace: str | None = None) -> ProvenanceCandidate | None:
+        """Select by active root source authority, never by echo count.
+
+        Candidates sharing one ultimate source form a single factual lineage. A
+        candidate whose explicit lineage has only superseded roots is historical
+        evidence and is intentionally excluded from current factual selection.
         """
         lineages: dict[str, list[tuple[ProvenanceCandidate, MemoryProvenance]]] = {}
         for candidate in candidates:
             direct = self.inspect(candidate.memory_id, namespace=namespace)
             if direct.superseded_by is not None:
                 continue
-            source = self.ultimate_source(candidate.memory_id, namespace=namespace)
+            source = self.active_ultimate_source(candidate.memory_id, namespace=namespace)
+            if source is None:
+                continue
             lineages.setdefault(source.memory_id, []).append((candidate, source))
         if not lineages:
             return None
