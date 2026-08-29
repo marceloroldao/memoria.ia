@@ -31,3 +31,19 @@ Ingest remains essentially flat across the matrix. Selected context remains boun
 Resolve scaling is not acceptable as a final optimization target: the 10k run reaches ~693 ms p50. Current code materializes semantic candidates by traversing lineage for each stored turn; that path performs repeated full turn-array lookup and is effectively quadratic at scale. This performance follow-up is tracked separately in Issue #110 so the completed Python→native authority migration in #88 is not conflated with a new optimization project.
 
 Raw accepted JSON is versioned beside this file as `native-100.json`, `native-1000.json` and `native-10000.json`.
+
+## Issue #110 — memory-id index optimization
+
+PR #111 removes the repeated full turn-array lookup from lineage resolution with an internal hash index keyed by `(namespace, memory_id)`. The index stores numeric turn/relation positions rather than pointers, so dynamic turn-array reallocation remains safe. Relation IDs are indexed too, preserving relation → turn → provenance-root traversal.
+
+Measured on GitHub Actions run `33281856973`, merge-test SHA `146c66ef280e12257529926edd83a69b136dcbfa`, with the same BDR pin and deterministic workload:
+
+| records | ingest p50 | ingest p95 | resolve p50 | resolve p95 | RSS peak | restart/load | context p50/p95 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 100 | 0.422026 ms | 0.543602 ms | 0.091490 ms | 0.117839 ms | 45.176 MiB | 2.972094 ms | 25 / 25 B |
+| 1,000 | 0.432708 ms | 0.587477 ms | 0.663809 ms | 0.884632 ms | 55.801 MiB | 18.468418 ms | 25 / 25 B |
+| 10,000 | 0.431082 ms | 0.564490 ms | 6.288470 ms | 6.391282 ms | 227.746 MiB | 215.720600 ms | 25 / 25 B |
+
+Relative to the frozen #109 baseline, resolve p50 improves about **7.7× at 1k** and **110× at 10k**; 10k p95 improves about **111×**. Ingest, selected-context size and restart/load remain effectively unchanged. All semantic, sampled-resolve, restart and durable-store validations remained green.
+
+Because the lookup-only change removes the observed quadratic hot path, no lineage cache is introduced in this slice. Additional caching should only be considered if a later profile demonstrates a new bottleneck.

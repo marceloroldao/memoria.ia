@@ -5,6 +5,7 @@ on:
     branches:
       - integration/v1.0-candidate
     paths:
+      - "native/mobile/**"
       - "benchmarks/native_server_matrix.py"
       - "benchmarks/results/native-server/**"
       - "docs/PYTHON_NATIVE_AUDIT.md"
