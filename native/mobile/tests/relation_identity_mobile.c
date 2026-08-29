@@ -53,6 +53,14 @@ int main(void) {
     CHECK(contains(out, "\"memory_id\":\"turn2#relation:0\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
+    /* Server adapters may pre-compute the bounded ID capacity without duplicating relation parsing. */
+    CHECK(learn(h,
+        "{\"role\":\"user\",\"text\":\"prefetch = stable\",\"memory_id\":\"turn3\",\"order\":3,\"relation_memory_ids\":[\"pref0\",\"pref1\",\"pref2\",\"pref3\"]}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"memory_id\":\"pref0\""));
+    CHECK(!contains(out, "\"memory_id\":\"pref1\""));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
     CHECK(learn(h,
         "{\"role\":\"user\",\"text\":\"invalid = relation\",\"memory_id\":\"bad\",\"relation_memory_ids\":[]}",
         &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
@@ -61,10 +69,12 @@ int main(void) {
 
     CHECK(assert_identity(h, "sensor active", "\"memory_id\":\"rel1\"") == 0);
     CHECK(assert_identity(h, "device ready", "\"memory_id\":\"turn2#relation:0\"") == 0);
+    CHECK(assert_identity(h, "prefetch stable", "\"memory_id\":\"pref0\"") == 0);
 
     CHECK(memoria_mobile_export_snapshot_json(h, snapshot_req, &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"memory_id\":\"rel1\""));
     CHECK(contains(out, "\"memory_id\":\"turn2#relation:0\""));
+    CHECK(contains(out, "\"memory_id\":\"pref0\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
@@ -73,10 +83,12 @@ int main(void) {
     CHECK(memoria_mobile_open("./tmp-mobile-relation-identity", "org-rel-id", &h) == MEMORIA_MOBILE_OK);
     CHECK(assert_identity(h, "sensor active", "\"memory_id\":\"rel1\"") == 0);
     CHECK(assert_identity(h, "device ready", "\"memory_id\":\"turn2#relation:0\"") == 0);
+    CHECK(assert_identity(h, "prefetch stable", "\"memory_id\":\"pref0\"") == 0);
 
     CHECK(memoria_mobile_export_snapshot_json(h, snapshot_req, &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"memory_id\":\"rel1\""));
     CHECK(contains(out, "\"memory_id\":\"turn2#relation:0\""));
+    CHECK(contains(out, "\"memory_id\":\"pref0\""));
     memoria_mobile_free_buffer(out);
 
     memoria_mobile_close(h);

@@ -7,7 +7,9 @@ on:
     paths:
       - "include/memoria_mobile.h"
       - "native/mobile/**"
+      - "src/memoria_resolutiva/native_conversation.py"
       - "src/memoria_resolutiva/native_episodic.py"
+      - "src/memoria_resolutiva/product_conversation.py"
       - "src/memoria_resolutiva/product_episodic.py"
       - "src/memoria_resolutiva/product_server.py"
       - "tests/fixtures/native_semantic_slice1.json"
@@ -16,6 +18,7 @@ on:
       - "tests/test_native_python_semantic_parity.py"
       - "tests/test_native_python_episodic_parity.py"
       - "tests/test_native_episodic_server_adapter.py"
+      - "tests/test_native_conversation_server_adapter.py"
       - ".github/workflows/android-mobile-abi.yml"
   workflow_dispatch:
 
@@ -49,6 +52,7 @@ jobs:
           tests/test_native_python_semantic_parity.py
           tests/test_native_python_episodic_parity.py
           tests/test_native_episodic_server_adapter.py
+          tests/test_native_conversation_server_adapter.py
 
   android-arm64:
     runs-on: ubuntu-latest

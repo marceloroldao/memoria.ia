@@ -767,7 +767,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     relation_ids_present = strstr(json, "\"relation_memory_ids\"") != NULL;
     if (relation_ids_present)
         relation_id_count = json_string_array(json, "relation_memory_ids", relation_ids, MAX_RELATIONS_PER_TURN);
-    if (relation_ids_present && relation_id_count != candidate.relation_count) {
+    if (relation_ids_present && relation_id_count < candidate.relation_count) {
         free_string_array(relation_ids, relation_id_count); free_string_array(parents,parent_count);
         free_string_array(corrections, correction_count); free(created_time);
         free(json); free_turn(&candidate); return MEMORIA_MOBILE_INVALID_ARGUMENT;
