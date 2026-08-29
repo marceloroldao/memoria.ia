@@ -136,7 +136,12 @@ class NativeConversationService:
             for index in range(MAX_NATIVE_RELATIONS)
         ]
         source_type = "user_correction" if corrects_memory_ids else ("user_assertion" if role == "user" else "assistant_generated")
-        source_authority = 0.95 if role == "user" else 0.25
+        if source_type == "user_correction":
+            source_authority = 1.0
+        elif source_type == "user_assertion":
+            source_authority = 0.95
+        else:
+            source_authority = 0.25
         payload: dict[str, object] = {
             "role": role,
             "text": text,
