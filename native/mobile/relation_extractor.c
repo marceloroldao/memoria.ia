@@ -34,15 +34,33 @@ static int is_token_start(const char *text, const char *p) {
     return !is_word_byte((unsigned char)p[-1]);
 }
 
+static int is_clause_sep(char c) {
+    return c == 0 || c == ',' || c == ';' || c == '.' || c == '!' || c == '?';
+}
+
 static int edge_punctuation(unsigned char c) {
     return c == '.' || c == ',' || c == ';' || c == ':' || c == '!' || c == '?' || c == '"';
 }
 
+static void trim_range_copy(const char *start, const char *end, char *out, size_t cap) {
+    size_t n;
+    while (start < end && isspace((unsigned char)*start)) ++start;
+    while (end > start && isspace((unsigned char)end[-1])) --end;
+    while (start < end && edge_punctuation((unsigned char)*start)) ++start;
+    while (end > start && edge_punctuation((unsigned char)end[-1])) --end;
+    n = (size_t)(end - start);
+    if (n >= cap) n = cap - 1;
+    memcpy(out, start, n);
+    out[n] = 0;
+}
+
 static int copy_word(const char *p, char *out, size_t cap, const char **end_out) {
     const char *start = p;
+    const char *raw_end;
     size_t n;
     if (!p || !*p || !is_word_byte((unsigned char)*p)) return 0;
     while (*p && is_word_byte((unsigned char)*p)) ++p;
+    raw_end = p;
     while (start < p && edge_punctuation((unsigned char)*start)) ++start;
     while (p > start && edge_punctuation((unsigned char)p[-1])) --p;
     if (p <= start) return 0;
@@ -50,11 +68,7 @@ static int copy_word(const char *p, char *out, size_t cap, const char **end_out)
     if (n >= cap) n = cap - 1;
     memcpy(out, start, n);
     out[n] = 0;
-    if (end_out) {
-        const char *raw_end = p;
-        while (*raw_end && is_word_byte((unsigned char)*raw_end)) ++raw_end;
-        *end_out = raw_end;
-    }
+    if (end_out) *end_out = raw_end;
     return 1;
 }
 
@@ -87,7 +101,7 @@ static int is_noise_term(const char *value) {
     return 0;
 }
 
-static int match_copula(const char *p, const char **end_out) {
+static int match_product_copula(const char *p, const char **end_out) {
     const char *end;
     if (*p == '=') {
         if (end_out) *end_out = p + 1;
@@ -98,7 +112,7 @@ static int match_copula(const char *p, const char **end_out) {
         if (end_out) *end_out = p + 2;
         return 1;
     }
-    if (keyword_at(p, "eh", &end) || keyword_at(p, "is", &end) || keyword_at(p, "e", &end)) {
+    if (keyword_at(p, "eh", &end) || keyword_at(p, "e", &end)) {
         if (end_out) *end_out = end;
         return 1;
     }
@@ -114,6 +128,38 @@ static const char *skip_object_article(const char *p) {
     return p;
 }
 
+static int parse_legacy_is_clause(
+    const char *start,
+    const char *end,
+    memoria_relation *row
+) {
+    char clause[256], left[96], right[96];
+    const char *p, *kw_end, *r;
+    size_t n = (size_t)(end - start);
+    if (n >= sizeof(clause)) n = sizeof(clause) - 1;
+    memcpy(clause, start, n);
+    clause[n] = 0;
+
+    for (p = clause; *p; ++p) {
+        if ((p == clause || isspace((unsigned char)p[-1])) && keyword_at(p, "is", &kw_end)) {
+            if (*kw_end && !isspace((unsigned char)*kw_end)) continue;
+            trim_range_copy(clause, p, left, sizeof(left));
+            r = skip_spaces(kw_end);
+            r = skip_object_article(r);
+            trim_range_copy(r, clause + strlen(clause), right, sizeof(right));
+            if (!left[0] || !right[0]) return 0;
+            strncpy(row->subject, left, sizeof(row->subject) - 1);
+            row->subject[sizeof(row->subject) - 1] = 0;
+            strcpy(row->predicate, "is");
+            strncpy(row->object, right, sizeof(row->object) - 1);
+            row->object[sizeof(row->object) - 1] = 0;
+            row->confidence = 0.95;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int parse_copular_at(
     const char *text,
     const char *start,
@@ -126,7 +172,7 @@ static int parse_copular_at(
     if (!copy_word(start, left, sizeof(left), &after_left)) return 0;
     if (is_noise_term(left)) return 0;
     p = skip_spaces(after_left);
-    if (!match_copula(p, &after_copula)) return 0;
+    if (!match_product_copula(p, &after_copula)) return 0;
     p = skip_spaces(after_copula);
     p = skip_object_article(p);
     if (!copy_word(p, right, sizeof(right), &after_right)) return 0;
@@ -205,14 +251,26 @@ static void add_unique(memoria_relation *out, size_t *count, size_t capacity, co
 }
 
 size_t memoria_extract_relations(const char *text, memoria_relation *out, size_t capacity) {
-    const char *p;
+    const char *segment, *p;
     size_t count = 0;
     memoria_relation candidate;
     const char *match_end;
 
     if (!text || !out || capacity == 0) return 0;
 
-    /* Product contract: collect all explicit copular relations first. */
+    /* Preserve the mobile/native compound-subject contract for English `is`. */
+    segment = text;
+    for (p = text;; ++p) {
+        if (is_clause_sep(*p)) {
+            if (count < capacity && parse_legacy_is_clause(segment, p, &candidate)) {
+                add_unique(out, &count, capacity, &candidate);
+            }
+            if (*p == 0) break;
+            segment = p + 1;
+        }
+    }
+
+    /* Product contract: collect explicit compact copular relations next. */
     for (p = text; *p && count < capacity; ++p) {
         if (parse_copular_at(text, p, &candidate, &match_end)) {
             add_unique(out, &count, capacity, &candidate);
