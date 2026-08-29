@@ -23,25 +23,29 @@ static int contains(memoria_mobile_buffer b, const char *needle) {
 static int assert_scopes(memoria_mobile_handle *h) {
     memoria_mobile_buffer out = {0};
 
-    CHECK(resolve(h, "{\"query\":\"device mode\",\"namespace\":\"s1\"}", &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"memory_ids\":[\"s1-new\"]"));
-    CHECK(contains(out, "device mode is active"));
-    CHECK(!contains(out, "broken"));
+    /* Semantic isolation uses one authoritative fact per namespace. */
+    CHECK(resolve(h, "{\"query\":\"workspace\",\"namespace\":\"s1\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"memory_ids\":[\"s1-workspace\"]"));
+    CHECK(contains(out, "workspace is alpha"));
+    CHECK(!contains(out, "beta"));
+    CHECK(!contains(out, "global"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    CHECK(resolve(h, "{\"query\":\"device mode\",\"namespace\":\"s2\"}", &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"memory_ids\":[\"s2-only\"]"));
-    CHECK(contains(out, "device mode is broken"));
-    CHECK(!contains(out, "active"));
+    CHECK(resolve(h, "{\"query\":\"workspace\",\"namespace\":\"s2\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"memory_ids\":[\"s2-workspace\"]"));
+    CHECK(contains(out, "workspace is beta"));
+    CHECK(!contains(out, "alpha"));
+    CHECK(!contains(out, "global"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    CHECK(resolve(h, "{\"query\":\"device mode\"}", &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"memory_ids\":[\"default\"]"));
-    CHECK(contains(out, "device mode is default"));
-    CHECK(!contains(out, "active"));
-    CHECK(!contains(out, "broken"));
+    CHECK(resolve(h, "{\"query\":\"workspace\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"memory_ids\":[\"default-workspace\"]"));
+    CHECK(contains(out, "workspace is global"));
+    CHECK(!contains(out, "alpha"));
+    CHECK(!contains(out, "beta"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
+    /* Historical state remains independently scoped. */
     CHECK(resolve(h, "{\"query\":\"what was device mode before and what is current now?\",\"namespace\":\"s1\"}", &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"temporal_state_used\":true"));
     CHECK(contains(out, "\"previous_memory_id\":\"s1-old\""));
@@ -49,6 +53,13 @@ static int assert_scopes(memoria_mobile_handle *h) {
     CHECK(contains(out, "\"previous_value\":\"standby\""));
     CHECK(contains(out, "\"current_value\":\"active\""));
     CHECK(!contains(out, "broken"));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
+    CHECK(resolve(h, "{\"query\":\"what is current device mode now?\",\"namespace\":\"s2\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"temporal_state_used\":true"));
+    CHECK(contains(out, "\"current_memory_id\":\"s2-device\""));
+    CHECK(contains(out, "\"current_value\":\"broken\""));
+    CHECK(!contains(out, "active"));
     memoria_mobile_free_buffer(out);
     return 0;
 }
@@ -61,17 +72,22 @@ int main(void) {
 
     CHECK(memoria_mobile_open("./tmp-mobile-namespace", "org-namespace", &h) == MEMORIA_MOBILE_OK);
 
-    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is standby\",\"memory_id\":\"s1-old\",\"namespace\":\"s1\",\"order\":1}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"workspace is alpha\",\"memory_id\":\"s1-workspace\",\"namespace\":\"s1\",\"order\":1}", &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
-    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is broken\",\"memory_id\":\"s2-only\",\"namespace\":\"s2\",\"order\":2}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"workspace is beta\",\"memory_id\":\"s2-workspace\",\"namespace\":\"s2\",\"order\":2}", &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
-    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is active\",\"memory_id\":\"s1-new\",\"namespace\":\"s1\",\"order\":3}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"workspace is global\",\"memory_id\":\"default-workspace\",\"order\":3}", &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
-    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is default\",\"memory_id\":\"default\",\"order\":4}", &out) == MEMORIA_MOBILE_OK);
+
+    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is standby\",\"memory_id\":\"s1-old\",\"namespace\":\"s1\",\"order\":4}", &out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is broken\",\"memory_id\":\"s2-device\",\"namespace\":\"s2\",\"order\":5}", &out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is active\",\"memory_id\":\"s1-new\",\"namespace\":\"s1\",\"order\":6}", &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     /* A named namespace cannot supersede memory from another namespace. */
-    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"device mode is fixed\",\"memory_id\":\"cross\",\"namespace\":\"s1\",\"corrects_memory_ids\":[\"s2-only\"]}", &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
+    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"workspace is fixed\",\"memory_id\":\"cross\",\"namespace\":\"s1\",\"corrects_memory_ids\":[\"s2-workspace\"]}", &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
     if (out.data) memoria_mobile_free_buffer(out);
     out = (memoria_mobile_buffer){0};
 
