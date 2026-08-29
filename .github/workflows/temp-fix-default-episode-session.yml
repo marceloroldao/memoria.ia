@@ -1,0 +1,32 @@
+name: temp-fix-default-episode-session
+
+on:
+  push:
+    branches:
+      - integration/v1.0-native-episodic-session
+    paths:
+      - '.github/workflows/temp-fix-default-episode-session.yml'
+      - '.github/scripts/temp_fix_default_episode_session.py'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/v1.0-native-episodic-session
+      - name: Apply default session parity fix
+        run: python .github/scripts/temp_fix_default_episode_session.py
+      - name: Commit permanent runtime fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/scripts/temp_fix_default_episode_session.py .github/workflows/temp-fix-default-episode-session.yml
+          git add native/mobile/memoria_mobile.c
+          git diff --cached --check
+          git commit -m "fix(native): keep unscoped episodes in default session"
+          git push origin HEAD:integration/v1.0-native-episodic-session
