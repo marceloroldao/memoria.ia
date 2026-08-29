@@ -52,11 +52,10 @@ int main(void) {
     CHECK(memoria_mobile_open("./tmp-mobile-trajectory-multisource","org-trajectory-multisource",&h) == MEMORIA_MOBILE_OK);
     CHECK(run_pair_recall(h) == 0);
 
-    /* Singular reference to two equally grounded roots must still fail closed. */
+    /* Singular reference with equally grounded antecedents must still fail closed. */
     CHECK(call(h,0,
-        "{\"query\":\"what is its model\",\"session_id\":\"s-pair\",\"conversation_window\":["
-        "{\"session_id\":\"s-pair\",\"role\":\"user\",\"text\":\"device alpha model is N7\",\"order\":1},"
-        "{\"session_id\":\"s-pair\",\"role\":\"user\",\"text\":\"device beta model is Q4\",\"order\":2}]}",
+        "{\"query\":\"what is its model\",\"session_id\":\"s-ambiguous\",\"conversation_window\":["
+        "{\"session_id\":\"s-ambiguous\",\"role\":\"user\",\"text\":\"device alpha and device beta are both relevant\",\"order\":1}]}",
         &out) == MEMORIA_MOBILE_UNRESOLVED);
     memoria_mobile_free_buffer(out);
 
