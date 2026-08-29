@@ -1,27 +1,19 @@
 from __future__ import annotations
 
-import ctypes
 from dataclasses import dataclass
-import json
 from pathlib import Path
-import threading
 import unicodedata
 
 from .episodic_recall import EpisodicRecallResult
+from .native_runtime import NativeRuntimeManager, default_native_runtime_manager
 from .product_episodic import EpisodeRecallRequest, EpisodeStoreRequest
 
 
-MEMORIA_MOBILE_ABI_VERSION = 1
 MEMORIA_MOBILE_OK = 0
 MEMORIA_MOBILE_INVALID_ARGUMENT = 1
 MEMORIA_MOBILE_UNRESOLVED = 2
 
 
-class _NativeBuffer(ctypes.Structure):
-    _fields_ = [
-        ("data", ctypes.POINTER(ctypes.c_uint8)),
-        ("size", ctypes.c_size_t),
-    ]
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,78 +67,23 @@ class NativeEpisodicService:
         library_path: str | Path,
         data_dir: str | Path,
         organization_id: str,
+        runtime_manager: NativeRuntimeManager | None = None,
     ) -> None:
         self.library_path = Path(library_path)
         self.data_dir = Path(data_dir)
         self.organization_id = organization_id
-        if not self.library_path.is_file():
-            raise RuntimeError(f"native Memoria.ia library not found: {self.library_path}")
-        if not organization_id.strip():
-            raise RuntimeError("organization_id must be non-empty for native episodic runtime")
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        self._lib = ctypes.CDLL(str(self.library_path))
-        self._configure_abi()
-        if self._lib.memoria_mobile_abi_version() != MEMORIA_MOBILE_ABI_VERSION:
-            raise RuntimeError("unsupported Memoria.ia native mobile ABI version")
-        self._handle = ctypes.c_void_p()
-        status = self._lib.memoria_mobile_open(
-            str(self.data_dir).encode("utf-8"),
-            organization_id.encode("utf-8"),
-            ctypes.byref(self._handle),
+        manager = runtime_manager or default_native_runtime_manager()
+        self._runtime_lease = manager.acquire(
+            library_path=self.library_path,
+            data_dir=self.data_dir,
+            organization_id=organization_id,
         )
-        if status != MEMORIA_MOBILE_OK or not self._handle.value:
-            raise RuntimeError(f"failed to open native Memoria.ia runtime: status={status}")
-        self._lock = threading.RLock()
         self._closed = False
 
-    def _configure_abi(self) -> None:
-        self._lib.memoria_mobile_abi_version.restype = ctypes.c_uint32
-        self._lib.memoria_mobile_open.argtypes = [
-            ctypes.c_char_p,
-            ctypes.c_char_p,
-            ctypes.POINTER(ctypes.c_void_p),
-        ]
-        self._lib.memoria_mobile_open.restype = ctypes.c_int
-        self._lib.memoria_mobile_store_episode_json.argtypes = [
-            ctypes.c_void_p,
-            _NativeBuffer,
-            ctypes.POINTER(_NativeBuffer),
-        ]
-        self._lib.memoria_mobile_store_episode_json.restype = ctypes.c_int
-        self._lib.memoria_mobile_recall_episode_json.argtypes = [
-            ctypes.c_void_p,
-            _NativeBuffer,
-            ctypes.POINTER(_NativeBuffer),
-        ]
-        self._lib.memoria_mobile_recall_episode_json.restype = ctypes.c_int
-        self._lib.memoria_mobile_flush.argtypes = [ctypes.c_void_p]
-        self._lib.memoria_mobile_flush.restype = ctypes.c_int
-        self._lib.memoria_mobile_free_buffer.argtypes = [_NativeBuffer]
-        self._lib.memoria_mobile_close.argtypes = [ctypes.c_void_p]
-
     def _call(self, function_name: str, payload: dict[str, object]) -> tuple[int, dict[str, object]]:
-        if self._closed or not self._handle.value:
+        if self._closed:
             raise RuntimeError("native episodic runtime is closed")
-        raw = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-        backing = ctypes.create_string_buffer(raw)
-        request = _NativeBuffer(ctypes.cast(backing, ctypes.POINTER(ctypes.c_uint8)), len(raw))
-        response = _NativeBuffer()
-        with self._lock:
-            status = getattr(self._lib, function_name)(self._handle, request, ctypes.byref(response))
-            try:
-                body = ctypes.string_at(response.data, response.size).decode("utf-8") if response.data else ""
-            finally:
-                if response.data:
-                    self._lib.memoria_mobile_free_buffer(response)
-        if not body:
-            return status, {}
-        try:
-            decoded = json.loads(body)
-        except json.JSONDecodeError as exc:
-            raise RuntimeError("native Memoria.ia returned invalid JSON") from exc
-        if not isinstance(decoded, dict):
-            raise RuntimeError("native Memoria.ia returned a non-object JSON response")
-        return status, decoded
+        return self._runtime_lease.call(function_name, payload)
 
     def store(self, request: EpisodeStoreRequest) -> tuple[NativeEpisodeEdge, NativeEpisodeReceipt]:
         if request.parent_memory_ids:
@@ -214,18 +151,11 @@ class NativeEpisodicService:
         )
 
     def flush(self) -> None:
-        if self._closed or not self._handle.value:
-            return
-        with self._lock:
-            status = self._lib.memoria_mobile_flush(self._handle)
-        if status != MEMORIA_MOBILE_OK:
-            raise RuntimeError(f"native Memoria.ia flush failed: status={status}")
+        if not self._closed:
+            self._runtime_lease.flush()
 
     def close(self) -> None:
         if self._closed:
             return
-        with self._lock:
-            if self._handle.value:
-                self._lib.memoria_mobile_close(self._handle)
-                self._handle = ctypes.c_void_p()
-            self._closed = True
+        self._closed = True
+        self._runtime_lease.release()
