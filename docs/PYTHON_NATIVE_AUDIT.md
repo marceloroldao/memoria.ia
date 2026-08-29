@@ -72,7 +72,8 @@ Frozen decisions:
 - the production Docker image builds `libmemoria_mobile.so` from this repository plus Resolutive-DB pinned at `1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e`;
 - the image embeds the native library, sets the native runtime environment explicitly, verifies mobile ABI v1 during image build and keeps BDR-backed state under `/data`;
 - `.env.example` exposes the migration explicitly, including how source/local deployments must point `MEMORIA_NATIVE_LIB` at a platform-native build;
-- when both production capabilities are native they share the unified `native-runtime` store introduced in the previous slice.
+- when both production capabilities are native they share the unified `native-runtime` store introduced in the previous slice;
+- native service shutdown is owned by FastAPI's supported `lifespan` context. The HTTP surface itself remains unchanged except for accepting that lifecycle hook; the lifespan releases conversation and episodic leases, allowing the shared runtime manager to close the underlying native handle only after the final lease is released.
 
 Acceptance requirements:
 
