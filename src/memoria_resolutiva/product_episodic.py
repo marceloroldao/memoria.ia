@@ -85,7 +85,7 @@ def attach_episodic_routes(app: FastAPI, *, api_key: str, service: ProductEpisod
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {
             "status": result.status,
-            "confidence": result.confidence,
+            "confidence": round(result.confidence, 6),
             "episode_ids": list(result.episode_ids),
             "selected_context": result.selected_context,
             "order": result.order,

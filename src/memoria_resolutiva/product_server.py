@@ -5,6 +5,7 @@ import os
 
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
+from .native_episodic import NativeEpisodicService
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
 from .product_admin_config import attach_configuration_routes
 from .product_applications import ApplicationRegistry
@@ -92,6 +93,27 @@ def _build_chat_service(
     raise RuntimeError(f"unsupported MEMORIA_LLM_PROVIDER: {provider}")
 
 
+def _build_episodic_service(
+    *,
+    evidence_service: ProductEvidenceService,
+    data_dir: Path,
+    organization_id: str,
+):
+    runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "python").strip().lower()
+    if runtime == "python":
+        return ProductEpisodicService(evidence_service)
+    if runtime != "native":
+        raise RuntimeError("MEMORIA_EPISODIC_RUNTIME must be 'python' or 'native'")
+    library_path = os.getenv("MEMORIA_NATIVE_LIB", "").strip()
+    if not library_path:
+        raise RuntimeError("MEMORIA_NATIVE_LIB is required when MEMORIA_EPISODIC_RUNTIME=native")
+    return NativeEpisodicService(
+        library_path=library_path,
+        data_dir=data_dir / "native-episodic",
+        organization_id=organization_id,
+    )
+
+
 def build_app():
     organization_id = _env("MEMORIA_ORGANIZATION_ID", required=True)
     organization_name = os.getenv("MEMORIA_ORGANIZATION_NAME")
@@ -123,7 +145,11 @@ def build_app():
         allow_fallback=storage_allow_fallback,
     )
     conversation_service = ConversationSemanticService(evidence_service)
-    episodic_service = ProductEpisodicService(evidence_service)
+    episodic_service = _build_episodic_service(
+        evidence_service=evidence_service,
+        data_dir=data_dir,
+        organization_id=organization_id,
+    )
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -159,12 +185,15 @@ def build_app():
             "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
             "evidence_backend": evidence_service.backend,
             "evidence_persisted": evidence_service.receipt is not None,
+            "episodic_runtime": "native" if isinstance(episodic_service, NativeEpisodicService) else "python",
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_episodic_routes(app, api_key=api_key, service=episodic_service)
     attach_configuration_routes(app, api_key=api_key, store=configuration)
+    if isinstance(episodic_service, NativeEpisodicService):
+        app.add_event_handler("shutdown", episodic_service.close)
     return app
 
 
