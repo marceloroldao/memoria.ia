@@ -48,7 +48,7 @@ static int assert_session_trajectory_temporal(memoria_mobile_handle *h) {
 
     CHECK(call(h,0,
         "{\"query\":\"what was its mode before and what is current now?\",\"session_id\":\"s-alpha\",\"conversation_window\":["
-        "{\"session_id\":\"s-alpha\",\"role\":\"user\",\"text\":\"we are discussing device alpha\",\"order\":1}]}",
+        "{\"session_id\":\"s-alpha\",\"role\":\"user\",\"text\":\"device alpha mode is active\",\"order\":1}]}",
         &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"temporal_state_used\":true"));
     CHECK(contains(out,"\"memory_ids\":[\"a1\",\"a2\"]"));
@@ -58,7 +58,7 @@ static int assert_session_trajectory_temporal(memoria_mobile_handle *h) {
 
     CHECK(call(h,0,
         "{\"query\":\"what was its mode before and what is current now?\",\"session_id\":\"s-beta\",\"conversation_window\":["
-        "{\"session_id\":\"s-beta\",\"role\":\"user\",\"text\":\"we are discussing device beta\",\"order\":1}]}",
+        "{\"session_id\":\"s-beta\",\"role\":\"user\",\"text\":\"device beta mode is running\",\"order\":1}]}",
         &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"temporal_state_used\":true"));
     CHECK(contains(out,"\"memory_ids\":[\"b1\",\"b2\"]"));
@@ -69,7 +69,7 @@ static int assert_session_trajectory_temporal(memoria_mobile_handle *h) {
     /* A trajectory-local antecedent from another session must not leak. */
     CHECK(call(h,0,
         "{\"query\":\"what was its mode before and what is current now?\",\"session_id\":\"s-beta\",\"conversation_window\":["
-        "{\"session_id\":\"s-alpha\",\"role\":\"user\",\"text\":\"we are discussing device alpha\",\"order\":1}]}",
+        "{\"session_id\":\"s-alpha\",\"role\":\"user\",\"text\":\"device alpha mode is active\",\"order\":1}]}",
         &out) == MEMORIA_MOBILE_UNRESOLVED);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
