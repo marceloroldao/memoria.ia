@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import os
 
+from .conversation_contract import attach_conversation_routes
+from .episodic_contract import attach_episodic_routes
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .native_conversation import NativeConversationService
@@ -13,9 +15,7 @@ from .product_admin_config import attach_configuration_routes
 from .product_applications import ApplicationRegistry
 from .product_chat import ProductChatService
 from .product_config import ProductConfigurationStore
-from .product_conversation import ConversationSemanticService, attach_conversation_routes
 from .product_evidence import ProductEvidenceService, attach_evidence_routes
-from .product_episodic import ProductEpisodicService, attach_episodic_routes
 from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
 from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
@@ -111,6 +111,8 @@ def _build_conversation_service(
 ):
     runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "native").strip().lower()
     if runtime == "python":
+        from .reference_conversation import ConversationSemanticService
+
         return ConversationSemanticService(evidence_service)
     if runtime != "native":
         raise RuntimeError("MEMORIA_CONVERSATION_RUNTIME must be 'python' or 'native'")
@@ -130,6 +132,8 @@ def _build_episodic_service(
 ):
     runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "native").strip().lower()
     if runtime == "python":
+        from .reference_episodic import ProductEpisodicService
+
         return ProductEpisodicService(evidence_service)
     if runtime != "native":
         raise RuntimeError("MEMORIA_EPISODIC_RUNTIME must be 'python' or 'native'")
