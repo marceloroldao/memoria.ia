@@ -22,8 +22,9 @@ The migration rule is: **one authoritative semantic implementation, multiple thi
 | Correction/supersession | native learn/persistence boundary | Python implementation remains until production conversation route switches |
 | Provenance/authority lineage | native parent/root lineage + supersession metadata | Python `memory_provenance.py` remains a reference/legacy server path during migration |
 | Relation identity | persisted native relation memory IDs | Server may pre-compute bounded deterministic IDs; native extraction decides how many are consumed |
+| Native process ownership | `native_runtime.py` shared DLL/handle/lock manager | Python owns lifecycle only; semantic state remains inside one native runtime/store |
 | Episodic server adapter | `NativeEpisodicService` | FastAPI/Pydantic remain Python |
-| Conversation server adapter | `NativeConversationService` | FastAPI/Pydantic/auth remain Python; runtime is opt-in while response metadata is frozen |
+| Conversation server adapter | `NativeConversationService` | FastAPI/Pydantic/auth remain Python; runtime remains opt-in until production-default slice |
 
 ## Product boundaries
 
@@ -35,7 +36,7 @@ OFF.IA must not parse BDR, duplicate semantic rules, or use product-server names
 
 ### PC/server
 
-`FastAPI/Pydantic -> thin native adapter -> Memoria.ia native core -> Resolutive-DB`
+`FastAPI/Pydantic -> thin native adapter -> shared native runtime -> Memoria.ia native core -> Resolutive-DB`
 
 Server `session_id` may be mapped to native persistent `namespace` to preserve product-level conversation isolation.
 
@@ -54,35 +55,37 @@ Server `session_id` may be mapped to native persistent `namespace` to preserve p
 - native parent lineage, authority clamping and superseded-by metadata;
 - opt-in native conversation HTTP adapter;
 - shared product relation extraction parity for compact Portuguese copulas, elliptic relations, dedupe and noise filtering;
-- deliberate native English `is` compound-subject compatibility preserved for mobile/temporal entities.
+- deliberate native English `is` compound-subject compatibility preserved for mobile/temporal entities;
+- complete supported conversation response parity, including native-authoritative confidence, durable relation order/time metadata, corrections, fallback, unresolved and restart.
 
-## Current slice — confidence and response metadata parity
+## Current slice — shared native runtime lifecycle
 
-The selected memory already has semantic parity. This slice freezes the remaining public response contract before native conversation can become the default server path.
+The conversation and episodic adapters previously each loaded `libmemoria_mobile`, opened an independent native handle and owned a separate lock/close lifecycle. The product server also placed those stores in separate directories. This slice removes that duplicated process ownership.
 
-Frozen decisions:
+Design decisions:
 
-- native semantic confidence is the v1 authority; it combines normalized lexical overlap with source authority and is capped by the native kernel contract;
-- public confidence is serialized/normalized to six decimal places, matching the native ABI JSON precision and avoiding language-specific floating-point artifacts;
-- the legacy Python conversation service keeps its selection logic unchanged and temporarily mirrors only the native public confidence formula for parity; this reference path is removed after native becomes production default;
-- the thin `NativeConversationService` does not recompute ranking or confidence;
-- public relation `epoch` means persistent conversational `created_order`, not the internal `EvidenceCore` sequence;
-- native resolve provenance exposes persisted `created_order` and `created_time`; the adapter copies those durable fields into the public response.
+- `NativeRuntimeManager` owns one DLL, one `memoria_mobile_open` handle and one re-entrant lock per canonical `(library_path, data_dir, organization_id)`;
+- leases are reference-counted; closing one service releases only its lease, while the last release closes the native handle;
+- opening the same active store with a different native library fails closed;
+- conversation and episodic services delegate call/flush/lifecycle to the manager and do not own native ABI setup independently;
+- when both product runtimes are native, the server points both adapters at one `native-runtime` store so turns and episodes share one durable BDR-backed handle;
+- when only one feature is native, its existing `native-conversation` or `native-episodic` path is preserved;
+- if both runtimes are enabled and a legacy split store already contains data, startup fails explicitly instead of silently abandoning or merging persistent state. A future migration must be deliberate.
 
 Acceptance requirements:
 
-- compare complete supported ingest/resolve JSON between Python and native paths;
-- preserve relation IDs, namespace, source authority, immediate source type, parent lineage, ultimate source, created order/time and supersession metadata;
-- preserve correction and turn-fallback behavior;
-- unresolved responses remain identical;
-- restart preserves the same public response;
+- conversation and episodic adapters acquired for the same store share one exact native runtime object;
+- releasing one adapter leaves the other operational;
+- the last release closes and evicts the runtime;
+- reopen after the last close recovers both conversational and episodic state from the same BDR-backed store;
+- conflicting native libraries for one active store fail closed;
+- all existing Python/native parity tests remain green;
 - Android arm64, Ubuntu, Windows and BDR gates remain green.
 
 ## Remaining P0 work after this slice
 
-1. Consolidate native episodic and conversation handles behind a shared runtime manager so one process does not maintain unnecessary duplicate native stores.
-2. Make the native server runtime the production default only after the frozen response contract is accepted.
-3. Remove duplicated authoritative Python ranking/provenance algorithms once native is the production path.
-4. Run the #88 benchmark matrix at 100 / 1,000 / 10,000 records: ingest p50/p95, resolve p50/p95, RSS, selected-context size and restart/load time.
+1. Make the native server runtime the production default after the shared-runtime gate is accepted.
+2. Remove duplicated authoritative Python ranking/provenance algorithms once native is the production path.
+3. Run the #88 benchmark matrix at 100 / 1,000 / 10,000 records: ingest p50/p95, resolve p50/p95, RSS, selected-context size and restart/load time.
 
 Do not close #88 until these production-path and benchmark criteria are satisfied.
