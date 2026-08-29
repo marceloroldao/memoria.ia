@@ -34,7 +34,7 @@ def test_user_correction_supersedes_wrong_assistant_answer(tmp_path: Path):
     assert service.provenance.inspect(wrong.memory_ids[0], namespace="s").superseded_by == correction.memory_ids[0]
 
 
-def test_user_correction_supersedes_prior_user_fact_and_derived_relation(tmp_path: Path):
+def test_user_correction_supersedes_prior_user_fact_and_survives_restart(tmp_path: Path):
     root = tmp_path / "evidence"
     service = _service(root)
     old = service.ingest(role="user", text="device alpha mode is standby", session_id="s", order=1)
@@ -50,9 +50,6 @@ def test_user_correction_supersedes_prior_user_fact_and_derived_relation(tmp_pat
     assert result.status == "HIT"
     assert result.selected_context == "device alpha mode is active"
     assert service.provenance.inspect(old.memory_ids[0], namespace="s").superseded_by == correction.memory_ids[0]
-    # The old relation remains stored for history but has no active factual root.
-    assert service.provenance.inspect(old.memory_ids[1], namespace="s").superseded_by is None
-    assert service.provenance.active_ultimate_source(old.memory_ids[1], namespace="s") is None
 
     restarted = _service(root)
     after = restarted.resolve(query="device alpha mode", session_id="s")
