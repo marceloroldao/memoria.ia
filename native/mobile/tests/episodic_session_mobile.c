@@ -35,9 +35,10 @@ static int assert_scoped(memoria_mobile_handle *h) {
     CHECK(!contains(out,"session one"));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    CHECK(recall(h,"{\"query\":\"latest atlas status report\",\"role\":\"assistant\",\"event_type\":\"report\",\"topics_csv\":\"atlas,status\"}",&out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out,"\"episode_ids\":[\"s2\"]"));
-    CHECK(contains(out,"atlas status report session two"));
+    CHECK(recall(h,"{\"query\":\"latest atlas status report\",\"role\":\"assistant\",\"event_type\":\"report\",\"topics_csv\":\"atlas,status\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out,"\"status\":\"UNRESOLVED\""));
+    CHECK(!contains(out,"session one"));
+    CHECK(!contains(out,"session two"));
     memoria_mobile_free_buffer(out);
     return 0;
 }
