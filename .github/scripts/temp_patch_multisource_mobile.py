@@ -1,0 +1,62 @@
+from pathlib import Path
+
+path = Path("native/mobile/memoria_mobile.c")
+text = path.read_text(encoding="utf-8")
+needle = "    if (trajectory_mode == 1) {\n"
+if text.count(needle) != 1:
+    raise SystemExit(f"expected exactly one trajectory branch, found {text.count(needle)}")
+
+block = r'''    if (trajectory_mode == 1 && tr.hit && tr.memory_count == 2) {
+        turn_row *first_turn = find_turn(h, tr.memory_ids[0]);
+        turn_row *second_turn = find_turn(h, tr.memory_ids[1]);
+        char first_relations[1536], second_relations[1536];
+        char *first_ctx = NULL, *second_ctx = NULL;
+        char *first_id = NULL, *second_id = NULL;
+        char *first_type = NULL, *second_type = NULL;
+        char *first_root = NULL, *second_root = NULL;
+
+        if (!first_turn || !second_turn) {
+            free(query); free(json);
+            return unresolved(out, "selected multi-source trajectory memory missing from native state");
+        }
+        if (!memoria_relations_to_json(first_turn->relations, first_turn->relation_count,
+                                       first_turn->memory_id, first_relations, sizeof(first_relations)) ||
+            !memoria_relations_to_json(second_turn->relations, second_turn->relation_count,
+                                       second_turn->memory_id, second_relations, sizeof(second_relations))) {
+            free(query); free(json);
+            return MEMORIA_MOBILE_INTERNAL_ERROR;
+        }
+
+        first_ctx = json_escape(first_turn->text);
+        second_ctx = json_escape(second_turn->text);
+        first_id = json_escape(first_turn->memory_id);
+        second_id = json_escape(second_turn->memory_id);
+        first_type = json_escape(first_turn->source_type ? first_turn->source_type : "");
+        second_type = json_escape(second_turn->source_type ? second_turn->source_type : "");
+        first_root = json_escape(first_turn->ultimate_source_memory_id ? first_turn->ultimate_source_memory_id : "");
+        second_root = json_escape(second_turn->ultimate_source_memory_id ? second_turn->ultimate_source_memory_id : "");
+        if (!first_ctx || !second_ctx || !first_id || !second_id || !first_type || !second_type || !first_root || !second_root) {
+            free(first_ctx); free(second_ctx); free(first_id); free(second_id);
+            free(first_type); free(second_type); free(first_root); free(second_root);
+            free(query); free(json);
+            return MEMORIA_MOBILE_INTERNAL_ERROR;
+        }
+
+        response_status = set_responsef(out, MEMORIA_MOBILE_OK,
+            "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\",\"%s\"],\"selected_context\":\"SOURCE_1: %s\\nSOURCE_2: %s\",\"relations\":[],\"relations_by_memory\":[{\"memory_id\":\"%s\",\"relations\":%s},{\"memory_id\":\"%s\",\"relations\":%s}],\"trajectory_used\":true,\"conversation_window_count\":%lu,\"temporal_state_used\":false,\"multi_source_used\":true,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"},{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
+            tr.confidence, first_id, second_id, first_ctx, second_ctx,
+            first_id, first_relations, second_id, second_relations,
+            (unsigned long)window_count,
+            first_id, first_type, first_turn->authority, first_root,
+            second_id, second_type, second_turn->authority, second_root);
+
+        free(first_ctx); free(second_ctx); free(first_id); free(second_id);
+        free(first_type); free(second_type); free(first_root); free(second_root);
+        free(query); free(json);
+        return response_status;
+    }
+
+    if (trajectory_mode == 1) {
+'''
+
+path.write_text(text.replace(needle, block, 1), encoding="utf-8")
