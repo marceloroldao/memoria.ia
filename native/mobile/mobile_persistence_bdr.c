@@ -159,7 +159,7 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
     char relation_ids[MEMORIA_PERSIST_MAX_RELATIONS][MEMORIA_PERSIST_MEMORY_ID_CAP];
     bdr_atomic_c_batch_result result = {0};
     size_t n = 0, i;
-    if (!p || !slot || !t || !t->memory_id || !t->text || !t->role ||
+    if (!p || !slot || !t || !t->memory_id || !t->namespace_id || !t->text || !t->role ||
         !t->source_type || !t->ultimate_source_memory_id ||
         t->relation_count > MEMORIA_PERSIST_MAX_RELATIONS ||
         (superseded_count && !superseded_slots)) return 0;
@@ -174,6 +174,7 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
         !add_meta(p,ops,keys,&n,"turn_count",vals[1]) ||
         !add_meta(p,ops,keys,&n,"sequence",vals[2]) ||
         !add_put(p,ops,keys,&n,"turn",slot,"memory_id",t->memory_id) ||
+        !add_put(p,ops,keys,&n,"turn",slot,"namespace",t->namespace_id) ||
         !add_put(p,ops,keys,&n,"turn",slot,"text",t->text) ||
         !add_put(p,ops,keys,&n,"turn",slot,"role",t->role) ||
         !add_put(p,ops,keys,&n,"turn",slot,"source_type",t->source_type) ||
@@ -228,8 +229,13 @@ int memoria_persistence_load_turn(memoria_persistence *p, size_t slot, memoria_p
     size_t i;
     if (!p || !slot || !t) return 0;
     memset(t,0,sizeof(*t));
-    if (!fetch(p,"turn",slot,"memory_id",&t->memory_id) || !t->memory_id ||
-        !fetch(p,"turn",slot,"text",&t->text) || !t->text ||
+    if (!fetch(p,"turn",slot,"memory_id",&t->memory_id) || !t->memory_id) goto fail;
+    if (!fetch(p,"turn",slot,"namespace",&t->namespace_id)) goto fail;
+    if (!t->namespace_id) {
+        t->namespace_id = sdup("");
+        if (!t->namespace_id) goto fail;
+    }
+    if (!fetch(p,"turn",slot,"text",&t->text) || !t->text ||
         !fetch(p,"turn",slot,"role",&t->role) || !t->role ||
         !fetch(p,"turn",slot,"source_type",&t->source_type) || !t->source_type ||
         !fetch(p,"turn",slot,"ultimate_source_memory_id",&t->ultimate_source_memory_id) || !t->ultimate_source_memory_id ||
@@ -349,7 +355,7 @@ int memoria_persistence_sync(memoria_persistence *p) {
 
 void memoria_persistence_free_turn(memoria_persist_turn *t) {
     if (!t) return;
-    free(t->memory_id); free(t->text); free(t->role); free(t->source_type); free(t->ultimate_source_memory_id);
+    free(t->memory_id); free(t->namespace_id); free(t->text); free(t->role); free(t->source_type); free(t->ultimate_source_memory_id);
     memset(t,0,sizeof(*t));
 }
 

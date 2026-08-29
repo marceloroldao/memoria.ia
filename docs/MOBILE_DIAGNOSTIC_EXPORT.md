@@ -74,6 +74,7 @@ Top-level fields include:
 Each exported turn contains, when available:
 
 - `memory_id`;
+- persistent `namespace` (empty string for the default/global namespace);
 - `role`;
 - text;
 - `source_type`;
@@ -117,6 +118,7 @@ The mobile regression verifies that:
 3. pagination is bounded and deterministic;
 4. export does not mutate the ID sequence;
 5. retrieval is unchanged before/after export;
-6. BDR-backed close/reopen preserves exported records.
+6. BDR-backed close/reopen preserves exported records;
+7. persistent turn namespaces are exported without exposing BDR internals.
 
 A future streaming/chunk callback ABI may be introduced if the mobile runtime grows beyond the current bounded in-memory state. The versioned JSON format allows that transport change without making raw persistence a public contract.
