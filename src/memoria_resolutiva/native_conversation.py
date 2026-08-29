@@ -45,7 +45,7 @@ def _relation_payload(row: object, *, namespace: str | None, order: int | None) 
 class NativeConversationService:
     """Thin Python boundary over the authoritative native conversation runtime.
 
-    HTTP, authentication and Pydantic remain Python concerns. Persistent memory,
+    HTTP, authentication and Pydantic stay in Python. Persistent memory,
     relation extraction, ranking, ambiguity, correction, temporal resolution and
     provenance authority are delegated to libmemoria_mobile. There is no Python
     semantic fallback.
@@ -177,10 +177,13 @@ class NativeConversationService:
             raise ValueError(str(response.get("reason") or "native conversation resolve rejected request"))
         if status != MEMORIA_MOBILE_OK or response.get("status") != "HIT":
             raise RuntimeError(f"native conversation resolve failed: status={status}")
+
         rows = response.get("relations", [])
         if not isinstance(rows, list):
             raise RuntimeError("native conversation resolve returned invalid relations")
         relations = tuple(_relation_payload(row, namespace=session_id, order=None) for row in rows)
+        native_memory_ids = tuple(str(value) for value in response.get("memory_ids", []))
+
         provenance_rows: list[dict[str, object]] = []
         raw_provenance = response.get("provenance", [])
         if not isinstance(raw_provenance, list):
@@ -200,10 +203,26 @@ class NativeConversationService:
                 "created_time": row.get("created_time"),
                 "superseded_by": row.get("superseded_by"),
             })
+
+        # The native resolver ranks authoritative turns. The historic product API,
+        # however, exposes the derived relation ID for a single-relation factual HIT.
+        # This is identity normalization only: native extraction/ranking already chose
+        # the source. We deliberately do not guess when multiple relations/sources exist.
+        public_memory_ids = native_memory_ids
+        if len(native_memory_ids) == 1 and len(relations) == 1:
+            relation_id = str(relations[0].get("memory_id") or "")
+            if relation_id and relation_id != native_memory_ids[0]:
+                turn_id = native_memory_ids[0]
+                public_memory_ids = (relation_id,)
+                if len(provenance_rows) == 1:
+                    provenance_rows[0]["memory_id"] = relation_id
+                    provenance_rows[0]["immediate_source_type"] = "derived_relation"
+                    provenance_rows[0]["parent_memory_ids"] = [turn_id]
+
         return ConversationResolveResult(
             "HIT",
             float(response.get("confidence", 0.0)),
-            tuple(str(value) for value in response.get("memory_ids", [])),
+            public_memory_ids,
             str(response.get("selected_context") or ""),
             relations,
             tuple(provenance_rows),
