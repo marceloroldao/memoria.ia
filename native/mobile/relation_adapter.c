@@ -32,8 +32,12 @@ static int append_escaped(char *out, size_t out_size, size_t *used, const char *
     return 1;
 }
 
-int memoria_relations_to_json(const memoria_relation *relations, size_t relation_count,
-                              const char *source_memory_id, char *out, size_t out_size) {
+int memoria_relations_to_json_with_ids(const memoria_relation *relations,
+                                       const char *const *relation_memory_ids,
+                                       size_t relation_count,
+                                       const char *source_memory_id,
+                                       char *out,
+                                       size_t out_size) {
     size_t i, used = 0;
     char number[64];
     if (!out || out_size == 0 || (!relations && relation_count)) return 0;
@@ -50,9 +54,21 @@ int memoria_relations_to_json(const memoria_relation *relations, size_t relation
         if (!append(out,out_size,&used,"\",\"confidence\":")) return 0;
         snprintf(number,sizeof(number),"%.6f",relations[i].confidence);
         if (!append(out,out_size,&used,number)) return 0;
+        if (relation_memory_ids && relation_memory_ids[i] && relation_memory_ids[i][0]) {
+            if (!append(out,out_size,&used,",\"memory_id\":\"")) return 0;
+            if (!append_escaped(out,out_size,&used,relation_memory_ids[i])) return 0;
+            if (!append(out,out_size,&used,"\"")) return 0;
+        }
         if (!append(out,out_size,&used,",\"source_memory_id\":\"")) return 0;
         if (!append_escaped(out,out_size,&used,source_memory_id ? source_memory_id : "")) return 0;
         if (!append(out,out_size,&used,"\"}")) return 0;
     }
     return append(out,out_size,&used,"]");
+}
+
+int memoria_relations_to_json(const memoria_relation *relations, size_t relation_count,
+                              const char *source_memory_id, char *out, size_t out_size) {
+    return memoria_relations_to_json_with_ids(
+        relations, NULL, relation_count, source_memory_id, out, out_size
+    );
 }
