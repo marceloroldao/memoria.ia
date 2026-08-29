@@ -78,6 +78,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_relation_identity PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_relation_identity COMMAND memoria_mobile_relation_identity)
 
+  add_executable(memoria_mobile_namespace tests/namespace_mobile.c)
+  target_link_libraries(memoria_mobile_namespace PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_namespace PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_namespace COMMAND memoria_mobile_namespace)
+
   add_executable(memoria_semantic_kernel_test tests/semantic_kernel.c semantic_kernel.c)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
