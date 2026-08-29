@@ -6,6 +6,7 @@
 #include "relation_adapter.h"
 #include "mobile_persistence.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,6 +141,37 @@ static memoria_mobile_status set_response(memoria_mobile_buffer *out, const char
     return status;
 }
 
+static memoria_mobile_status set_responsef(memoria_mobile_buffer *out, memoria_mobile_status status, const char *fmt, ...) {
+    va_list args;
+    va_list measure;
+    int needed;
+    int written;
+    uint8_t *data;
+    if (!out || !fmt) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    va_start(args, fmt);
+    va_copy(measure, args);
+    needed = vsnprintf(NULL, 0, fmt, measure);
+    va_end(measure);
+    if (needed < 0) {
+        va_end(args);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    data = (uint8_t *)malloc((size_t)needed + 1u);
+    if (!data) {
+        va_end(args);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    written = vsnprintf((char *)data, (size_t)needed + 1u, fmt, args);
+    va_end(args);
+    if (written != needed) {
+        free(data);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    out->data = data;
+    out->size = (size_t)needed;
+    return status;
+}
+
 static memoria_mobile_status unresolved(memoria_mobile_buffer *out, const char *reason) {
     char *e = json_escape(reason);
     char buf[512];
@@ -193,11 +225,12 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
 
 memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *text, *role, *id, *source_type, *root;
-    char idbuf[64], relations_json[1536], resp[2304];
+    char idbuf[64], relations_json[1536];
     turn_row candidate;
     long order;
     double authority;
     unsigned long next_sequence;
+    memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     if (h->turn_count >= MAX_TURNS) return unresolved(out, "native turn capacity reached");
     memset(&candidate, 0, sizeof(candidate));
@@ -243,21 +276,22 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     }
     h->turns[h->turn_count++] = candidate;
     h->sequence = next_sequence;
-    snprintf(resp, sizeof(resp),
+    response_status = set_responsef(out, MEMORIA_MOBILE_OK,
              "{\"status\":\"OK\",\"stored_memory_ids\":[\"%s\"],\"relations\":%s,\"unresolved\":%s,\"native_relation_extraction\":true,\"durable\":true}",
              id, relations_json, candidate.relation_count ? "false" : "true");
     free(json);
-    return set_response(out, resp, MEMORIA_MOBILE_OK);
+    return response_status;
 }
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *query, *ctx, *st, *root;
-    char relations_json[1536], resp[3840];
+    char relations_json[1536];
     memoria_semantic_source sources[MAX_TURNS];
     memoria_semantic_result r;
     memoria_trajectory_result tr;
     size_t i, window_count = 0;
     int trajectory_mode;
+    memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -306,23 +340,24 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     st = json_escape(r.source_type ? r.source_type : "");
     root = json_escape(r.ultimate_source_memory_id ? r.ultimate_source_memory_id : "");
     if (!ctx || !st || !root) { free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }
-    snprintf(resp, sizeof(resp),
+    response_status = set_responsef(out, MEMORIA_MOBILE_OK,
              "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"trajectory_used\":%s,\"conversation_window_count\":%lu,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
              r.confidence, r.memory_id, ctx, relations_json,
              trajectory_mode == 1 && tr.used_window ? "true" : "false",
              (unsigned long)(trajectory_mode == 1 ? window_count : 0),
              r.memory_id, st, r.source_authority, root);
     free(ctx); free(st); free(root);
-    return set_response(out, resp, MEMORIA_MOBILE_OK);
+    return response_status;
 }
 
 memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *id, *role, *text, *timestamp, *event_type, *topics, *source_type, *root;
-    char idbuf[64], resp[512];
+    char idbuf[64];
     episode_row candidate;
     long order;
     double authority;
     unsigned long next_sequence;
+    memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     if (h->episode_count >= MAX_EPISODES) return unresolved(out, "native episode capacity reached");
     memset(&candidate, 0, sizeof(candidate));
@@ -374,17 +409,18 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
     }
     h->episodes[h->episode_count++] = candidate;
     h->sequence = next_sequence;
-    snprintf(resp, sizeof(resp), "{\"status\":\"OK\",\"episode_id\":\"%s\",\"durable\":true}", id);
+    response_status = set_responsef(out, MEMORIA_MOBILE_OK,
+        "{\"status\":\"OK\",\"episode_id\":\"%s\",\"durable\":true}", id);
     free(json);
-    return set_response(out, resp, MEMORIA_MOBILE_OK);
+    return response_status;
 }
 
 memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *query, *role, *event_type, *topics, *ctx, *st, *root;
-    char resp[2048];
     memoria_episode_source eps[MAX_EPISODES];
     memoria_episode_result r;
     size_t i;
+    memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -414,13 +450,13 @@ memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *
     st = json_escape(r.source_type ? r.source_type : "");
     root = json_escape(r.ultimate_source_memory_id ? r.ultimate_source_memory_id : "");
     if (!ctx || !st || !root) { free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }
-    snprintf(resp, sizeof(resp),
+    response_status = set_responsef(out, MEMORIA_MOBILE_OK,
              "{\"status\":\"HIT\",\"confidence\":%.6f,\"episode_ids\":[\"%s\"],\"selected_context\":\"%s\",\"order\":%ld,\"timestamp\":\"%s\",\"event_type\":\"%s\",\"topics_csv\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}",
              r.confidence, r.episode_id, ctx, r.order, r.timestamp ? r.timestamp : "",
              r.event_type ? r.event_type : "", r.topics_csv ? r.topics_csv : "",
              st, r.source_authority, root);
     free(ctx); free(st); free(root);
-    return set_response(out, resp, MEMORIA_MOBILE_OK);
+    return response_status;
 }
 
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *h) {
