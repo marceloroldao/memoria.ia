@@ -314,6 +314,16 @@ static turn_row *find_turn(memoria_mobile_handle *h, const char *memory_id) {
     return NULL;
 }
 
+static int turn_relations_to_json(const turn_row *turn, char *out, size_t out_size) {
+    const char *ids[MAX_RELATIONS_PER_TURN];
+    size_t i;
+    if (!turn) return 0;
+    for (i = 0; i < turn->relation_count; ++i) ids[i] = turn->relation_memory_ids[i];
+    return memoria_relations_to_json_with_ids(
+        turn->relations, ids, turn->relation_count, turn->memory_id, out, out_size
+    );
+}
+
 static int turn_factual_active(memoria_mobile_handle *h, const turn_row *turn) {
     turn_row *root;
     if (!h || !turn || turn->superseded) return 0;
@@ -361,7 +371,7 @@ static int try_temporal_response(
     size_t source_count = 0, fact_capacity = 0, fact_count = 0, i;
     memoria_temporal_state_result state;
     turn_row *previous_turn = NULL, *current_turn = NULL;
-    char relations_json[1536];
+    char relations_json[4096];
     char *prev_ctx = NULL, *curr_ctx = NULL, *entity = NULL, *property = NULL, *prev_value = NULL, *curr_value = NULL;
     char *prev_type = NULL, *prev_root = NULL, *curr_type = NULL, *curr_root = NULL;
     memoria_mobile_status response_status;
@@ -424,8 +434,7 @@ static int try_temporal_response(
         if (status_out) *status_out = unresolved(out, "temporal source missing from native state");
         return 1;
     }
-    if (!memoria_relations_to_json(current_turn->relations, current_turn->relation_count,
-                                   current_turn->memory_id, relations_json, sizeof(relations_json))) {
+    if (!turn_relations_to_json(current_turn, relations_json, sizeof(relations_json))) {
         if (status_out) *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
         return 1;
     }
@@ -518,10 +527,13 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
 memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *text, *role, *id, *source_type, *root;
     char *corrections[MAX_CORRECTIONS] = {0};
+    char *relation_ids[MAX_RELATIONS_PER_TURN] = {0};
+    const char *relation_id_ptrs[MAX_RELATIONS_PER_TURN] = {0};
     size_t correction_slots[MAX_CORRECTIONS] = {0};
-    char idbuf[64], relations_json[1536];
+    char idbuf[64], relations_json[4096];
     turn_row candidate;
-    size_t correction_count = 0, i, unique_count = 0;
+    size_t correction_count = 0, relation_id_count = 0, i, unique_count = 0;
+    int relation_ids_present = 0;
     long order;
     double authority;
     unsigned long next_sequence;
@@ -592,13 +604,41 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     candidate.order = order;
     candidate.superseded = 0;
     candidate.relation_count = memoria_extract_relations(text, candidate.relations, MAX_RELATIONS_PER_TURN);
-    if (!memoria_relations_to_json(candidate.relations, candidate.relation_count, id, relations_json, sizeof(relations_json))) {
+    relation_ids_present = strstr(json, "\"relation_memory_ids\"") != NULL;
+    if (relation_ids_present)
+        relation_id_count = json_string_array(json, "relation_memory_ids", relation_ids, MAX_RELATIONS_PER_TURN);
+    if (relation_ids_present && relation_id_count != candidate.relation_count) {
+        free_string_array(relation_ids, relation_id_count);
+        free_string_array(corrections, correction_count);
+        free(json); free_turn(&candidate); return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    }
+    for (i = 0; i < candidate.relation_count; ++i) {
+        int written;
+        if (relation_ids_present) {
+            if (!relation_ids[i] || !relation_ids[i][0] || strlen(relation_ids[i]) >= sizeof(candidate.relation_memory_ids[i])) {
+                free_string_array(relation_ids, relation_id_count);
+                free_string_array(corrections, correction_count);
+                free(json); free_turn(&candidate); return MEMORIA_MOBILE_INVALID_ARGUMENT;
+            }
+            snprintf(candidate.relation_memory_ids[i], sizeof(candidate.relation_memory_ids[i]), "%s", relation_ids[i]);
+        } else {
+            written = snprintf(candidate.relation_memory_ids[i], sizeof(candidate.relation_memory_ids[i]), "%s#relation:%zu", id, i);
+            if (written < 0 || (size_t)written >= sizeof(candidate.relation_memory_ids[i])) {
+                free_string_array(corrections, correction_count);
+                free(json); free_turn(&candidate); return MEMORIA_MOBILE_INVALID_ARGUMENT;
+            }
+        }
+        relation_id_ptrs[i] = candidate.relation_memory_ids[i];
+    }
+    if (!memoria_relations_to_json_with_ids(candidate.relations, relation_id_ptrs, candidate.relation_count, id, relations_json, sizeof(relations_json))) {
+        free_string_array(relation_ids, relation_id_count);
         free_string_array(corrections, correction_count);
         free(json); free_turn(&candidate); return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
     if (!memoria_persistence_save_turn_with_supersessions(
             h->persistence, h->turn_count + 1, next_sequence, &candidate,
             correction_slots, unique_count)) {
+        free_string_array(relation_ids, relation_id_count);
         free_string_array(corrections, correction_count);
         free(json); free_turn(&candidate); return MEMORIA_MOBILE_PERSISTENCE_ERROR;
     }
@@ -608,6 +648,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     response_status = set_responsef(out, MEMORIA_MOBILE_OK,
              "{\"status\":\"OK\",\"stored_memory_ids\":[\"%s\"],\"relations\":%s,\"unresolved\":%s,\"native_relation_extraction\":true,\"durable\":true,\"correction_applied\":%s}",
              id, relations_json, candidate.relation_count ? "false" : "true", unique_count ? "true" : "false");
+    free_string_array(relation_ids, relation_id_count);
     free_string_array(corrections, correction_count);
     free(json);
     return response_status;
@@ -615,7 +656,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *query, *ctx, *st, *root;
-    char relations_json[1536];
+    char relations_json[4096];
     memoria_semantic_source sources[MAX_TURNS];
     memoria_semantic_result r;
     memoria_trajectory_result tr;
@@ -650,7 +691,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     if (trajectory_mode == 1 && tr.hit && tr.memory_count == 2) {
         turn_row *first_turn = find_turn(h, tr.memory_ids[0]);
         turn_row *second_turn = find_turn(h, tr.memory_ids[1]);
-        char first_relations[1536], second_relations[1536];
+        char first_relations[4096], second_relations[4096];
         char *first_ctx = NULL, *second_ctx = NULL;
         char *first_id = NULL, *second_id = NULL;
         char *first_type = NULL, *second_type = NULL;
@@ -730,8 +771,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         return response_status;
     }
     free(query); free(json);
-    if (!memoria_relations_to_json(h->turns[i].relations, h->turns[i].relation_count,
-                                   h->turns[i].memory_id, relations_json, sizeof(relations_json)))
+    if (!turn_relations_to_json(&h->turns[i], relations_json, sizeof(relations_json)))
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     ctx = json_escape(h->turns[i].text);
     st = json_escape(r.source_type ? r.source_type : "");

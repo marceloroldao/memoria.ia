@@ -156,6 +156,7 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
     bdr_atomic_c_operation ops[MAX_OPS];
     char keys[MAX_OPS][KEY_CAP];
     char vals[16][VAL_CAP];
+    char relation_ids[MEMORIA_PERSIST_MAX_RELATIONS][MEMORIA_PERSIST_MEMORY_ID_CAP];
     bdr_atomic_c_batch_result result = {0};
     size_t n = 0, i;
     if (!p || !slot || !t || !t->memory_id || !t->text || !t->role ||
@@ -187,8 +188,16 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
         if (!add_put(p,ops,keys,&n,"turn",slot,field,t->relations[i].subject)) return 0;
         snprintf(field,sizeof(field),"relation/%zu/predicate",i);
         if (!add_put(p,ops,keys,&n,"turn",slot,field,t->relations[i].predicate)) return 0;
+        const char *relation_id = t->relation_memory_ids[i];
         snprintf(field,sizeof(field),"relation/%zu/object",i);
         if (!add_put(p,ops,keys,&n,"turn",slot,field,t->relations[i].object)) return 0;
+        if (!relation_id[0]) {
+            int written = snprintf(relation_ids[i], sizeof(relation_ids[i]), "%s#relation:%zu", t->memory_id, i);
+            if (written < 0 || (size_t)written >= sizeof(relation_ids[i])) return 0;
+            relation_id = relation_ids[i];
+        }
+        snprintf(field,sizeof(field),"relation/%zu/memory_id",i);
+        if (!add_put(p,ops,keys,&n,"turn",slot,field,relation_id)) return 0;
         snprintf(vals[7+i],VAL_CAP,"%.17g",t->relations[i].confidence);
         snprintf(field,sizeof(field),"relation/%zu/confidence",i);
         if (!add_put(p,ops,keys,&n,"turn",slot,field,vals[7+i])) return 0;
@@ -254,6 +263,18 @@ int memoria_persistence_load_turn(memoria_persistence *p, size_t slot, memoria_p
         snprintf(field,sizeof(field),"relation/%zu/confidence",i);
         if(!fetch(p,"turn",slot,field,&v)||!v||!parse_d(v,&t->relations[i].confidence)) goto fail;
         free(v); v=NULL;
+        snprintf(field,sizeof(field),"relation/%zu/memory_id",i);
+        if(!fetch(p,"turn",slot,field,&v)) goto fail;
+        if (v && *v) {
+            if (strlen(v) >= sizeof(t->relation_memory_ids[i])) goto fail;
+            snprintf(t->relation_memory_ids[i], sizeof(t->relation_memory_ids[i]), "%s", v);
+            free(v); v=NULL;
+        } else {
+            int written;
+            free(v); v=NULL;
+            written = snprintf(t->relation_memory_ids[i], sizeof(t->relation_memory_ids[i]), "%s#relation:%zu", t->memory_id, i);
+            if (written < 0 || (size_t)written >= sizeof(t->relation_memory_ids[i])) goto fail;
+        }
     }
     return 1;
 fail:

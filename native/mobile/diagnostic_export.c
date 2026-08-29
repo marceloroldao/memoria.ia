@@ -102,15 +102,17 @@ static size_t page_end(size_t offset, size_t limit, size_t total) {
     return offset + (limit < remaining ? limit : remaining);
 }
 
-static int append_relation(json_builder *b, const memoria_relation *r, const char *memory_id) {
+static int append_relation(json_builder *b, const memoria_relation *r, const char *relation_memory_id, const char *source_memory_id) {
     if (!append(b, "{\"subject\":")) return 0;
     if (!append_json_string(b, r->subject)) return 0;
     if (!append(b, ",\"predicate\":")) return 0;
     if (!append_json_string(b, r->predicate)) return 0;
     if (!append(b, ",\"object\":")) return 0;
     if (!append_json_string(b, r->object)) return 0;
+    if (!append(b, ",\"memory_id\":")) return 0;
+    if (!append_json_string(b, relation_memory_id)) return 0;
     if (!appendf(b, ",\"confidence\":%.6f,\"source_memory_id\":", r->confidence)) return 0;
-    if (!append_json_string(b, memory_id)) return 0;
+    if (!append_json_string(b, source_memory_id)) return 0;
     return append(b, "}");
 }
 
@@ -129,7 +131,7 @@ static int append_turn(json_builder *b, const memoria_persist_turn *t) {
     if (!appendf(b, ",\"source_authority\":%.6f,\"order\":%ld,\"superseded\":%s,\"relations\":[", t->authority, t->order, t->superseded ? "true" : "false")) return 0;
     for (i = 0; i < t->relation_count; ++i) {
         if (i && !append(b, ",")) return 0;
-        if (!append_relation(b, &t->relations[i], t->memory_id)) return 0;
+        if (!append_relation(b, &t->relations[i], t->relation_memory_ids[i], t->memory_id)) return 0;
     }
     return append(b, "]}");
 }
