@@ -25,6 +25,7 @@ typedef struct memoria_persist_turn {
 
 typedef struct memoria_persist_episode {
     char *episode_id;
+    char *session_id;
     char *role;
     char *text;
     char *timestamp;

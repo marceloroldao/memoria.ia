@@ -137,6 +137,8 @@ static int append_turn(json_builder *b, const memoria_persist_turn *t) {
 static int append_episode(json_builder *b, const memoria_persist_episode *e) {
     if (!append(b, "{\"episode_id\":")) return 0;
     if (!append_json_string(b, e->episode_id)) return 0;
+    if (!append(b, ",\"session_id\":")) return 0;
+    if (!append_json_string(b, e->session_id)) return 0;
     if (!append(b, ",\"role\":")) return 0;
     if (!append_json_string(b, e->role)) return 0;
     if (!append(b, ",\"text\":")) return 0;

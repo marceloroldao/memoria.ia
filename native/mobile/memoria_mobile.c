@@ -748,7 +748,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
 }
 
 memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json, *id, *role, *text, *timestamp, *event_type, *topics, *source_type, *root;
+    char *json, *id, *session_id, *role, *text, *timestamp, *event_type, *topics, *source_type, *root;
     char idbuf[64];
     episode_row candidate;
     long order;
@@ -761,6 +761,7 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     id = json_string(json, "episode_id");
+    session_id = json_string(json, "session_id");
     role = json_string(json, "role");
     text = json_string(json, "text");
     timestamp = json_string(json, "timestamp");
@@ -771,7 +772,7 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
     order = json_long(json, "order", (long)h->episode_count + 1);
     authority = json_double(json, "source_authority", -1.0);
     if (!role || !text) {
-        free(json); free(id); free(role); free(text); free(timestamp); free(event_type); free(topics); free(source_type); free(root);
+        free(json); free(id); free(session_id); free(role); free(text); free(timestamp); free(event_type); free(topics); free(source_type); free(root);
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
     }
     next_sequence = h->sequence;
@@ -780,17 +781,19 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
         snprintf(idbuf, sizeof(idbuf), "episode:%lu", next_sequence);
         id = dup_string(idbuf);
     }
+    if (!session_id) session_id = dup_string("");
     if (!source_type) source_type = dup_string(strcmp(role, "user") == 0 ? "user_assertion" : "assistant_generated");
     if (authority < 0.0) authority = strcmp(source_type, "user_assertion") == 0 ? 1.0 : 0.35;
     if (!root) root = dup_string(id);
     if (!timestamp) timestamp = dup_string("");
     if (!event_type) event_type = dup_string("");
     if (!topics) topics = dup_string("");
-    if (!id || !source_type || !root || !timestamp || !event_type || !topics) {
-        free(json); free(id); free(role); free(text); free(timestamp); free(event_type); free(topics); free(source_type); free(root);
+    if (!id || !session_id || !source_type || !root || !timestamp || !event_type || !topics) {
+        free(json); free(id); free(session_id); free(role); free(text); free(timestamp); free(event_type); free(topics); free(source_type); free(root);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
     candidate.episode_id = id;
+    candidate.session_id = session_id;
     candidate.role = role;
     candidate.text = text;
     candidate.timestamp = timestamp;
@@ -813,35 +816,38 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
 }
 
 memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json, *query, *role, *event_type, *topics, *ctx, *st, *root;
+    char *json, *query, *session_id, *role, *event_type, *topics, *ctx, *st, *root;
     memoria_episode_source eps[MAX_EPISODES];
     memoria_episode_result r;
-    size_t i;
+    size_t i, episode_count = 0;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     query = json_string(json, "query");
+    session_id = json_string(json, "session_id");
     role = json_string(json, "role");
     event_type = json_string(json, "event_type");
     topics = json_string(json, "topics_csv");
-    if (!query) { free(json); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    if (!query) { free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
     for (i = 0; i < h->episode_count; ++i) {
         episode_row *e = &h->episodes[i];
-        eps[i].episode_id = e->episode_id;
-        eps[i].role = e->role;
-        eps[i].text = e->text;
-        eps[i].order = e->order;
-        eps[i].timestamp = e->timestamp;
-        eps[i].event_type = e->event_type;
-        eps[i].topics_csv = e->topics_csv;
-        eps[i].source_type = e->source_type;
-        eps[i].source_authority = e->authority;
-        eps[i].ultimate_source_memory_id = e->ultimate_source_memory_id;
-        eps[i].superseded = e->superseded;
+        if (session_id && strcmp(session_id, e->session_id ? e->session_id : "") != 0) continue;
+        eps[episode_count].episode_id = e->episode_id;
+        eps[episode_count].role = e->role;
+        eps[episode_count].text = e->text;
+        eps[episode_count].order = e->order;
+        eps[episode_count].timestamp = e->timestamp;
+        eps[episode_count].event_type = e->event_type;
+        eps[episode_count].topics_csv = e->topics_csv;
+        eps[episode_count].source_type = e->source_type;
+        eps[episode_count].source_authority = e->authority;
+        eps[episode_count].ultimate_source_memory_id = e->ultimate_source_memory_id;
+        eps[episode_count].superseded = e->superseded;
+        ++episode_count;
     }
-    r = memoria_episode_recall_latest(query, role, event_type, topics, eps, h->episode_count);
-    free(query); free(role); free(event_type); free(topics); free(json);
+    r = memoria_episode_recall_latest(query, role, event_type, topics, eps, episode_count);
+    free(query); free(session_id); free(role); free(event_type); free(topics); free(json);
     if (!r.hit) return unresolved(out, "no justified native episode");
     ctx = json_escape(r.text);
     st = json_escape(r.source_type ? r.source_type : "");
