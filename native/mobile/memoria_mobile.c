@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_TURNS 256
+#define INITIAL_TURN_CAPACITY 256u
 #define MAX_EPISODES 256
 #define MAX_RELATIONS_PER_TURN MEMORIA_PERSIST_MAX_RELATIONS
 
@@ -25,8 +25,11 @@ struct memoria_mobile_handle {
     char *data_dir;
     char *organization_id;
     memoria_persistence *persistence;
-    turn_row turns[MAX_TURNS];
+    turn_row *turns;
     size_t turn_count;
+    size_t turn_capacity;
+    memoria_semantic_source *semantic_sources;
+    size_t semantic_capacity;
     episode_row episodes[MAX_EPISODES];
     size_t episode_count;
     unsigned long sequence;
@@ -598,6 +601,52 @@ static int try_temporal_response(
 static void free_turn(turn_row *r) { memoria_persistence_free_turn(r); }
 static void free_episode(episode_row *r) { memoria_persistence_free_episode(r); }
 
+static int ensure_turn_capacity(memoria_mobile_handle *h, size_t needed) {
+    turn_row *resized;
+    size_t old_capacity, new_capacity;
+    if (!h) return 0;
+    if (needed <= h->turn_capacity) return 1;
+    old_capacity = h->turn_capacity;
+    new_capacity = old_capacity ? old_capacity : INITIAL_TURN_CAPACITY;
+    while (new_capacity < needed) {
+        if (new_capacity > ((size_t)-1) / 2u) {
+            new_capacity = needed;
+            break;
+        }
+        new_capacity *= 2u;
+    }
+    if (new_capacity > ((size_t)-1) / sizeof(*resized)) return 0;
+    resized = (turn_row *)realloc(h->turns, new_capacity * sizeof(*resized));
+    if (!resized) return 0;
+    memset(resized + old_capacity, 0, (new_capacity - old_capacity) * sizeof(*resized));
+    h->turns = resized;
+    h->turn_capacity = new_capacity;
+    return 1;
+}
+
+static int ensure_semantic_capacity(memoria_mobile_handle *h, size_t needed) {
+    memoria_semantic_source *resized;
+    size_t old_capacity, new_capacity;
+    if (!h) return 0;
+    if (needed <= h->semantic_capacity) return 1;
+    old_capacity = h->semantic_capacity;
+    new_capacity = old_capacity ? old_capacity : INITIAL_TURN_CAPACITY;
+    while (new_capacity < needed) {
+        if (new_capacity > ((size_t)-1) / 2u) {
+            new_capacity = needed;
+            break;
+        }
+        new_capacity *= 2u;
+    }
+    if (new_capacity > ((size_t)-1) / sizeof(*resized)) return 0;
+    resized = (memoria_semantic_source *)realloc(h->semantic_sources, new_capacity * sizeof(*resized));
+    if (!resized) return 0;
+    memset(resized + old_capacity, 0, (new_capacity - old_capacity) * sizeof(*resized));
+    h->semantic_sources = resized;
+    h->semantic_capacity = new_capacity;
+    return 1;
+}
+
 uint32_t memoria_mobile_abi_version(void) { return MEMORIA_MOBILE_ABI_VERSION; }
 
 memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *organization_id, memoria_mobile_handle **out_handle) {
@@ -614,9 +663,13 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     if (!h->data_dir || !h->organization_id ||
         !memoria_persistence_open(data_dir, organization_id, &h->persistence) ||
         !memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence) ||
-        turns > MAX_TURNS || episodes > MAX_EPISODES) {
+        episodes > MAX_EPISODES) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    }
+    if (turns && !ensure_turn_capacity(h, turns)) {
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
     for (i = 0; i < turns; ++i) {
         if (!memoria_persistence_load_turn(h->persistence, i + 1, &h->turns[i])) {
@@ -653,7 +706,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     unsigned long next_sequence;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
-    if (h->turn_count >= MAX_TURNS) return unresolved(out, "native turn capacity reached");
+    if (!ensure_turn_capacity(h, h->turn_count + 1u)) return MEMORIA_MOBILE_INTERNAL_ERROR;
     memset(&candidate, 0, sizeof(candidate));
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -823,7 +876,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *query, *namespace_id, *ctx, *st, *root, *created_time;
     char relations_json[4096];
-    memoria_semantic_source sources[MAX_TURNS];
+    memoria_semantic_source *sources = NULL;
     memoria_semantic_result r;
     memoria_trajectory_result tr;
     size_t i, window_count = 0;
@@ -836,6 +889,11 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     namespace_id = json_string(json, "namespace");
     if (!namespace_id) namespace_id = dup_string("");
     if (!query || !namespace_id) { free(query); free(namespace_id); free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    if (!ensure_semantic_capacity(h, h->turn_count)) {
+        free(query); free(namespace_id); free(json);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    sources = h->semantic_sources;
     size_t source_count = 0;
     for (i = 0; i < h->turn_count; ++i) {
         lineage_root lineage = {0};
@@ -1132,6 +1190,8 @@ void memoria_mobile_close(memoria_mobile_handle *h) {
     for (i = 0; i < h->turn_count; ++i) free_turn(&h->turns[i]);
     for (i = 0; i < h->episode_count; ++i) free_episode(&h->episodes[i]);
     memoria_persistence_close(h->persistence);
+    free(h->turns);
+    free(h->semantic_sources);
     free(h->data_dir);
     free(h->organization_id);
     free(h);

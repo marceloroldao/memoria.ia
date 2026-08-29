@@ -1,6 +1,6 @@
 # Python ↔ Native Authority Audit
 
-Status: active P0 migration tracker for Issue #88.
+Status: P0 migration completed by Issue #88; native resolve scaling follow-up is tracked separately in Issue #110.
 
 ## Objective
 
@@ -58,39 +58,35 @@ Server `session_id` maps to native persistent `namespace` for product-level conv
 - deliberate native English `is` compound-subject compatibility preserved for mobile/temporal entities;
 - complete supported conversation response parity, including native-authoritative confidence, durable relation order/time metadata, corrections, fallback, unresolved and restart;
 - shared server native runtime manager with one DLL/handle/lock, reference-counted leases and joint conversation/episodic restart recovery;
-- native server production default with fail-closed library requirement and a Docker image that proves native conversation/episodic persistence across restart.
+- native server production default with fail-closed library requirement and a Docker image that proves native conversation/episodic persistence across restart;
+- Python reference semantics isolated from native production startup; explicit Python mode remains parity/reference only;
+- fixed 256-turn native capacity removed with geometric dynamic allocation and a 300-turn BDR restart regression;
+- reproducible native production benchmark matrix completed and versioned at 100 / 1,000 / 10,000 records.
 
-## Current slice — isolate Python reference semantics
+## Accepted native benchmark matrix
 
-The production server must not merely prefer the native implementation; it must also avoid loading a second semantic authority into the process when native mode is active.
+GitHub Actions run `33270148076`, PR #109, pinned Resolutive-DB `1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e`.
 
-Frozen decisions:
+| records | ingest p50 | ingest p95 | resolve p50 | resolve p95 | RSS peak | restart/load | selected context |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 100 | 0.414567 ms | 0.571824 ms | 0.135134 ms | 0.194920 ms | 45.477 MiB | 2.926600 ms | 25 B |
+| 1,000 | 0.439418 ms | 0.585933 ms | 5.086863 ms | 6.687028 ms | 55.723 MiB | 18.668047 ms | 25 B |
+| 10,000 | 0.444959 ms | 0.594831 ms | 693.232709 ms | 710.630051 ms | 226.934 MiB | 218.140401 ms | 25 B |
 
-- `conversation_contract.py` owns conversation DTOs and route attachment without importing ranking, relation extraction or provenance algorithms;
-- `episodic_contract.py` owns episodic DTOs and route attachment without importing episodic selection algorithms;
-- `NativeConversationService` and `NativeEpisodicService` depend only on those neutral contracts plus the native runtime manager;
-- `product_server.py` imports the neutral contracts at startup and lazy-loads Python semantics only inside explicit `runtime=python` branches;
-- `reference_conversation.py` and `reference_episodic.py` make the status of the old Python implementations explicit: they are parity/reference paths, not production authority;
-- compatibility modules remain available during v1 migration so existing tests and downstream imports are not broken unnecessarily;
-- native production startup is gated to prove that `product_conversation`, `product_episodic`, `reference_conversation`, `reference_episodic` and `memory_provenance` are absent from `sys.modules`;
-- explicit Python reference mode is separately gated to prove that those reference modules are loaded only when deliberately requested.
+All semantic and restart validations passed for all three sizes. Raw JSON is versioned under `benchmarks/results/native-server/`.
 
-Acceptance requirements:
+The benchmark does **not** establish a performance-superiority claim. It exposes a resolve-scaling bottleneck at 10k while showing nearly flat ingest latency. That optimization is deliberately separated from the authority migration and tracked in Issue #110. Current code repeatedly traverses lineage and performs full-array memory lookup while materializing candidates, producing an effectively quadratic hot path at scale.
 
-- default/native server startup does not import any reference conversation/episodic semantic module;
-- explicit `python`/`python` mode still starts and loads the reference implementations;
-- existing HTTP response contracts remain unchanged;
-- all prior Python/native parity fixtures remain green;
-- Android arm64, Ubuntu, Windows, production container and BDR gates remain green.
+## Issue #88 acceptance
 
-## Remaining P0 work after this slice
+The migration acceptance criteria are satisfied:
 
-Run and record the #88 benchmark matrix at 100 / 1,000 / 10,000 records:
+- shared native C ABI is authoritative;
+- Android, Ubuntu and Windows gates are green;
+- BDR persistence/restart is green;
+- cross-runtime parity is green for supported contracts;
+- benchmark evidence is reproducible and versioned;
+- HTTP/ABI compatibility is preserved;
+- native production startup does not load a second authoritative Python ranking/provenance implementation.
 
-- ingest p50/p95;
-- resolve p50/p95;
-- RSS;
-- selected-context size;
-- restart/load time.
-
-If the isolation gate and benchmark matrix are both accepted, Issue #88 can be closed.
+Issue #88 can therefore be closed after PR #109 merges. Performance work continues independently in #110 without weakening semantic correctness or changing the migration authority boundary.
