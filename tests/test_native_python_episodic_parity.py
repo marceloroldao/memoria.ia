@@ -170,7 +170,7 @@ def _python_cross_session(root: Path):
     before = {
         "s1": recall("s1"),
         "s2": recall("s2"),
-        "global": recall(None),
+        "default": recall(None),
     }
     restarted = ProductEpisodicService(ProductEvidenceService.open(evidence_root))
 
@@ -187,7 +187,7 @@ def _python_cross_session(root: Path):
     after = {
         "s1": recall_after("s1"),
         "s2": recall_after("s2"),
-        "global": recall_after(None),
+        "default": recall_after(None),
     }
     assert after == before
     return before
@@ -232,7 +232,7 @@ def _native_cross_session(lib, root: Path):
         before = {
             "s1": recall("s1"),
             "s2": recall("s2"),
-            "global": recall(None),
+            "default": recall(None),
         }
         assert lib.memoria_mobile_flush(handle) == 0
     finally:
@@ -257,7 +257,7 @@ def _native_cross_session(lib, root: Path):
         after = {
             "s1": recall_after("s1"),
             "s2": recall_after("s2"),
-            "global": recall_after(None),
+            "default": recall_after(None),
         }
     finally:
         lib.memoria_mobile_close(reopened)
@@ -289,7 +289,7 @@ def test_python_and_native_isolate_episodes_by_session(tmp_path):
     expected = {
         "s1": {"status": "HIT", "selected_context": "atlas status report session one new"},
         "s2": {"status": "HIT", "selected_context": "atlas status report session two"},
-        "global": {"status": "HIT", "selected_context": "atlas status report session two"},
+        "default": {"status": "UNRESOLVED", "selected_context": ""},
     }
     python_result = _python_cross_session(tmp_path)
     native_result = _native_cross_session(lib, tmp_path)
