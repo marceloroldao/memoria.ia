@@ -1,0 +1,32 @@
+name: temp-native-episodic-session
+
+on:
+  push:
+    branches:
+      - integration/v1.0-native-episodic-session
+    paths:
+      - '.github/workflows/temp-native-episodic-session.yml'
+      - '.github/scripts/temp_patch_episode_session.py'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/v1.0-native-episodic-session
+      - name: Apply episodic session patch
+        run: python .github/scripts/temp_patch_episode_session.py
+      - name: Commit permanent runtime changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/scripts/temp_patch_episode_session.py .github/workflows/temp-native-episodic-session.yml
+          git add native/mobile/mobile_persistence.h native/mobile/mobile_persistence_bdr.c native/mobile/memoria_mobile.c native/mobile/diagnostic_export.c
+          git diff --cached --check
+          git commit -m "feat(native): isolate episodic recall by session"
+          git push origin HEAD:integration/v1.0-native-episodic-session
