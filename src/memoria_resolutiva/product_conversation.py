@@ -239,7 +239,7 @@ class ConversationSemanticService:
         overlap = len(qtokens & _tokens(edge.source_text)) / max(1, len(qtokens))
         source = self.provenance.active_ultimate_source(edge.evidence_id, namespace=namespace)
         authority = 0.0 if source is None else max(0.0, min(1.0, float(source.authority)))
-        return min(0.8, 0.30 + 0.25 * overlap + 0.25 * authority)
+        return round(min(0.8, 0.30 + 0.25 * overlap + 0.25 * authority), 6)
 
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult:
         query = query.strip()
