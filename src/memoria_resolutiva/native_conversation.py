@@ -209,6 +209,10 @@ class NativeConversationService:
                 "superseded_by": row.get("superseded_by"),
             })
 
+        if len(provenance_rows) == 1 and provenance_rows[0].get("created_order") is not None:
+            relation_order = provenance_rows[0]["created_order"]
+            relations = tuple({**row, "epoch": relation_order} for row in relations)
+
         # The native resolver ranks authoritative turns. The historic product API,
         # however, exposes the derived relation ID for a single-relation factual HIT.
         # This is identity normalization only: native extraction/ranking already chose

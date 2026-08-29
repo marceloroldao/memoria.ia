@@ -821,7 +821,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
 }
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json, *query, *namespace_id, *ctx, *st, *root;
+    char *json, *query, *namespace_id, *ctx, *st, *root, *created_time;
     char relations_json[4096];
     memoria_semantic_source sources[MAX_TURNS];
     memoria_semantic_result r;
@@ -946,14 +946,15 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     ctx = json_escape(h->turns[i].text);
     st = json_escape(r.source_type ? r.source_type : "");
     root = json_escape(r.ultimate_source_memory_id ? r.ultimate_source_memory_id : "");
-    if (!ctx || !st || !root) { free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    created_time = json_escape(h->turns[i].created_time);
+    if (!ctx || !st || !root || !created_time) { free(ctx); free(st); free(root); free(created_time); return MEMORIA_MOBILE_INTERNAL_ERROR; }
     response_status = set_responsef(out, MEMORIA_MOBILE_OK,
-             "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"trajectory_used\":%s,\"conversation_window_count\":%lu,\"temporal_state_used\":false,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
+             "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"trajectory_used\":%s,\"conversation_window_count\":%lu,\"temporal_state_used\":false,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\",\"created_order\":%ld,\"created_time\":\"%s\"}]}",
              r.confidence, r.memory_id, ctx, relations_json,
              trajectory_mode == 1 && tr.used_window ? "true" : "false",
              (unsigned long)(trajectory_mode == 1 ? window_count : 0),
-             r.memory_id, st, r.source_authority, root);
-    free(ctx); free(st); free(root);
+             r.memory_id, st, r.source_authority, root, h->turns[i].order, created_time);
+    free(ctx); free(st); free(root); free(created_time);
     return response_status;
 }
 

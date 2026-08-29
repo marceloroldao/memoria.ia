@@ -235,6 +235,12 @@ class ConversationSemanticService:
                 roots.add(source.memory_id)
         return roots
 
+    def _native_reference_confidence(self, *, qtokens: set[str], edge: EvidenceEdge, namespace: str | None) -> float:
+        overlap = len(qtokens & _tokens(edge.source_text)) / max(1, len(qtokens))
+        source = self.provenance.active_ultimate_source(edge.evidence_id, namespace=namespace)
+        authority = 0.0 if source is None else max(0.0, min(1.0, float(source.authority)))
+        return min(0.8, 0.30 + 0.25 * overlap + 0.25 * authority)
+
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult:
         query = query.strip()
         if not query:
@@ -257,8 +263,12 @@ class ConversationSemanticService:
                 return self._result("UNRESOLVED", [])
         selected = self._select_authoritative(anchored, namespace=session_id)
         if selected is not None:
-            relevance, edge = selected
-            return self._result("HIT", [edge], confidence=min(1.0, 0.65 + 0.15 * relevance), namespace=session_id)
+            _relevance, edge = selected
+            return self._result(
+                "HIT", [edge],
+                confidence=self._native_reference_confidence(qtokens=qtokens, edge=edge, namespace=session_id),
+                namespace=session_id,
+            )
 
         turns = [edge for edge in active if edge.predicate == "conversation_text"]
         ranked: list[tuple[float, int, EvidenceEdge]] = []
@@ -277,8 +287,12 @@ class ConversationSemanticService:
         selected = self._select_authoritative(ranked, namespace=session_id)
         if selected is None:
             return self._result("UNRESOLVED", [])
-        score, edge = selected
-        return self._result("HIT", [edge], confidence=min(0.8, 0.45 + 0.35 * score), namespace=session_id)
+        _score, edge = selected
+        return self._result(
+            "HIT", [edge],
+            confidence=self._native_reference_confidence(qtokens=qtokens, edge=edge, namespace=session_id),
+            namespace=session_id,
+        )
 
 
 class ConversationIngestRequest(BaseModel):
