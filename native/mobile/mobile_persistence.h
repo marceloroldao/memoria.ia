@@ -7,7 +7,7 @@
 
 #define MEMORIA_MOBILE_STATE_SCHEMA 1u
 #define MEMORIA_PERSIST_MAX_RELATIONS 4u
-#define MEMORIA_PERSIST_MEMORY_ID_CAP 257u
+#define MEMORIA_PERSIST_MEMORY_ID_CAP 384u
 
 typedef struct memoria_persistence memoria_persistence;
 
