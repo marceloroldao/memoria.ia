@@ -17,4 +17,17 @@ int memoria_relations_to_json(
     size_t out_size
 );
 
+/* Same as memoria_relations_to_json, adding a stable memory_id for each relation.
+ * relation_memory_ids may be NULL to omit the additive field and preserve the
+ * original mobile JSON shape.
+ */
+int memoria_relations_to_json_with_ids(
+    const memoria_relation *relations,
+    const char *const *relation_memory_ids,
+    size_t relation_count,
+    const char *source_memory_id,
+    char *out,
+    size_t out_size
+);
+
 #endif
