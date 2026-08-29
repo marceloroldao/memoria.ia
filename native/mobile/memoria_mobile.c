@@ -832,7 +832,7 @@ memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *
     if (!query) { free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
     for (i = 0; i < h->episode_count; ++i) {
         episode_row *e = &h->episodes[i];
-        if (session_id && strcmp(session_id, e->session_id ? e->session_id : "") != 0) continue;
+        if (strcmp(session_id ? session_id : "", e->session_id ? e->session_id : "") != 0) continue;
         eps[episode_count].episode_id = e->episode_id;
         eps[episode_count].role = e->role;
         eps[episode_count].text = e->text;
