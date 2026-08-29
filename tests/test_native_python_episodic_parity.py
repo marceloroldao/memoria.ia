@@ -92,7 +92,7 @@ def _python_result(case, root):
 
 
 def _native_recall(lib, handle, case):
-    payload = {"query": case["query"]}
+    payload = {"query": case["query"], "session_id": case["name"]}
     if case.get("role"):
         payload["role"] = case["role"]
     if case.get("event_type"):
@@ -113,6 +113,7 @@ def _native_result(lib, case, root):
         for episode in case["episodes"]:
             payload = {
                 "episode_id": episode["episode_id"],
+                "session_id": case["name"],
                 "role": episode["role"],
                 "text": episode["text"],
                 "order": episode["order"],
@@ -137,6 +138,133 @@ def _native_result(lib, case, root):
     return first
 
 
+def _python_cross_session(root: Path):
+    evidence_root = root / "python-cross-session"
+    service = ProductEpisodicService(ProductEvidenceService.open(evidence_root))
+    rows = (
+        ("s1-old", "s1", "atlas status report session one old", 10),
+        ("s2", "s2", "atlas status report session two", 20),
+        ("s1-new", "s1", "atlas status report session one new", 15),
+    )
+    for episode_id, session_id, text, order in rows:
+        service.store(EpisodeStoreRequest(
+            episode_id=episode_id,
+            role="assistant",
+            text=text,
+            session_id=session_id,
+            order=order,
+            event_type="report",
+            topics=["atlas", "status"],
+        ))
+
+    def recall(session_id):
+        result = service.resolve(EpisodeRecallRequest(
+            query="latest atlas status report",
+            session_id=session_id,
+            role="assistant",
+            event_type="report",
+            topics=["atlas", "status"],
+        ))
+        return _normalized(result.status, result.selected_context)
+
+    before = {
+        "s1": recall("s1"),
+        "s2": recall("s2"),
+        "default": recall(None),
+    }
+    restarted = ProductEpisodicService(ProductEvidenceService.open(evidence_root))
+
+    def recall_after(session_id):
+        result = restarted.resolve(EpisodeRecallRequest(
+            query="latest atlas status report",
+            session_id=session_id,
+            role="assistant",
+            event_type="report",
+            topics=["atlas", "status"],
+        ))
+        return _normalized(result.status, result.selected_context)
+
+    after = {
+        "s1": recall_after("s1"),
+        "s2": recall_after("s2"),
+        "default": recall_after(None),
+    }
+    assert after == before
+    return before
+
+
+def _native_cross_session(lib, root: Path):
+    native_dir = root / "native-cross-session"
+    native_dir.mkdir(parents=True, exist_ok=True)
+    handle = ctypes.c_void_p()
+    assert lib.memoria_mobile_open(str(native_dir).encode(), b"cross-session-org", ctypes.byref(handle)) == 0
+    rows = (
+        ("s1-old", "s1", "atlas status report session one old", 10),
+        ("s2", "s2", "atlas status report session two", 20),
+        ("s1-new", "s1", "atlas status report session one new", 15),
+    )
+    try:
+        for episode_id, session_id, text, order in rows:
+            status, _ = _request(lib, "memoria_mobile_store_episode_json", handle, {
+                "episode_id": episode_id,
+                "session_id": session_id,
+                "role": "assistant",
+                "text": text,
+                "order": order,
+                "event_type": "report",
+                "topics_csv": "atlas,status",
+            })
+            assert status == 0
+
+        def recall(session_id):
+            payload = {
+                "query": "latest atlas status report",
+                "role": "assistant",
+                "event_type": "report",
+                "topics_csv": "atlas,status",
+            }
+            if session_id is not None:
+                payload["session_id"] = session_id
+            status, body = _request(lib, "memoria_mobile_recall_episode_json", handle, payload)
+            normalized_status = "HIT" if status == 0 else "UNRESOLVED" if status == 2 else f"STATUS_{status}"
+            return _normalized(body.get("status", normalized_status), body.get("selected_context", ""))
+
+        before = {
+            "s1": recall("s1"),
+            "s2": recall("s2"),
+            "default": recall(None),
+        }
+        assert lib.memoria_mobile_flush(handle) == 0
+    finally:
+        lib.memoria_mobile_close(handle)
+
+    reopened = ctypes.c_void_p()
+    assert lib.memoria_mobile_open(str(native_dir).encode(), b"cross-session-org", ctypes.byref(reopened)) == 0
+    try:
+        def recall_after(session_id):
+            payload = {
+                "query": "latest atlas status report",
+                "role": "assistant",
+                "event_type": "report",
+                "topics_csv": "atlas,status",
+            }
+            if session_id is not None:
+                payload["session_id"] = session_id
+            status, body = _request(lib, "memoria_mobile_recall_episode_json", reopened, payload)
+            normalized_status = "HIT" if status == 0 else "UNRESOLVED" if status == 2 else f"STATUS_{status}"
+            return _normalized(body.get("status", normalized_status), body.get("selected_context", ""))
+
+        after = {
+            "s1": recall_after("s1"),
+            "s2": recall_after("s2"),
+            "default": recall_after(None),
+        }
+    finally:
+        lib.memoria_mobile_close(reopened)
+    assert after == before
+    return before
+
+
 def test_python_and_native_share_episodic_reference_vectors(tmp_path):
     lib = _load_native()
     assert lib.memoria_mobile_abi_version() == 1
@@ -154,3 +282,17 @@ def test_python_and_native_share_episodic_reference_vectors(tmp_path):
         assert python_result == expected, f"python:{case['name']}"
         assert native_result == expected, f"native:{case['name']}"
         assert native_result == python_result, f"parity:{case['name']}"
+
+
+def test_python_and_native_isolate_episodes_by_session(tmp_path):
+    lib = _load_native()
+    expected = {
+        "s1": {"status": "HIT", "selected_context": "atlas status report session one new"},
+        "s2": {"status": "HIT", "selected_context": "atlas status report session two"},
+        "default": {"status": "UNRESOLVED", "selected_context": ""},
+    }
+    python_result = _python_cross_session(tmp_path)
+    native_result = _native_cross_session(lib, tmp_path)
+    assert python_result == expected
+    assert native_result == expected
+    assert native_result == python_result

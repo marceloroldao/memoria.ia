@@ -267,7 +267,7 @@ int memoria_persistence_save_episode(memoria_persistence *p, size_t slot,
     char vals[8][VAL_CAP];
     bdr_atomic_c_batch_result result = {0};
     size_t n = 0;
-    if (!p || !slot || !e || !e->episode_id || !e->role || !e->text || !e->timestamp ||
+    if (!p || !slot || !e || !e->episode_id || !e->session_id || !e->role || !e->text || !e->timestamp ||
         !e->event_type || !e->topics_csv || !e->source_type || !e->ultimate_source_memory_id) return 0;
     snprintf(vals[0],VAL_CAP,"%u",MEMORIA_MOBILE_STATE_SCHEMA);
     snprintf(vals[1],VAL_CAP,"%zu",slot);
@@ -279,6 +279,7 @@ int memoria_persistence_save_episode(memoria_persistence *p, size_t slot,
         !add_meta(p,ops,keys,&n,"episode_count",vals[1]) ||
         !add_meta(p,ops,keys,&n,"sequence",vals[2]) ||
         !add_put(p,ops,keys,&n,"episode",slot,"episode_id",e->episode_id) ||
+        !add_put(p,ops,keys,&n,"episode",slot,"session_id",e->session_id) ||
         !add_put(p,ops,keys,&n,"episode",slot,"role",e->role) ||
         !add_put(p,ops,keys,&n,"episode",slot,"text",e->text) ||
         !add_put(p,ops,keys,&n,"episode",slot,"timestamp",e->timestamp) ||
@@ -299,6 +300,7 @@ int memoria_persistence_load_episode(memoria_persistence *p, size_t slot, memori
     if (!p || !slot || !e) return 0;
     memset(e,0,sizeof(*e));
     if (!fetch(p,"episode",slot,"episode_id",&e->episode_id) || !e->episode_id ||
+        !fetch(p,"episode",slot,"session_id",&e->session_id) ||
         !fetch(p,"episode",slot,"role",&e->role) || !e->role ||
         !fetch(p,"episode",slot,"text",&e->text) || !e->text ||
         !fetch(p,"episode",slot,"timestamp",&e->timestamp) || !e->timestamp ||
@@ -307,6 +309,10 @@ int memoria_persistence_load_episode(memoria_persistence *p, size_t slot, memori
         !fetch(p,"episode",slot,"source_type",&e->source_type) || !e->source_type ||
         !fetch(p,"episode",slot,"ultimate_source_memory_id",&e->ultimate_source_memory_id) || !e->ultimate_source_memory_id ||
         !fetch(p,"episode",slot,"authority",&v) || !v || !parse_d(v,&e->authority)) goto fail;
+    if (!e->session_id) {
+        e->session_id = sdup("");
+        if (!e->session_id) goto fail;
+    }
     free(v); v=NULL;
     if (!fetch(p,"episode",slot,"order",&v) || !v || !parse_l(v,&e->order)) goto fail;
     free(v); v=NULL;
@@ -328,7 +334,7 @@ void memoria_persistence_free_turn(memoria_persist_turn *t) {
 
 void memoria_persistence_free_episode(memoria_persist_episode *e) {
     if (!e) return;
-    free(e->episode_id); free(e->role); free(e->text); free(e->timestamp); free(e->event_type); free(e->topics_csv);
+    free(e->episode_id); free(e->session_id); free(e->role); free(e->text); free(e->timestamp); free(e->event_type); free(e->topics_csv);
     free(e->source_type); free(e->ultimate_source_memory_id);
     memset(e,0,sizeof(*e));
 }
