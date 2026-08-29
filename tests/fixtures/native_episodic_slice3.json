@@ -1,0 +1,78 @@
+{
+  "version": 3,
+  "cases": [
+    {
+      "name": "latest_matching_topic",
+      "episodes": [
+        {"episode_id":"e1","role":"assistant","text":"atlas deployment note version one","order":1,"timestamp":"2026-08-28T10:00:00Z","event_type":"note","topics":["atlas"]},
+        {"episode_id":"e2","role":"assistant","text":"orion deployment note","order":2,"timestamp":"2026-08-28T11:00:00Z","event_type":"note","topics":["orion"]},
+        {"episode_id":"e3","role":"assistant","text":"atlas deployment note version two","order":3,"timestamp":"2026-08-28T12:00:00Z","event_type":"note","topics":["atlas"]}
+      ],
+      "query":"latest note about atlas",
+      "role":"assistant",
+      "event_type":"note",
+      "topics":["atlas"],
+      "expected_status":"HIT",
+      "expected_context":"atlas deployment note version two"
+    },
+    {
+      "name": "topic_isolation",
+      "episodes": [
+        {"episode_id":"a1","role":"assistant","text":"north laboratory maintenance report","order":4,"timestamp":"2026-08-28T13:00:00Z","event_type":"report","topics":["north","maintenance"]},
+        {"episode_id":"b1","role":"assistant","text":"south laboratory maintenance report","order":5,"timestamp":"2026-08-28T14:00:00Z","event_type":"report","topics":["south","maintenance"]}
+      ],
+      "query":"latest maintenance report for north",
+      "role":"assistant",
+      "event_type":"report",
+      "topics":["north"],
+      "expected_status":"HIT",
+      "expected_context":"north laboratory maintenance report"
+    },
+    {
+      "name": "role_filter",
+      "episodes": [
+        {"episode_id":"u1","role":"user","text":"atlas calibration request","order":6,"timestamp":"2026-08-28T15:00:00Z","event_type":"request","topics":["atlas","calibration"]},
+        {"episode_id":"a1","role":"assistant","text":"atlas calibration response","order":7,"timestamp":"2026-08-28T16:00:00Z","event_type":"response","topics":["atlas","calibration"]}
+      ],
+      "query":"atlas calibration",
+      "role":"user",
+      "event_type":"request",
+      "topics":["atlas"],
+      "expected_status":"HIT",
+      "expected_context":"atlas calibration request"
+    },
+    {
+      "name": "semantic_only_latest",
+      "episodes": [
+        {"episode_id":"s1","role":"assistant","text":"gateway latency measured 18 milliseconds","order":8,"timestamp":"2026-08-28T17:00:00Z"},
+        {"episode_id":"s2","role":"assistant","text":"gateway latency measured 12 milliseconds","order":9,"timestamp":"2026-08-28T18:00:00Z"},
+        {"episode_id":"s3","role":"assistant","text":"battery temperature measured 31 degrees","order":10,"timestamp":"2026-08-28T19:00:00Z"}
+      ],
+      "query":"gateway latency measured",
+      "expected_status":"HIT",
+      "expected_context":"gateway latency measured 12 milliseconds"
+    },
+    {
+      "name": "same_order_ambiguity",
+      "episodes": [
+        {"episode_id":"x1","role":"assistant","text":"atlas status report green","order":11,"timestamp":"2026-08-28T20:00:00Z","event_type":"report","topics":["atlas","status"]},
+        {"episode_id":"x2","role":"assistant","text":"atlas status report amber","order":11,"timestamp":"2026-08-28T20:00:01Z","event_type":"report","topics":["atlas","status"]}
+      ],
+      "query":"latest atlas status report",
+      "role":"assistant",
+      "event_type":"report",
+      "topics":["atlas","status"],
+      "expected_status":"UNRESOLVED",
+      "expected_context":""
+    },
+    {
+      "name": "open_set_episode",
+      "episodes": [
+        {"episode_id":"o1","role":"assistant","text":"atlas deployment note","order":12,"timestamp":"2026-08-28T21:00:00Z","event_type":"note","topics":["atlas"]}
+      ],
+      "query":"unknown satellite inspection",
+      "expected_status":"UNRESOLVED",
+      "expected_context":""
+    }
+  ]
+}
