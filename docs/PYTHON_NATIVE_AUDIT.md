@@ -13,9 +13,9 @@ The migration rule is: **one authoritative semantic implementation, multiple thi
 | Capability | Authoritative/current native path | Python role / remaining work |
 | --- | --- | --- |
 | Semantic candidate ranking | `native/mobile/semantic_kernel.c` | Python parity/reference code remains until server migration completes |
-| Relation extraction | `native/mobile/relation_extractor.c` | `product_conversation.py` parser remains the production default until native conversation runtime is accepted |
+| Relation extraction | `native/mobile/relation_extractor.c` | Shared product vectors are parity-gated; Python parser remains the default server path until native conversation becomes default |
 | Trajectory/window resolve | `native/mobile/trajectory_*` | Python retains tests/orchestration |
-| Temporal previous/current | `native/mobile/temporal_state_*` | Server exposure is being routed through native conversation runtime |
+| Temporal previous/current | `native/mobile/temporal_state_*` | Exposed through opt-in native conversation runtime |
 | Episodic recall | `native/mobile/episodic_kernel.c` | `NativeEpisodicService` is opt-in; Python remains default during migration |
 | Turn persistence | `native/mobile/mobile_persistence_bdr.c` | BDR is authoritative persistence for native runtime |
 | Persistent namespaces | native turn `namespace` | Server maps product `session_id` to namespace; OFF.IA omits namespace and retains global personal memory |
@@ -23,7 +23,7 @@ The migration rule is: **one authoritative semantic implementation, multiple thi
 | Provenance/authority lineage | native parent/root lineage + supersession metadata | Python `memory_provenance.py` remains a reference/legacy server path during migration |
 | Relation identity | persisted native relation memory IDs | Server may pre-compute bounded deterministic IDs; native extraction decides how many are consumed |
 | Episodic server adapter | `NativeEpisodicService` | FastAPI/Pydantic remain Python |
-| Conversation server adapter | `NativeConversationService` (PR #103 candidate) | FastAPI/Pydantic/auth remain Python; runtime remains opt-in until gates/parity pass |
+| Conversation server adapter | `NativeConversationService` | FastAPI/Pydantic/auth remain Python; runtime is opt-in while response metadata is frozen |
 
 ## Product boundaries
 
@@ -51,28 +51,31 @@ Server `session_id` may be mapped to native persistent `namespace` to preserve p
 - opt-in native episodic HTTP adapter;
 - persistent relation IDs;
 - persistent turn namespace isolation;
-- native parent lineage, authority clamping and superseded-by metadata.
+- native parent lineage, authority clamping and superseded-by metadata;
+- opt-in native conversation HTTP adapter;
+- shared product relation extraction parity for compact Portuguese copulas, elliptic relations, dedupe and noise filtering;
+- deliberate native English `is` compound-subject compatibility preserved for mobile/temporal entities.
 
-## Current slice — native conversation server adapter
+## Current slice — confidence and response metadata parity
+
+The selected memory already has semantic parity. This slice freezes the remaining public response contract before native conversation can become the default server path.
 
 Acceptance requirements:
 
-- Python remains the default runtime;
-- native mode is explicitly selected with `MEMORIA_CONVERSATION_RUNTIME=native`;
-- no Python semantic fallback occurs in native mode;
-- deterministic public turn/relation IDs survive migration;
-- session namespaces do not leak;
-- correction/supersession and generated-parent lineage survive restart;
-- unknown/ambiguous queries abstain;
-- temporal previous/current is available through the same conversation endpoint;
+- compare complete supported ingest/resolve JSON between Python and native paths;
+- freeze `confidence` semantics without recomputing Python ranking in the thin adapter;
+- define stable relation `epoch` semantics that survive restart and are reproducible across runtimes;
+- preserve relation IDs, namespace, source authority, immediate source type, parent lineage, ultimate source, created order/time and supersession metadata;
+- preserve correction and turn-fallback behavior;
+- unresolved responses remain identical;
+- restart preserves the same public response;
 - Android arm64, Ubuntu, Windows and BDR gates remain green.
 
-## Remaining P0 work after conversation adapter
+## Remaining P0 work after this slice
 
-1. Expand native relation extraction parity for richer/elliptic natural-language relations still handled by `product_conversation.py`.
-2. Decide and freeze cross-runtime confidence/response metadata semantics before making native conversation the default server path.
-3. Consolidate native episodic and conversation handles behind a shared runtime manager so one process does not maintain unnecessary duplicate native stores.
-4. Remove duplicated authoritative Python ranking/provenance algorithms once the native server path becomes production default.
-5. Run the #88 benchmark matrix at 100 / 1,000 / 10,000 records: ingest p50/p95, resolve p50/p95, RSS, selected-context size and restart/load time.
+1. Consolidate native episodic and conversation handles behind a shared runtime manager so one process does not maintain unnecessary duplicate native stores.
+2. Make the native server runtime the production default only after the frozen response contract is accepted.
+3. Remove duplicated authoritative Python ranking/provenance algorithms once native is the production path.
+4. Run the #88 benchmark matrix at 100 / 1,000 / 10,000 records: ingest p50/p95, resolve p50/p95, RSS, selected-context size and restart/load time.
 
 Do not close #88 until these production-path and benchmark criteria are satisfied.
