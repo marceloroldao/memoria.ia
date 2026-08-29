@@ -41,5 +41,35 @@ int main(void) {
         r=memoria_trajectory_resolve("what is its model","s3",ambiguous,1,sources,3);
         CHECK(r.hit==0);
     }
+
+    /* Ordinal intent reverses the default recency preference when justified. */
+    {
+        memoria_semantic_source ordered_sources[] = {
+            {"o1","sensor east calibration is A1",1.0,10,"user_assertion","o1"},
+            {"o2","sensor west calibration is B2",1.0,11,"user_assertion","o2"}
+        };
+        memoria_trajectory_turn ordered_window[] = {
+            {"ord","user","sensor east calibration is A1",1},
+            {"ord","user","sensor west calibration is B2",2}
+        };
+
+        r=memoria_trajectory_resolve("which sensor calibration did I mention first","ord",ordered_window,2,ordered_sources,2);
+        CHECK(r.hit==1);
+        CHECK(strcmp(r.memory_id,"o1")==0);
+        CHECK(r.used_window==1);
+
+        r=memoria_trajectory_resolve("which sensor calibration did I mention last","ord",ordered_window,2,ordered_sources,2);
+        CHECK(r.hit==1);
+        CHECK(strcmp(r.memory_id,"o2")==0);
+        CHECK(r.used_window==1);
+
+        r=memoria_trajectory_resolve("qual calibracao de sensor mencionei primeiro","ord",ordered_window,2,ordered_sources,2);
+        CHECK(r.hit==1);
+        CHECK(strcmp(r.memory_id,"o1")==0);
+
+        r=memoria_trajectory_resolve("qual calibracao de sensor mencionei último","ord",ordered_window,2,ordered_sources,2);
+        CHECK(r.hit==1);
+        CHECK(strcmp(r.memory_id,"o2")==0);
+    }
     return 0;
 }
