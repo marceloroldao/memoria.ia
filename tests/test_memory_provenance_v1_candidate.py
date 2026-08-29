@@ -44,6 +44,27 @@ def test_user_correction_supersedes_wrong_generated_answer():
     assert index.inspect("wrong", namespace="s").superseded_by == "correction"
 
 
+def test_derived_descendant_of_superseded_source_is_historical_not_active_root():
+    core = EvidenceCore()
+    index = MemoryProvenanceIndex(core)
+    index.register("old", source_type="user_assertion", created_order=1, namespace="s")
+    index.register("old-relation", source_type="derived_relation", parent_memory_ids=("old",), created_order=1, namespace="s")
+    index.register("correction", source_type="user_correction", parent_memory_ids=("old",), created_order=2, namespace="s")
+    index.register("new-relation", source_type="derived_relation", parent_memory_ids=("correction",), created_order=2, namespace="s")
+    index.supersede("old", by_memory_id="correction", namespace="s")
+
+    assert index.inspect("old-relation", namespace="s").superseded_by is None
+    assert index.active_ultimate_source("old-relation", namespace="s") is None
+    assert index.ultimate_source("old-relation", namespace="s").memory_id == "old-relation"
+
+    selected = index.select([
+        ProvenanceCandidate("old-relation", 1.0, 1),
+        ProvenanceCandidate("new-relation", 1.0, 2),
+    ], namespace="s")
+    assert selected is not None
+    assert selected.memory_id == "new-relation"
+
+
 def test_provenance_survives_evidence_replay():
     core = EvidenceCore()
     index = MemoryProvenanceIndex(core)

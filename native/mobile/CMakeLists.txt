@@ -63,6 +63,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_diagnostic_export PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_diagnostic_export COMMAND memoria_mobile_diagnostic_export)
 
+  add_executable(memoria_mobile_correction tests/correction_mobile.c)
+  target_link_libraries(memoria_mobile_correction PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_correction PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_correction COMMAND memoria_mobile_correction)
+
   add_executable(memoria_semantic_kernel_test tests/semantic_kernel.c semantic_kernel.c)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)

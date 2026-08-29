@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "name": "user_correction_supersedes_prior",
+      "sources": [
+        {"memory_id":"old","role":"user","text":"device alpha mode is standby","order":1},
+        {"memory_id":"new","role":"user","text":"device alpha mode is active","order":2,"corrects_memory_ids":["old"]}
+      ],
+      "query":"device alpha mode",
+      "expected_status":"HIT",
+      "expected_context":"device alpha mode is active"
+    },
+    {
+      "name": "correction_beats_old_echo",
+      "sources": [
+        {"memory_id":"old","role":"user","text":"project atlas code is 4729","order":1},
+        {"memory_id":"echo","role":"assistant","text":"the atlas code is 4729","order":2,"parent_memory_ids":["old"]},
+        {"memory_id":"new","role":"user","text":"project atlas code is 5831","order":3,"corrects_memory_ids":["old"]}
+      ],
+      "query":"project atlas code",
+      "expected_status":"HIT",
+      "expected_context":"project atlas code is 5831"
+    }
+  ]
+}

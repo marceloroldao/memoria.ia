@@ -219,10 +219,12 @@ class ConversationSemanticService:
         return {(_key(edge.subject), edge.predicate, _key(edge.object)) for _score, _order, edge in scored}
 
     def _ultimate_source_ids(self, scored: list[tuple[float, int, EvidenceEdge]], *, namespace: str | None) -> set[str]:
-        return {
-            self.provenance.ultimate_source(edge.evidence_id, namespace=namespace).memory_id
-            for _score, _order, edge in scored
-        }
+        roots: set[str] = set()
+        for _score, _order, edge in scored:
+            source = self.provenance.active_ultimate_source(edge.evidence_id, namespace=namespace)
+            if source is not None:
+                roots.add(source.memory_id)
+        return roots
 
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult:
         query = query.strip()

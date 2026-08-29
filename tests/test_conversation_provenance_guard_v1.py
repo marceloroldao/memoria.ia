@@ -34,6 +34,29 @@ def test_user_correction_supersedes_wrong_assistant_answer(tmp_path: Path):
     assert service.provenance.inspect(wrong.memory_ids[0], namespace="s").superseded_by == correction.memory_ids[0]
 
 
+def test_user_correction_supersedes_prior_user_fact_and_survives_restart(tmp_path: Path):
+    root = tmp_path / "evidence"
+    service = _service(root)
+    old = service.ingest(role="user", text="device alpha mode is standby", session_id="s", order=1)
+    correction = service.ingest(
+        role="user",
+        text="device alpha mode is active",
+        session_id="s",
+        order=2,
+        corrects_memory_ids=(old.memory_ids[0],),
+    )
+
+    result = service.resolve(query="device alpha mode", session_id="s")
+    assert result.status == "HIT"
+    assert result.selected_context == "device alpha mode is active"
+    assert service.provenance.inspect(old.memory_ids[0], namespace="s").superseded_by == correction.memory_ids[0]
+
+    restarted = _service(root)
+    after = restarted.resolve(query="device alpha mode", session_id="s")
+    assert after.status == "HIT"
+    assert after.selected_context == "device alpha mode is active"
+
+
 def test_generated_only_result_exposes_generated_provenance(tmp_path: Path):
     service = _service(tmp_path / "evidence")
     service.ingest(role="assistant", text="a previsão interna é 17 unidades", session_id="s", order=1)
