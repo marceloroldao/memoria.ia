@@ -1,10 +1,26 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import hmac
 from typing import Protocol
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
+
+
+@dataclass(frozen=True, slots=True)
+class EpisodicRecallResult:
+    status: str
+    confidence: float
+    episode_ids: tuple[str, ...]
+    selected_context: str
+    order: int | None
+    timestamp: str | None
+    event_type: str | None
+    topics: tuple[str, ...]
+    source_type: str | None = None
+    source_authority: float | None = None
+    ultimate_source_memory_id: str | None = None
 
 
 class EpisodeStoreRequest(BaseModel):
