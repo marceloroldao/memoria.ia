@@ -1,0 +1,101 @@
+name: temp-native-runtime-manager
+
+on:
+  push:
+    branches:
+      - integration/v1.0-native-runtime-manager
+    paths:
+      - '.github/workflows/temp-native-runtime-manager.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/v1.0-native-runtime-manager
+          fetch-depth: 0
+      - name: Consolidate native service ownership
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          conv = Path('src/memoria_resolutiva/native_conversation.py')
+          text = conv.read_text()
+          text = text.replace(
+              'import ctypes\nimport hashlib\nimport json\nfrom pathlib import Path\nimport threading\n\nfrom .product_conversation import ConversationIngestResult, ConversationResolveResult\n',
+              'import hashlib\nfrom pathlib import Path\n\nfrom .native_runtime import NativeRuntimeManager, default_native_runtime_manager\nfrom .product_conversation import ConversationIngestResult, ConversationResolveResult\n',
+          )
+          text = text.replace('MEMORIA_MOBILE_ABI_VERSION = 1\n', '')
+          text = re.sub(r'\nclass _NativeBuffer\(ctypes\.Structure\):\n    _fields_ = \[\n        \("data", ctypes\.POINTER\(ctypes\.c_uint8\)\),\n        \("size", ctypes\.c_size_t\),\n    \]\n', '\n', text)
+          text = re.sub(
+              r'    def __init__\(self, \*, library_path: str \| Path, data_dir: str \| Path, organization_id: str\) -> None:\n.*?        self\._closed = False\n\n    def _configure_abi\(self\) -> None:\n.*?    def ingest\(',
+              '''    def __init__(\n        self,\n        *,\n        library_path: str | Path,\n        data_dir: str | Path,\n        organization_id: str,\n        runtime_manager: NativeRuntimeManager | None = None,\n    ) -> None:\n        self.library_path = Path(library_path)\n        self.data_dir = Path(data_dir)\n        self.organization_id = organization_id\n        manager = runtime_manager or default_native_runtime_manager()\n        self._runtime_lease = manager.acquire(\n            library_path=self.library_path,\n            data_dir=self.data_dir,\n            organization_id=organization_id,\n        )\n        self._closed = False\n\n    def _call(self, function_name: str, payload: dict[str, object]) -> tuple[int, dict[str, object]]:\n        if self._closed:\n            raise RuntimeError("native conversation runtime is closed")\n        return self._runtime_lease.call(function_name, payload)\n\n    def ingest(''',
+              text,
+              flags=re.S,
+          )
+          text = re.sub(
+              r'    def flush\(self\) -> None:\n.*?            self\._closed = True\s*$',
+              '''    def flush(self) -> None:\n        if not self._closed:\n            self._runtime_lease.flush()\n\n    def close(self) -> None:\n        if self._closed:\n            return\n        self._closed = True\n        self._runtime_lease.release()\n''',
+              text,
+              flags=re.S,
+          )
+          conv.write_text(text)
+
+          epi = Path('src/memoria_resolutiva/native_episodic.py')
+          text = epi.read_text()
+          text = text.replace(
+              'import ctypes\nfrom dataclasses import dataclass\nimport json\nfrom pathlib import Path\nimport threading\nimport unicodedata\n\nfrom .episodic_recall import EpisodicRecallResult\n',
+              'from dataclasses import dataclass\nfrom pathlib import Path\nimport unicodedata\n\nfrom .episodic_recall import EpisodicRecallResult\nfrom .native_runtime import NativeRuntimeManager, default_native_runtime_manager\n',
+          )
+          text = text.replace('MEMORIA_MOBILE_ABI_VERSION = 1\n', '')
+          text = re.sub(r'\nclass _NativeBuffer\(ctypes\.Structure\):\n    _fields_ = \[\n        \("data", ctypes\.POINTER\(ctypes\.c_uint8\)\),\n        \("size", ctypes\.c_size_t\),\n    \]\n', '\n', text)
+          text = re.sub(
+              r'    def __init__\(\n        self,\n        \*,\n        library_path: str \| Path,\n        data_dir: str \| Path,\n        organization_id: str,\n    \) -> None:\n.*?        self\._closed = False\n\n    def _configure_abi\(self\) -> None:\n.*?    def store\(',
+              '''    def __init__(\n        self,\n        *,\n        library_path: str | Path,\n        data_dir: str | Path,\n        organization_id: str,\n        runtime_manager: NativeRuntimeManager | None = None,\n    ) -> None:\n        self.library_path = Path(library_path)\n        self.data_dir = Path(data_dir)\n        self.organization_id = organization_id\n        manager = runtime_manager or default_native_runtime_manager()\n        self._runtime_lease = manager.acquire(\n            library_path=self.library_path,\n            data_dir=self.data_dir,\n            organization_id=organization_id,\n        )\n        self._closed = False\n\n    def _call(self, function_name: str, payload: dict[str, object]) -> tuple[int, dict[str, object]]:\n        if self._closed:\n            raise RuntimeError("native episodic runtime is closed")\n        return self._runtime_lease.call(function_name, payload)\n\n    def store(''',
+              text,
+              flags=re.S,
+          )
+          text = re.sub(
+              r'    def flush\(self\) -> None:\n.*?            self\._closed = True\s*$',
+              '''    def flush(self) -> None:\n        if not self._closed:\n            self._runtime_lease.flush()\n\n    def close(self) -> None:\n        if self._closed:\n            return\n        self._closed = True\n        self._runtime_lease.release()\n''',
+              text,
+              flags=re.S,
+          )
+          epi.write_text(text)
+
+          server = Path('src/memoria_resolutiva/product_server.py')
+          text = server.read_text()
+          text = text.replace(
+              'def _build_conversation_service(\n    *,\n    evidence_service: ProductEvidenceService,\n    data_dir: Path,\n    organization_id: str,\n):',
+              'def _build_conversation_service(\n    *,\n    evidence_service: ProductEvidenceService,\n    data_dir: Path,\n    organization_id: str,\n    native_data_dir: Path | None = None,\n):',
+          )
+          text = text.replace('        data_dir=data_dir / "native-conversation",\n', '        data_dir=native_data_dir or (data_dir / "native-conversation"),\n', 1)
+          text = text.replace(
+              'def _build_episodic_service(\n    *,\n    evidence_service: ProductEvidenceService,\n    data_dir: Path,\n    organization_id: str,\n):',
+              'def _build_episodic_service(\n    *,\n    evidence_service: ProductEvidenceService,\n    data_dir: Path,\n    organization_id: str,\n    native_data_dir: Path | None = None,\n):',
+          )
+          text = text.replace('        data_dir=data_dir / "native-episodic",\n', '        data_dir=native_data_dir or (data_dir / "native-episodic"),\n', 1)
+          marker = '\n\ndef build_app():\n'
+          helper = '''\n\ndef _native_shared_data_dir(data_dir: Path) -> Path | None:\n    conversation_runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "python").strip().lower()\n    episodic_runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "python").strip().lower()\n    if conversation_runtime != "native" or episodic_runtime != "native":\n        return None\n    legacy_paths = (data_dir / "native-conversation", data_dir / "native-episodic")\n    legacy_with_state = [path for path in legacy_paths if path.exists() and any(path.iterdir())]\n    if legacy_with_state:\n        names = ", ".join(str(path) for path in legacy_with_state)\n        raise RuntimeError(\n            "legacy split native stores contain data and require explicit migration before enabling both native runtimes: " + names\n        )\n    return data_dir / "native-runtime"\n'''
+          text = text.replace(marker, helper + marker)
+          old = '''    conversation_service = _build_conversation_service(\n        evidence_service=evidence_service,\n        data_dir=data_dir,\n        organization_id=organization_id,\n    )\n    episodic_service = _build_episodic_service(\n        evidence_service=evidence_service,\n        data_dir=data_dir,\n        organization_id=organization_id,\n    )\n'''
+          new = '''    native_shared_data_dir = _native_shared_data_dir(data_dir)\n    conversation_service = _build_conversation_service(\n        evidence_service=evidence_service,\n        data_dir=data_dir,\n        organization_id=organization_id,\n        native_data_dir=native_shared_data_dir,\n    )\n    episodic_service = _build_episodic_service(\n        evidence_service=evidence_service,\n        data_dir=data_dir,\n        organization_id=organization_id,\n        native_data_dir=native_shared_data_dir,\n    )\n'''
+          if old not in text:
+              raise SystemExit('product_server service block not found')
+          server.write_text(text.replace(old, new))
+          PY
+      - name: Commit consolidation patch and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-native-runtime-manager.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/memoria_resolutiva/native_conversation.py src/memoria_resolutiva/native_episodic.py src/memoria_resolutiva/product_server.py .github/workflows/temp-native-runtime-manager.yml
+          git commit -m "feat(native): share server runtime handle"
+          git push origin HEAD:integration/v1.0-native-runtime-manager
