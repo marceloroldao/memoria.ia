@@ -73,5 +73,6 @@ jobs:
           grep -q "memoria_mobile_resolve_context_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_store_episode_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_recall_episode_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_export_snapshot_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_flush" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_close" memoria-mobile-symbols.txt
