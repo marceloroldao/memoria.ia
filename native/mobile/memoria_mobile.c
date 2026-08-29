@@ -80,6 +80,56 @@ static char *json_string(const char *json, const char *key) {
     return out;
 }
 
+#define MAX_CORRECTIONS 16u
+
+static size_t json_string_array(const char *json, const char *key, char **out, size_t cap) {
+    char pattern[96];
+    const char *p;
+    size_t count = 0;
+    if (!json || !key || !out || !cap) return 0;
+    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+    p = strstr(json, pattern);
+    if (!p) return 0;
+    p = strchr(p + strlen(pattern), ':');
+    if (!p) return 0;
+    ++p;
+    while (*p && isspace((unsigned char)*p)) ++p;
+    if (*p != '[') return 0;
+    ++p;
+    while (*p) {
+        const char *q;
+        char *value;
+        size_t n, w = 0;
+        while (*p && (isspace((unsigned char)*p) || *p == ',')) ++p;
+        if (*p == ']') break;
+        if (*p != '"' || count >= cap) return 0;
+        ++p;
+        q = p;
+        while (*q && *q != '"') {
+            if (*q == '\\' && q[1]) q += 2;
+            else ++q;
+        }
+        if (*q != '"') return 0;
+        n = (size_t)(q - p);
+        value = (char *)malloc(n + 1u);
+        if (!value) return 0;
+        while (p < q) {
+            if (*p == '\\' && p + 1 < q) ++p;
+            value[w++] = *p++;
+        }
+        value[w] = 0;
+        out[count++] = value;
+        p = q + 1;
+    }
+    return count;
+}
+
+static void free_string_array(char **values, size_t count) {
+    size_t i;
+    if (!values) return;
+    for (i = 0; i < count; ++i) free(values[i]);
+}
+
 static long json_long(const char *json, const char *key, long fallback) {
     char pattern[96];
     const char *p;
@@ -262,6 +312,15 @@ static turn_row *find_turn(memoria_mobile_handle *h, const char *memory_id) {
     if (!h || !memory_id) return NULL;
     for (i = 0; i < h->turn_count; ++i) if (h->turns[i].memory_id && strcmp(h->turns[i].memory_id, memory_id) == 0) return &h->turns[i];
     return NULL;
+}
+
+static int turn_factual_active(memoria_mobile_handle *h, const turn_row *turn) {
+    turn_row *root;
+    if (!h || !turn || turn->superseded) return 0;
+    if (!turn->ultimate_source_memory_id || !*turn->ultimate_source_memory_id) return 1;
+    root = find_turn(h, turn->ultimate_source_memory_id);
+    if (root && root->superseded) return 0;
+    return 1;
 }
 
 static int same_relation_key(const memoria_relation *a, const memoria_relation *b) {
@@ -458,8 +517,11 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
 
 memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *text, *role, *id, *source_type, *root;
+    char *corrections[MAX_CORRECTIONS] = {0};
+    size_t correction_slots[MAX_CORRECTIONS] = {0};
     char idbuf[64], relations_json[1536];
     turn_row candidate;
+    size_t correction_count = 0, i, unique_count = 0;
     long order;
     double authority;
     unsigned long next_sequence;
@@ -474,9 +536,11 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     id = json_string(json, "memory_id");
     source_type = json_string(json, "source_type");
     root = json_string(json, "ultimate_source_memory_id");
+    correction_count = json_string_array(json, "corrects_memory_ids", corrections, MAX_CORRECTIONS);
     order = json_long(json, "order", (long)h->turn_count + 1);
     authority = json_double(json, "source_authority", -1.0);
-    if (!text || !role) {
+    if (!text || !role || (correction_count && strcmp(role, "user") != 0)) {
+        free_string_array(corrections, correction_count);
         free(json); free(text); free(role); free(id); free(source_type); free(root);
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
     }
@@ -486,12 +550,38 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
         snprintf(idbuf, sizeof(idbuf), "mobile:%lu", next_sequence);
         id = dup_string(idbuf);
     }
-    if (!source_type) source_type = dup_string(strcmp(role, "user") == 0 ? "user_assertion" : "assistant_generated");
-    if (authority < 0.0) authority = strcmp(source_type, "user_assertion") == 0 ? 1.0 : 0.35;
+    if (!source_type) {
+        if (correction_count) source_type = dup_string("user_correction");
+        else source_type = dup_string(strcmp(role, "user") == 0 ? "user_assertion" : "assistant_generated");
+    }
+    if (authority < 0.0)
+        authority = (strcmp(source_type, "user_assertion") == 0 || strcmp(source_type, "user_correction") == 0) ? 1.0 : 0.35;
     if (!root) root = dup_string(id);
     if (!id || !source_type || !root) {
+        free_string_array(corrections, correction_count);
         free(json); free(text); free(role); free(id); free(source_type); free(root);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    for (i = 0; i < correction_count; ++i) {
+        size_t j;
+        turn_row *prior = find_turn(h, corrections[i]);
+        if (!prior) {
+            free_string_array(corrections, correction_count);
+            free(json); free(text); free(role); free(id); free(source_type); free(root);
+            return MEMORIA_MOBILE_INVALID_ARGUMENT;
+        }
+        for (j = 0; j < h->turn_count && &h->turns[j] != prior; ++j) {}
+        if (j == h->turn_count) {
+            free_string_array(corrections, correction_count);
+            free(json); free(text); free(role); free(id); free(source_type); free(root);
+            return MEMORIA_MOBILE_INTERNAL_ERROR;
+        }
+        for (size_t k = 0; k < unique_count; ++k) if (correction_slots[k] == j + 1u) break;
+        {
+            size_t k;
+            for (k = 0; k < unique_count; ++k) if (correction_slots[k] == j + 1u) break;
+            if (k == unique_count) correction_slots[unique_count++] = j + 1u;
+        }
     }
     candidate.memory_id = id;
     candidate.text = text;
@@ -500,18 +590,25 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     candidate.ultimate_source_memory_id = root;
     candidate.authority = authority;
     candidate.order = order;
+    candidate.superseded = 0;
     candidate.relation_count = memoria_extract_relations(text, candidate.relations, MAX_RELATIONS_PER_TURN);
     if (!memoria_relations_to_json(candidate.relations, candidate.relation_count, id, relations_json, sizeof(relations_json))) {
+        free_string_array(corrections, correction_count);
         free(json); free_turn(&candidate); return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
-    if (!memoria_persistence_save_turn(h->persistence, h->turn_count + 1, next_sequence, &candidate)) {
+    if (!memoria_persistence_save_turn_with_supersessions(
+            h->persistence, h->turn_count + 1, next_sequence, &candidate,
+            correction_slots, unique_count)) {
+        free_string_array(corrections, correction_count);
         free(json); free_turn(&candidate); return MEMORIA_MOBILE_PERSISTENCE_ERROR;
     }
+    for (i = 0; i < unique_count; ++i) h->turns[correction_slots[i] - 1u].superseded = 1;
     h->turns[h->turn_count++] = candidate;
     h->sequence = next_sequence;
     response_status = set_responsef(out, MEMORIA_MOBILE_OK,
-             "{\"status\":\"OK\",\"stored_memory_ids\":[\"%s\"],\"relations\":%s,\"unresolved\":%s,\"native_relation_extraction\":true,\"durable\":true}",
-             id, relations_json, candidate.relation_count ? "false" : "true");
+             "{\"status\":\"OK\",\"stored_memory_ids\":[\"%s\"],\"relations\":%s,\"unresolved\":%s,\"native_relation_extraction\":true,\"durable\":true,\"correction_applied\":%s}",
+             id, relations_json, candidate.relation_count ? "false" : "true", unique_count ? "true" : "false");
+    free_string_array(corrections, correction_count);
     free(json);
     return response_status;
 }
@@ -530,19 +627,22 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     query = json_string(json, "query");
     if (!query) { free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    size_t source_count = 0;
     for (i = 0; i < h->turn_count; ++i) {
-        sources[i].memory_id = h->turns[i].memory_id;
-        sources[i].text = h->turns[i].text;
-        sources[i].authority = h->turns[i].authority;
-        sources[i].order = h->turns[i].order;
-        sources[i].source_type = h->turns[i].source_type;
-        sources[i].ultimate_source_memory_id = h->turns[i].ultimate_source_memory_id;
+        if (!turn_factual_active(h, &h->turns[i])) continue;
+        sources[source_count].memory_id = h->turns[i].memory_id;
+        sources[source_count].text = h->turns[i].text;
+        sources[source_count].authority = h->turns[i].authority;
+        sources[source_count].order = h->turns[i].order;
+        sources[source_count].source_type = h->turns[i].source_type;
+        sources[source_count].ultimate_source_memory_id = h->turns[i].ultimate_source_memory_id;
+        ++source_count;
     }
     if (try_temporal_response(h, query, NULL, out, &response_status)) {
         free(query); free(json);
         return response_status;
     }
-    trajectory_mode = memoria_trajectory_resolve_json(json, query, sources, h->turn_count, &tr, &window_count);
+    trajectory_mode = memoria_trajectory_resolve_json(json, query, sources, source_count, &tr, &window_count);
     if (trajectory_mode < 0) {
         free(query); free(json);
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
@@ -614,7 +714,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         r.source_authority = h->turns[i].authority;
         r.ultimate_source_memory_id = h->turns[i].ultimate_source_memory_id;
     } else {
-        r = memoria_semantic_resolve_sources(query, sources, h->turn_count);
+        r = memoria_semantic_resolve_sources(query, sources, source_count);
     }
     if (!r.hit) {
         free(query); free(json);
