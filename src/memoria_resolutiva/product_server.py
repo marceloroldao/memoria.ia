@@ -108,7 +108,7 @@ def _build_conversation_service(
     organization_id: str,
     native_data_dir: Path | None = None,
 ):
-    runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "python").strip().lower()
+    runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "native").strip().lower()
     if runtime == "python":
         return ConversationSemanticService(evidence_service)
     if runtime != "native":
@@ -127,7 +127,7 @@ def _build_episodic_service(
     organization_id: str,
     native_data_dir: Path | None = None,
 ):
-    runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "python").strip().lower()
+    runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "native").strip().lower()
     if runtime == "python":
         return ProductEpisodicService(evidence_service)
     if runtime != "native":
@@ -140,8 +140,8 @@ def _build_episodic_service(
 
 
 def _native_shared_data_dir(data_dir: Path) -> Path | None:
-    conversation_runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "python").strip().lower()
-    episodic_runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "python").strip().lower()
+    conversation_runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "native").strip().lower()
+    episodic_runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "native").strip().lower()
     if conversation_runtime != "native" or episodic_runtime != "native":
         return None
     legacy_paths = (data_dir / "native-conversation", data_dir / "native-episodic")
