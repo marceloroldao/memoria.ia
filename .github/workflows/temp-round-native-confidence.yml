@@ -1,0 +1,37 @@
+name: temp-round-native-confidence
+
+on:
+  pull_request:
+    branches:
+      - integration/v1.0-candidate
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.ref == 'integration/v1.0-native-confidence-metadata'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Match native ABI confidence precision
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/memoria_resolutiva/product_conversation.py')
+          text = path.read_text(encoding='utf-8')
+          old = '        return min(0.8, 0.30 + 0.25 * overlap + 0.25 * authority)\n'
+          new = '        return round(min(0.8, 0.30 + 0.25 * overlap + 0.25 * authority), 6)\n'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one confidence return, found {text.count(old)}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          Path('.github/workflows/temp-round-native-confidence.yml').unlink()
+      - name: Commit precision normalization
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/memoria_resolutiva/product_conversation.py .github/workflows/temp-round-native-confidence.yml
+          git commit -m "fix(server): normalize native confidence precision"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
