@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include "semantic_kernel.h"
 
+#define MEMORIA_TRAJECTORY_MAX_SELECTED 2
+
 typedef struct memoria_trajectory_turn {
     const char *session_id;
     const char *role;
@@ -16,6 +18,8 @@ typedef struct memoria_trajectory_result {
     const char *memory_id;
     double confidence;
     int used_window;
+    size_t memory_count;
+    const char *memory_ids[MEMORIA_TRAJECTORY_MAX_SELECTED];
 } memoria_trajectory_result;
 
 memoria_trajectory_result memoria_trajectory_resolve(
