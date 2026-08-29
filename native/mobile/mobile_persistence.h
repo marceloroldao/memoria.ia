@@ -7,6 +7,7 @@
 
 #define MEMORIA_MOBILE_STATE_SCHEMA 1u
 #define MEMORIA_PERSIST_MAX_RELATIONS 4u
+#define MEMORIA_PERSIST_MEMORY_ID_CAP 384u
 
 typedef struct memoria_persistence memoria_persistence;
 
@@ -20,6 +21,7 @@ typedef struct memoria_persist_turn {
     long order;
     int superseded;
     memoria_relation relations[MEMORIA_PERSIST_MAX_RELATIONS];
+    char relation_memory_ids[MEMORIA_PERSIST_MAX_RELATIONS][MEMORIA_PERSIST_MEMORY_ID_CAP];
     size_t relation_count;
 } memoria_persist_turn;
 
