@@ -7,7 +7,7 @@
 
 #define KEY_CAP 384
 #define VAL_CAP 128
-#define MAX_OPS 64
+#define MAX_OPS 128
 
 struct memoria_persistence {
     bdr_atomic_c_handle *db;
@@ -152,17 +152,19 @@ int memoria_persistence_meta(memoria_persistence *p, size_t *turn_count,
 
 static int save_turn_impl(memoria_persistence *p, size_t slot,
                           unsigned long sequence, const memoria_persist_turn *t,
-                          const size_t *superseded_slots, size_t superseded_count) {
+                          const size_t *superseded_slots, size_t superseded_count,
+                          const char *superseded_by_memory_id) {
     bdr_atomic_c_operation ops[MAX_OPS];
     char keys[MAX_OPS][KEY_CAP];
-    char vals[16][VAL_CAP];
+    char vals[24][VAL_CAP];
     char relation_ids[MEMORIA_PERSIST_MAX_RELATIONS][MEMORIA_PERSIST_MEMORY_ID_CAP];
     bdr_atomic_c_batch_result result = {0};
     size_t n = 0, i;
     if (!p || !slot || !t || !t->memory_id || !t->namespace_id || !t->text || !t->role ||
         !t->source_type || !t->ultimate_source_memory_id ||
         t->relation_count > MEMORIA_PERSIST_MAX_RELATIONS ||
-        (superseded_count && !superseded_slots)) return 0;
+        t->parent_count > MEMORIA_PERSIST_MAX_PARENTS ||
+        (superseded_count && (!superseded_slots || !superseded_by_memory_id || !*superseded_by_memory_id))) return 0;
     snprintf(vals[0], VAL_CAP, "%u", MEMORIA_MOBILE_STATE_SCHEMA);
     snprintf(vals[1], VAL_CAP, "%zu", slot);
     snprintf(vals[2], VAL_CAP, "%lu", sequence);
@@ -170,6 +172,7 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
     snprintf(vals[4], VAL_CAP, "%ld", t->order);
     snprintf(vals[5], VAL_CAP, "%zu", t->relation_count);
     snprintf(vals[6], VAL_CAP, "%d", t->superseded ? 1 : 0);
+    snprintf(vals[7], VAL_CAP, "%zu", t->parent_count);
     if (!add_meta(p,ops,keys,&n,"schema",vals[0]) ||
         !add_meta(p,ops,keys,&n,"turn_count",vals[1]) ||
         !add_meta(p,ops,keys,&n,"sequence",vals[2]) ||
@@ -182,14 +185,23 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
         !add_put(p,ops,keys,&n,"turn",slot,"authority",vals[3]) ||
         !add_put(p,ops,keys,&n,"turn",slot,"order",vals[4]) ||
         !add_put(p,ops,keys,&n,"turn",slot,"relation_count",vals[5]) ||
-        !add_put(p,ops,keys,&n,"turn",slot,"superseded",vals[6])) return 0;
+        !add_put(p,ops,keys,&n,"turn",slot,"superseded",vals[6]) ||
+        !add_put(p,ops,keys,&n,"turn",slot,"created_time",t->created_time) ||
+        !add_put(p,ops,keys,&n,"turn",slot,"superseded_by",t->superseded_by) ||
+        !add_put(p,ops,keys,&n,"turn",slot,"parent_count",vals[7])) return 0;
+    for (i = 0; i < t->parent_count; ++i) {
+        char field[64];
+        if (!t->parent_memory_ids[i][0]) return 0;
+        snprintf(field,sizeof(field),"parent/%zu",i);
+        if (!add_put(p,ops,keys,&n,"turn",slot,field,t->parent_memory_ids[i])) return 0;
+    }
     for (i = 0; i < t->relation_count; ++i) {
         char field[64];
+        const char *relation_id = t->relation_memory_ids[i];
         snprintf(field,sizeof(field),"relation/%zu/subject",i);
         if (!add_put(p,ops,keys,&n,"turn",slot,field,t->relations[i].subject)) return 0;
         snprintf(field,sizeof(field),"relation/%zu/predicate",i);
         if (!add_put(p,ops,keys,&n,"turn",slot,field,t->relations[i].predicate)) return 0;
-        const char *relation_id = t->relation_memory_ids[i];
         snprintf(field,sizeof(field),"relation/%zu/object",i);
         if (!add_put(p,ops,keys,&n,"turn",slot,field,t->relations[i].object)) return 0;
         if (!relation_id[0]) {
@@ -199,13 +211,14 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
         }
         snprintf(field,sizeof(field),"relation/%zu/memory_id",i);
         if (!add_put(p,ops,keys,&n,"turn",slot,field,relation_id)) return 0;
-        snprintf(vals[7+i],VAL_CAP,"%.17g",t->relations[i].confidence);
+        snprintf(vals[8+i],VAL_CAP,"%.17g",t->relations[i].confidence);
         snprintf(field,sizeof(field),"relation/%zu/confidence",i);
-        if (!add_put(p,ops,keys,&n,"turn",slot,field,vals[7+i])) return 0;
+        if (!add_put(p,ops,keys,&n,"turn",slot,field,vals[8+i])) return 0;
     }
     for (i = 0; i < superseded_count; ++i) {
         if (!superseded_slots[i] || superseded_slots[i] >= slot) return 0;
-        if (!add_put(p,ops,keys,&n,"turn",superseded_slots[i],"superseded","1")) return 0;
+        if (!add_put(p,ops,keys,&n,"turn",superseded_slots[i],"superseded","1") ||
+            !add_put(p,ops,keys,&n,"turn",superseded_slots[i],"superseded_by",superseded_by_memory_id)) return 0;
     }
     return bdr_atomic_c_write_batch(p->db,ops,n,&result) == BDR_ATOMIC_C_OK &&
            result.durable == 1 && result.operations == n;
@@ -213,19 +226,20 @@ static int save_turn_impl(memoria_persistence *p, size_t slot,
 
 int memoria_persistence_save_turn(memoria_persistence *p, size_t slot,
                                   unsigned long sequence, const memoria_persist_turn *t) {
-    return save_turn_impl(p, slot, sequence, t, NULL, 0);
+    return save_turn_impl(p, slot, sequence, t, NULL, 0, NULL);
 }
 
 int memoria_persistence_save_turn_with_supersessions(
     memoria_persistence *p, size_t slot, unsigned long sequence,
-    const memoria_persist_turn *t, const size_t *superseded_slots, size_t superseded_count
+    const memoria_persist_turn *t, const size_t *superseded_slots, size_t superseded_count,
+    const char *superseded_by_memory_id
 ) {
-    return save_turn_impl(p, slot, sequence, t, superseded_slots, superseded_count);
+    return save_turn_impl(p, slot, sequence, t, superseded_slots, superseded_count, superseded_by_memory_id);
 }
 
 int memoria_persistence_load_turn(memoria_persistence *p, size_t slot, memoria_persist_turn *t) {
     char *v = NULL;
-    unsigned long rc = 0;
+    unsigned long rc = 0, pc = 0;
     size_t i;
     if (!p || !slot || !t) return 0;
     memset(t,0,sizeof(*t));
@@ -249,8 +263,29 @@ int memoria_persistence_load_turn(memoria_persistence *p, size_t slot, memoria_p
         if (!parse_l(v,&sup)) goto fail;
         t->superseded = sup != 0;
         free(v); v=NULL;
-    } else {
-        t->superseded = 0;
+    }
+    if (!fetch(p,"turn",slot,"created_time",&v)) goto fail;
+    if (v) {
+        if (strlen(v) >= sizeof(t->created_time)) goto fail;
+        snprintf(t->created_time,sizeof(t->created_time),"%s",v); free(v); v=NULL;
+    }
+    if (!fetch(p,"turn",slot,"superseded_by",&v)) goto fail;
+    if (v) {
+        if (strlen(v) >= sizeof(t->superseded_by)) goto fail;
+        snprintf(t->superseded_by,sizeof(t->superseded_by),"%s",v); free(v); v=NULL;
+    }
+    if (!fetch(p,"turn",slot,"parent_count",&v)) goto fail;
+    if (v) {
+        if (!parse_ul(v,&pc) || pc > MEMORIA_PERSIST_MAX_PARENTS) goto fail;
+        free(v); v=NULL;
+    }
+    t->parent_count=(size_t)pc;
+    for (i=0;i<t->parent_count;++i) {
+        char field[64];
+        snprintf(field,sizeof(field),"parent/%zu",i);
+        if(!fetch(p,"turn",slot,field,&v)||!v||!*v) goto fail;
+        if(strlen(v)>=sizeof(t->parent_memory_ids[i])) goto fail;
+        snprintf(t->parent_memory_ids[i],sizeof(t->parent_memory_ids[i]),"%s",v); free(v); v=NULL;
     }
     if (!fetch(p,"turn",slot,"relation_count",&v) || !v || !parse_ul(v,&rc) || rc > MEMORIA_PERSIST_MAX_RELATIONS) goto fail;
     free(v); v=NULL;
