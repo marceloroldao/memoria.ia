@@ -3,15 +3,14 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+from .conversation_contract import ConversationIngestResult, ConversationResolveResult
 from .native_runtime import NativeRuntimeManager, default_native_runtime_manager
-from .product_conversation import ConversationIngestResult, ConversationResolveResult
 
 
 MEMORIA_MOBILE_OK = 0
 MEMORIA_MOBILE_INVALID_ARGUMENT = 1
 MEMORIA_MOBILE_UNRESOLVED = 2
 MAX_NATIVE_RELATIONS = 4
-
 
 
 
