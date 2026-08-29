@@ -86,6 +86,7 @@ def create_app(
     node_identity: NodeIdentity | None = None,
     chat_service: ProductChatService | None = None,
     application_registry: ApplicationRegistry | None = None,
+    lifespan=None,
 ) -> FastAPI:
     if not api_key:
         raise ValueError("api_key must be configured")
@@ -96,6 +97,7 @@ def create_app(
         version="product-alpha",
         docs_url="/docs",
         redoc_url=None,
+        lifespan=lifespan,
     )
 
     web_root = Path(__file__).with_name("webui")
