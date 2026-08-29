@@ -47,6 +47,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_trajectory PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_trajectory COMMAND memoria_mobile_trajectory)
 
+  add_executable(memoria_mobile_trajectory_multisource tests/trajectory_multisource_mobile.c)
+  target_link_libraries(memoria_mobile_trajectory_multisource PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_trajectory_multisource PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_trajectory_multisource COMMAND memoria_mobile_trajectory_multisource)
+
   add_executable(memoria_mobile_temporal_state tests/temporal_state_mobile.c)
   target_link_libraries(memoria_mobile_temporal_state PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_temporal_state PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)

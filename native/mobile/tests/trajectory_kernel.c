@@ -20,11 +20,13 @@ int main(void) {
     r=memoria_trajectory_resolve("what model is the cobalt one","s1",s1,2,sources,3);
     CHECK(r.hit==1);
     CHECK(strcmp(r.memory_id,"m1")==0);
+    CHECK(r.memory_count==1);
     CHECK(r.used_window==1);
 
     r=memoria_trajectory_resolve("and its model","s1",s1,2,sources,3);
     CHECK(r.hit==1);
     CHECK(strcmp(r.memory_id,"m1")==0);
+    CHECK(r.memory_count==1);
     CHECK(r.used_window==1);
 
     r=memoria_trajectory_resolve("and its model","s2",s1,2,sources,3);
@@ -39,6 +41,56 @@ int main(void) {
             {"s3","user","device alpha and device beta are both relevant",1}
         };
         r=memoria_trajectory_resolve("what is its model","s3",ambiguous,1,sources,3);
+        CHECK(r.hit==0);
+    }
+
+    /* A collective reference may select exactly two independently grounded roots. */
+    {
+        memoria_trajectory_turn pair_window[] = {
+            {"pair","user","device alpha and device beta are being compared",1}
+        };
+        r=memoria_trajectory_resolve("and the model of both","pair",pair_window,1,sources,3);
+        CHECK(r.hit==1);
+        CHECK(r.used_window==1);
+        CHECK(r.memory_count==2);
+        CHECK(strcmp(r.memory_ids[0],"m1")==0);
+        CHECK(strcmp(r.memory_ids[1],"m2")==0);
+
+        r=memoria_trajectory_resolve("e o modelo dos dois","pair",pair_window,1,sources,3);
+        CHECK(r.hit==1);
+        CHECK(r.memory_count==2);
+        CHECK(strcmp(r.memory_ids[0],"m1")==0);
+        CHECK(strcmp(r.memory_ids[1],"m2")==0);
+    }
+
+    /* Generated echoes sharing one ultimate root cannot impersonate a second antecedent. */
+    {
+        memoria_semantic_source rooted_sources[] = {
+            {"r1","controller east mode is eco",1.0,1,"user_assertion","r1"},
+            {"echo","controller east mode is eco",0.35,2,"assistant_generated","r1"},
+            {"r2","controller west mode is sport",1.0,3,"user_assertion","r2"}
+        };
+        memoria_trajectory_turn rooted_window[] = {
+            {"roots","user","controller east and controller west",1}
+        };
+        r=memoria_trajectory_resolve("mode of both","roots",rooted_window,1,rooted_sources,3);
+        CHECK(r.hit==1);
+        CHECK(r.memory_count==2);
+        CHECK(strcmp(r.memory_ids[0],"r1")==0);
+        CHECK(strcmp(r.memory_ids[1],"r2")==0);
+    }
+
+    /* Three equally plausible roots make a request for a pair unresolved. */
+    {
+        memoria_semantic_source three_sources[] = {
+            {"t1","node alpha state is ready",1.0,1,"user_assertion","t1"},
+            {"t2","node beta state is ready",1.0,2,"user_assertion","t2"},
+            {"t3","node gamma state is ready",1.0,3,"user_assertion","t3"}
+        };
+        memoria_trajectory_turn three_window[] = {
+            {"three","user","node alpha node beta node gamma",1}
+        };
+        r=memoria_trajectory_resolve("state of both","three",three_window,1,three_sources,3);
         CHECK(r.hit==0);
     }
 
