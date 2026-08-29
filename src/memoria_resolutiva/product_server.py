@@ -106,6 +106,7 @@ def _build_conversation_service(
     evidence_service: ProductEvidenceService,
     data_dir: Path,
     organization_id: str,
+    native_data_dir: Path | None = None,
 ):
     runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "python").strip().lower()
     if runtime == "python":
@@ -114,7 +115,7 @@ def _build_conversation_service(
         raise RuntimeError("MEMORIA_CONVERSATION_RUNTIME must be 'python' or 'native'")
     return NativeConversationService(
         library_path=_native_library_path("MEMORIA_CONVERSATION_RUNTIME"),
-        data_dir=data_dir / "native-conversation",
+        data_dir=native_data_dir or (data_dir / "native-conversation"),
         organization_id=organization_id,
     )
 
@@ -124,6 +125,7 @@ def _build_episodic_service(
     evidence_service: ProductEvidenceService,
     data_dir: Path,
     organization_id: str,
+    native_data_dir: Path | None = None,
 ):
     runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "python").strip().lower()
     if runtime == "python":
@@ -132,9 +134,24 @@ def _build_episodic_service(
         raise RuntimeError("MEMORIA_EPISODIC_RUNTIME must be 'python' or 'native'")
     return NativeEpisodicService(
         library_path=_native_library_path("MEMORIA_EPISODIC_RUNTIME"),
-        data_dir=data_dir / "native-episodic",
+        data_dir=native_data_dir or (data_dir / "native-episodic"),
         organization_id=organization_id,
     )
+
+
+def _native_shared_data_dir(data_dir: Path) -> Path | None:
+    conversation_runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "python").strip().lower()
+    episodic_runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "python").strip().lower()
+    if conversation_runtime != "native" or episodic_runtime != "native":
+        return None
+    legacy_paths = (data_dir / "native-conversation", data_dir / "native-episodic")
+    legacy_with_state = [path for path in legacy_paths if path.exists() and any(path.iterdir())]
+    if legacy_with_state:
+        names = ", ".join(str(path) for path in legacy_with_state)
+        raise RuntimeError(
+            "legacy split native stores contain data and require explicit migration before enabling both native runtimes: " + names
+        )
+    return data_dir / "native-runtime"
 
 
 def build_app():
@@ -167,15 +184,18 @@ def build_app():
         backend=storage_backend,
         allow_fallback=storage_allow_fallback,
     )
+    native_shared_data_dir = _native_shared_data_dir(data_dir)
     conversation_service = _build_conversation_service(
         evidence_service=evidence_service,
         data_dir=data_dir,
         organization_id=organization_id,
+        native_data_dir=native_shared_data_dir,
     )
     episodic_service = _build_episodic_service(
         evidence_service=evidence_service,
         data_dir=data_dir,
         organization_id=organization_id,
+        native_data_dir=native_shared_data_dir,
     )
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
