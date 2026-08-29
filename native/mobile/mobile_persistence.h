@@ -13,6 +13,7 @@ typedef struct memoria_persistence memoria_persistence;
 
 typedef struct memoria_persist_turn {
     char *memory_id;
+    char *namespace_id;
     char *text;
     char *role;
     char *source_type;
