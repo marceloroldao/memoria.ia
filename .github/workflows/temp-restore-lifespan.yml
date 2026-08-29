@@ -1,0 +1,66 @@
+name: temp-restore-lifespan
+
+on:
+  push:
+    branches:
+      - integration/v1.0-native-server-default
+    paths:
+      - '.github/workflows/temp-restore-lifespan.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/v1.0-native-server-default
+          fetch-depth: 0
+      - name: Restore product HTTP and add lifespan hook only
+        shell: bash
+        run: |
+          git show add2b5c0e04d9754af5e6255578ebdc2383fe1e4:src/memoria_resolutiva/product_http.py > src/memoria_resolutiva/product_http.py
+          python - <<'PY'
+          from pathlib import Path
+
+          http = Path('src/memoria_resolutiva/product_http.py')
+          text = http.read_text()
+          old = '''    chat_service: ProductChatService | None = None,\n    application_registry: ApplicationRegistry | None = None,\n) -> FastAPI:\n'''
+          new = '''    chat_service: ProductChatService | None = None,\n    application_registry: ApplicationRegistry | None = None,\n    lifespan=None,\n) -> FastAPI:\n'''
+          if old not in text:
+              raise SystemExit('create_app signature marker not found')
+          text = text.replace(old, new, 1)
+          old = '''        docs_url="/docs",\n        redoc_url=None,\n    )\n'''
+          new = '''        docs_url="/docs",\n        redoc_url=None,\n        lifespan=lifespan,\n    )\n'''
+          if old not in text:
+              raise SystemExit('FastAPI constructor marker not found')
+          http.write_text(text.replace(old, new, 1))
+
+          server = Path('src/memoria_resolutiva/product_server.py')
+          text = server.read_text()
+          if 'from contextlib import asynccontextmanager\n' not in text:
+              text = text.replace('from __future__ import annotations\n\n', 'from __future__ import annotations\n\nfrom contextlib import asynccontextmanager\n', 1)
+          marker = '''    application_registry = ApplicationRegistry(\n        organization_id,\n        data_dir / "applications.json",\n    )\n\n    app = create_app(\n'''
+          replacement = '''    application_registry = ApplicationRegistry(\n        organization_id,\n        data_dir / "applications.json",\n    )\n\n    @asynccontextmanager\n    async def lifespan(_app):\n        try:\n            yield\n        finally:\n            if isinstance(conversation_service, NativeConversationService):\n                conversation_service.close()\n            if isinstance(episodic_service, NativeEpisodicService):\n                episodic_service.close()\n\n    app = create_app(\n'''
+          if marker not in text:
+              raise SystemExit('product_server app marker not found')
+          text = text.replace(marker, replacement, 1)
+          old = '''        chat_service=_build_chat_service(service, configuration),\n        application_registry=application_registry,\n    )\n'''
+          new = '''        chat_service=_build_chat_service(service, configuration),\n        application_registry=application_registry,\n        lifespan=lifespan,\n    )\n'''
+          if old not in text:
+              raise SystemExit('create_app call marker not found')
+          text = text.replace(old, new, 1)
+          text = text.replace('''    if isinstance(conversation_service, NativeConversationService):\n        app.add_event_handler("shutdown", conversation_service.close)\n    if isinstance(episodic_service, NativeEpisodicService):\n        app.add_event_handler("shutdown", episodic_service.close)\n''', '')
+          server.write_text(text)
+          PY
+      - name: Commit minimal lifespan patch and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-restore-lifespan.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/memoria_resolutiva/product_http.py src/memoria_resolutiva/product_server.py .github/workflows/temp-restore-lifespan.yml
+          git commit -m "fix(server): use FastAPI lifespan for native cleanup"
+          git push origin HEAD:integration/v1.0-native-server-default
