@@ -49,6 +49,30 @@ int main(void) {
     CHECK(call(h,2,"{\"query\":\"unknown satellite frequency\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
+    {
+        size_t i;
+        const size_t payload_chars = 6200;
+        char *request = (char *)malloc(payload_chars + 256);
+        char *p;
+        CHECK(request != NULL);
+        p = request;
+        p += sprintf(p,"{\"role\":\"user\",\"text\":\"resolutive physics long context ");
+        for (i = 0; i < payload_chars; ++i) *p++ = (i % 17 == 0) ? ' ' : 'x';
+        p += sprintf(p," final marker omega\",\"memory_id\":\"long1\",\"order\":3}");
+        *p = 0;
+        CHECK(call(h,1,request,&out) == MEMORIA_MOBILE_OK);
+        memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+        free(request);
+
+        CHECK(call(h,2,"{\"query\":\"resolutive physics long context\"}",&out) == MEMORIA_MOBILE_OK);
+        CHECK(out.size > 5000);
+        CHECK(contains(out,"\"memory_ids\":[\"long1\"]"));
+        CHECK(contains(out,"final marker omega"));
+        CHECK(out.data[out.size - 1] == '}');
+        CHECK(((const char *)out.data)[out.size] == '\0');
+        memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    }
+
     CHECK(call(h,3,"{\"episode_id\":\"e1\",\"role\":\"assistant\",\"text\":\"first creation about transport\",\"order\":1,\"event_type\":\"creation\",\"topics_csv\":\"transport\"}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"durable\":true"));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
