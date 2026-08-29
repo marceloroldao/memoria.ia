@@ -7,6 +7,8 @@ on:
     paths:
       - "include/memoria_mobile.h"
       - "native/mobile/**"
+      - "tests/fixtures/native_semantic_slice1.json"
+      - "tests/test_native_python_semantic_parity.py"
       - ".github/workflows/android-mobile-abi.yml"
   workflow_dispatch:
 
@@ -30,6 +32,12 @@ jobs:
         run: cmake --build build/mobile-host --config Release -j2
       - name: Run host semantic + restart tests
         run: ctest --test-dir build/mobile-host -R '^memoria_' --output-on-failure
+      - name: Install Python parity dependencies
+        run: python -m pip install -e '.[product,test]'
+      - name: Compare Python and native semantic reference vectors
+        env:
+          MEMORIA_NATIVE_LIB: ${{ github.workspace }}/build/mobile-host/libmemoria_mobile.so
+        run: python -m pytest -q tests/test_native_python_semantic_parity.py
 
   android-arm64:
     runs-on: ubuntu-latest
