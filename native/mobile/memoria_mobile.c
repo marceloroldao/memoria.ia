@@ -4,8 +4,10 @@
 #include "episodic_kernel.h"
 #include "relation_extractor.h"
 #include "relation_adapter.h"
+#include "temporal_state_adapter.h"
 #include "mobile_persistence.h"
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,6 +183,236 @@ static memoria_mobile_status unresolved(memoria_mobile_buffer *out, const char *
     return set_response(out, buf, MEMORIA_MOBILE_UNRESOLVED);
 }
 
+static int starts_word_ci(const char *s, const char *word) {
+    size_t i = 0, j = 0;
+    if (!s || !word) return 0;
+    while (s[i] && isspace((unsigned char)s[i])) ++i;
+    while (word[j]) {
+        if (!s[i + j]) return 0;
+        if (tolower((unsigned char)s[i + j]) != tolower((unsigned char)word[j])) return 0;
+        ++j;
+    }
+    return s[i + j] == 0 || !isalnum((unsigned char)s[i + j]);
+}
+
+static int looks_like_question_text(const char *text) {
+    static const char *question_starts[] = {
+        "qual", "quais", "quem", "onde", "quando", "como", "quanto", "quantos", "quantas",
+        "por que", "porque", "what", "which", "who", "where", "when", "how", "why",
+        "can", "could", "would", "should", "do", "does", "did"
+    };
+    size_t i;
+    if (!text) return 0;
+    if (strchr(text, '?')) return 1;
+    for (i = 0; i < sizeof(question_starts)/sizeof(question_starts[0]); ++i)
+        if (starts_word_ci(text, question_starts[i])) return 1;
+    return 0;
+}
+
+static int contains_ci(const char *text, const char *needle) {
+    const char *p;
+    if (!text || !needle || !*needle) return 0;
+    for (p = text; *p; ++p) {
+        const char *a = p;
+        const char *b = needle;
+        while (*a && *b && tolower((unsigned char)*a) == tolower((unsigned char)*b)) { ++a; ++b; }
+        if (!*b) return 1;
+    }
+    return 0;
+}
+
+static int contains_word_ci(const char *text, const char *word) {
+    size_t n;
+    const char *p;
+    if (!text || !word || !*word) return 0;
+    n = strlen(word);
+    for (p = text; *p; ++p) {
+        if ((p == text || !isalnum((unsigned char)p[-1])) &&
+            contains_ci(p, word) &&
+            strlen(p) >= n &&
+            (p[n] == 0 || !isalnum((unsigned char)p[n]))) return 1;
+    }
+    return 0;
+}
+
+static int temporal_query_flags(const char *query, int *wants_previous, int *wants_current) {
+    static const char *previous_words[] = {"before", "previous", "prior", "earlier", "old", "antes", "anterior", "antigo", "era"};
+    static const char *current_words[] = {"now", "current", "latest", "present", "agora", "atual", "ultimo"};
+    size_t i;
+    int p = 0, c = 0;
+    if (!query) return 0;
+    for (i = 0; i < sizeof(previous_words)/sizeof(previous_words[0]); ++i) if (contains_word_ci(query, previous_words[i])) { p = 1; break; }
+    for (i = 0; i < sizeof(current_words)/sizeof(current_words[0]); ++i) if (contains_word_ci(query, current_words[i])) { c = 1; break; }
+    if (wants_previous) *wants_previous = p;
+    if (wants_current) *wants_current = c;
+    return p || c;
+}
+
+static int temporal_turn_eligible(const turn_row *turn) {
+    if (!turn || !turn->memory_id || !turn->text || turn->relation_count == 0) return 0;
+    if (turn->authority < 0.5) return 0;
+    if (turn->source_type && strcmp(turn->source_type, "user_query") == 0) return 0;
+    if (turn->source_type && strcmp(turn->source_type, "user_assertion") == 0 && looks_like_question_text(turn->text)) return 0;
+    return 1;
+}
+
+static turn_row *find_turn(memoria_mobile_handle *h, const char *memory_id) {
+    size_t i;
+    if (!h || !memory_id) return NULL;
+    for (i = 0; i < h->turn_count; ++i) if (h->turns[i].memory_id && strcmp(h->turns[i].memory_id, memory_id) == 0) return &h->turns[i];
+    return NULL;
+}
+
+static int same_relation_key(const memoria_relation *a, const memoria_relation *b) {
+    if (!a || !b) return 0;
+    return strcasecmp(a->subject, b->subject) == 0 && strcasecmp(a->predicate, b->predicate) == 0;
+}
+
+static int temporal_target_from_query(memoria_mobile_handle *h, const char *query, const memoria_relation **target) {
+    size_t i, j;
+    const memoria_relation *found = NULL;
+    if (!h || !query || !target) return 0;
+    for (i = 0; i < h->turn_count; ++i) {
+        turn_row *turn = &h->turns[i];
+        if (!temporal_turn_eligible(turn)) continue;
+        for (j = 0; j < turn->relation_count; ++j) {
+            const memoria_relation *rel = &turn->relations[j];
+            if (!rel->subject[0] || !rel->predicate[0] || !contains_ci(query, rel->subject)) continue;
+            if (!found) found = rel;
+            else if (!same_relation_key(found, rel)) return -1;
+        }
+    }
+    *target = found;
+    return found ? 1 : 0;
+}
+
+static int try_temporal_response(
+    memoria_mobile_handle *h,
+    const char *query,
+    turn_row *fallback_turn,
+    memoria_mobile_buffer *out,
+    memoria_mobile_status *status_out
+) {
+    int wants_previous = 0, wants_current = 0;
+    const memoria_relation *target = NULL;
+    int target_state;
+    memoria_temporal_relation_source *sources = NULL;
+    memoria_state_fact *facts = NULL;
+    size_t source_count = 0, fact_capacity = 0, fact_count = 0, i;
+    memoria_temporal_state_result state;
+    turn_row *previous_turn = NULL, *current_turn = NULL;
+    char relations_json[1536];
+    char *prev_ctx = NULL, *curr_ctx = NULL, *entity = NULL, *property = NULL, *prev_value = NULL, *curr_value = NULL;
+    char *prev_type = NULL, *prev_root = NULL, *curr_type = NULL, *curr_root = NULL;
+    memoria_mobile_status response_status;
+
+    if (!temporal_query_flags(query, &wants_previous, &wants_current)) return 0;
+    target_state = temporal_target_from_query(h, query, &target);
+    if (target_state < 0) {
+        if (status_out) *status_out = unresolved(out, "temporal state target is ambiguous");
+        return 1;
+    }
+    if (target_state == 0 && fallback_turn) {
+        if (fallback_turn->relation_count != 1) {
+            if (status_out) *status_out = unresolved(out, "temporal state target is not uniquely justified");
+            return 1;
+        }
+        target = &fallback_turn->relations[0];
+    }
+    if (!target) return 0;
+
+    for (i = 0; i < h->turn_count; ++i) if (temporal_turn_eligible(&h->turns[i])) {
+        ++source_count;
+        fact_capacity += h->turns[i].relation_count;
+    }
+    if (!source_count || !fact_capacity) {
+        if (status_out) *status_out = unresolved(out, "no authoritative temporal state history");
+        return 1;
+    }
+    sources = (memoria_temporal_relation_source *)calloc(source_count, sizeof(*sources));
+    facts = (memoria_state_fact *)calloc(fact_capacity, sizeof(*facts));
+    if (!sources || !facts) {
+        free(sources); free(facts);
+        if (status_out) *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
+        return 1;
+    }
+    source_count = 0;
+    for (i = 0; i < h->turn_count; ++i) {
+        turn_row *turn = &h->turns[i];
+        if (!temporal_turn_eligible(turn)) continue;
+        sources[source_count].memory_id = turn->memory_id;
+        sources[source_count].relations = turn->relations;
+        sources[source_count].relation_count = turn->relation_count;
+        sources[source_count].order = turn->order;
+        sources[source_count].authority = turn->authority;
+        ++source_count;
+    }
+    fact_count = memoria_temporal_build_facts(sources, source_count, facts, fact_capacity);
+    state = memoria_temporal_state_resolve(target->subject, target->predicate, facts, fact_count);
+    free(sources); free(facts);
+    if (!state.hit) {
+        if (status_out) *status_out = unresolved(out, "no justified temporal state for target");
+        return 1;
+    }
+    if (wants_previous && !state.previous_memory_id) {
+        if (status_out) *status_out = unresolved(out, "previous temporal state is unavailable");
+        return 1;
+    }
+    current_turn = find_turn(h, state.current_memory_id);
+    previous_turn = state.previous_memory_id ? find_turn(h, state.previous_memory_id) : NULL;
+    if (!current_turn || (state.previous_memory_id && !previous_turn)) {
+        if (status_out) *status_out = unresolved(out, "temporal source missing from native state");
+        return 1;
+    }
+    if (!memoria_relations_to_json(current_turn->relations, current_turn->relation_count,
+                                   current_turn->memory_id, relations_json, sizeof(relations_json))) {
+        if (status_out) *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
+        return 1;
+    }
+
+    prev_ctx = previous_turn ? json_escape(previous_turn->text) : NULL;
+    curr_ctx = json_escape(current_turn->text);
+    entity = json_escape(target->subject);
+    property = json_escape(target->predicate);
+    prev_value = state.previous_value ? json_escape(state.previous_value) : NULL;
+    curr_value = json_escape(state.current_value ? state.current_value : "");
+    curr_type = json_escape(current_turn->source_type ? current_turn->source_type : "");
+    curr_root = json_escape(current_turn->ultimate_source_memory_id ? current_turn->ultimate_source_memory_id : "");
+    if (previous_turn) {
+        prev_type = json_escape(previous_turn->source_type ? previous_turn->source_type : "");
+        prev_root = json_escape(previous_turn->ultimate_source_memory_id ? previous_turn->ultimate_source_memory_id : "");
+    }
+    if (!curr_ctx || !entity || !property || !curr_value || !curr_type || !curr_root ||
+        (previous_turn && (!prev_ctx || !prev_value || !prev_type || !prev_root))) {
+        free(prev_ctx); free(curr_ctx); free(entity); free(property); free(prev_value); free(curr_value);
+        free(prev_type); free(prev_root); free(curr_type); free(curr_root);
+        if (status_out) *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
+        return 1;
+    }
+
+    if (previous_turn) {
+        response_status = set_responsef(out, MEMORIA_MOBILE_OK,
+            "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\",\"%s\"],\"selected_context\":\"PREVIOUS: %s\\nCURRENT: %s\",\"relations\":%s,\"trajectory_used\":false,\"conversation_window_count\":0,\"temporal_state_used\":true,\"entity\":\"%s\",\"property\":\"%s\",\"previous_memory_id\":\"%s\",\"current_memory_id\":\"%s\",\"previous_order\":%ld,\"current_order\":%ld,\"previous_value\":\"%s\",\"current_value\":\"%s\",\"transition_detected\":%s,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"},{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
+            state.confidence, previous_turn->memory_id, current_turn->memory_id,
+            prev_ctx, curr_ctx, relations_json, entity, property,
+            previous_turn->memory_id, current_turn->memory_id,
+            state.previous_order, state.current_order, prev_value, curr_value,
+            state.transition_detected ? "true" : "false",
+            previous_turn->memory_id, prev_type, previous_turn->authority, prev_root,
+            current_turn->memory_id, curr_type, current_turn->authority, curr_root);
+    } else {
+        response_status = set_responsef(out, MEMORIA_MOBILE_OK,
+            "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"CURRENT: %s\",\"relations\":%s,\"trajectory_used\":false,\"conversation_window_count\":0,\"temporal_state_used\":true,\"entity\":\"%s\",\"property\":\"%s\",\"previous_memory_id\":null,\"current_memory_id\":\"%s\",\"previous_order\":null,\"current_order\":%ld,\"previous_value\":null,\"current_value\":\"%s\",\"transition_detected\":false,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
+            state.confidence, current_turn->memory_id, curr_ctx, relations_json, entity, property,
+            current_turn->memory_id, state.current_order, curr_value,
+            current_turn->memory_id, curr_type, current_turn->authority, curr_root);
+    }
+    free(prev_ctx); free(curr_ctx); free(entity); free(property); free(prev_value); free(curr_value);
+    free(prev_type); free(prev_root); free(curr_type); free(curr_root);
+    if (status_out) *status_out = response_status;
+    return 1;
+}
+
 static void free_turn(turn_row *r) { memoria_persistence_free_turn(r); }
 static void free_episode(episode_row *r) { memoria_persistence_free_episode(r); }
 
@@ -305,6 +537,10 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         sources[i].source_type = h->turns[i].source_type;
         sources[i].ultimate_source_memory_id = h->turns[i].ultimate_source_memory_id;
     }
+    if (try_temporal_response(h, query, NULL, out, &response_status)) {
+        free(query); free(json);
+        return response_status;
+    }
     trajectory_mode = memoria_trajectory_resolve_json(json, query, sources, h->turn_count, &tr, &window_count);
     if (trajectory_mode < 0) {
         free(query); free(json);
@@ -329,10 +565,20 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     } else {
         r = memoria_semantic_resolve_sources(query, sources, h->turn_count);
     }
-    free(query); free(json);
-    if (!r.hit) return unresolved(out, "no justified native semantic source");
+    if (!r.hit) {
+        free(query); free(json);
+        return unresolved(out, "no justified native semantic source");
+    }
     for (i = 0; i < h->turn_count && strcmp(h->turns[i].memory_id, r.memory_id) != 0; ++i) {}
-    if (i == h->turn_count) return unresolved(out, "selected source missing from native state");
+    if (i == h->turn_count) {
+        free(query); free(json);
+        return unresolved(out, "selected source missing from native state");
+    }
+    if (try_temporal_response(h, query, &h->turns[i], out, &response_status)) {
+        free(query); free(json);
+        return response_status;
+    }
+    free(query); free(json);
     if (!memoria_relations_to_json(h->turns[i].relations, h->turns[i].relation_count,
                                    h->turns[i].memory_id, relations_json, sizeof(relations_json)))
         return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -341,7 +587,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     root = json_escape(r.ultimate_source_memory_id ? r.ultimate_source_memory_id : "");
     if (!ctx || !st || !root) { free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }
     response_status = set_responsef(out, MEMORIA_MOBILE_OK,
-             "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"trajectory_used\":%s,\"conversation_window_count\":%lu,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
+             "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],\"selected_context\":\"%s\",\"relations\":%s,\"trajectory_used\":%s,\"conversation_window_count\":%lu,\"temporal_state_used\":false,\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"ultimate_source_memory_id\":\"%s\"}]}",
              r.confidence, r.memory_id, ctx, relations_json,
              trajectory_mode == 1 && tr.used_window ? "true" : "false",
              (unsigned long)(trajectory_mode == 1 ? window_count : 0),
