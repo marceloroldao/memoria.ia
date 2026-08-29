@@ -12,7 +12,7 @@ The migration rule is: **one authoritative semantic implementation, multiple thi
 
 | Capability | Authoritative/current native path | Python role / remaining work |
 | --- | --- | --- |
-| Semantic candidate ranking | `native/mobile/semantic_kernel.c` | Python parity/reference code remains until server migration completes |
+| Semantic candidate ranking + confidence | `native/mobile/semantic_kernel.c` | Python parity/reference code remains temporarily aligned until server migration completes |
 | Relation extraction | `native/mobile/relation_extractor.c` | Shared product vectors are parity-gated; Python parser remains the default server path until native conversation becomes default |
 | Trajectory/window resolve | `native/mobile/trajectory_*` | Python retains tests/orchestration |
 | Temporal previous/current | `native/mobile/temporal_state_*` | Exposed through opt-in native conversation runtime |
@@ -60,11 +60,17 @@ Server `session_id` may be mapped to native persistent `namespace` to preserve p
 
 The selected memory already has semantic parity. This slice freezes the remaining public response contract before native conversation can become the default server path.
 
+Frozen decisions:
+
+- native semantic confidence is the v1 authority; it combines normalized lexical overlap with source authority and is capped by the native kernel contract;
+- the legacy Python conversation service keeps its selection logic unchanged and temporarily mirrors only the native public confidence formula for parity; this reference path is removed after native becomes production default;
+- the thin `NativeConversationService` does not recompute ranking or confidence;
+- public relation `epoch` means persistent conversational `created_order`, not the internal `EvidenceCore` sequence;
+- native resolve provenance exposes persisted `created_order` and `created_time`; the adapter copies those durable fields into the public response.
+
 Acceptance requirements:
 
 - compare complete supported ingest/resolve JSON between Python and native paths;
-- freeze `confidence` semantics without recomputing Python ranking in the thin adapter;
-- define stable relation `epoch` semantics that survive restart and are reproducible across runtimes;
 - preserve relation IDs, namespace, source authority, immediate source type, parent lineage, ultimate source, created order/time and supersession metadata;
 - preserve correction and turn-fallback behavior;
 - unresolved responses remain identical;
