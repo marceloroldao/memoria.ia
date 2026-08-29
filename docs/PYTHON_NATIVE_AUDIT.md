@@ -1,6 +1,6 @@
 # Python ↔ Native Authority Audit
 
-Status: active P0 migration tracker for Issue #88.
+Status: P0 migration completed by Issue #88; native resolve scaling follow-up is tracked separately in Issue #110.
 
 ## Objective
 
@@ -59,33 +59,34 @@ Server `session_id` maps to native persistent `namespace` for product-level conv
 - complete supported conversation response parity, including native-authoritative confidence, durable relation order/time metadata, corrections, fallback, unresolved and restart;
 - shared server native runtime manager with one DLL/handle/lock, reference-counted leases and joint conversation/episodic restart recovery;
 - native server production default with fail-closed library requirement and a Docker image that proves native conversation/episodic persistence across restart;
-- Python reference semantics isolated from native production startup; explicit Python mode remains parity/reference only.
+- Python reference semantics isolated from native production startup; explicit Python mode remains parity/reference only;
+- fixed 256-turn native capacity removed with geometric dynamic allocation and a 300-turn BDR restart regression;
+- reproducible native production benchmark matrix completed and versioned at 100 / 1,000 / 10,000 records.
 
-## Current slice — native benchmark matrix
+## Accepted native benchmark matrix
 
-The final P0 gate measures the accepted native production path at 100 / 1,000 / 10,000 conversational memories. The harness records ingest p50/p95, resolve p50/p95, RSS, selected-context bytes, restart/load time, first resolve after restart and durable store size. Semantic correctness remains a hard gate; there is no encoded performance threshold or superiority claim.
+GitHub Actions run `33270148076`, PR #109, pinned Resolutive-DB `1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e`.
 
-The first matrix run exposed a real pre-benchmark limitation rather than a measurement problem: the mobile/server native handle still used a fixed `MAX_TURNS=256` array and returned `MEMORIA_MOBILE_UNRESOLVED` when the 1,000-record run crossed that limit. The 100-record run passed; the 1,000-record run stopped at the legacy capacity; 10,000 was therefore not measured.
+| records | ingest p50 | ingest p95 | resolve p50 | resolve p95 | RSS peak | restart/load | selected context |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 100 | 0.414567 ms | 0.571824 ms | 0.135134 ms | 0.194920 ms | 45.477 MiB | 2.926600 ms | 25 B |
+| 1,000 | 0.439418 ms | 0.585933 ms | 5.086863 ms | 6.687028 ms | 55.723 MiB | 18.668047 ms | 25 B |
+| 10,000 | 0.444959 ms | 0.594831 ms | 693.232709 ms | 710.630051 ms | 226.934 MiB | 218.140401 ms | 25 B |
 
-This limitation is being removed structurally rather than by increasing a constant:
+All semantic and restart validations passed for all three sizes. Raw JSON is versioned under `benchmarks/results/native-server/`.
 
-- native turn rows now grow geometrically from an initial 256-slot allocation;
-- persisted stores with more than 256 turns can be reopened and loaded;
-- the semantic-source scratch buffer grows with the active turn count instead of using a fixed stack array;
-- dynamic allocations are released by `memoria_mobile_close`;
-- a dedicated C regression writes 300 turns, closes, reopens through BDR and resolves the final turn, proving operation above the former ceiling.
+The benchmark does **not** establish a performance-superiority claim. It exposes a resolve-scaling bottleneck at 10k while showing nearly flat ingest latency. That optimization is deliberately separated from the authority migration and tracked in Issue #110. Current code repeatedly traverses lineage and performs full-array memory lookup while materializing candidates, producing an effectively quadratic hot path at scale.
 
-The fixed 256-episode limit is intentionally unchanged in this slice because the benchmark evidence identified the conversation-turn capacity specifically; unrelated limits are not broadened without a separate requirement/evidence gate.
+## Issue #88 acceptance
 
-## Remaining P0 acceptance
+The migration acceptance criteria are satisfied:
 
-Run and version the successful #88 benchmark matrix at 100 / 1,000 / 10,000 records with:
+- shared native C ABI is authoritative;
+- Android, Ubuntu and Windows gates are green;
+- BDR persistence/restart is green;
+- cross-runtime parity is green for supported contracts;
+- benchmark evidence is reproducible and versioned;
+- HTTP/ABI compatibility is preserved;
+- native production startup does not load a second authoritative Python ranking/provenance implementation.
 
-- ingest p50/p95;
-- resolve p50/p95;
-- RSS;
-- selected-context size;
-- restart/load time;
-- raw JSON evidence tied to exact commit and GitHub Actions run.
-
-If the dynamic-capacity regression, normal candidate gates and complete benchmark matrix are accepted, Issue #88 can be closed.
+Issue #88 can therefore be closed after PR #109 merges. Performance work continues independently in #110 without weakening semantic correctness or changing the migration authority boundary.
