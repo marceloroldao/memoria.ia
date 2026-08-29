@@ -26,6 +26,7 @@ add_library(memoria_mobile SHARED
   temporal_state_adapter.c
   relation_extractor.c
   relation_adapter.c
+  diagnostic_export.c
 )
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api)
@@ -56,6 +57,11 @@ if(NOT ANDROID)
   target_link_libraries(memoria_mobile_temporal_state PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_temporal_state PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_temporal_state COMMAND memoria_mobile_temporal_state)
+
+  add_executable(memoria_mobile_diagnostic_export tests/diagnostic_export_mobile.c)
+  target_link_libraries(memoria_mobile_diagnostic_export PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_diagnostic_export PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_diagnostic_export COMMAND memoria_mobile_diagnostic_export)
 
   add_executable(memoria_semantic_kernel_test tests/semantic_kernel.c semantic_kernel.c)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
