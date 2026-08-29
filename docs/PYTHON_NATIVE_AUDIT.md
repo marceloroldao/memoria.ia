@@ -58,39 +58,34 @@ Server `session_id` maps to native persistent `namespace` for product-level conv
 - deliberate native English `is` compound-subject compatibility preserved for mobile/temporal entities;
 - complete supported conversation response parity, including native-authoritative confidence, durable relation order/time metadata, corrections, fallback, unresolved and restart;
 - shared server native runtime manager with one DLL/handle/lock, reference-counted leases and joint conversation/episodic restart recovery;
-- native server production default with fail-closed library requirement and a Docker image that proves native conversation/episodic persistence across restart.
+- native server production default with fail-closed library requirement and a Docker image that proves native conversation/episodic persistence across restart;
+- Python reference semantics isolated from native production startup; explicit Python mode remains parity/reference only.
 
-## Current slice — isolate Python reference semantics
+## Current slice — native benchmark matrix
 
-The production server must not merely prefer the native implementation; it must also avoid loading a second semantic authority into the process when native mode is active.
+The final P0 gate measures the accepted native production path at 100 / 1,000 / 10,000 conversational memories. The harness records ingest p50/p95, resolve p50/p95, RSS, selected-context bytes, restart/load time, first resolve after restart and durable store size. Semantic correctness remains a hard gate; there is no encoded performance threshold or superiority claim.
 
-Frozen decisions:
+The first matrix run exposed a real pre-benchmark limitation rather than a measurement problem: the mobile/server native handle still used a fixed `MAX_TURNS=256` array and returned `MEMORIA_MOBILE_UNRESOLVED` when the 1,000-record run crossed that limit. The 100-record run passed; the 1,000-record run stopped at the legacy capacity; 10,000 was therefore not measured.
 
-- `conversation_contract.py` owns conversation DTOs and route attachment without importing ranking, relation extraction or provenance algorithms;
-- `episodic_contract.py` owns episodic DTOs and route attachment without importing episodic selection algorithms;
-- `NativeConversationService` and `NativeEpisodicService` depend only on those neutral contracts plus the native runtime manager;
-- `product_server.py` imports the neutral contracts at startup and lazy-loads Python semantics only inside explicit `runtime=python` branches;
-- `reference_conversation.py` and `reference_episodic.py` make the status of the old Python implementations explicit: they are parity/reference paths, not production authority;
-- compatibility modules remain available during v1 migration so existing tests and downstream imports are not broken unnecessarily;
-- native production startup is gated to prove that `product_conversation`, `product_episodic`, `reference_conversation`, `reference_episodic` and `memory_provenance` are absent from `sys.modules`;
-- explicit Python reference mode is separately gated to prove that those reference modules are loaded only when deliberately requested.
+This limitation is being removed structurally rather than by increasing a constant:
 
-Acceptance requirements:
+- native turn rows now grow geometrically from an initial 256-slot allocation;
+- persisted stores with more than 256 turns can be reopened and loaded;
+- the semantic-source scratch buffer grows with the active turn count instead of using a fixed stack array;
+- dynamic allocations are released by `memoria_mobile_close`;
+- a dedicated C regression writes 300 turns, closes, reopens through BDR and resolves the final turn, proving operation above the former ceiling.
 
-- default/native server startup does not import any reference conversation/episodic semantic module;
-- explicit `python`/`python` mode still starts and loads the reference implementations;
-- existing HTTP response contracts remain unchanged;
-- all prior Python/native parity fixtures remain green;
-- Android arm64, Ubuntu, Windows, production container and BDR gates remain green.
+The fixed 256-episode limit is intentionally unchanged in this slice because the benchmark evidence identified the conversation-turn capacity specifically; unrelated limits are not broadened without a separate requirement/evidence gate.
 
-## Remaining P0 work after this slice
+## Remaining P0 acceptance
 
-Run and record the #88 benchmark matrix at 100 / 1,000 / 10,000 records:
+Run and version the successful #88 benchmark matrix at 100 / 1,000 / 10,000 records with:
 
 - ingest p50/p95;
 - resolve p50/p95;
 - RSS;
 - selected-context size;
-- restart/load time.
+- restart/load time;
+- raw JSON evidence tied to exact commit and GitHub Actions run.
 
-If the isolation gate and benchmark matrix are both accepted, Issue #88 can be closed.
+If the dynamic-capacity regression, normal candidate gates and complete benchmark matrix are accepted, Issue #88 can be closed.
