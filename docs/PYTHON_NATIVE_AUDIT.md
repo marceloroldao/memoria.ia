@@ -63,6 +63,7 @@ The selected memory already has semantic parity. This slice freezes the remainin
 Frozen decisions:
 
 - native semantic confidence is the v1 authority; it combines normalized lexical overlap with source authority and is capped by the native kernel contract;
+- public confidence is serialized/normalized to six decimal places, matching the native ABI JSON precision and avoiding language-specific floating-point artifacts;
 - the legacy Python conversation service keeps its selection logic unchanged and temporarily mirrors only the native public confidence formula for parity; this reference path is removed after native becomes production default;
 - the thin `NativeConversationService` does not recompute ranking or confidence;
 - public relation `epoch` means persistent conversational `created_order`, not the internal `EvidenceCore` sequence;
