@@ -100,14 +100,18 @@ def _native_result(lib, case, root):
             }
             if source["role"] == "assistant":
                 payload["source_type"] = "assistant_generated"
-                payload["source_authority"] = 0.35
+                payload["source_authority"] = 0.25
             elif corrections:
                 payload["source_type"] = "user_correction"
                 payload["source_authority"] = 1.0
                 payload["corrects_memory_ids"] = corrections
+            else:
+                payload["source_type"] = "user_assertion"
+                payload["source_authority"] = 0.95
             if parents:
-                # Fixture IDs are also used as native memory IDs, so lineage remains explicit.
-                payload["ultimate_source_memory_id"] = parents[0]
+                # Same explicit lineage contract as Python: the native core must derive
+                # the active ultimate source rather than receiving a precomputed root.
+                payload["parent_memory_ids"] = parents
             status, _ = _request(lib, "memoria_mobile_learn_turn_json", handle, payload)
             assert status == 0, case["name"]
 
