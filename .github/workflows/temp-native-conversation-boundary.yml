@@ -1,20 +1,20 @@
 name: temp-native-conversation-boundary
 on:
-  push:
+  pull_request:
     branches:
-      - integration/v1.0-native-conversation-server-adapter
+      - integration/v1.0-candidate
 permissions:
   contents: write
 jobs:
   patch:
-    if: github.event.head_commit.message == 'chore(ci): apply one-shot conversation boundary patch'
+    if: github.head_ref == 'integration/v1.0-native-conversation-server-adapter'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: integration/v1.0-native-conversation-server-adapter
           fetch-depth: 0
-      - name: Patch relation id boundary
+      - name: Patch relation id boundary and clean workflow
         shell: bash
         run: |
           set -euo pipefail
