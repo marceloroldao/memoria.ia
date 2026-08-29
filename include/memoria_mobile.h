@@ -63,6 +63,18 @@ memoria_mobile_status memoria_mobile_recall_episode_json(
     memoria_mobile_buffer *response_json
 );
 
+/*
+ * Read-only, versioned diagnostic export. request_json accepts optional
+ * turn_offset/turn_limit and episode_offset/episode_limit pagination fields.
+ * The returned buffer is released with memoria_mobile_free_buffer().
+ * This additive ABI-v1 symbol does not expose BDR implementation details.
+ */
+memoria_mobile_status memoria_mobile_export_snapshot_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *handle);
 void memoria_mobile_free_buffer(memoria_mobile_buffer buffer);
 void memoria_mobile_close(memoria_mobile_handle *handle);
