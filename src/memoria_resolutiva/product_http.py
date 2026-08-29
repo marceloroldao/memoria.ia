@@ -86,6 +86,7 @@ def create_app(
     node_identity: NodeIdentity | None = None,
     chat_service: ProductChatService | None = None,
     application_registry: ApplicationRegistry | None = None,
+    lifespan=None,
 ) -> FastAPI:
     if not api_key:
         raise ValueError("api_key must be configured")
@@ -96,6 +97,7 @@ def create_app(
         version="product-alpha",
         docs_url="/docs",
         redoc_url=None,
+        lifespan=lifespan,
     )
 
     web_root = Path(__file__).with_name("webui")
@@ -118,263 +120,146 @@ def create_app(
 
     def require_admin(auth: AuthContext = Depends(authenticate)) -> AuthContext:
         if not auth.is_admin:
-            raise HTTPException(status_code=403, detail="administrator credential required")
+            raise HTTPException(status_code=403, detail="administrator credentials required")
         return auth
 
-    def require_scope(required_scope: str):
-        def guard(auth: AuthContext = Depends(authenticate)) -> AuthContext:
-            if auth.is_admin:
-                return auth
-            assert auth.application is not None
-            if not auth.application.allows(required_scope):
-                raise HTTPException(status_code=403, detail=f"missing scope: {required_scope}")
-            return auth
-        return guard
-
-    def scope_from(model: ScopeModel, auth: AuthContext) -> MemoryScope:
-        application_id = model.application_id
-        if not auth.is_admin:
-            assert auth.application is not None
+    def scope_from_request(scope: ScopeModel, auth: AuthContext):
+        application_id = scope.application_id
+        if auth.application is not None:
             if application_id is not None and application_id != auth.application.application_id:
-                raise HTTPException(status_code=403, detail="application credential cannot access another application scope")
+                raise HTTPException(status_code=403, detail="application scope mismatch")
             application_id = auth.application.application_id
-        return MemoryScope(
-            service.organization.organization_id,
+        return service.scope(
             application_id=application_id,
-            agent_id=model.agent_id,
-            user_id=model.user_id,
+            agent_id=scope.agent_id,
+            user_id=scope.user_id,
         )
-
-    def persist() -> None:
-        if persist_root is not None:
-            service.save(persist_root)
 
     @app.get(f"{API_PREFIX}/health")
     def health():
-        return {"status": "ok", "product": "memoria.ia-enterprise", "maturity": "product-alpha"}
+        return service.health(node_identity=node_identity)
 
-    @app.get(f"{API_PREFIX}/admin/status", dependencies=[Depends(require_admin)])
-    def admin_status():
-        identity = None
-        if node_identity is not None:
-            identity = {
-                "organization_id": node_identity.organization_id,
-                "node_id": node_identity.node_id,
-                "certificate_status": node_identity.certificate_status.value,
-                "license_status": node_identity.license_status.value,
-                "capabilities": sorted(node_identity.capabilities),
-            }
-        llm = None
-        if chat_service is not None:
-            llm = {
-                "provider": chat_service.adapter.provider_name,
-                "model": chat_service.adapter.model_name,
-            }
-        applications = []
-        if application_registry is not None:
-            applications = [
-                {
-                    "application_id": record.application_id,
-                    "display_name": record.display_name,
-                    "scopes": sorted(record.scopes),
-                    "enabled": record.enabled,
-                    "created_at": record.created_at.isoformat(),
-                }
-                for record in application_registry.list()
-            ]
-        return {
-            "organization": {
-                "organization_id": service.organization.organization_id,
-                "display_name": service.organization.display_name,
-            },
-            "node": identity,
-            "memory": service.statistics,
-            "llm": llm,
-            "applications": applications,
-            "semantic_routing": "experimental",
-            "security_status": "not-security-reviewed",
-        }
-
-    @app.get(f"{API_PREFIX}/admin/applications", dependencies=[Depends(require_admin)])
-    def list_applications():
-        if application_registry is None:
-            return {"applications": []}
-        return {
-            "applications": [
-                {
-                    "application_id": record.application_id,
-                    "display_name": record.display_name,
-                    "scopes": sorted(record.scopes),
-                    "enabled": record.enabled,
-                    "created_at": record.created_at.isoformat(),
-                }
-                for record in application_registry.list()
-            ]
-        }
-
-    @app.post(f"{API_PREFIX}/admin/applications", status_code=201, dependencies=[Depends(require_admin)])
-    def create_application(request: CreateApplicationRequest):
-        if application_registry is None:
-            raise HTTPException(status_code=503, detail="application registry is not configured")
+    @app.post(f"{API_PREFIX}/memory/store", dependencies=[Depends(authenticate)])
+    def store(request: StoreMemoryRequest, auth: AuthContext = Depends(authenticate)):
+        if auth.application is not None and "memory.write" not in auth.application.scopes:
+            raise HTTPException(status_code=403, detail="memory.write scope required")
+        scope = scope_from_request(request.scope, auth)
         try:
-            created = application_registry.create(
-                request.application_id,
-                display_name=request.display_name,
-                scopes=request.scopes,
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
-        return {
-            "application": {
-                "application_id": created.record.application_id,
-                "display_name": created.record.display_name,
-                "scopes": sorted(created.record.scopes),
-                "enabled": created.record.enabled,
-            },
-            "credential": created.token,
-            "credential_notice": "This credential is returned once. Store it securely; Memoria.ia persists only a verifier.",
-        }
-
-    @app.delete(f"{API_PREFIX}/admin/applications/{{application_id}}", dependencies=[Depends(require_admin)])
-    def revoke_application(application_id: str):
-        if application_registry is None:
-            raise HTTPException(status_code=503, detail="application registry is not configured")
-        try:
-            record = application_registry.revoke(application_id)
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="application not found") from exc
-        return {"application_id": record.application_id, "enabled": record.enabled}
-
-    @app.post(f"{API_PREFIX}/memories", status_code=201)
-    def store_memory(request: StoreMemoryRequest, auth: AuthContext = Depends(require_scope("memory.write"))):
-        scope = scope_from(request.scope, auth)
-        try:
-            record = service.remember(
-                scope,
+            return service.store(
                 request.knowledge_id,
+                request.key,
                 request.payload,
-                ("key", request.key),
-                modality=request.modality,
-                provenance=request.provenance,
-            )
-            persist()
-        except (ValueError, OrganizationMismatch) as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
-        return {
-            "stored": True,
-            "knowledge_id": request.knowledge_id,
-            "key": request.key,
-            "version": record.version,
-        }
-
-    @app.put(f"{API_PREFIX}/memories/{{key}}")
-    def update_memory(key: str, request: UpdateMemoryRequest, auth: AuthContext = Depends(require_scope("memory.write"))):
-        scope = scope_from(request.scope, auth)
-        try:
-            record = service.update(
                 scope,
-                ("key", key),
-                request.payload,
                 modality=request.modality,
                 provenance=request.provenance,
             )
-            persist()
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        except MemoryRevoked as exc:
+        except OrganizationMismatch as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        return {"updated": True, "key": key, "version": record.version}
 
-    @app.delete(f"{API_PREFIX}/memories/{{key}}")
-    def revoke_memory(
-        key: str,
-        application_id: str | None = None,
-        agent_id: str | None = None,
-        user_id: str | None = None,
-        auth: AuthContext = Depends(require_scope("memory.write")),
-    ):
-        scope = scope_from(ScopeModel(application_id=application_id, agent_id=agent_id, user_id=user_id), auth)
+    @app.post(f"{API_PREFIX}/memory/resolve", dependencies=[Depends(authenticate)])
+    def resolve(request: ResolveMemoryRequest, auth: AuthContext = Depends(authenticate)):
+        if auth.application is not None and "memory.read" not in auth.application.scopes:
+            raise HTTPException(status_code=403, detail="memory.read scope required")
+        scope = scope_from_request(request.scope, auth)
         try:
-            service.revoke(scope, ("key", key))
-            persist()
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        return {"revoked": True, "key": key}
+            return service.resolve(
+                request.key,
+                scope,
+                include_revoked=request.include_revoked,
+                version=request.version,
+            )
+        except (OrganizationMismatch, MemoryRevoked) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    @app.post(f"{API_PREFIX}/memories/resolve")
-    def resolve_memory(request: ResolveMemoryRequest, auth: AuthContext = Depends(require_scope("memory.read"))):
-        scope = scope_from(request.scope, auth)
-        record = service.recall(
-            scope,
-            ("key", request.key),
-            include_revoked=request.include_revoked,
-            version=request.version,
-        )
-        if record is None:
-            return {"hit": False, "record": None}
-        return {
-            "hit": True,
-            "record": {
-                "organization_id": record.organization_id,
-                "knowledge_id": record.knowledge_id,
-                "payload": record.payload,
-                "modality": record.modality,
-                "provenance": list(record.provenance),
-                "accesses": record.accesses,
-                "version": record.version,
-                "revoked": record.revoked,
-            },
-        }
+    @app.post(f"{API_PREFIX}/memory/update", dependencies=[Depends(authenticate)])
+    def update(request: UpdateMemoryRequest, auth: AuthContext = Depends(authenticate)):
+        if auth.application is not None and "memory.write" not in auth.application.scopes:
+            raise HTTPException(status_code=403, detail="memory.write scope required")
+        scope = scope_from_request(request.scope, auth)
+        try:
+            return service.update(
+                request.payload,
+                scope,
+                modality=request.modality,
+                provenance=request.provenance,
+            )
+        except OrganizationMismatch as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    @app.post(f"{API_PREFIX}/chat")
-    def chat(request: ChatRequest, auth: AuthContext = Depends(require_scope("chat.use"))):
+    @app.get(f"{API_PREFIX}/memory/{{knowledge_id}}", dependencies=[Depends(authenticate)])
+    def retrieve(knowledge_id: str, auth: AuthContext = Depends(authenticate)):
+        if auth.application is not None and "memory.read" not in auth.application.scopes:
+            raise HTTPException(status_code=403, detail="memory.read scope required")
+        return service.retrieve(knowledge_id)
+
+    @app.delete(f"{API_PREFIX}/memory/{{knowledge_id}}", dependencies=[Depends(authenticate)])
+    def delete(knowledge_id: str, auth: AuthContext = Depends(authenticate)):
+        if auth.application is not None and "memory.write" not in auth.application.scopes:
+            raise HTTPException(status_code=403, detail="memory.write scope required")
+        return service.delete(knowledge_id)
+
+    @app.post(f"{API_PREFIX}/chat", dependencies=[Depends(authenticate)])
+    def chat(request: ChatRequest, auth: AuthContext = Depends(authenticate)):
         if chat_service is None:
-            raise HTTPException(status_code=503, detail="LLM adapter is not configured")
+            raise HTTPException(status_code=503, detail="LLM provider is not configured")
+        if auth.application is not None and "chat.use" not in auth.application.scopes:
+            raise HTTPException(status_code=403, detail="chat.use scope required")
+        scope = scope_from_request(request.scope, auth)
         try:
-            result = chat_service.run(
-                scope=scope_from(request.scope, auth),
-                message=request.message,
+            return chat_service.chat(
+                request.message,
                 mode=request.mode,
                 baseline_context=request.baseline_context,
                 memory_keys=request.memory_keys,
+                scope=scope,
             )
         except LLMAdapterError as exc:
-            raise HTTPException(status_code=503, detail="LLM provider unavailable") from exc
-        return {
-            "text": result.text,
-            "context": list(result.context),
-            "metrics": result.metrics.as_dict(),
-        }
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    @app.post(f"{API_PREFIX}/chat/compare")
-    def compare_chat(request: CompareChatRequest, auth: AuthContext = Depends(require_scope("chat.use"))):
+    @app.post(f"{API_PREFIX}/chat/compare", dependencies=[Depends(authenticate)])
+    def compare_chat(request: CompareChatRequest, auth: AuthContext = Depends(authenticate)):
         if chat_service is None:
-            raise HTTPException(status_code=503, detail="LLM adapter is not configured")
-        scope = scope_from(request.scope, auth)
+            raise HTTPException(status_code=503, detail="LLM provider is not configured")
+        if auth.application is not None and "chat.use" not in auth.application.scopes:
+            raise HTTPException(status_code=403, detail="chat.use scope required")
+        scope = scope_from_request(request.scope, auth)
         try:
-            baseline = chat_service.run(
-                scope=scope,
-                message=request.message,
+            baseline = chat_service.chat(
+                request.message,
                 mode="baseline",
                 baseline_context=request.baseline_context,
-            )
-            memoria = chat_service.run(
-                scope=scope,
-                message=request.message,
-                mode="memoria",
                 memory_keys=request.memory_keys,
+                scope=scope,
+            )
+            memoria = chat_service.chat(
+                request.message,
+                mode="memoria",
+                baseline_context=request.baseline_context,
+                memory_keys=request.memory_keys,
+                scope=scope,
             )
         except LLMAdapterError as exc:
-            raise HTTPException(status_code=503, detail="LLM provider unavailable") from exc
-        reduction = token_reduction(
-            baseline_tokens=baseline.metrics.input_tokens,
-            memoria_tokens=memoria.metrics.input_tokens,
-        )
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
         return {
-            "baseline": {"text": baseline.text, "metrics": baseline.metrics.as_dict()},
-            "memoria": {"text": memoria.text, "metrics": memoria.metrics.as_dict()},
-            "token_reduction": reduction,
-            "token_reduction_percent": None if reduction is None else reduction * 100.0,
+            "baseline": baseline,
+            "memoria": memoria,
+            "token_reduction": token_reduction(baseline, memoria),
         }
+
+    @app.post(f"{API_PREFIX}/applications", dependencies=[Depends(require_admin)])
+    def create_application(request: CreateApplicationRequest):
+        if application_registry is None:
+            raise HTTPException(status_code=503, detail="application registry is not configured")
+        return application_registry.create(
+            request.application_id,
+            display_name=request.display_name,
+            scopes=frozenset(request.scopes),
+        )
+
+    @app.get(f"{API_PREFIX}/applications", dependencies=[Depends(require_admin)])
+    def list_applications():
+        if application_registry is None:
+            raise HTTPException(status_code=503, detail="application registry is not configured")
+        return application_registry.list()
 
     return app
