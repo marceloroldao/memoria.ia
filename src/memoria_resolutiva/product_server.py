@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 import os
 
@@ -214,6 +215,16 @@ def build_app():
         data_dir / "applications.json",
     )
 
+    @asynccontextmanager
+    async def lifespan(_app):
+        try:
+            yield
+        finally:
+            if isinstance(conversation_service, NativeConversationService):
+                conversation_service.close()
+            if isinstance(episodic_service, NativeEpisodicService):
+                episodic_service.close()
+
     app = create_app(
         service,
         api_key=api_key,
@@ -221,6 +232,7 @@ def build_app():
         node_identity=node_identity,
         chat_service=_build_chat_service(service, configuration),
         application_registry=application_registry,
+        lifespan=lifespan,
     )
 
     @app.get("/api/v1/storage/health")
@@ -240,10 +252,6 @@ def build_app():
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_episodic_routes(app, api_key=api_key, service=episodic_service)
     attach_configuration_routes(app, api_key=api_key, store=configuration)
-    if isinstance(conversation_service, NativeConversationService):
-        app.add_event_handler("shutdown", conversation_service.close)
-    if isinstance(episodic_service, NativeEpisodicService):
-        app.add_event_handler("shutdown", episodic_service.close)
     return app
 
 
