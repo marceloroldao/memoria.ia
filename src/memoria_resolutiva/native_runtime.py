@@ -46,6 +46,8 @@ class NativeRuntime:
         self._lib.memoria_mobile_open.restype = ctypes.c_int
         for name in (
             "memoria_mobile_learn_turn_json",
+            "memoria_mobile_learn_external_knowledge_json",
+            "memoria_mobile_inspect_external_knowledge_json",
             "memoria_mobile_resolve_context_json",
             "memoria_mobile_store_episode_json",
             "memoria_mobile_recall_episode_json",

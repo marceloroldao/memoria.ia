@@ -16,8 +16,7 @@ add_subdirectory(
 )
 
 add_library(memoria_mobile SHARED
-  memoria_mobile.c
-  mobile_persistence_bdr.c
+  memoria_mobile_post_v1.c
   semantic_kernel.c
   trajectory_kernel.c
   trajectory_json_adapter.c
@@ -92,6 +91,11 @@ if(NOT ANDROID)
   target_link_libraries(memoria_mobile_provenance_lineage PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
+
+  add_executable(memoria_mobile_external_public_knowledge tests/external_public_knowledge_mobile.c)
+  target_link_libraries(memoria_mobile_external_public_knowledge PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_external_public_knowledge PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_external_public_knowledge COMMAND memoria_mobile_external_public_knowledge)
 
   add_executable(memoria_semantic_kernel_test tests/semantic_kernel.c semantic_kernel.c)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})

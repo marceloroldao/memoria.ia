@@ -45,6 +45,31 @@ memoria_mobile_status memoria_mobile_learn_turn_json(
     memoria_mobile_buffer *response_json
 );
 
+/*
+ * Additive ABI-v1 post-v1 contract for issue #114.
+ *
+ * The caller supplies approved public/external knowledge plus source metadata.
+ * Memoria.ia, not the caller, assigns source authority, performs semantic
+ * deduplication/conflict handling and persists the record through BDR.
+ * Required JSON fields are: content, source_url, source_domain, source_title and
+ * acquired_time. source_class, when supplied, must be "external_public".
+ */
+memoria_mobile_status memoria_mobile_learn_external_knowledge_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/*
+ * Read the durable external/public provenance attached to one memory (or one of
+ * its relation IDs). The result never exposes raw BDR records.
+ */
+memoria_mobile_status memoria_mobile_inspect_external_knowledge_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_resolve_context_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
