@@ -56,6 +56,8 @@ int main(void) {
     memoria_mobile_buffer out = {0};
     char public_id[128] = {0};
     char derived_id[128] = {0};
+    char conflict_a_id[128] = {0};
+    char conflict_b_id[128] = {0};
     char request[2048];
 
     (void)system("rm -rf ./tmp-mobile-external-public");
@@ -156,20 +158,28 @@ int main(void) {
     CHECK(contains(out, "\"source_type\":\"user_assertion\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    /* Contradictory public sources remain distinct and resolve conservatively. */
+    /* Contradictory public sources stay separately auditable and resolve conservatively. */
     CHECK(external_learn(h,
         "{\"content\":\"planet code is alpha\",\"source_url\":\"https://a.example/planet\","
         "\"source_domain\":\"a.example\",\"source_title\":\"Planet A\","
         "\"acquired_time\":\"2026-08-30T04:46:00Z\",\"import_kind\":\"imported\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(first_stored_id(out, conflict_a_id, sizeof(conflict_a_id)));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
     CHECK(external_learn(h,
         "{\"content\":\"planet code is beta\",\"source_url\":\"https://b.example/planet\","
         "\"source_domain\":\"b.example\",\"source_title\":\"Planet B\","
         "\"acquired_time\":\"2026-08-30T04:47:00Z\",\"import_kind\":\"imported\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(first_stored_id(out, conflict_b_id, sizeof(conflict_b_id)));
+    CHECK(strcmp(conflict_a_id, conflict_b_id) != 0);
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+    CHECK(inspect_external(h, conflict_a_id, &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "https://a.example/planet"));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+    CHECK(inspect_external(h, conflict_b_id, &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "https://b.example/planet"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
     CHECK(resolve(h, "{\"query\":\"planet code\",\"namespace\":\"\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
-    CHECK(contains(out, "conflicting external public sources"));
-    CHECK(contains(out, "\"knowledge_class\":\"external_public\""));
+    CHECK(contains(out, "\"status\":\"UNRESOLVED\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     /* UTF-8 provenance must remain byte-exact through BDR. */
