@@ -1,0 +1,12 @@
+:root {
+  --memoria-bg: #050816;
+  --memoria-bg-secondary: #0B1026;
+  --memoria-blue: #22A7F0;
+  --memoria-blue-structural: #367BFF;
+  --memoria-violet: #8B5CF6;
+  --memoria-violet-orbital: #B179FF;
+  --memoria-text: #FFFFFF;
+  --memoria-text-secondary: #AAB4D6;
+  --memoria-gradient: linear-gradient(90deg,#22A7F0 0%,#367BFF 38%,#8B5CF6 72%,#B179FF 100%);
+  --memoria-font: Inter, Manrope, "Space Grotesk", system-ui, sans-serif;
+}
