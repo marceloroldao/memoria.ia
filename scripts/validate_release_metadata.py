@@ -11,6 +11,7 @@ EXPECTED_PACKAGE_VERSION = "1.0.0rc1"
 EXPECTED_RELEASE_DATE = "2026-08-30"
 EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 1"
 EXPECTED_ORCID = "0009-0003-6075-4680"
+EXPECTED_DOI = "10.5281/zenodo.22170165"
 
 
 def fail(message: str) -> None:
@@ -42,6 +43,16 @@ def main() -> int:
     require(creator.get("name") == "Matos, Marcelo Roldão", "Zenodo creator name mismatch")
     require(creator.get("orcid") == EXPECTED_ORCID, "Zenodo ORCID mismatch")
     require(bool(re.fullmatch(r"\d{4}-\d{4}-\d{4}-\d{3}[\dX]", creator["orcid"])), "Zenodo ORCID shape is invalid")
+    related_identifiers = zenodo.get("related_identifiers", [])
+    require(
+        any(
+            item.get("identifier") == f"https://doi.org/{EXPECTED_DOI}"
+            and item.get("relation") == "isIdenticalTo"
+            for item in related_identifiers
+            if isinstance(item, dict)
+        ),
+        "Zenodo metadata does not link the v1.0.0-rc1 archival DOI",
+    )
 
     cff = (ROOT / "CITATION.cff").read_text("utf-8")
     require("cff-version: 1.2.0" in cff, "CITATION.cff must use CFF 1.2.0")
@@ -49,17 +60,23 @@ def main() -> int:
     require(f'version: "{EXPECTED_RELEASE_VERSION}"' in cff, "CITATION.cff version mismatch")
     require(f'date-released: "{EXPECTED_RELEASE_DATE}"' in cff, "CITATION.cff release date mismatch")
     require(f'https://orcid.org/{EXPECTED_ORCID}' in cff, "CITATION.cff ORCID mismatch")
+    require(f'doi: "{EXPECTED_DOI}"' in cff, "CITATION.cff archival DOI mismatch")
     require("10.5281/zenodo.21973472" not in cff, "CITATION.cff must not assign the old v0.95.1 DOI to this release")
     require("license-url:" in cff and "/LICENSE" in cff, "CITATION.cff must link the custom license")
 
     readme = (ROOT / "README.md").read_text("utf-8")
     require("v1.0.0-rc1" in readme, "README does not identify the v1.0 release candidate")
+    require(EXPECTED_DOI in readme, "README does not identify the v1.0.0-rc1 archival DOI")
     require("RSMS 1.0-rc.1" in readme, "README does not preserve the RSMS release-candidate compatibility boundary")
+
+    release_notes = (ROOT / "RELEASE_NOTES_v1.0.0-rc1.md").read_text("utf-8")
+    require(EXPECTED_DOI in release_notes, "release notes do not identify the v1.0.0-rc1 archival DOI")
 
     json.dumps(zenodo, ensure_ascii=False)
     print("metadata gate: PASS")
     print(f"release_version={EXPECTED_RELEASE_VERSION}")
     print(f"package_version={EXPECTED_PACKAGE_VERSION}")
+    print(f"archival_doi={EXPECTED_DOI}")
     print("zenodo_source=.zenodo.json")
     print("citation_source=CITATION.cff")
     print("old_release_doi_not_reused=true")
