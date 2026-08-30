@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="assets/brand/logo-official.svg" alt="Memoria.ia — Memória Resolutiva" width="760" />
+</p>
+
+<p align="center"><strong>Resolutive Memory for persistent state, relations, trajectories and AI context.</strong></p>
+
+<p align="center"><a href="assets/brand/BRAND_GUIDE.md">Visual identity</a> · <a href="assets/brand/README.md">Brand assets</a></p>
+
 # memoria.ia
 
 Experimental implementation of **Resolutive Memory**, a memory architecture built around reusable knowledge nodes, multiple trajectories, online lifecycle dynamics, distributed consensus, and persistence.

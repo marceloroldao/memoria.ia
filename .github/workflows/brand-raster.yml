@@ -1,0 +1,39 @@
+name: Brand raster assets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install renderers
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin imagemagick
+      - name: Render official raster assets
+        run: |
+          mkdir -p assets/brand/raster
+          # The approved composition is the source for presentation-scale raster output.
+          # Compact icons remain derived from their dedicated small-size assets.
+          rsvg-convert -w 1536 -h 1536 assets/brand/logo-official.svg -o assets/brand/raster/logo-official-1536.png
+          rsvg-convert -w 1024 -h 1024 assets/brand/logo-official.svg -o assets/brand/raster/logo-official-1024.png
+          rsvg-convert -w 512 -h 512 assets/brand/symbol-square.svg -o assets/brand/raster/symbol-512.png
+          rsvg-convert -w 1024 -h 1024 assets/brand/symbol-square.svg -o assets/brand/raster/symbol-1024.png
+          rsvg-convert -w 2048 -h 2048 assets/brand/symbol-square.svg -o assets/brand/raster/symbol-2048.png
+          rsvg-convert -w 32 -h 32 assets/brand/favicon.svg -o assets/brand/raster/favicon-32.png
+          rsvg-convert -w 64 -h 64 assets/brand/favicon.svg -o assets/brand/raster/favicon-64.png
+          convert assets/brand/raster/favicon-32.png assets/brand/raster/favicon-64.png assets/brand/raster/favicon.ico
+      - name: Commit generated assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/brand/raster
+          if git diff --cached --quiet; then
+            echo 'Raster assets already current.'
+          else
+            git commit -m 'brand: render approved official assets [brand-raster]'
+            git push
+          fi
