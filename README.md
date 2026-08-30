@@ -14,6 +14,8 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 Current publication candidate: **v1.0.0-rc1** (`1.0.0rc1` package version).
 
+Archival DOI: **[10.5281/zenodo.22170165](https://doi.org/10.5281/zenodo.22170165)**.
+
 This release candidate consolidates the validated research core and the first deployable PC/server/mobile runtime boundary while preserving the architecture:
 
 ```text
@@ -79,9 +81,9 @@ The repository includes authentication boundaries, application isolation, integr
 - **v0.95.1** — archived stable research metadata patch.
 - **v0.95.0** — stable research release.
 
-Archived v0.95 DOI: **10.5281/zenodo.21973472**.
+Memoria.ia v1.0.0-rc1 DOI: **10.5281/zenodo.22170165**.
 
-A new DOI for v1.0.0-rc1 must be assigned by the archival publication; the older DOI must not be reused as the release DOI for this candidate.
+Archived v0.95 DOI: **10.5281/zenodo.21973472**.
 
 ## Research lineage
 
