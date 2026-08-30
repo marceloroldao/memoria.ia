@@ -294,14 +294,18 @@ static int external_add_source_fields(
     bdr_atomic_c_operation *ops,
     char keys[][KEY_CAP], size_t *n,
     size_t slot, unsigned long source_index,
-    const external_request *r
+    const external_request *r,
+    char *confidence, size_t confidence_cap
 ) {
-    char field[96], confidence[VAL_CAP];
+    char field[96];
+    int confidence_len;
 #define EXT_PUT(name, value) do { \
     snprintf(field, sizeof(field), "source/%lu/%s", source_index, name); \
     if (!add_put(p, ops, keys, n, "external", slot, field, value)) return 0; \
 } while (0)
-    snprintf(confidence, sizeof(confidence), "%.17g", r->validation_confidence);
+    if (!confidence || confidence_cap == 0) return 0;
+    confidence_len = snprintf(confidence, confidence_cap, "%.17g", r->validation_confidence);
+    if (confidence_len < 0 || (size_t)confidence_len >= confidence_cap) return 0;
     EXT_PUT("url", r->source_url);
     EXT_PUT("domain", r->source_domain);
     EXT_PUT("title", r->source_title);
@@ -320,14 +324,14 @@ static int external_append_source(memoria_mobile_handle *h, size_t slot, const e
     bdr_atomic_c_operation ops[EXTERNAL_MAX_SOURCE_FIELDS];
     char keys[EXTERNAL_MAX_SOURCE_FIELDS][KEY_CAP];
     bdr_atomic_c_batch_result result = {0};
-    char countbuf[VAL_CAP];
+    char countbuf[VAL_CAP], confidence[VAL_CAP];
     unsigned long count = 0;
     size_t n = 0;
     if (!external_source_count(h, slot, &count)) return 0;
     if (count >= 1000000ul) return 0;
     snprintf(countbuf, sizeof(countbuf), "%lu", count + 1ul);
     if (!add_put(h->persistence, ops, keys, &n, "external", slot, "source_count", countbuf) ||
-        !external_add_source_fields(h->persistence, ops, keys, &n, slot, count, r)) return 0;
+        !external_add_source_fields(h->persistence, ops, keys, &n, slot, count, r, confidence, sizeof(confidence))) return 0;
     if (bdr_atomic_c_write_batch(h->persistence->db, ops, n, &result) != BDR_ATOMIC_C_OK ||
         result.durable != 1 || result.operations != n) return 0;
     if (new_count) *new_count = count + 1ul;
@@ -341,6 +345,7 @@ static int external_persist_new_turn(
     bdr_atomic_c_operation ops[MAX_OPS];
     char keys[MAX_OPS][KEY_CAP];
     char vals[24][VAL_CAP];
+    char external_confidence[VAL_CAP];
     char relation_ids[MEMORIA_PERSIST_MAX_RELATIONS][MEMORIA_PERSIST_MEMORY_ID_CAP];
     bdr_atomic_c_batch_result result = {0};
     size_t n = 0, i;
@@ -402,7 +407,7 @@ static int external_persist_new_turn(
         !add_put(h->persistence,ops,keys,&n,"external",slot,"federation_eligible","0") ||
         !add_put(h->persistence,ops,keys,&n,"external",slot,"fact_signature",signature) ||
         !add_put(h->persistence,ops,keys,&n,"external",slot,"source_count","1") ||
-        !external_add_source_fields(h->persistence,ops,keys,&n,slot,0,r)) return 0;
+        !external_add_source_fields(h->persistence,ops,keys,&n,slot,0,r,external_confidence,sizeof(external_confidence))) return 0;
     return bdr_atomic_c_write_batch(h->persistence->db,ops,n,&result) == BDR_ATOMIC_C_OK &&
            result.durable == 1 && result.operations == n;
 }
