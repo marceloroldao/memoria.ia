@@ -1,0 +1,37 @@
+<svg width="1200" height="500" viewBox="0 0 1200 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="110" y1="70" x2="470" y2="410" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22A7F0"/>
+      <stop offset="0.38" stop-color="#367BFF"/>
+      <stop offset="0.72" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#B179FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="500" rx="28" fill="#050816"/>
+  <g transform="translate(40 22) scale(.86)">
+    <circle cx="256" cy="256" r="42" stroke="url(#g)" stroke-width="12"/>
+    <circle cx="256" cy="256" r="86" stroke="url(#g)" stroke-width="10" opacity="0.95"/>
+    <circle cx="256" cy="256" r="132" stroke="url(#g)" stroke-width="8" opacity="0.9"/>
+    <circle cx="256" cy="256" r="178" stroke="url(#g)" stroke-width="6" opacity="0.85"/>
+    <path d="M78 254L118 206L150 236L188 178L222 206" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M92 330L132 298L164 332L204 296" stroke="url(#g)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="78" cy="254" r="13" fill="#22A7F0"/>
+    <circle cx="118" cy="206" r="11" fill="#2C97F7"/>
+    <circle cx="150" cy="236" r="10" fill="#317FFC"/>
+    <circle cx="188" cy="178" r="12" fill="#4B72FA"/>
+    <circle cx="222" cy="206" r="9" fill="#6170F9"/>
+    <circle cx="92" cy="330" r="11" fill="#2A94F5"/>
+    <circle cx="132" cy="298" r="10" fill="#387FFC"/>
+    <circle cx="164" cy="332" r="11" fill="#5072FA"/>
+    <circle cx="204" cy="296" r="9" fill="#6870F8"/>
+    <g fill="#9C69FA">
+      <circle cx="374" cy="164" r="7"/><circle cx="404" cy="188" r="6"/><circle cx="426" cy="220" r="5"/>
+      <circle cx="389" cy="238" r="8"/><circle cx="430" cy="268" r="7"/><circle cx="400" cy="300" r="6"/>
+      <circle cx="378" cy="336" r="8"/><circle cx="412" cy="358" r="5"/><circle cx="352" cy="388" r="6"/>
+    </g>
+    <circle cx="256" cy="256" r="13" fill="#FFFFFF"/>
+  </g>
+  <text x="490" y="245" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="108" font-weight="400" letter-spacing="-5">memoria</text>
+  <text x="902" y="245" fill="#8B5CF6" font-family="Inter, Arial, sans-serif" font-size="108" font-weight="400" letter-spacing="-5">.ia</text>
+  <text x="494" y="300" fill="#AAB4D6" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="500" letter-spacing="3">MEMÓRIA RESOLUTIVA • CONTEXTO INTELIGENTE</text>
+</svg>
