@@ -113,10 +113,19 @@ class EnterpriseMemoryService:
                 f"scope organization {scope.organization_id!r} does not match service organization"
             )
 
-    def _qualified_knowledge_id(self, external_id: str, version: int | None = None) -> str:
+    def _qualified_knowledge_id(
+        self,
+        external_id: str,
+        version: int | None = None,
+        *,
+        logical_key: str | None = None,
+    ) -> str:
         if not isinstance(external_id, str) or not external_id:
             raise ValueError("knowledge_id must be a non-empty string")
         base = f"org:{self.organization.organization_id}:knowledge:{external_id}"
+        if logical_key is not None:
+            scope_tag = f"{zlib.crc32(logical_key.encode('utf-8')) & 0xFFFFFFFF:08x}"
+            base = f"{base}:scope:{scope_tag}"
         return base if version is None else f"{base}:v{version}"
 
     def _route(self, scope: MemoryScope, trajectory: Iterable[Node]) -> tuple[Node, ...]:
@@ -148,7 +157,7 @@ class EnterpriseMemoryService:
         version = 1
         route = self._version_route(logical_route, version)
         self._memory.remember(
-            self._qualified_knowledge_id(knowledge_id, version),
+            self._qualified_knowledge_id(knowledge_id, version, logical_key=key),
             payload,
             route,
             modality=modality,
@@ -180,7 +189,7 @@ class EnterpriseMemoryService:
         version = entry.latest_version + 1
         route = self._version_route(logical_route, version)
         self._memory.remember(
-            self._qualified_knowledge_id(entry.knowledge_id, version),
+            self._qualified_knowledge_id(entry.knowledge_id, version, logical_key=key),
             payload,
             route,
             modality=modality,
@@ -212,7 +221,6 @@ class EnterpriseMemoryService:
         key = _route_key(logical_route)
         entry = self._entries.get(key)
 
-        # Backward compatibility for alpha-v1 manifests without a logical index.
         if entry is None:
             node = self._memory.recall(logical_route, include_inactive=include_inactive)
             if node is None:
@@ -241,9 +249,10 @@ class EnterpriseMemoryService:
         node = self._memory.recall(route, include_inactive=include_inactive)
         if node is None:
             return None
-        prefix = f"org:{self.organization.organization_id}:knowledge:{entry.knowledge_id}:v"
-        if not node.knowledge_id.startswith(prefix):
-            raise OrganizationMismatch("resolved knowledge belongs to a different organization")
+        legacy_prefix = f"org:{self.organization.organization_id}:knowledge:{entry.knowledge_id}:v"
+        scoped_prefix = f"org:{self.organization.organization_id}:knowledge:{entry.knowledge_id}:scope:"
+        if not (node.knowledge_id.startswith(legacy_prefix) or node.knowledge_id.startswith(scoped_prefix)):
+            raise OrganizationMismatch("resolved knowledge belongs to a different organization or scope")
         modalities = tuple(sorted(node.modalities))
         return MemoryRecord(
             organization_id=self.organization.organization_id,

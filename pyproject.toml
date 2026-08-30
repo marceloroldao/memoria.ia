@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68", "pybind11>=2.13,<3"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "memoria-resolutiva"
-version = "0.99.0a1"
-description = "Resolutive Memory research core with an installable PC/server product-alpha layer"
+version = "1.0.0rc1"
+description = "Resolutive Memory local-first runtime for persistent AI state on PC, server and mobile targets"
 requires-python = ">=3.10"
 license = {text = "Resolutive Research and Non-Commercial License (RRNCL) v1.0"}
 authors = [{name = "Marcelo Roldão Matos"}]

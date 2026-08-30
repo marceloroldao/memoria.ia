@@ -1,0 +1,130 @@
+name: Native server image
+
+on:
+  pull_request:
+    branches:
+      - integration/v1.0-candidate
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.env.example'
+      - 'include/memoria_mobile.h'
+      - 'native/mobile/**'
+      - 'src/memoria_resolutiva/native_*.py'
+      - 'src/memoria_resolutiva/product_server.py'
+      - '.github/workflows/native-server-image.yml'
+  workflow_dispatch:
+
+jobs:
+  production-native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build pinned native production image
+        run: docker build --pull -t memoria-native-server:test .
+
+      - name: Verify native runtime is embedded
+        run: |
+          docker run --rm memoria-native-server:test \
+            python -c "import ctypes, os; p=os.environ['MEMORIA_NATIVE_LIB']; lib=ctypes.CDLL(p); assert lib.memoria_mobile_abi_version() == 1; assert os.environ['MEMORIA_CONVERSATION_RUNTIME'] == 'native'; assert os.environ['MEMORIA_EPISODIC_RUNTIME'] == 'native'"
+
+      - name: Start server with runtime defaults
+        run: |
+          docker run -d --name memoria-native-server \
+            -p 18080:8080 \
+            -e MEMORIA_ORGANIZATION_ID=ci-native-org \
+            -e MEMORIA_API_KEY=ci-native-secret \
+            memoria-native-server:test
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:18080/api/v1/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          docker logs memoria-native-server
+          exit 1
+
+      - name: Prove native default conversation and episodic routes
+        run: |
+          curl -fsS http://127.0.0.1:18080/api/v1/storage/health > /tmp/storage.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/storage.json'))
+          assert data['conversation_runtime'] == 'native', data
+          assert data['episodic_runtime'] == 'native', data
+          PY
+
+          curl -fsS \
+            -H 'X-Memoria-Key: ci-native-secret' \
+            -H 'Content-Type: application/json' \
+            -d '{"role":"user","text":"sensor = active","session_id":"docker-conversation","order":1,"timestamp":"2026-08-29T18:10:00Z"}' \
+            http://127.0.0.1:18080/api/v1/conversation/ingest > /tmp/ingest.json
+
+          curl -fsS \
+            -H 'X-Memoria-Key: ci-native-secret' \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"sensor active","session_id":"docker-conversation"}' \
+            http://127.0.0.1:18080/api/v1/conversation/resolve > /tmp/resolve.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/resolve.json'))
+          assert data['status'] == 'HIT', data
+          assert data['selected_context'] == 'sensor = active', data
+          PY
+
+          curl -fsS \
+            -H 'X-Memoria-Key: ci-native-secret' \
+            -H 'Content-Type: application/json' \
+            -d '{"episode_id":"docker-episode","role":"user","text":"atlas status report native container","session_id":"docker-episodes","order":2,"timestamp":"2026-08-29T18:11:00Z","event_type":"report","topics":["atlas","status"]}' \
+            http://127.0.0.1:18080/api/v1/episodes > /tmp/episode.json
+
+          curl -fsS \
+            -H 'X-Memoria-Key: ci-native-secret' \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"latest atlas status report","session_id":"docker-episodes","role":"user","event_type":"report","topics":["atlas","status"]}' \
+            http://127.0.0.1:18080/api/v1/episodes/recall > /tmp/recall.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/recall.json'))
+          assert data['status'] == 'HIT', data
+          assert data['episode_ids'] == ['docker-episode'], data
+          PY
+
+      - name: Prove BDR recovery after container restart
+        run: |
+          docker restart memoria-native-server >/dev/null
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:18080/api/v1/health >/dev/null; then break; fi
+            sleep 1
+          done
+
+          curl -fsS \
+            -H 'X-Memoria-Key: ci-native-secret' \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"sensor active","session_id":"docker-conversation"}' \
+            http://127.0.0.1:18080/api/v1/conversation/resolve > /tmp/restart-resolve.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/restart-resolve.json'))
+          assert data['status'] == 'HIT', data
+          assert data['selected_context'] == 'sensor = active', data
+          PY
+
+          curl -fsS \
+            -H 'X-Memoria-Key: ci-native-secret' \
+            -H 'Content-Type: application/json' \
+            -d '{"query":"latest atlas status report","session_id":"docker-episodes","role":"user","event_type":"report","topics":["atlas","status"]}' \
+            http://127.0.0.1:18080/api/v1/episodes/recall > /tmp/restart-recall.json
+          python - <<'PY'
+          import json
+          data = json.load(open('/tmp/restart-recall.json'))
+          assert data['status'] == 'HIT', data
+          assert data['episode_ids'] == ['docker-episode'], data
+          PY
+
+      - name: Show server logs
+        if: always()
+        run: docker logs memoria-native-server || true
+
+      - name: Remove server container
+        if: always()
+        run: docker rm -f memoria-native-server || true

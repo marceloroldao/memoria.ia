@@ -1,15 +1,15 @@
 cff-version: 1.2.0
 message: "If you use memoria.ia in academic or scientific work, please cite this software."
-title: "memoria.ia: Resolutive Memory — First PC/Server Product Alpha"
+title: "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 1"
 type: software
 authors:
   - family-names: "Matos"
     given-names: "Marcelo Roldão"
     orcid: "https://orcid.org/0009-0003-6075-4680"
-abstract: "First installable PC/server product alpha of memoria.ia, preserving the validated resolutive-memory research core while adding a local-first product API, persistent state, application isolation, provider adapters, metrics, and operator backup/restore."
+abstract: "Release Candidate 1 for memoria.ia v1.0, consolidating the validated Resolutive Memory research core with local-first PC/server product interfaces, native runtime paths, Android/mobile ABI support, provenance-aware memory semantics, and Resolutive-DB persistence."
 repository-code: "https://github.com/marceloroldao/memoria.ia"
-version: "0.99.0-alpha.1"
-date-released: "2026-08-24"
+version: "1.0.0-rc1"
+date-released: "2026-08-30"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
 keywords:
   - resolutive memory
@@ -18,3 +18,4 @@ keywords:
   - AI memory
   - local-first AI
   - PC server
+  - mobile AI memory

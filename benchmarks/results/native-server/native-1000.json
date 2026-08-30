@@ -1,0 +1,26 @@
+{
+  "git_sha": "51a169658f56861049ca7f2ece066e7ae9098378",
+  "library": "/home/runner/work/memoria.ia/memoria.ia/build/mobile-host/libmemoria_mobile.so",
+  "metrics": {
+    "first_resolve_after_restart_ms": 5.565644,
+    "ingest_ms": {"count": 1000, "p50": 0.439418, "p95": 0.585933},
+    "resolve_ms": {"count": 200, "p50": 5.086863, "p95": 6.687028},
+    "restart_load_ms": 18.668047,
+    "rss_mib": {"after_ingest": 55.801, "after_resolve": 55.867, "after_restart": 55.934, "peak": 55.723},
+    "selected_context_bytes": {"p50": 25, "p95": 25},
+    "store_bytes": 1763783,
+    "store_bytes_before_restart": 1763783
+  },
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "resolve_samples": 200,
+  "runner": "GitHub Actions 1000014274",
+  "schema": "memoria.native-benchmark.v1",
+  "size": 1000,
+  "validation": {
+    "all_ingests_created_one_relation": true,
+    "all_sampled_resolves_hit_expected_context": true,
+    "restart_resolve_hit_expected_context": true,
+    "store_size_stable_across_restart": true
+  }
+}

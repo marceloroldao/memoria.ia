@@ -35,11 +35,13 @@ def test_application_scopes_do_not_collide_inside_organization():
     app1 = MemoryScope("org-a", application_id="one")
     app2 = MemoryScope("org-a", application_id="two")
 
-    service.remember(app1, "k1", "first", ("same", "tail"))
-    service.remember(app2, "k2", "second", ("same", "tail"))
+    service.remember(app1, "shared-id", "first", ("same", "tail"))
+    service.remember(app2, "shared-id", "second", ("same", "tail"))
 
-    assert service.recall(app1, ("same", "tail")).payload == "first"
-    assert service.recall(app2, ("same", "tail")).payload == "second"
+    first = service.recall(app1, ("same", "tail"))
+    second = service.recall(app2, ("same", "tail"))
+    assert first is not None and first.knowledge_id == "shared-id" and first.payload == "first"
+    assert second is not None and second.knowledge_id == "shared-id" and second.payload == "second"
 
 
 def test_restart_preserves_memory_and_organization(tmp_path: Path):
