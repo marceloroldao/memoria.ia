@@ -74,9 +74,10 @@ These figures are environment- and workload-specific benchmark evidence, not uni
 - License: Resolutive Research and Non-Commercial License (RRNCL) v1.0
 - Author: Marcelo Roldão Matos
 - ORCID: `0009-0003-6075-4680`
+- Zenodo DOI: `10.5281/zenodo.22170165`
 - RSMS compatibility: `1.0-rc.1`
 
-A new archival DOI should be assigned to this publication. The v0.95 DOI must not be reused as the release DOI for v1.0.0-rc1.
+The DOI `10.5281/zenodo.22170165` is the archival DOI assigned specifically to Memoria.ia v1.0.0-rc1. The archived v0.95 DOI is retained only for the earlier research release and is not reused for this candidate.
 
 ## Why this is RC1 rather than final v1.0
 
