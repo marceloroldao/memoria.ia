@@ -2,31 +2,27 @@ name: Brand raster assets
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'assets/brand/*.svg'
-      - '.github/workflows/brand-raster.yml'
 
 permissions:
   contents: write
 
 jobs:
   render:
-    if: ${{ !contains(github.event.head_commit.message, '[brand-raster]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install renderers
         run: sudo apt-get update && sudo apt-get install -y librsvg2-bin imagemagick
-      - name: Render PNG and ICO assets
+      - name: Render official raster assets
         run: |
           mkdir -p assets/brand/raster
-          for size in 512 1024 2048; do
-            rsvg-convert -w "$size" -h "$size" assets/brand/symbol-square.svg -o "assets/brand/raster/symbol-${size}.png"
-          done
-          rsvg-convert -w 1600 assets/brand/logo-horizontal.svg -o assets/brand/raster/logo-horizontal-1600.png
-          rsvg-convert -w 1280 -h 640 assets/brand/banner-github.svg -o assets/brand/raster/banner-github-1280x640.png
+          # The approved composition is the source for presentation-scale raster output.
+          # Compact icons remain derived from their dedicated small-size assets.
+          rsvg-convert -w 1536 -h 1536 assets/brand/logo-official.svg -o assets/brand/raster/logo-official-1536.png
+          rsvg-convert -w 1024 -h 1024 assets/brand/logo-official.svg -o assets/brand/raster/logo-official-1024.png
+          rsvg-convert -w 512 -h 512 assets/brand/symbol-square.svg -o assets/brand/raster/symbol-512.png
+          rsvg-convert -w 1024 -h 1024 assets/brand/symbol-square.svg -o assets/brand/raster/symbol-1024.png
+          rsvg-convert -w 2048 -h 2048 assets/brand/symbol-square.svg -o assets/brand/raster/symbol-2048.png
           rsvg-convert -w 32 -h 32 assets/brand/favicon.svg -o assets/brand/raster/favicon-32.png
           rsvg-convert -w 64 -h 64 assets/brand/favicon.svg -o assets/brand/raster/favicon-64.png
           convert assets/brand/raster/favicon-32.png assets/brand/raster/favicon-64.png assets/brand/raster/favicon.ico
@@ -38,6 +34,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'Raster assets already current.'
           else
-            git commit -m 'brand: generate raster assets [brand-raster]'
+            git commit -m 'brand: render approved official assets [brand-raster]'
             git push
           fi
