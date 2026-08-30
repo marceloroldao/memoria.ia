@@ -8,6 +8,7 @@ authors:
     orcid: "https://orcid.org/0009-0003-6075-4680"
 abstract: "Release Candidate 1 for memoria.ia v1.0, consolidating the validated Resolutive Memory research core with local-first PC/server product interfaces, native runtime paths, Android/mobile ABI support, provenance-aware memory semantics, and Resolutive-DB persistence."
 repository-code: "https://github.com/marceloroldao/memoria.ia"
+doi: "10.5281/zenodo.22170165"
 version: "1.0.0-rc1"
 date-released: "2026-08-30"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
