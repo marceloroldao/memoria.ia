@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/brand/logo-horizontal.svg" alt="Memoria.ia — Memória Resolutiva" width="820" />
+  <img src="assets/brand/logo-official.svg" alt="Memoria.ia — Memória Resolutiva" width="760" />
 </p>
 
 <p align="center"><strong>Resolutive Memory for persistent state, relations, trajectories and AI context.</strong></p>
