@@ -1,0 +1,74 @@
+name: one-shot fix external confidence lifetime
+
+on:
+  push:
+    branches:
+      - feat/post-v1-external-public-knowledge
+    paths:
+      - '.github/workflows/one-shot-fix-external-confidence.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/post-v1-external-public-knowledge
+
+      - name: Patch BDR batch value lifetime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('native/mobile/memoria_mobile_post_v1.c')
+          text = path.read_text('utf-8')
+
+          def replace_once(old: str, new: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one match, got {count}: {old[:80]!r}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              '    size_t slot, unsigned long source_index,\n    const external_request *r\n) {\n    char field[96], confidence[VAL_CAP];',
+              '    size_t slot, unsigned long source_index,\n    const external_request *r,\n    char *confidence, size_t confidence_cap\n) {\n    char field[96];\n    int confidence_len;'
+          )
+          replace_once(
+              '    snprintf(confidence, sizeof(confidence), "%.17g", r->validation_confidence);',
+              '    if (!confidence || confidence_cap == 0) return 0;\n    confidence_len = snprintf(confidence, confidence_cap, "%.17g", r->validation_confidence);\n    if (confidence_len < 0 || (size_t)confidence_len >= confidence_cap) return 0;'
+          )
+          replace_once(
+              '    char countbuf[VAL_CAP];\n    unsigned long count = 0;',
+              '    char countbuf[VAL_CAP], confidence[VAL_CAP];\n    unsigned long count = 0;'
+          )
+          replace_once(
+              '!external_add_source_fields(h->persistence, ops, keys, &n, slot, count, r)) return 0;',
+              '!external_add_source_fields(h->persistence, ops, keys, &n, slot, count, r, confidence, sizeof(confidence))) return 0;'
+          )
+          replace_once(
+              '    char vals[24][VAL_CAP];\n    char relation_ids[MEMORIA_PERSIST_MAX_RELATIONS][MEMORIA_PERSIST_MEMORY_ID_CAP];',
+              '    char vals[24][VAL_CAP];\n    char external_confidence[VAL_CAP];\n    char relation_ids[MEMORIA_PERSIST_MAX_RELATIONS][MEMORIA_PERSIST_MEMORY_ID_CAP];'
+          )
+          replace_once(
+              '!external_add_source_fields(h->persistence,ops,keys,&n,slot,0,r)) return 0;',
+              '!external_add_source_fields(h->persistence,ops,keys,&n,slot,0,r,external_confidence,sizeof(external_confidence))) return 0;'
+          )
+
+          path.write_text(text, 'utf-8')
+          PY
+
+          git diff --check
+          git diff -- native/mobile/memoria_mobile_post_v1.c
+
+      - name: Commit focused fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add native/mobile/memoria_mobile_post_v1.c
+          git commit -m 'fix(post-v1): preserve external confidence through BDR batch'
+          git push origin HEAD:feat/post-v1-external-public-knowledge
