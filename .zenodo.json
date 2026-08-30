@@ -10,6 +10,12 @@
   "upload_type": "software",
   "access_right": "open",
   "language": "eng",
+  "related_identifiers": [
+    {
+      "identifier": "https://doi.org/10.5281/zenodo.22170165",
+      "relation": "isIdenticalTo"
+    }
+  ],
   "keywords": [
     "resolutive memory",
     "continual memory",
