@@ -76,6 +76,26 @@ memoria_mobile_status memoria_mobile_resolve_context_json(
     memoria_mobile_buffer *response_json
 );
 
+/*
+ * Post-v1 additive ABI-v1 subconscious-gap inspection. The resolver observes
+ * successful, low-confidence and UNRESOLVED queries locally without LLM or
+ * network access. peek returns the highest-priority pending topic. The queue is
+ * runtime-local in this first slice; learned external evidence remains durable.
+ */
+memoria_mobile_status memoria_mobile_subconscious_peek_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/* Remove one pending topic after a consumer has acquired/accepted evidence.
+ * Required request field: topic. */
+memoria_mobile_status memoria_mobile_subconscious_satisfy_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_store_episode_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
