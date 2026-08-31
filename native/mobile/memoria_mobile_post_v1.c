@@ -13,8 +13,11 @@
 /* Wrap the validated resolver so post-v1 can add public-source conflict and
  * provenance semantics without changing the frozen implementation. */
 #define memoria_mobile_resolve_context_json memoria_mobile_resolve_context_json_v1_core
+#define memoria_mobile_close memoria_mobile_close_v1_core
 #include "memoria_mobile.c"
+#undef memoria_mobile_close
 #undef memoria_mobile_resolve_context_json
+#include "subconscious_mobile.h"
 
 #define EXTERNAL_KNOWLEDGE_CLASS "external_public"
 #define EXTERNAL_SOURCE_TYPE "external_import"
@@ -786,6 +789,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(
     if (!h || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     status = memoria_mobile_resolve_context_json_v1_core(h, req, &core);
     if (status != MEMORIA_MOBILE_OK || !core.data) {
+        memoria_subconscious_mobile_observe_resolution(h, req, status, core);
         if (core.data) {
             memoria_mobile_status copied = set_response(out, (const char *)core.data, status);
             memoria_mobile_free_buffer(core);
@@ -794,6 +798,13 @@ memoria_mobile_status memoria_mobile_resolve_context_json(
         return status;
     }
     status = external_enrich_resolve(h, req, core, out);
+    memoria_subconscious_mobile_observe_resolution(h, req, status, *out);
     memoria_mobile_free_buffer(core);
     return status;
+}
+
+void memoria_mobile_close(memoria_mobile_handle *h) {
+    if (!h) return;
+    memoria_subconscious_mobile_forget_handle(h);
+    memoria_mobile_close_v1_core(h);
 }
