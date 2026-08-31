@@ -2,6 +2,7 @@
 #define MEMORIA_SUBCONSCIOUS_KERNEL_H
 
 #include <stddef.h>
+#include <stdlib.h>
 
 #define MEMORIA_SUBCONSCIOUS_MAX_CANDIDATES 64u
 #define MEMORIA_SUBCONSCIOUS_TOPIC_CAP 192u
