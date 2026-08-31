@@ -20,6 +20,8 @@ add_library(memoria_mobile SHARED
   semantic_kernel.c
   subconscious_kernel.c
   subconscious_mobile.c
+  external_consolidation_kernel.c
+  external_consolidation_mobile.c
   trajectory_kernel.c
   trajectory_json_adapter.c
   episodic_kernel.c
@@ -98,6 +100,11 @@ if(NOT ANDROID)
   target_link_libraries(memoria_mobile_external_public_knowledge PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_external_public_knowledge PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_external_public_knowledge COMMAND memoria_mobile_external_public_knowledge)
+
+  add_executable(memoria_mobile_external_consolidation tests/external_consolidation_mobile.c)
+  target_link_libraries(memoria_mobile_external_consolidation PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_external_consolidation PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_external_consolidation COMMAND memoria_mobile_external_consolidation)
 
   add_executable(memoria_external_consolidation_kernel_test tests/external_consolidation_kernel.c external_consolidation_kernel.c)
   target_include_directories(memoria_external_consolidation_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
