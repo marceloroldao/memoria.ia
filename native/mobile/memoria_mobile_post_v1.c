@@ -200,24 +200,62 @@ static void external_request_free(external_request *r) {
     memset(r, 0, sizeof(*r));
 }
 
+/* The frozen v1 helper extracts JSON string bytes but deliberately does not
+ * unescape them. External/public knowledge is fed by Android JSONObject, so
+ * provenance values such as URLs may legally arrive with JSON escapes (for
+ * example https:\/\/example.org). Decode the common JSON escapes before
+ * validating or persisting the post-v1 external contract. */
+static char *external_json_string(const char *json, const char *key) {
+    char *value = json_string(json, key);
+    char *read, *write;
+    if (!value) return NULL;
+    read = value;
+    write = value;
+    while (*read) {
+        if (*read == '\\' && read[1]) {
+            ++read;
+            switch (*read) {
+                case '"': *write++ = '"'; ++read; break;
+                case '\\': *write++ = '\\'; ++read; break;
+                case '/': *write++ = '/'; ++read; break;
+                case 'n': *write++ = '\n'; ++read; break;
+                case 'r': *write++ = '\r'; ++read; break;
+                case 't': *write++ = '\t'; ++read; break;
+                case 'b': *write++ = '\b'; ++read; break;
+                case 'f': *write++ = '\f'; ++read; break;
+                default:
+                    /* Preserve unsupported escapes (notably \uXXXX) bytewise
+                     * rather than silently corrupting public evidence. */
+                    *write++ = '\\';
+                    *write++ = *read++;
+                    break;
+            }
+        } else {
+            *write++ = *read++;
+        }
+    }
+    *write = 0;
+    return value;
+}
+
 static int external_parse_request(memoria_mobile_buffer req, external_request *r) {
     char *json = NULL, *source_class = NULL;
     if (!r || !req.data || !req.size) return 0;
     memset(r, 0, sizeof(*r));
     json = buffer_to_string(req);
     if (!json) return 0;
-    r->content = json_string(json, "content");
-    r->namespace_id = json_string(json, "namespace");
-    r->source_url = json_string(json, "source_url");
-    r->source_domain = json_string(json, "source_domain");
-    r->source_title = json_string(json, "source_title");
-    r->acquired_time = json_string(json, "acquired_time");
-    r->source_excerpt = json_string(json, "source_excerpt");
-    r->provider_id = json_string(json, "provider_id");
-    r->import_kind = json_string(json, "import_kind");
-    r->request_id = json_string(json, "request_id");
-    r->session_id = json_string(json, "session_id");
-    source_class = json_string(json, "source_class");
+    r->content = external_json_string(json, "content");
+    r->namespace_id = external_json_string(json, "namespace");
+    r->source_url = external_json_string(json, "source_url");
+    r->source_domain = external_json_string(json, "source_domain");
+    r->source_title = external_json_string(json, "source_title");
+    r->acquired_time = external_json_string(json, "acquired_time");
+    r->source_excerpt = external_json_string(json, "source_excerpt");
+    r->provider_id = external_json_string(json, "provider_id");
+    r->import_kind = external_json_string(json, "import_kind");
+    r->request_id = external_json_string(json, "request_id");
+    r->session_id = external_json_string(json, "session_id");
+    source_class = external_json_string(json, "source_class");
     r->parent_count = json_string_array(json, "parent_memory_ids", r->parents, MAX_PARENTS);
     r->validation_confidence = json_double(json, "validation_confidence", 0.85);
     free(json);
