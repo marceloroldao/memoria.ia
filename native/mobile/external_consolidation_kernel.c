@@ -1,6 +1,7 @@
 #include "external_consolidation_kernel.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <string.h>
 
 typedef struct normalized_domain_evidence {
