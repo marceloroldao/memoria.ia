@@ -79,8 +79,9 @@ memoria_mobile_status memoria_mobile_resolve_context_json(
 /*
  * Post-v1 additive ABI-v1 subconscious-gap inspection. The resolver observes
  * successful, low-confidence and UNRESOLVED queries locally without LLM or
- * network access. peek returns the highest-priority pending topic. The queue is
- * runtime-local in this first slice; learned external evidence remains durable.
+ * network access. peek returns the highest-priority pending topic. Pending gaps
+ * and satisfy/removal state are persisted in the same organization-scoped BDR
+ * state as the mobile runtime and therefore survive close/reopen.
  */
 memoria_mobile_status memoria_mobile_subconscious_peek_json(
     memoria_mobile_handle *handle,
