@@ -90,7 +90,7 @@ int main(void) {
     CHECK(contains(out, "\"observed_sources\":3"));
     CHECK(contains(out, "\"independent_domains\":2"));
     CHECK(contains(out, "\"qualifying_independent_domains\":2"));
-    CHECK(contains(out, "\"durable_basis\":\"external_public_provenance\""));
+    CHECK(contains(out, "\"durable_basis\":\"external_public_provenance+diagnostic_snapshot\""));
     CHECK(contains(out, "\"semantic_conflict\":false"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
