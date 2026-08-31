@@ -297,8 +297,10 @@ memoria_semantic_result memoria_semantic_resolve_sources(const char *query, cons
         if (authority > 1.0) authority = 1.0;
         result.hit = 1;
         result.memory_id = sources[best].memory_id;
-        result.confidence = 0.28 + 0.26 * best_coverage + 0.24 * authority + 0.12 * (best_rank > 1.0 ? 1.0 : best_rank);
-        if (result.confidence > 0.9) result.confidence = 0.9;
+        /* Keep the published/native response confidence contract stable.
+           Retrieval v2 changes candidate selection, not API semantics. */
+        result.confidence = 0.30 + 0.25 * best_coverage + 0.25 * authority;
+        if (result.confidence > 0.8) result.confidence = 0.8;
         result.source_type = sources[best].source_type;
         result.source_authority = sources[best].authority;
         result.ultimate_source_memory_id = root_id(&sources[best]);
