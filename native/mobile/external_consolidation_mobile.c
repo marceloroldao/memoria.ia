@@ -132,20 +132,28 @@ static const char *consolidation_turns_start(const char *snapshot) {
     return p ? p + strlen("\"turns\":[") : NULL;
 }
 
+/* Return the closing brace of the current top-level turn.  The delimiter
+ * between turns is },{\"memory_id\":...; returning the delimiter's first
+ * character keeps iteration positioned on the current turn's closing '}'. */
 static const char *consolidation_turn_end(const char *turn_start) {
     const char *next_turn, *episodes;
     if (!turn_start) return NULL;
     next_turn = strstr(turn_start + 1, "},{\"memory_id\":\"");
     episodes = strstr(turn_start + 1, "],\"episodes\":[");
-    if (next_turn && (!episodes || next_turn < episodes)) return next_turn + 1;
-    return episodes ? episodes : turn_start + strlen(turn_start);
+    if (next_turn && (!episodes || next_turn < episodes)) return next_turn;
+    if (episodes) {
+        /* Before ],\"episodes\" the turns array ends immediately after the
+         * current turn's closing brace. */
+        return episodes > turn_start ? episodes - 1 : episodes;
+    }
+    return turn_start + strlen(turn_start);
 }
 
 static int consolidation_span_contains(const char *start, const char *end, const char *needle) {
     const char *p;
     if (!start || !end || !needle || end <= start) return 0;
     p = strstr(start, needle);
-    return p && p < end;
+    return p && p <= end;
 }
 
 static int consolidation_span_string(
@@ -157,14 +165,14 @@ static int consolidation_span_string(
     if (!start || !end || !key || !out || cap == 0u || end <= start) return 0;
     snprintf(pattern, sizeof(pattern), "\"%s\":\"", key);
     p = strstr(start, pattern);
-    if (!p || p >= end) return 0;
+    if (!p || p > end) return 0;
     p += strlen(pattern);
     q = p;
-    while (q < end) {
+    while (q <= end) {
         if (*q == '"' && (q == p || q[-1] != '\\')) break;
         ++q;
     }
-    if (q >= end || *q != '"') return 0;
+    if (q > end || *q != '"') return 0;
     n = (size_t)(q - p);
     if (n + 1u > cap) return 0;
     memcpy(out, p, n);
@@ -244,7 +252,7 @@ static int consolidation_find_target_relations(
             const char *end = consolidation_turn_end(turn);
             char current_id[CONSOLIDATION_TEXT_CAP] = {0};
             char current_namespace[CONSOLIDATION_TEXT_CAP] = {0};
-            if (end > page_end) end = page_end;
+            if (!end || end > page_end) end = page_end;
             if (consolidation_span_string(turn, end, "memory_id", current_id, sizeof(current_id)) &&
                 consolidation_span_string(turn, end, "namespace", current_namespace, sizeof(current_namespace)) &&
                 strcmp(current_id, memory_id) == 0 && strcmp(current_namespace, namespace_id) == 0) {
@@ -252,7 +260,8 @@ static int consolidation_find_target_relations(
                 free(snapshot);
                 return *relation_count > 0u;
             }
-            turn = (*end == '}') ? end + 1 : page_end;
+            if (end >= page_end) break;
+            turn = end + 1;
             if (turn < page_end && *turn == ',') ++turn;
         }
         free(snapshot);
@@ -285,7 +294,7 @@ static int consolidation_has_semantic_conflict(
             char source_type[CONSOLIDATION_TEXT_CAP] = {0};
             consolidation_relation other[CONSOLIDATION_MAX_RELATIONS];
             size_t other_count, j;
-            if (end > page_end) end = page_end;
+            if (!end || end > page_end) end = page_end;
             if (consolidation_span_string(turn, end, "memory_id", current_id, sizeof(current_id)) &&
                 strcmp(current_id, memory_id) != 0 &&
                 consolidation_span_string(turn, end, "namespace", current_namespace, sizeof(current_namespace)) &&
@@ -305,7 +314,8 @@ static int consolidation_has_semantic_conflict(
                     }
                 }
             }
-            turn = (*end == '}') ? end + 1 : page_end;
+            if (end >= page_end) break;
+            turn = end + 1;
             if (turn < page_end && *turn == ',') ++turn;
         }
         free(snapshot);
@@ -365,7 +375,7 @@ memoria_mobile_status memoria_mobile_inspect_external_consolidation_json(
     char namespace_id[CONSOLIDATION_TEXT_CAP] = {0};
     long min_domains;
     size_t source_count = 0u;
-    int semantic_conflict;
+    int semantic_conflict = 0;
 
     if (!handle || !response_json || !request_json.data || request_json.size == 0u)
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
@@ -392,9 +402,9 @@ memoria_mobile_status memoria_mobile_inspect_external_consolidation_json(
     provenance_json = consolidation_buffer_string(provenance);
     memoria_mobile_free_buffer(provenance);
     if (!provenance_json) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    semantic_conflict = consolidation_has_semantic_conflict(handle, memory_id, namespace_id);
     memset(sources, 0, sizeof(sources));
     memset(domains, 0, sizeof(domains));
-    semantic_conflict = consolidation_has_semantic_conflict(handle, memory_id, namespace_id);
     if (!consolidation_parse_sources(provenance_json, sources, domains, &source_count) ||
         !memoria_external_consolidation_evaluate(sources, source_count, semantic_conflict, &policy, &result)) {
         free(provenance_json);
