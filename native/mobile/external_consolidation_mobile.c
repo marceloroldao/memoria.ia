@@ -85,7 +85,8 @@ static int consolidation_parse_sources(
 static memoria_mobile_status consolidation_response(
     memoria_mobile_buffer *out,
     const memoria_external_consolidation_result *result,
-    const memoria_external_consolidation_policy *policy
+    const memoria_external_consolidation_policy *policy,
+    int semantic_conflict
 ) {
     char json[640];
     int written;
@@ -98,14 +99,15 @@ static memoria_mobile_status consolidation_response(
         "\"weakest_qualifying_confidence\":%.6f,"
         "\"policy\":{\"min_independent_domains\":%zu,\"min_validation_confidence\":%.6f},"
         "\"durable_basis\":\"external_public_provenance\","
-        "\"semantic_conflict_checked\":false}",
+        "\"semantic_conflict_checked\":true,\"semantic_conflict\":%s}",
         memoria_external_evidence_state_name(result->state),
         result->observed_sources,
         result->independent_domains,
         result->qualifying_independent_domains,
         result->weakest_qualifying_confidence,
         policy->min_independent_domains,
-        policy->min_validation_confidence);
+        policy->min_validation_confidence,
+        semantic_conflict ? "true" : "false");
     if (written < 0 || (size_t)written >= sizeof(json)) return MEMORIA_MOBILE_INTERNAL_ERROR;
     data = (uint8_t *)malloc((size_t)written + 1u);
     if (!data) return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -126,9 +128,12 @@ memoria_mobile_status memoria_mobile_inspect_external_consolidation_json(
     memoria_external_consolidation_policy policy;
     memoria_external_consolidation_result result;
     memoria_mobile_status status;
-    char *request = NULL, *provenance_json = NULL;
+    memory_ref ref = {0};
+    char *request = NULL, *provenance_json = NULL, *memory_id = NULL, *namespace_id = NULL;
+    const char *conflict_memory_id = NULL;
     long min_domains;
     size_t source_count = 0u;
+    int semantic_conflict = 0;
 
     if (!handle || !response_json || !request_json.data || request_json.size == 0u)
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
@@ -139,6 +144,13 @@ memoria_mobile_status memoria_mobile_inspect_external_consolidation_json(
     policy.min_independent_domains = min_domains > 0 ? (size_t)min_domains : 0u;
     policy.min_validation_confidence = consolidation_json_double(
         request, "min_validation_confidence", CONSOLIDATION_DEFAULT_MIN_CONFIDENCE);
+    memory_id = json_string(request, "memory_id");
+    namespace_id = json_string(request, "namespace");
+    if (!namespace_id) namespace_id = dup_string("");
+    if (memory_id && namespace_id && find_memory_ref(handle, memory_id, namespace_id, &ref) && ref.turn)
+        semantic_conflict = external_conflict_for_turn(handle, ref.turn, namespace_id, &conflict_memory_id);
+    free(memory_id);
+    free(namespace_id);
     free(request);
     if (policy.min_independent_domains == 0u ||
         policy.min_validation_confidence < 0.0 || policy.min_validation_confidence > 1.0)
@@ -152,10 +164,10 @@ memoria_mobile_status memoria_mobile_inspect_external_consolidation_json(
     memset(sources, 0, sizeof(sources));
     memset(domains, 0, sizeof(domains));
     if (!consolidation_parse_sources(provenance_json, sources, domains, &source_count) ||
-        !memoria_external_consolidation_evaluate(sources, source_count, 0, &policy, &result)) {
+        !memoria_external_consolidation_evaluate(sources, source_count, semantic_conflict, &policy, &result)) {
         free(provenance_json);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
     free(provenance_json);
-    return consolidation_response(response_json, &result, &policy);
+    return consolidation_response(response_json, &result, &policy, semantic_conflict);
 }
