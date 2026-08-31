@@ -99,6 +99,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_external_public_knowledge PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_external_public_knowledge COMMAND memoria_mobile_external_public_knowledge)
 
+  add_executable(memoria_external_consolidation_kernel_test tests/external_consolidation_kernel.c external_consolidation_kernel.c)
+  target_include_directories(memoria_external_consolidation_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_external_consolidation_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_external_consolidation_kernel_test COMMAND memoria_external_consolidation_kernel_test)
+
   add_executable(memoria_semantic_kernel_test tests/semantic_kernel.c semantic_kernel.c)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
