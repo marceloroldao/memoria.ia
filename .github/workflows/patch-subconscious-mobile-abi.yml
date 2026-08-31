@@ -1,0 +1,24 @@
+name: patch-subconscious-mobile-abi
+on:
+  push:
+    branches: [experiment/post-v1-subconscious-mobile-abi]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-subconscious-mobile-abi
+          fetch-depth: 0
+      - name: Apply subconscious mobile ABI wiring
+        run: python tools/patch_subconscious_mobile_abi.py
+      - name: Commit patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add native/mobile/subconscious_mobile.c native/mobile/memoria_mobile_post_v1.c native/mobile/CMakeLists.txt
+          git commit -m "feat(subconscious): wire automatic mobile gap observation"
+          git push origin HEAD:experiment/post-v1-subconscious-mobile-abi
