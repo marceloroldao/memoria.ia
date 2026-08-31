@@ -18,6 +18,7 @@ add_subdirectory(
 add_library(memoria_mobile SHARED
   memoria_mobile_post_v1.c
   semantic_kernel.c
+  subconscious_kernel.c
   trajectory_kernel.c
   trajectory_json_adapter.c
   episodic_kernel.c
@@ -101,6 +102,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_semantic_kernel_test COMMAND memoria_semantic_kernel_test)
+
+  add_executable(memoria_subconscious_kernel_test tests/subconscious_kernel.c subconscious_kernel.c)
+  target_include_directories(memoria_subconscious_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_subconscious_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_subconscious_kernel_test COMMAND memoria_subconscious_kernel_test)
 
   add_executable(memoria_trajectory_kernel_test tests/trajectory_kernel.c trajectory_kernel.c)
   target_include_directories(memoria_trajectory_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
