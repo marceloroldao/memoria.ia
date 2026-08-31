@@ -148,6 +148,7 @@ void memoria_subconscious_mobile_observe_resolution(
         if (resolved_response) confidence = json_double_value(resolved_response, "confidence", 0.0);
         free(resolved_response);
     }
+    if (resolved && confidence >= 0.75) { free(query); return; }
     slot = runtime_for(handle, 1);
     if (slot) {
         ++slot->observation_order;
