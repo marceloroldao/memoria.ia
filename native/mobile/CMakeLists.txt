@@ -109,7 +109,7 @@ if(NOT ANDROID)
   set_target_properties(memoria_subconscious_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_subconscious_kernel_test COMMAND memoria_subconscious_kernel_test)
 
-  add_executable(memoria_subconscious_mobile_test tests/subconscious_mobile.c subconscious_mobile.c subconscious_kernel.c)
+  add_executable(memoria_subconscious_mobile_test tests/subconscious_mobile.c)
   target_include_directories(memoria_subconscious_mobile_test PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/../../include)
   target_link_libraries(memoria_subconscious_mobile_test PRIVATE memoria_mobile)
   set_target_properties(memoria_subconscious_mobile_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
