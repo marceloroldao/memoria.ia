@@ -62,6 +62,8 @@ int main(void) {
     CHECK(contains(out, "\"evidence_state\":\"raw\""));
     CHECK(contains(out, "\"observed_sources\":1"));
     CHECK(contains(out, "\"independent_domains\":1"));
+    CHECK(contains(out, "\"semantic_conflict_checked\":true"));
+    CHECK(contains(out, "\"semantic_conflict\":false"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     /* A second URL from the same domain is more evidence, but not independent corroboration. */
@@ -89,17 +91,32 @@ int main(void) {
     CHECK(contains(out, "\"independent_domains\":2"));
     CHECK(contains(out, "\"qualifying_independent_domains\":2"));
     CHECK(contains(out, "\"durable_basis\":\"external_public_provenance\""));
+    CHECK(contains(out, "\"semantic_conflict\":false"));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
+    /* Contradictory public relation must override corroboration conservatively. */
+    CHECK(learn(h,
+        "{\"content\":\"atlas code is 9999\",\"source_url\":\"https://three.example/a\","
+        "\"source_domain\":\"three.example\",\"source_title\":\"Atlas C\","
+        "\"acquired_time\":\"2026-08-31T15:03:00Z\",\"import_kind\":\"imported\","
+        "\"validation_confidence\":0.93}", &out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+    CHECK(consolidation(h, id, &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"evidence_state\":\"conflict\""));
+    CHECK(contains(out, "\"semantic_conflict_checked\":true"));
+    CHECK(contains(out, "\"semantic_conflict\":true"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
     memoria_mobile_close(h); h = NULL;
 
-    /* The classification is recomputed from BDR-backed provenance after restart. */
+    /* Both corroboration and the contradictory relation are reconstructed from durable state. */
     CHECK(memoria_mobile_open(dir, "org-consolidation", &h) == MEMORIA_MOBILE_OK);
     CHECK(consolidation(h, id, &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"evidence_state\":\"corroborated\""));
+    CHECK(contains(out, "\"evidence_state\":\"conflict\""));
     CHECK(contains(out, "\"observed_sources\":3"));
     CHECK(contains(out, "\"independent_domains\":2"));
+    CHECK(contains(out, "\"semantic_conflict\":true"));
     memoria_mobile_free_buffer(out);
 
     memoria_mobile_close(h);
