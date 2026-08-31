@@ -77,6 +77,16 @@ int main(void) {
     CHECK(first_stored_id(out, public_id, sizeof(public_id)));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
+    /* Android/consumer serializers may escape forward slashes and quotes. */
+    CHECK(external_learn(h,
+        "{\"content\":\"android says \\\"ocean\\\" is public\","
+        "\"source_class\":\"external_public\","
+        "\"source_url\":\"https:\\/\\/example.org\\/android\","
+        "\"source_domain\":\"example.org\",\"source_title\":\"Android \\\"Public\\\" Source\","
+        "\"acquired_time\":\"2026-08-30T04:40:30Z\",\"import_kind\":\"imported\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"knowledge_class\":\"external_public\""));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
     CHECK(inspect_external(h, public_id, &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "https://example.org/fact-a"));
     CHECK(contains(out, "\"source_domain\":\"example.org\""));
