@@ -11,7 +11,8 @@ static int stopword(const char *w) {
     static const char *words[] = {
         "a","ao","aos","as","da","das","de","do","dos","e","em","me","o","os","para","por","que","um","uma",
         "fale","falar","diga","dizer","conte","sobre","mais","procure","pesquise","pesquisar","favor",
-        "the","a","an","of","to","and","about","tell","please","find","search","more","what","which"
+        "ola","oi","como","vai","voce","voces","bom","boa","dia","tarde","noite","tudo","bem",
+        "the","a","an","of","to","and","about","tell","please","find","search","more","what","which","hello","hi"
     };
     size_t i;
     for (i = 0; i < sizeof(words)/sizeof(words[0]); ++i) if (strcmp(w, words[i]) == 0) return 1;
