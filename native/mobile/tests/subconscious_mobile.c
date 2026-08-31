@@ -20,6 +20,15 @@ int main(void) {
     memoria_mobile_handle *h = (memoria_mobile_handle *)(uintptr_t)0x1234;
     memoria_mobile_buffer out = {0};
 
+    /* Greetings/small talk must never become Web-research tasks. */
+    memoria_subconscious_mobile_observe_resolution(
+        h, buf("{\"query\":\"olá, como vai?\"}"),
+        MEMORIA_MOBILE_UNRESOLVED,
+        buf("{\"status\":\"UNRESOLVED\"}"));
+    assert(memoria_mobile_subconscious_peek_json(h, buf("{}"), &out) == MEMORIA_MOBILE_OK);
+    assert(contains(out, "\"pending\":false"));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
     memoria_subconscious_mobile_observe_resolution(
         h, buf("{\"query\":\"me fale sobre a China\"}"),
         MEMORIA_MOBILE_UNRESOLVED,
