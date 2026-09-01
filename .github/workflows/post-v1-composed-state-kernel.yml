@@ -1,0 +1,37 @@
+name: Post-v1 composed state kernel
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-composed-state-kernel
+    paths:
+      - "native/mobile/composed_state_kernel.h"
+      - "native/mobile/composed_state_kernel.c"
+      - "native/mobile/temporal_state_kernel.h"
+      - "native/mobile/tests/composed_state_kernel.c"
+      - ".github/workflows/post-v1-composed-state-kernel.yml"
+  pull_request:
+    branches:
+      - post-v1/core-base
+    paths:
+      - "native/mobile/composed_state_kernel.h"
+      - "native/mobile/composed_state_kernel.c"
+      - "native/mobile/temporal_state_kernel.h"
+      - "native/mobile/tests/composed_state_kernel.c"
+      - ".github/workflows/post-v1-composed-state-kernel.yml"
+  workflow_dispatch:
+
+jobs:
+  composed-state-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build composed state kernel test
+        run: >-
+          cc -std=c11 -Wall -Wextra -Werror
+          -Inative/mobile
+          native/mobile/tests/composed_state_kernel.c
+          native/mobile/composed_state_kernel.c
+          -o composed-state-kernel-test
+      - name: Run composed state kernel test
+        run: ./composed-state-kernel-test
