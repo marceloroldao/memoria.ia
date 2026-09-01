@@ -43,7 +43,7 @@ static char *json_string_dup(const char *json, const char *key) {
     return out;
 }
 
-static memoria_mobile_status response_json(
+static memoria_mobile_status set_rejection_response(
     memoria_mobile_buffer *out,
     memoria_mobile_status status,
     const memoria_external_relevance_result *r
@@ -75,7 +75,6 @@ memoria_mobile_status memoria_mobile_learn_external_knowledge_guarded_json(
     memoria_external_relevance_policy policy;
     memoria_external_relevance_result result;
     char *request = NULL, *origin_query = NULL, *content = NULL;
-    memoria_mobile_status status;
 
     if (!handle || !response_json || !request_json.data || request_json.size == 0u)
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
@@ -103,8 +102,7 @@ memoria_mobile_status memoria_mobile_learn_external_knowledge_guarded_json(
     free(content);
 
     if (!result.accepted)
-        return response_json(response_json, MEMORIA_MOBILE_UNRESOLVED, &result);
+        return set_rejection_response(response_json, MEMORIA_MOBILE_UNRESOLVED, &result);
 
-    status = memoria_mobile_learn_external_knowledge_json(handle, request_json, response_json);
-    return status;
+    return memoria_mobile_learn_external_knowledge_json(handle, request_json, response_json);
 }
