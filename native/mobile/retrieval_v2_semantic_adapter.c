@@ -32,52 +32,30 @@ static int append_bytes(char **buffer, size_t *length, size_t *capacity, const c
     return 1;
 }
 
-static int token_char(unsigned char ch) {
-    return ch >= 0x80u || isalnum(ch);
-}
+static int token_char(unsigned char ch) { return ch >= 0x80u || isalnum(ch); }
 
 static char *normalize_text_copy(const char *input) {
     char *out = NULL;
     size_t out_len = 0u, out_cap = 0u, i = 0u;
     int had_question = 0;
     if (!input) return NULL;
-
     while (input[i]) {
-        char raw[RAW_TOKEN_CAP];
-        char normalized[RAW_TOKEN_CAP];
+        char raw[RAW_TOKEN_CAP], normalized[RAW_TOKEN_CAP];
         size_t k = 0u;
         unsigned char ch = (unsigned char)input[i];
         if (input[i] == '?') had_question = 1;
-        if (!token_char(ch)) {
-            ++i;
-            continue;
-        }
+        if (!token_char(ch)) { ++i; continue; }
         while (input[i] && token_char((unsigned char)input[i])) {
-            if (k + 1u >= sizeof(raw)) {
-                free(out);
-                return NULL;
-            }
+            if (k + 1u >= sizeof(raw)) { free(out); return NULL; }
             raw[k++] = input[i++];
         }
         raw[k] = 0;
         if (!memoria_retrieval_v2_normalize_token(raw, normalized, sizeof(normalized))) continue;
-        if (out_len && !append_bytes(&out, &out_len, &out_cap, " ", 1u)) {
-            free(out);
-            return NULL;
-        }
-        if (!append_bytes(&out, &out_len, &out_cap, normalized, strlen(normalized))) {
-            free(out);
-            return NULL;
-        }
+        if (out_len && !append_bytes(&out, &out_len, &out_cap, " ", 1u)) { free(out); return NULL; }
+        if (!append_bytes(&out, &out_len, &out_cap, normalized, strlen(normalized))) { free(out); return NULL; }
     }
-    if (!out) {
-        out = (char *)calloc(1u, 1u);
-        if (!out) return NULL;
-    }
-    if (had_question && !append_bytes(&out, &out_len, &out_cap, "?", 1u)) {
-        free(out);
-        return NULL;
-    }
+    if (!out) { out = (char *)calloc(1u, 1u); if (!out) return NULL; }
+    if (had_question && !append_bytes(&out, &out_len, &out_cap, "?", 1u)) { free(out); return NULL; }
     return out;
 }
 
@@ -87,8 +65,7 @@ static int ambiguity_stopword(const char *w) {
         "me","fale","sobre","qual","quais","what","which","the","of","is","tell","about"
     };
     size_t i;
-    for (i = 0u; i < sizeof(stop)/sizeof(stop[0]); ++i)
-        if (strcmp(w, stop[i]) == 0) return 1;
+    for (i = 0u; i < sizeof(stop)/sizeof(stop[0]); ++i) if (strcmp(w, stop[i]) == 0) return 1;
     return 0;
 }
 
@@ -161,9 +138,27 @@ static size_t query_overlap(const char *normalized_query, const char *normalized
     char q[AMBIGUITY_MAX_TOKENS][AMBIGUITY_TOKEN_CAP];
     size_t nq = split_meaningful_tokens(normalized_query, q, AMBIGUITY_MAX_TOKENS);
     size_t i, hits = 0u;
-    for (i = 0u; i < nq; ++i)
-        if (text_has_token(normalized_text, q[i])) ++hits;
+    for (i = 0u; i < nq; ++i) if (text_has_token(normalized_text, q[i])) ++hits;
     return hits;
+}
+
+static int minimum_concept_coverage(
+    const char *normalized_query,
+    const memoria_semantic_source *sources,
+    char **normalized_texts,
+    size_t source_count
+) {
+    char q[AMBIGUITY_MAX_TOKENS][AMBIGUITY_TOKEN_CAP];
+    size_t nq = split_meaningful_tokens(normalized_query, q, AMBIGUITY_MAX_TOKENS);
+    size_t i, best_overlap = 0u;
+    if (nq < 2u) return 1;
+    for (i = 0u; i < source_count; ++i) {
+        size_t overlap;
+        if (!source_is_retrievable(&sources[i])) continue;
+        overlap = query_overlap(normalized_query, normalized_texts[i]);
+        if (overlap > best_overlap) best_overlap = overlap;
+    }
+    return best_overlap * 2u >= nq;
 }
 
 static const char *source_root(const memoria_semantic_source *s) {
@@ -184,18 +179,11 @@ static int normalized_ambiguity(
         size_t overlap;
         if (!source_is_retrievable(&sources[i])) continue;
         overlap = query_overlap(normalized_query, normalized_texts[i]);
-        if (!found || overlap > best_overlap) {
-            best_overlap = overlap;
-            best_index = i;
-            found = 1;
-        }
+        if (!found || overlap > best_overlap) { best_overlap = overlap; best_index = i; found = 1; }
     }
-    /* One shared concept is too weak for this pre-check because entity overview
-     * ranking (e.g. China vs Air China) intentionally resolves such cases. */
     if (!found || best_overlap < 2u) return 0;
     for (i = 0u; i < source_count; ++i) {
-        const char *a_root;
-        const char *b_root;
+        const char *a_root, *b_root;
         if (i == best_index || !source_is_retrievable(&sources[i])) continue;
         if (query_overlap(normalized_query, normalized_texts[i]) != best_overlap) continue;
         if (fabs(sources[i].authority - sources[best_index].authority) >= 0.05) continue;
@@ -233,7 +221,8 @@ memoria_semantic_result memoria_retrieval_v2_resolve_sources(
         normalized_sources[i].text = normalized_texts[i];
     }
 
-    if (normalized_ambiguity(normalized_query, sources, normalized_texts, source_count))
+    if (!minimum_concept_coverage(normalized_query, sources, normalized_texts, source_count) ||
+        normalized_ambiguity(normalized_query, sources, normalized_texts, source_count))
         result = unresolved;
     else
         result = memoria_semantic_resolve_sources(normalized_query, normalized_sources, source_count);
