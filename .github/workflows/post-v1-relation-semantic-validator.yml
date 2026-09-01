@@ -1,0 +1,24 @@
+name: Post-v1 relation semantic validator
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-relation-semantic-validator
+  pull_request:
+    branches:
+      - post-v1/core-base
+
+jobs:
+  relation-validator:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build relation semantic validator test
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror \
+            -Inative/mobile \
+            native/mobile/tests/relation_semantic_validator.c \
+            native/mobile/relation_semantic_validator.c \
+            -o /tmp/memoria_relation_semantic_validator_test
+      - name: Run relation semantic validator test
+        run: /tmp/memoria_relation_semantic_validator_test
