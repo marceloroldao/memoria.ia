@@ -157,7 +157,12 @@ class NativeConversationService:
             source_authority = 0.25
 
         effective_parents = list(parent_memory_ids)
-        if not effective_parents and not corrects_memory_ids and session_id:
+        # Automatic chronological continuity is deliberately restricted to user
+        # assertions. assistant_generated is traceable evidence in the native core;
+        # auto-parenting it would let mere conversational adjacency borrow a user's
+        # authority. Explicit assistant parents remain available when a caller has
+        # deliberately established an evidential/derivation link.
+        if not effective_parents and not corrects_memory_ids and session_id and role == "user":
             previous_turn_id = self._latest_active_turn_id(session_id)
             if previous_turn_id and previous_turn_id != turn_id:
                 effective_parents = [previous_turn_id]

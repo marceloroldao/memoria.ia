@@ -102,6 +102,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
 
+  add_executable(memoria_mobile_assistant_promotion tests/assistant_promotion_mobile.c)
+  target_link_libraries(memoria_mobile_assistant_promotion PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_assistant_promotion PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_assistant_promotion COMMAND memoria_mobile_assistant_promotion)
+
   add_executable(memoria_mobile_external_public_knowledge tests/external_public_knowledge_mobile.c)
   target_link_libraries(memoria_mobile_external_public_knowledge PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_external_public_knowledge PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
