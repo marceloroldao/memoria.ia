@@ -27,6 +27,7 @@ on:
       - "tests/test_native_episodic_server_adapter.py"
       - "tests/test_native_conversation_server_adapter.py"
       - "tests/test_native_conversation_response_metadata_parity.py"
+      - "tests/test_native_session_lineage.py"
       - "tests/test_native_runtime_manager.py"
       - "tests/test_native_server_runtime_default.py"
       - "tests/test_native_production_import_isolation.py"
@@ -66,6 +67,7 @@ jobs:
           tests/test_native_episodic_server_adapter.py
           tests/test_native_conversation_server_adapter.py
           tests/test_native_conversation_response_metadata_parity.py
+          tests/test_native_session_lineage.py
           tests/test_native_runtime_manager.py
           tests/test_native_server_runtime_default.py
           tests/test_native_production_import_isolation.py
