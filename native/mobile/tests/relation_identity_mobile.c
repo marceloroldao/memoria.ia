@@ -61,6 +61,21 @@ int main(void) {
     CHECK(!contains(out, "\"memory_id\":\"pref1\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
+    /* The turn itself remains durable, but a bare entity=number candidate is not promoted. */
+    CHECK(learn(h,
+        "{\"role\":\"user\",\"text\":\"atlas is 7319\",\"memory_id\":\"turn4\",\"order\":4}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"stored_memory_ids\":[\"turn4\"]"));
+    CHECK(!contains(out, "turn4#relation:0"));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
+    /* Explicit numeric attribute stays promotable and keeps the conflict/consolidation contract. */
+    CHECK(learn(h,
+        "{\"role\":\"user\",\"text\":\"atlas code is 7319\",\"memory_id\":\"turn5\",\"order\":5}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"memory_id\":\"turn5#relation:0\""));
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
     CHECK(learn(h,
         "{\"role\":\"user\",\"text\":\"invalid = relation\",\"memory_id\":\"bad\",\"relation_memory_ids\":[]}",
         &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
@@ -70,11 +85,15 @@ int main(void) {
     CHECK(assert_identity(h, "sensor active", "\"memory_id\":\"rel1\"") == 0);
     CHECK(assert_identity(h, "device ready", "\"memory_id\":\"turn2#relation:0\"") == 0);
     CHECK(assert_identity(h, "prefetch stable", "\"memory_id\":\"pref0\"") == 0);
+    CHECK(assert_identity(h, "atlas code 7319", "\"memory_id\":\"turn5#relation:0\"") == 0);
 
     CHECK(memoria_mobile_export_snapshot_json(h, snapshot_req, &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"memory_id\":\"rel1\""));
     CHECK(contains(out, "\"memory_id\":\"turn2#relation:0\""));
     CHECK(contains(out, "\"memory_id\":\"pref0\""));
+    CHECK(contains(out, "\"memory_id\":\"turn4\""));
+    CHECK(!contains(out, "turn4#relation:0"));
+    CHECK(contains(out, "\"memory_id\":\"turn5#relation:0\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
@@ -84,11 +103,15 @@ int main(void) {
     CHECK(assert_identity(h, "sensor active", "\"memory_id\":\"rel1\"") == 0);
     CHECK(assert_identity(h, "device ready", "\"memory_id\":\"turn2#relation:0\"") == 0);
     CHECK(assert_identity(h, "prefetch stable", "\"memory_id\":\"pref0\"") == 0);
+    CHECK(assert_identity(h, "atlas code 7319", "\"memory_id\":\"turn5#relation:0\"") == 0);
 
     CHECK(memoria_mobile_export_snapshot_json(h, snapshot_req, &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"memory_id\":\"rel1\""));
     CHECK(contains(out, "\"memory_id\":\"turn2#relation:0\""));
     CHECK(contains(out, "\"memory_id\":\"pref0\""));
+    CHECK(contains(out, "\"memory_id\":\"turn4\""));
+    CHECK(!contains(out, "turn4#relation:0"));
+    CHECK(contains(out, "\"memory_id\":\"turn5#relation:0\""));
     memoria_mobile_free_buffer(out);
 
     memoria_mobile_close(h);
