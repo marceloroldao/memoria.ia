@@ -22,6 +22,8 @@ add_library(memoria_mobile SHARED
   subconscious_mobile.c
   external_consolidation_kernel.c
   external_consolidation_mobile.c
+  external_relevance_kernel.c
+  external_relevance_mobile.c
   trajectory_kernel.c
   trajectory_json_adapter.c
   episodic_kernel.c

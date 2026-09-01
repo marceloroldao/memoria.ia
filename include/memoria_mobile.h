@@ -30,6 +30,17 @@ uint32_t memoria_mobile_abi_version(void);
 memoria_mobile_status memoria_mobile_open(const char *data_dir,const char *organization_id,memoria_mobile_handle **out_handle);
 memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
 memoria_mobile_status memoria_mobile_learn_external_knowledge_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
+
+/* Guarded post-v1 external/public ingestion. The request carries the normal
+ * external knowledge fields plus origin_query. A deterministic relevance gate
+ * runs before persistence. Irrelevant evidence returns UNRESOLVED with
+ * persisted=false and never delegates to the durable ingest path. */
+memoria_mobile_status memoria_mobile_learn_external_knowledge_guarded_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_inspect_external_knowledge_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
 
 /* Deterministically classify the durable external_public provenance attached to
