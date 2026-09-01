@@ -1,0 +1,38 @@
+name: Post-v1 evidence metrics runtime
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-evidence-metrics-separation
+  pull_request:
+    branches:
+      - post-v1/core-base
+
+jobs:
+  durable-metrics:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout pinned Resolutive-DB
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+          path: deps/resolutive-DB
+      - name: Configure mobile host library
+        run: >-
+          cmake -S native/mobile -B build/evidence-metrics
+          -DCMAKE_BUILD_TYPE=Release
+          -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
+      - name: Build mobile host library
+        run: cmake --build build/evidence-metrics --target memoria_mobile --config Release -j2
+      - name: Build durable evidence metrics test
+        run: >-
+          cc -std=c11 -Wall -Wextra -Werror
+          -Iinclude
+          native/mobile/tests/evidence_metrics_mobile.c
+          -Lbuild/evidence-metrics -lmemoria_mobile
+          -Wl,-rpath,"$GITHUB_WORKSPACE/build/evidence-metrics"
+          -o /tmp/memoria_evidence_metrics_mobile_test
+      - name: Run durable evidence metrics test
+        run: /tmp/memoria_evidence_metrics_mobile_test
