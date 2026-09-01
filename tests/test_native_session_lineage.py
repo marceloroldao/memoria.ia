@@ -52,14 +52,17 @@ def test_session_lineage_is_scoped_explicit_and_restart_durable(tmp_path: Path):
         first_id = first.memory_ids[0]
         assert _turn(service, first_id).get("parent_memory_ids") == []
 
+        # Conversational adjacency alone is not evidence for assistant output.
         second = service.ingest(role="assistant", text="alpha stage remains one", session_id="s-alpha", order=2)
         second_id = second.memory_ids[0]
-        assert _turn(service, second_id).get("parent_memory_ids") == [first_id]
+        assert _turn(service, second_id).get("parent_memory_ids") == []
 
         other = service.ingest(role="user", text="beta stage is one", session_id="s-beta", order=1)
         other_id = other.memory_ids[0]
         assert _turn(service, other_id).get("parent_memory_ids") == []
 
+        # An explicit assistant parent remains available when the caller deliberately
+        # establishes an evidential/derivation link.
         explicit = service.ingest(
             role="assistant",
             text="alpha explicit branch",
@@ -88,6 +91,8 @@ def test_session_lineage_is_scoped_explicit_and_restart_durable(tmp_path: Path):
 
     reopened = _service(tmp_path, library)
     try:
+        # User chronology can point to the latest durable turn without borrowing its
+        # factual authority, because user_assertion is not a traceable derived source.
         after_restart = reopened.ingest(
             role="user",
             text="alpha continued after restart",
@@ -97,5 +102,6 @@ def test_session_lineage_is_scoped_explicit_and_restart_durable(tmp_path: Path):
         after_restart_id = after_restart.memory_ids[0]
         assert _turn(reopened, after_restart_id).get("parent_memory_ids") == [explicit_id]
         assert other_id not in _turn(reopened, after_restart_id).get("parent_memory_ids", [])
+        assert second_id not in _turn(reopened, after_restart_id).get("parent_memory_ids", [])
     finally:
         reopened.close()
