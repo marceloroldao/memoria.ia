@@ -11,6 +11,71 @@ static void composed_free_properties(char **properties, size_t count) {
     for (i = 0; i < count; ++i) free(properties[i]);
 }
 
+static int composed_ci_equal(const char *a, const char *b) {
+    unsigned char ca, cb;
+    if (!a || !b) return 0;
+    while (*a && *b) {
+        ca = (unsigned char)*a++;
+        cb = (unsigned char)*b++;
+        if (ca < 0x80u) ca = (unsigned char)tolower(ca);
+        if (cb < 0x80u) cb = (unsigned char)tolower(cb);
+        if (ca != cb) return 0;
+    }
+    return *a == 0 && *b == 0;
+}
+
+/*
+ * The frozen relation extractor preserves its historic English contract:
+ *   "device alpha model is N7"
+ * becomes
+ *   subject="device alpha model", predicate="is", object="N7".
+ *
+ * Composed state exposes entity/property separately, so the adapter recognizes
+ * that legacy representation only when the subject is exactly
+ *   <requested entity> + " " + <requested property>
+ * (case-insensitive). This is structural decoding of an existing relation, not
+ * a new semantic inference. Direct subject/entity + predicate/property rows are
+ * accepted as well.
+ */
+static int composed_relation_matches(
+    const memoria_relation *relation,
+    const char *entity,
+    const char *property
+) {
+    size_t entity_len, property_len, subject_len;
+    if (!relation || !entity || !property || !relation->subject[0] ||
+        !relation->predicate[0] || !relation->object[0]) return 0;
+
+    if (composed_ci_equal(relation->subject, entity) &&
+        composed_ci_equal(relation->predicate, property)) return 1;
+
+    if (!composed_ci_equal(relation->predicate, "is")) return 0;
+    entity_len = strlen(entity);
+    property_len = strlen(property);
+    subject_len = strlen(relation->subject);
+    if (subject_len != entity_len + 1u + property_len) return 0;
+    if (relation->subject[entity_len] != ' ') return 0;
+
+    {
+        size_t i;
+        for (i = 0; i < entity_len; ++i) {
+            unsigned char a = (unsigned char)relation->subject[i];
+            unsigned char b = (unsigned char)entity[i];
+            if (a < 0x80u) a = (unsigned char)tolower(a);
+            if (b < 0x80u) b = (unsigned char)tolower(b);
+            if (a != b) return 0;
+        }
+        for (i = 0; i < property_len; ++i) {
+            unsigned char a = (unsigned char)relation->subject[entity_len + 1u + i];
+            unsigned char b = (unsigned char)property[i];
+            if (a < 0x80u) a = (unsigned char)tolower(a);
+            if (b < 0x80u) b = (unsigned char)tolower(b);
+            if (a != b) return 0;
+        }
+    }
+    return 1;
+}
+
 memoria_mobile_status memoria_mobile_resolve_composed_state_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
@@ -22,7 +87,7 @@ memoria_mobile_status memoria_mobile_resolve_composed_state_json(
     char *properties[MEMORIA_COMPOSED_STATE_MAX_ITEMS + 1u] = {0};
     const char *property_ptrs[MEMORIA_COMPOSED_STATE_MAX_ITEMS] = {0};
     size_t property_count = 0u;
-    size_t i, j, fact_count = 0u, fact_capacity;
+    size_t i, j, k, fact_count = 0u, fact_capacity;
     memoria_state_fact *facts = NULL;
     memoria_composed_state_result result;
     external_builder b = {0};
@@ -80,15 +145,18 @@ memoria_mobile_status memoria_mobile_resolve_composed_state_json(
             continue;
         for (j = 0; j < turn->relation_count && fact_count < fact_capacity; ++j) {
             const memoria_relation *relation = &turn->relations[j];
-            if (!relation->subject[0] || !relation->predicate[0] || !relation->object[0]) continue;
-            facts[fact_count].memory_id = turn->relation_memory_ids[j][0]
-                ? turn->relation_memory_ids[j] : turn->memory_id;
-            facts[fact_count].entity = relation->subject;
-            facts[fact_count].property = relation->predicate;
-            facts[fact_count].value = relation->object;
-            facts[fact_count].order = turn->order;
-            facts[fact_count].authority = lineage.authority;
-            ++fact_count;
+            for (k = 0; k < property_count; ++k) {
+                if (!composed_relation_matches(relation, entity, properties[k])) continue;
+                facts[fact_count].memory_id = turn->relation_memory_ids[j][0]
+                    ? turn->relation_memory_ids[j] : turn->memory_id;
+                facts[fact_count].entity = entity;
+                facts[fact_count].property = properties[k];
+                facts[fact_count].value = relation->object;
+                facts[fact_count].order = turn->order;
+                facts[fact_count].authority = lineage.authority;
+                ++fact_count;
+                break;
+            }
         }
     }
 
