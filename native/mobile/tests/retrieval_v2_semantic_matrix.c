@@ -1,16 +1,22 @@
 #include "retrieval_v2_semantic_adapter.h"
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 static void expect_hit(const char *query, memoria_semantic_source *sources, size_t n, const char *id) {
     memoria_semantic_result r = memoria_retrieval_v2_resolve_sources(query, sources, n);
-    assert(r.hit == 1);
-    assert(r.memory_id && strcmp(r.memory_id, id) == 0);
+    if (!(r.hit == 1 && r.memory_id && strcmp(r.memory_id, id) == 0)) {
+        fprintf(stderr, "expected HIT %s for query: %s; got hit=%d id=%s\n", id, query, r.hit, r.memory_id ? r.memory_id : "<null>");
+        assert(0);
+    }
 }
 
 static void expect_miss(const char *query, memoria_semantic_source *sources, size_t n) {
     memoria_semantic_result r = memoria_retrieval_v2_resolve_sources(query, sources, n);
-    assert(r.hit == 0);
+    if (r.hit != 0) {
+        fprintf(stderr, "expected MISS for query: %s; got id=%s confidence=%.6f\n", query, r.memory_id ? r.memory_id : "<null>", r.confidence);
+        assert(0);
+    }
 }
 
 int main(void) {
