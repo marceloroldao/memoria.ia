@@ -67,6 +67,53 @@ static memoria_mobile_status set_rejection_response(
     return status;
 }
 
+static memoria_mobile_status delegate_with_retrieval_relevance(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json,
+    double retrieval_relevance
+) {
+    char *request = NULL, *end;
+    char *enriched = NULL;
+    size_t prefix, capacity;
+    int written;
+    memoria_mobile_buffer in;
+    memoria_mobile_status status;
+
+    request = buffer_string(request_json);
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    /* The guarded path owns retrieval_relevance. Do not allow callers to spoof
+     * the score before the deterministic gate has evaluated the evidence. */
+    if (strstr(request, "\"retrieval_relevance\"") != NULL) {
+        free(request);
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    }
+    end = request + strlen(request);
+    while (end > request && (end[-1] == ' ' || end[-1] == '\t' || end[-1] == '\r' || end[-1] == '\n')) --end;
+    if (end <= request || end[-1] != '}') {
+        free(request);
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    }
+    prefix = (size_t)((end - 1) - request);
+    capacity = prefix + 96u;
+    enriched = (char *)malloc(capacity);
+    if (!enriched) { free(request); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    memcpy(enriched, request, prefix);
+    written = snprintf(enriched + prefix, capacity - prefix,
+        "%s\"retrieval_relevance\":%.17g}",
+        prefix > 1u ? "," : "", retrieval_relevance);
+    free(request);
+    if (written < 0 || (size_t)written >= capacity - prefix) {
+        free(enriched);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    in.data = (const uint8_t *)enriched;
+    in.size = prefix + (size_t)written;
+    status = memoria_mobile_learn_external_knowledge_json(handle, in, response_json);
+    free(enriched);
+    return status;
+}
+
 memoria_mobile_status memoria_mobile_learn_external_knowledge_guarded_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
@@ -104,5 +151,6 @@ memoria_mobile_status memoria_mobile_learn_external_knowledge_guarded_json(
     if (!result.accepted)
         return set_rejection_response(response_json, MEMORIA_MOBILE_UNRESOLVED, &result);
 
-    return memoria_mobile_learn_external_knowledge_json(handle, request_json, response_json);
+    return delegate_with_retrieval_relevance(
+        handle, request_json, response_json, result.relevance_score);
 }
