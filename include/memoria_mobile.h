@@ -66,6 +66,17 @@ memoria_mobile_status memoria_mobile_inspect_external_consolidation_json(
 );
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
+
+/* Explicit post-v1 read-only state composition. Request requires entity and a
+ * non-empty properties array (maximum 8), with optional namespace. The result
+ * combines only already-promoted current facts and returns each property's exact
+ * source memory/order/authority. It never persists or infers a new fact. */
+memoria_mobile_status memoria_mobile_resolve_composed_state_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_subconscious_peek_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
 memoria_mobile_status memoria_mobile_subconscious_satisfy_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
 memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
