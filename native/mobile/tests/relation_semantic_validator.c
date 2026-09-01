@@ -15,7 +15,7 @@ static memoria_relation rel(const char *s, const char *p, const char *o, double 
 
 int main(void) {
     memoria_relation_validation_result v;
-    memoria_relation input[5], output[5];
+    memoria_relation input[7], output[7];
     size_t n;
 
     memoria_relation good = rel("sensor", "is", "active", 0.95);
@@ -28,10 +28,21 @@ int main(void) {
     assert(v.promotable == 0);
     assert(v.reason == MEMORIA_RELATION_NUMERIC_SUBJECT);
 
+    /* Bare entity=number stays conservative. */
     memoria_relation numeric_identity = rel("atlas", "is", "7319", 0.95);
     assert(memoria_relation_validate_for_promotion(&numeric_identity, &v));
     assert(v.promotable == 0);
     assert(v.reason == MEMORIA_RELATION_NUMERIC_IDENTITY);
+
+    /* Explicit numeric attributes must remain valid; consolidation/conflict relies on this shape. */
+    memoria_relation code = rel("atlas code", "is", "7319", 0.95);
+    assert(memoria_relation_validate_for_promotion(&code, &v));
+    assert(v.promotable == 1);
+    assert(v.reason == MEMORIA_RELATION_VALID);
+
+    memoria_relation temperature = rel("temperature", "is", "25", 0.90);
+    assert(memoria_relation_validate_for_promotion(&temperature, &v));
+    assert(v.promotable == 1);
 
     memoria_relation self = rel("brasil", "is", "Brasil", 0.95);
     assert(memoria_relation_validate_for_promotion(&self, &v));
@@ -53,11 +64,14 @@ int main(void) {
     input[2] = rel("temperature", "is", "high", 0.85);
     input[3] = self;
     input[4] = rel("battery", "is", "charged", 0.90);
-    n = memoria_relation_filter_promotable(input, 5, output, 5);
-    assert(n == 3);
+    input[5] = code;
+    input[6] = numeric_identity;
+    n = memoria_relation_filter_promotable(input, 7, output, 7);
+    assert(n == 4);
     assert(strcmp(output[0].subject, "sensor") == 0);
     assert(strcmp(output[1].subject, "temperature") == 0);
     assert(strcmp(output[2].subject, "battery") == 0);
+    assert(strcmp(output[3].subject, "atlas code") == 0);
 
     return 0;
 }
