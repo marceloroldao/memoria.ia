@@ -1,0 +1,38 @@
+name: Post-v1 automatic episode capture
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-mobile-episode-capture
+  pull_request:
+    branches:
+      - post-v1/core-base
+
+jobs:
+  automatic-episodes:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout pinned Resolutive-DB
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+          path: deps/resolutive-DB
+      - name: Configure mobile host library
+        run: >-
+          cmake -S native/mobile -B build/auto-episode
+          -DCMAKE_BUILD_TYPE=Release
+          -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
+      - name: Build mobile host library
+        run: cmake --build build/auto-episode --target memoria_mobile --config Release -j2
+      - name: Build automatic episode capture test
+        run: >-
+          cc -std=c11 -Wall -Wextra -Werror
+          -Iinclude
+          native/mobile/tests/automatic_episode_capture_mobile.c
+          -Lbuild/auto-episode -lmemoria_mobile
+          -Wl,-rpath,"$GITHUB_WORKSPACE/build/auto-episode"
+          -o /tmp/memoria_auto_episode_test
+      - name: Run automatic episode capture restart test
+        run: /tmp/memoria_auto_episode_test
