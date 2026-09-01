@@ -16,7 +16,7 @@ int main(void) {
 
     assert(memoria_external_relevance_evaluate(
         "quais oceanos existem no planeta",
-        "Os oceanos da Terra incluem Pacifico, Atlantico, Indico, Artico e Antartico.",
+        "Os oceanos do planeta Terra incluem Pacifico, Atlantico, Indico, Artico e Antartico.",
         &p, &r));
     assert(r.accepted == 1);
     assert(r.query_coverage >= 0.60);
