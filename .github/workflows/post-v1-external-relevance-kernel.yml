@@ -1,0 +1,24 @@
+name: Post-v1 external relevance kernel
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-external-relevance-gate-v2
+  pull_request:
+    branches:
+      - post-v1/core-base
+
+jobs:
+  relevance-kernel:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build deterministic relevance kernel test
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror \
+            -Inative/mobile \
+            native/mobile/tests/external_relevance_kernel.c \
+            native/mobile/external_relevance_kernel.c \
+            -o /tmp/memoria_external_relevance_kernel_test
+      - name: Run relevance kernel test
+        run: /tmp/memoria_external_relevance_kernel_test
