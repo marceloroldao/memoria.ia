@@ -73,6 +73,40 @@ int main(void) {
         memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
     }
 
+    /* Retrieval v2 is active in the real post-v1 mobile path: transient lexical
+     * normalization recovers a paraphrase without rewriting persisted text. */
+    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"A tensão nominal do módulo principal é 24 volts.\",\"memory_id\":\"rv2-v24\",\"order\":10}",&out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call(h,2,"{\"query\":\"qual a voltagem dos módulos principais\"}",&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"memory_ids\":[\"rv2-v24\"]"));
+    CHECK(contains(out,"24 volts"));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    /* Equal plausible candidates must fail closed rather than select by order. */
+    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"O servidor norte usa a porta 443.\",\"memory_id\":\"rv2-north\",\"order\":11}",&out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"O servidor sul usa a porta 8443.\",\"memory_id\":\"rv2-south\",\"order\":12}",&out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call(h,2,"{\"query\":\"porta do servidor\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    /* Minimum conceptual coverage prevents a single shared token from creating
+     * a false HIT against an otherwise unrelated memory. */
+    CHECK(call(h,2,"{\"query\":\"frequência do satélite desconhecido\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
+    memoria_mobile_close(h); h = NULL;
+    CHECK(memoria_mobile_open("./tmp-mobile","org-test",&h) == MEMORIA_MOBILE_OK);
+
+    /* Retrieval v2 decisions are reconstructed from durable v1/post-v1 memory;
+     * no normalized shadow copy is required to survive restart. */
+    CHECK(call(h,2,"{\"query\":\"qual a voltagem dos módulos principais\"}",&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"memory_ids\":[\"rv2-v24\"]"));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call(h,2,"{\"query\":\"porta do servidor\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
     CHECK(call(h,3,"{\"episode_id\":\"e1\",\"role\":\"assistant\",\"text\":\"first creation about transport\",\"order\":1,\"event_type\":\"creation\",\"topics_csv\":\"transport\"}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"durable\":true"));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
