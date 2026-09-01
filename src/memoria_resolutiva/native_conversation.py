@@ -11,7 +11,7 @@ MEMORIA_MOBILE_OK = 0
 MEMORIA_MOBILE_INVALID_ARGUMENT = 1
 MEMORIA_MOBILE_UNRESOLVED = 2
 MAX_NATIVE_RELATIONS = 4
-
+DIAGNOSTIC_PAGE_SIZE = 64
 
 
 def _memory_id(*, role: str, text: str, session_id: str | None, order: int | None, index: int) -> str:
@@ -66,6 +66,65 @@ class NativeConversationService:
             raise RuntimeError("native conversation runtime is closed")
         return self._runtime_lease.call(function_name, payload)
 
+    def _latest_active_turn_id(self, session_id: str) -> str | None:
+        """Read the native durable state and return the latest active turn in one namespace.
+
+        This intentionally derives continuity from Memoria.ia's persisted state rather
+        than keeping an app-local pointer, so lineage continues correctly after restart.
+        """
+        if not session_id:
+            return None
+        offset = 0
+        best_id: str | None = None
+        best_order: int | float = float("-inf")
+        while True:
+            status, snapshot = self._call(
+                "memoria_mobile_export_snapshot_json",
+                {
+                    "turn_offset": offset,
+                    "turn_limit": DIAGNOSTIC_PAGE_SIZE,
+                    "episode_offset": 0,
+                    "episode_limit": 1,
+                },
+            )
+            if status != MEMORIA_MOBILE_OK or snapshot.get("status") != "OK":
+                raise RuntimeError(f"native diagnostic export failed while deriving lineage: status={status}")
+            rows = snapshot.get("turns", [])
+            if not isinstance(rows, list):
+                raise RuntimeError("native diagnostic export returned invalid turns")
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                if str(row.get("namespace") or "") != session_id:
+                    continue
+                if row.get("superseded") is True or row.get("superseded_by"):
+                    continue
+                memory_id = str(row.get("memory_id") or "")
+                if not memory_id:
+                    continue
+                raw_order = row.get("order")
+                try:
+                    turn_order = float(raw_order)
+                except (TypeError, ValueError):
+                    turn_order = float(offset)
+                if best_id is None or turn_order >= best_order:
+                    best_id = memory_id
+                    best_order = turn_order
+            page = snapshot.get("turn_page")
+            if not isinstance(page, dict):
+                break
+            next_offset = page.get("next_offset")
+            if next_offset is None:
+                break
+            try:
+                next_offset_int = int(next_offset)
+            except (TypeError, ValueError):
+                break
+            if next_offset_int <= offset:
+                break
+            offset = next_offset_int
+        return best_id
+
     def ingest(
         self,
         *,
@@ -96,15 +155,23 @@ class NativeConversationService:
             source_authority = 0.95
         else:
             source_authority = 0.25
+
+        effective_parents = list(parent_memory_ids)
+        if not effective_parents and not corrects_memory_ids and session_id:
+            previous_turn_id = self._latest_active_turn_id(session_id)
+            if previous_turn_id and previous_turn_id != turn_id:
+                effective_parents = [previous_turn_id]
+
         payload: dict[str, object] = {
             "role": role,
             "text": text,
             "memory_id": turn_id,
             "namespace": session_id or "",
+            "session_id": session_id or "",
             "source_type": source_type,
             "source_authority": source_authority,
             "timestamp": timestamp or "",
-            "parent_memory_ids": list(parent_memory_ids),
+            "parent_memory_ids": effective_parents,
             "corrects_memory_ids": list(corrects_memory_ids),
             "relation_memory_ids": relation_ids,
         }
