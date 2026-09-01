@@ -30,9 +30,12 @@ add_library(memoria_mobile SHARED
   temporal_state_kernel.c
   temporal_state_adapter.c
   relation_extractor.c
+  relation_semantic_validator.c
+  relation_promoting_extractor.c
   relation_adapter.c
   diagnostic_export.c
 )
+set_source_files_properties(memoria_mobile_post_v1.c PROPERTIES COMPILE_DEFINITIONS MEMORIA_RELATION_PROMOTION_FILTER)
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api)
 set_target_properties(memoria_mobile PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES LINKER_LANGUAGE CXX)
@@ -163,4 +166,9 @@ if(NOT ANDROID)
   target_include_directories(memoria_relation_adapter_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_relation_adapter_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_relation_adapter_test COMMAND memoria_relation_adapter_test)
+
+  add_executable(memoria_relation_semantic_validator_test tests/relation_semantic_validator.c relation_semantic_validator.c)
+  target_include_directories(memoria_relation_semantic_validator_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_relation_semantic_validator_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_relation_semantic_validator_test COMMAND memoria_relation_semantic_validator_test)
 endif()
