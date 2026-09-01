@@ -1,0 +1,26 @@
+name: Post-v1 Retrieval v2 semantic matrix
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-retrieval-v2-mobile-path
+  pull_request:
+    branches:
+      - post-v1/core-base
+
+jobs:
+  semantic-matrix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Retrieval v2 semantic matrix
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror \
+            -Inative/mobile \
+            native/mobile/tests/retrieval_v2_semantic_matrix.c \
+            native/mobile/retrieval_v2_semantic_adapter.c \
+            native/mobile/retrieval_v2_normalization.c \
+            native/mobile/semantic_kernel.c \
+            -lm -o /tmp/retrieval-v2-semantic-matrix
+      - name: Run Retrieval v2 semantic matrix
+        run: /tmp/retrieval-v2-semantic-matrix
