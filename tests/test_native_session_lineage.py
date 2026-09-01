@@ -49,15 +49,15 @@ def test_session_lineage_is_scoped_explicit_and_restart_durable(tmp_path: Path):
     service = _service(tmp_path, library)
     try:
         first = service.ingest(role="user", text="alpha stage is one", session_id="s-alpha", order=1)
-        first_id = first.stored_memory_ids[0]
+        first_id = first.memory_ids[0]
         assert _turn(service, first_id).get("parent_memory_ids") == []
 
         second = service.ingest(role="assistant", text="alpha stage remains one", session_id="s-alpha", order=2)
-        second_id = second.stored_memory_ids[0]
+        second_id = second.memory_ids[0]
         assert _turn(service, second_id).get("parent_memory_ids") == [first_id]
 
         other = service.ingest(role="user", text="beta stage is one", session_id="s-beta", order=1)
-        other_id = other.stored_memory_ids[0]
+        other_id = other.memory_ids[0]
         assert _turn(service, other_id).get("parent_memory_ids") == []
 
         explicit = service.ingest(
@@ -67,11 +67,11 @@ def test_session_lineage_is_scoped_explicit_and_restart_durable(tmp_path: Path):
             order=3,
             parent_memory_ids=[first_id],
         )
-        explicit_id = explicit.stored_memory_ids[0]
+        explicit_id = explicit.memory_ids[0]
         assert _turn(service, explicit_id).get("parent_memory_ids") == [first_id]
 
         correction_root = service.ingest(role="user", text="gamma mode is off", session_id="s-fix", order=1)
-        correction_root_id = correction_root.stored_memory_ids[0]
+        correction_root_id = correction_root.memory_ids[0]
         corrected = service.ingest(
             role="user",
             text="gamma mode is on",
@@ -79,7 +79,7 @@ def test_session_lineage_is_scoped_explicit_and_restart_durable(tmp_path: Path):
             order=2,
             corrects_memory_ids=[correction_root_id],
         )
-        corrected_id = corrected.stored_memory_ids[0]
+        corrected_id = corrected.memory_ids[0]
         assert _turn(service, corrected_id).get("parent_memory_ids") == [correction_root_id]
 
         service.flush()
@@ -94,7 +94,7 @@ def test_session_lineage_is_scoped_explicit_and_restart_durable(tmp_path: Path):
             session_id="s-alpha",
             order=4,
         )
-        after_restart_id = after_restart.stored_memory_ids[0]
+        after_restart_id = after_restart.memory_ids[0]
         assert _turn(reopened, after_restart_id).get("parent_memory_ids") == [explicit_id]
         assert other_id not in _turn(reopened, after_restart_id).get("parent_memory_ids", [])
     finally:
