@@ -16,7 +16,7 @@ add_subdirectory(
 )
 
 add_library(memoria_mobile SHARED
-  evidence_metrics_runtime.c
+  composed_state_runtime.c
   evidence_metrics.c
   semantic_kernel.c
   subconscious_kernel.c
@@ -30,13 +30,14 @@ add_library(memoria_mobile SHARED
   episodic_kernel.c
   temporal_state_kernel.c
   temporal_state_adapter.c
+  composed_state_kernel.c
   relation_extractor.c
   relation_semantic_validator.c
   relation_promoting_extractor.c
   relation_adapter.c
   diagnostic_export.c
 )
-set_source_files_properties(evidence_metrics_runtime.c PROPERTIES COMPILE_DEFINITIONS MEMORIA_RELATION_PROMOTION_FILTER)
+set_source_files_properties(composed_state_runtime.c PROPERTIES COMPILE_DEFINITIONS MEMORIA_RELATION_PROMOTION_FILTER)
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api)
 set_target_properties(memoria_mobile PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES LINKER_LANGUAGE CXX)
@@ -71,6 +72,11 @@ if(NOT ANDROID)
   target_link_libraries(memoria_mobile_temporal_state PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_temporal_state PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_temporal_state COMMAND memoria_mobile_temporal_state)
+
+  add_executable(memoria_mobile_composed_state tests/composed_state_mobile.c)
+  target_link_libraries(memoria_mobile_composed_state PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_composed_state PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_composed_state COMMAND memoria_mobile_composed_state)
 
   add_executable(memoria_mobile_diagnostic_export tests/diagnostic_export_mobile.c)
   target_link_libraries(memoria_mobile_diagnostic_export PRIVATE memoria_mobile)
@@ -162,6 +168,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_temporal_state_adapter_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_temporal_state_adapter_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_temporal_state_adapter_test COMMAND memoria_temporal_state_adapter_test)
+
+  add_executable(memoria_composed_state_kernel_test tests/composed_state_kernel.c composed_state_kernel.c)
+  target_include_directories(memoria_composed_state_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_composed_state_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_composed_state_kernel_test COMMAND memoria_composed_state_kernel_test)
 
   add_executable(memoria_relation_extractor_test tests/relation_extractor.c relation_extractor.c)
   target_include_directories(memoria_relation_extractor_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
