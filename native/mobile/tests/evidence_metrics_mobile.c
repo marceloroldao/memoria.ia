@@ -51,17 +51,17 @@ int main(void) {
         "{\"content\":\"atlas code is 7319\","
         "\"source_url\":\"https://example.org/atlas\",\"source_domain\":\"example.org\","
         "\"source_title\":\"Atlas\",\"acquired_time\":\"2026-09-01T04:00:00Z\","
-        "\"import_kind\":\"imported\",\"validation_confidence\":0.91,"
-        "\"source_authority\":0.72,\"retrieval_relevance\":0.83,"
-        "\"semantic_confidence\":0.88,\"freshness\":0.64}"), &out) == MEMORIA_MOBILE_OK);
+        "\"import_kind\":\"imported\",\"validation_confidence\":0.875,"
+        "\"source_authority\":0.5,\"retrieval_relevance\":0.75,"
+        "\"semantic_confidence\":0.875,\"freshness\":0.625}"), &out) == MEMORIA_MOBILE_OK);
     CHECK(first_id(out, id, sizeof(id)));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     CHECK(inspect(h, id, &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"source_authority\":0.72"));
-    CHECK(contains(out, "\"retrieval_relevance\":0.83"));
-    CHECK(contains(out, "\"semantic_confidence\":0.88"));
-    CHECK(contains(out, "\"freshness\":0.64"));
+    CHECK(contains(out, "\"source_authority\":0.5"));
+    CHECK(contains(out, "\"retrieval_relevance\":0.75"));
+    CHECK(contains(out, "\"semantic_confidence\":0.875"));
+    CHECK(contains(out, "\"freshness\":0.625"));
     CHECK(contains(out, "\"legacy_validation_confidence_preserved\":true"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
@@ -70,10 +70,10 @@ int main(void) {
 
     CHECK(memoria_mobile_open(dir, "org-evidence-metrics", &h) == MEMORIA_MOBILE_OK);
     CHECK(inspect(h, id, &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"source_authority\":0.72"));
-    CHECK(contains(out, "\"retrieval_relevance\":0.83"));
-    CHECK(contains(out, "\"semantic_confidence\":0.88"));
-    CHECK(contains(out, "\"freshness\":0.64"));
+    CHECK(contains(out, "\"source_authority\":0.5"));
+    CHECK(contains(out, "\"retrieval_relevance\":0.75"));
+    CHECK(contains(out, "\"semantic_confidence\":0.875"));
+    CHECK(contains(out, "\"freshness\":0.625"));
     memoria_mobile_free_buffer(out);
 
     memoria_mobile_close(h);
