@@ -20,8 +20,10 @@ static int assert_snapshot_policy(memoria_mobile_handle *h) {
     memoria_mobile_buffer out = {0};
     CHECK(memoria_mobile_export_snapshot_json(h, req, &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"memory_id\":\"assistant-fact\""));
+    CHECK(contains(out, "\"namespace\":\"policy\""));
+    CHECK(contains(out, "\"role\":\"assistant\""));
+    CHECK(contains(out, "\"text\":\"device = ready\""));
     CHECK(contains(out, "\"source_type\":\"assistant_generated\""));
-    CHECK(contains(out, "\"memory_id\":\"assistant-fact\",\"namespace\":\"policy\",\"role\":\"assistant\",\"text\":\"device = ready\""));
     CHECK(contains(out, "\"memory_id\":\"user-confirmation\""));
     CHECK(contains(out, "user-confirmation#relation:0"));
     CHECK(!contains(out, "assistant-fact#relation:0"));
