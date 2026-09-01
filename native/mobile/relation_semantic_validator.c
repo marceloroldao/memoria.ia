@@ -43,6 +43,41 @@ static int noise(const char *s) {
     return 0;
 }
 
+static int ascii_ci_token_equal(const char *start, size_t n, const char *word) {
+    size_t i;
+    if (!start || !word || strlen(word) != n) return 0;
+    for (i = 0; i < n; ++i) {
+        unsigned char a = (unsigned char)start[i];
+        unsigned char b = (unsigned char)word[i];
+        if (a < 0x80u) a = (unsigned char)tolower(a);
+        if (b < 0x80u) b = (unsigned char)tolower(b);
+        if (a != b) return 0;
+    }
+    return 1;
+}
+
+static int numeric_attribute_subject(const char *subject) {
+    static const char *attributes[] = {
+        "code","codigo","id","age","idade","temperature","temperatura","temp","port","porta",
+        "version","versao","year","ano","count","contagem","number","numero","quantity","quantidade",
+        "height","altura","width","largura","weight","peso","voltage","tensao","current","corrente",
+        "frequency","frequencia","speed","velocidade","capacity","capacidade","size","tamanho"
+    };
+    const char *end, *start;
+    size_t i, n;
+    if (!subject || !*subject) return 0;
+    end = subject + strlen(subject);
+    while (end > subject && isspace((unsigned char)end[-1])) --end;
+    start = end;
+    while (start > subject && !isspace((unsigned char)start[-1])) --start;
+    n = (size_t)(end - start);
+    if (!n) return 0;
+    for (i = 0; i < sizeof(attributes)/sizeof(attributes[0]); ++i) {
+        if (ascii_ci_token_equal(start, n, attributes[i])) return 1;
+    }
+    return 0;
+}
+
 const char *memoria_relation_validation_reason_name(memoria_relation_validation_reason reason) {
     switch (reason) {
         case MEMORIA_RELATION_VALID: return "valid";
@@ -77,7 +112,8 @@ int memoria_relation_validate_for_promotion(
         reason = MEMORIA_RELATION_SELF_IDENTITY;
     else if (numeric_only(relation->subject))
         reason = MEMORIA_RELATION_NUMERIC_SUBJECT;
-    else if (ci_equal(relation->predicate, "is") && numeric_only(relation->object))
+    else if (ci_equal(relation->predicate, "is") && numeric_only(relation->object) &&
+             !numeric_attribute_subject(relation->subject))
         reason = MEMORIA_RELATION_NUMERIC_IDENTITY;
 
     semantic_confidence = relation->confidence;
