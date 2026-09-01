@@ -92,6 +92,39 @@ static int ambiguity_stopword(const char *w) {
     return 0;
 }
 
+static int starts_word(const char *s, const char *word) {
+    size_t i = 0u, j = 0u;
+    if (!s || !word) return 0;
+    while (s[i] && isspace((unsigned char)s[i])) ++i;
+    while (word[j]) {
+        if (!s[i + j]) return 0;
+        if (tolower((unsigned char)s[i + j]) != tolower((unsigned char)word[j])) return 0;
+        ++j;
+    }
+    return s[i + j] == 0 || !isalnum((unsigned char)s[i + j]);
+}
+
+static int looks_like_question(const char *text) {
+    static const char *question_starts[] = {
+        "qual", "quais", "quem", "onde", "quando", "como", "quanto", "quantos", "quantas",
+        "por que", "porque", "what", "which", "who", "where", "when", "how", "why",
+        "can", "could", "would", "should", "do", "does", "did"
+    };
+    size_t i;
+    if (!text) return 0;
+    if (strchr(text, '?')) return 1;
+    for (i = 0u; i < sizeof(question_starts)/sizeof(question_starts[0]); ++i)
+        if (starts_word(text, question_starts[i])) return 1;
+    return 0;
+}
+
+static int source_is_retrievable(const memoria_semantic_source *source) {
+    if (!source || !source->text) return 0;
+    if (source->source_type && strcmp(source->source_type, "user_query") == 0) return 0;
+    if (source->source_type && strcmp(source->source_type, "user_assertion") == 0 && looks_like_question(source->text)) return 0;
+    return 1;
+}
+
 static size_t split_meaningful_tokens(const char *text, char out[][AMBIGUITY_TOKEN_CAP], size_t cap) {
     size_t count = 0u, i = 0u;
     if (!text) return 0u;
@@ -148,7 +181,9 @@ static int normalized_ambiguity(
     size_t i, best_overlap = 0u, best_index = 0u;
     int found = 0;
     for (i = 0u; i < source_count; ++i) {
-        size_t overlap = query_overlap(normalized_query, normalized_texts[i]);
+        size_t overlap;
+        if (!source_is_retrievable(&sources[i])) continue;
+        overlap = query_overlap(normalized_query, normalized_texts[i]);
         if (!found || overlap > best_overlap) {
             best_overlap = overlap;
             best_index = i;
@@ -161,7 +196,8 @@ static int normalized_ambiguity(
     for (i = 0u; i < source_count; ++i) {
         const char *a_root;
         const char *b_root;
-        if (i == best_index || query_overlap(normalized_query, normalized_texts[i]) != best_overlap) continue;
+        if (i == best_index || !source_is_retrievable(&sources[i])) continue;
+        if (query_overlap(normalized_query, normalized_texts[i]) != best_overlap) continue;
         if (fabs(sources[i].authority - sources[best_index].authority) >= 0.05) continue;
         a_root = source_root(&sources[best_index]);
         b_root = source_root(&sources[i]);
