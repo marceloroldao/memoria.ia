@@ -1,0 +1,37 @@
+name: Automatic context
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/memoria_resolutiva/product_chat.py'
+      - 'src/memoria_resolutiva/product_server.py'
+      - 'tests/test_product_chat_automatic_context.py'
+      - '.github/workflows/automatic-context.yml'
+  pull_request:
+    paths:
+      - 'src/memoria_resolutiva/product_chat.py'
+      - 'src/memoria_resolutiva/product_server.py'
+      - 'tests/test_product_chat_automatic_context.py'
+      - '.github/workflows/automatic-context.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  automatic-context:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install product test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product]'
+          python -m pip install pytest
+      - name: Validate automatic conversational context
+        run: pytest -q tests/test_product_chat_automatic_context.py
