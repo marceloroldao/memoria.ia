@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import hmac
 from typing import Protocol
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 
@@ -48,6 +48,14 @@ class EpisodicService(Protocol):
 
     def resolve(self, request: EpisodeRecallRequest): ...
 
+    def history(
+        self,
+        *,
+        session_id: str | None = None,
+        event_type: str | None = None,
+        limit: int = 1000,
+    ) -> list[dict[str, object]]: ...
+
 
 def attach_episodic_routes(app: FastAPI, *, api_key: str, service: EpisodicService) -> None:
     """Attach the stable episodic HTTP contract without selecting an implementation."""
@@ -67,6 +75,24 @@ def attach_episodic_routes(app: FastAPI, *, api_key: str, service: EpisodicServi
             "episode_id": edge.evidence_id,
             "namespace": edge.namespace,
             "persistence": receipt.as_dict(),
+        }
+
+    @app.get("/api/v1/episodes/history", dependencies=[Depends(require_admin)])
+    def episode_history(
+        session_id: str | None = Query(default=None, max_length=256),
+        event_type: str | None = Query(default=None, max_length=128),
+        limit: int = Query(default=1000, ge=1, le=5000),
+    ):
+        try:
+            episodes = service.history(session_id=session_id, event_type=event_type, limit=limit)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {
+            "schema": "memoria-episode-history/v1",
+            "session_id": session_id,
+            "event_type": event_type,
+            "count": len(episodes),
+            "episodes": episodes,
         }
 
     @app.post("/api/v1/episodes/recall", dependencies=[Depends(require_admin)])
