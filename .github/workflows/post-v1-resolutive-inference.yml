@@ -1,0 +1,25 @@
+name: Post-v1 resolutive inference kernel
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-resolutive-inference-2hop
+  pull_request:
+    paths:
+      - 'native/mobile/resolutive_inference_kernel.*'
+      - 'native/mobile/test_resolutive_inference_kernel.c'
+      - '.github/workflows/post-v1-resolutive-inference.yml'
+
+jobs:
+  inference-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build conservative inference kernel
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror \
+            native/mobile/resolutive_inference_kernel.c \
+            native/mobile/test_resolutive_inference_kernel.c \
+            -lm -o /tmp/test_resolutive_inference
+      - name: Run inference proof/conflict tests
+        run: /tmp/test_resolutive_inference
