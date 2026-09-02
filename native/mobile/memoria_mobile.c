@@ -1060,6 +1060,10 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     namespace_id = json_string(json, "namespace");
     if (!namespace_id) namespace_id = dup_string("");
     if (!query || !namespace_id) { free(query); free(namespace_id); free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    if (h->turn_count == 0) {
+        free(namespace_id); free(query); free(json);
+        return unresolved(out, "native memory store is empty");
+    }
     if (!ensure_semantic_capacity(h, h->turn_count)) {
         free(query); free(namespace_id); free(json);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
