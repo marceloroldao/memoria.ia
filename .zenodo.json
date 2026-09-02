@@ -5,8 +5,8 @@
       "orcid": "0009-0003-6075-4680"
     }
   ],
-  "title": "memoria.ia: Resolutive Memory — First PC/Server Product Alpha",
-  "version": "0.99.0-alpha.1",
+  "title": "memoria.ia: Resolutive Memory — v1.0 Release Candidate",
+  "version": "1.0.0-rc.1",
   "upload_type": "software",
   "access_right": "open",
   "language": "eng",
@@ -14,6 +14,7 @@
     "resolutive memory",
     "continual memory",
     "deterministic memory",
+    "resolutive inference",
     "AI memory",
     "PC server",
     "local-first AI"
