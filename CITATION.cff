@@ -1,15 +1,14 @@
 cff-version: 1.2.0
 message: "If you use memoria.ia in academic or scientific work, please cite this software."
-title: "memoria.ia: Resolutive Memory — v1.0 Release Candidate 2"
+title: "memoria.ia: Resolutive Memory — v1.0 Release Candidate 3"
 type: software
 authors:
   - family-names: "Matos"
     given-names: "Marcelo Roldão"
     orcid: "https://orcid.org/0009-0003-6075-4680"
-abstract: "Second v1.0 release candidate of memoria.ia, extending the published RC1 baseline with durable Retrieval v2, provenance-aware relational memory, episodic continuity, explicit resolution modes, and bounded deterministic 2-hop resolutive inference over typed transitive relations."
+abstract: "Corrective third v1.0 release candidate of memoria.ia. RC3 supersedes RC2 due to release-tag alignment error while preserving the validated frozen runtime with Retrieval v2, provenance-aware relational memory, episodic continuity, explicit resolution modes, and bounded deterministic 2-hop resolutive inference over typed transitive relations."
 repository-code: "https://github.com/marceloroldao/memoria.ia"
-doi: "10.5281/zenodo.22244038"
-version: "1.0.0-rc.2"
+version: "1.0.0-rc.3"
 date-released: "2026-09-02"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
 keywords:
