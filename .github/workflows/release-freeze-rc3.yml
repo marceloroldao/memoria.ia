@@ -1,0 +1,41 @@
+name: Release freeze RC3 metadata
+
+on:
+  push:
+    branches:
+      - release/v1.0.0-rc3-corrective
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'CITATION.cff'
+      - '.zenodo.json'
+      - 'README.md'
+      - 'KNOWN_LIMITATIONS.md'
+      - 'RELEASE_NOTES_v1.0.0-rc3.md'
+      - '.github/workflows/release-freeze-rc3.yml'
+
+jobs:
+  rc3-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate RC3 alignment
+        run: |
+          set -euo pipefail
+          grep -q 'version = "1.0.0rc3"' pyproject.toml
+          grep -q 'version: "1.0.0-rc.3"' CITATION.cff
+          grep -q '"version": "1.0.0-rc.3"' .zenodo.json
+          grep -q 'v1.0.0-rc3' README.md
+          grep -q 'v1.0.0-rc3' KNOWN_LIMITATIONS.md
+          grep -q 'v1.0.0-rc3' RELEASE_NOTES_v1.0.0-rc3.md
+      - name: Protect historical RC2 DOI
+        run: |
+          set -euo pipefail
+          grep -q '10.5281/zenodo.22244038' RELEASE_NOTES_v1.0.0-rc3.md
+          ! grep -q '^doi: "10.5281/zenodo.22244038"' CITATION.cff
+          ! grep -q '22244038' .zenodo.json
+      - name: Enforce corrective-only scope
+        run: |
+          set -euo pipefail
+          grep -qi 'does not introduce a new functional capability' RELEASE_NOTES_v1.0.0-rc3.md
+          grep -qi 'release-tag alignment error' RELEASE_NOTES_v1.0.0-rc3.md
