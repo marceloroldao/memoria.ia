@@ -1,4 +1,4 @@
-# Known Limitations — memoria.ia v1.0.0-rc1
+# Known Limitations — memoria.ia v1.0.0-rc2
 
 This document records the scientific and engineering limits of the v1.0 release-candidate line. The RC is a freeze candidate, not a claim of production-secure general intelligence.
 
@@ -33,7 +33,7 @@ This document records the scientific and engineering limits of the v1.0 release-
 ## Distributed memory and MA2A
 
 - `related` does not establish identity and never authorizes destructive automatic merge.
-- MA2A federation, PKI, Byzantine-fault tolerance, network partition reconciliation, and production distributed consensus remain outside the local v1.0.0-rc1 freeze boundary.
+- MA2A federation, PKI, Byzantine-fault tolerance, network partition reconciliation, and production distributed consensus remain outside the local v1.0.0-rc2 freeze boundary.
 
 ## Security and deployment
 
@@ -49,9 +49,9 @@ This document records the scientific and engineering limits of the v1.0 release-
 
 ## Compatibility
 
-- Resolutive Science baseline remains v0.1.1 / RSPS 1.0-draft with RSMS 1.0-rc.1 candidate compatibility.
+- Resolutive Science baseline remains v0.1.1 / RSPS 1.0-draft with RSMS 1.0-rc.1 candidate compatibility until the repository-wide compatibility metadata is re-audited.
 - RSMS compatibility must be re-audited before promoting this release candidate to stable v1.0.0 if the normative RSMS baseline changes.
 
 ## Release status
 
-v1.0.0-rc1 freezes the feature set around durable memory, Retrieval v2, provenance-aware relations, episodic continuity, explicit resolution modes, and bounded typed Resolutive Inference. Stable v1.0.0 requires only stabilization evidence, final metadata review, immutable tag/release preparation, and archival publication preparation; no additional feature work is required for the freeze candidate.
+v1.0.0-rc2 freezes the post-RC1 feature set around durable memory, Retrieval v2, provenance-aware relations, episodic continuity, explicit resolution modes, and bounded typed Resolutive Inference. Stable v1.0.0 requires stabilization evidence, final metadata review, immutable tag/release preparation, compatibility re-audit, and archival publication preparation; no additional feature work is required for this freeze candidate.
