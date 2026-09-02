@@ -8,6 +8,8 @@ authors:
     orcid: "https://orcid.org/0009-0003-6075-4680"
 abstract: "Corrective third v1.0 release candidate of memoria.ia. RC3 supersedes RC2 due to release-tag alignment error while preserving the validated frozen runtime with Retrieval v2, provenance-aware relational memory, episodic continuity, explicit resolution modes, and bounded deterministic 2-hop resolutive inference over typed transitive relations."
 repository-code: "https://github.com/marceloroldao/memoria.ia"
+doi: "10.5281/zenodo.22253566"
+url: "https://doi.org/10.5281/zenodo.22253566"
 version: "1.0.0-rc.3"
 date-released: "2026-09-02"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
