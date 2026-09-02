@@ -192,4 +192,4 @@ _DEFAULT_RUNTIME_MANAGER = NativeRuntimeManager()
 
 
 def default_native_runtime_manager() -> NativeRuntimeManager:
-    return _DEFAULT_RUNTIME_MANAGER()
+    return _DEFAULT_RUNTIME_MANAGER
