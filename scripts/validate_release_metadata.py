@@ -6,12 +6,12 @@ from pathlib import Path
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_RELEASE_VERSION = "1.0.0-rc1"
-EXPECTED_PACKAGE_VERSION = "1.0.0rc1"
-EXPECTED_RELEASE_DATE = "2026-08-30"
-EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 1"
+EXPECTED_RELEASE_VERSION = "1.0.0-rc2"
+EXPECTED_PACKAGE_VERSION = "1.0.0rc2"
+EXPECTED_RELEASE_DATE = "2026-09-02"
+EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 2"
 EXPECTED_ORCID = "0009-0003-6075-4680"
-EXPECTED_DOI = "10.5281/zenodo.22170165"
+EXPECTED_DOI = "10.5281/zenodo.22244038"
 
 
 def fail(message: str) -> None:
@@ -51,7 +51,7 @@ def main() -> int:
             for item in related_identifiers
             if isinstance(item, dict)
         ),
-        "Zenodo metadata does not link the v1.0.0-rc1 archival DOI",
+        "Zenodo metadata does not link the v1.0.0-rc2 archival DOI",
     )
 
     cff = (ROOT / "CITATION.cff").read_text("utf-8")
@@ -65,12 +65,12 @@ def main() -> int:
     require("license-url:" in cff and "/LICENSE" in cff, "CITATION.cff must link the custom license")
 
     readme = (ROOT / "README.md").read_text("utf-8")
-    require("v1.0.0-rc1" in readme, "README does not identify the v1.0 release candidate")
-    require(EXPECTED_DOI in readme, "README does not identify the v1.0.0-rc1 archival DOI")
+    require("v1.0.0-rc2" in readme, "README does not identify the v1.0 release candidate")
+    require(EXPECTED_DOI in readme, "README does not identify the v1.0.0-rc2 archival DOI")
     require("RSMS 1.0-rc.1" in readme, "README does not preserve the RSMS release-candidate compatibility boundary")
 
-    release_notes = (ROOT / "RELEASE_NOTES_v1.0.0-rc1.md").read_text("utf-8")
-    require(EXPECTED_DOI in release_notes, "release notes do not identify the v1.0.0-rc1 archival DOI")
+    release_notes = (ROOT / "RELEASE_NOTES_v1.0.0-rc2.md").read_text("utf-8")
+    require(EXPECTED_DOI in release_notes, "release notes do not identify the v1.0.0-rc2 archival DOI")
 
     json.dumps(zenodo, ensure_ascii=False)
     print("metadata gate: PASS")
