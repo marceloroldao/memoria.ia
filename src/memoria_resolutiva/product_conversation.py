@@ -28,6 +28,7 @@ _QUERY_STOPWORDS = {
     "quais", "um", "uma", "uns", "umas", "voce", "você",
 }
 _RELATION_NOISE = _QUERY_STOPWORDS | {"outro", "outra"}
+_AGGREGATE_QUERY = re.compile(r"^\s*(?:quais|liste|listar|mostre|enumere)\b", re.IGNORECASE)
 
 
 def _key(value: str) -> str:
@@ -38,6 +39,15 @@ def _key(value: str) -> str:
 
 def _tokens(value: str) -> set[str]:
     return {_key(token) for token in _WORD_RE.findall(value) if _key(token) and _key(token) not in _QUERY_STOPWORDS}
+
+
+def _aggregate_overlap(query_tokens: set[str], edge_tokens: set[str]) -> int:
+    """Count exact terms plus conservative regular plural matches."""
+    return sum(
+        1
+        for token in query_tokens
+        if token in edge_tokens or (len(token) > 3 and token.endswith("s") and token[:-1] in edge_tokens)
+    )
 
 
 def _relation_term(value: str) -> str | None:
@@ -251,6 +261,26 @@ class ConversationSemanticService:
             return self._result("UNRESOLVED", [])
 
         relations = [e for e in active if e.predicate != "conversation_text" and not e.predicate.startswith("provenance_")]
+        if _AGGREGATE_QUERY.search(query):
+            grouped: dict[tuple[str, str, str], list[tuple[float, int, EvidenceEdge]]] = {}
+            for edge in relations:
+                overlap = _aggregate_overlap(qtokens, _tokens(edge.subject) | _tokens(edge.object))
+                if overlap:
+                    claim = (_key(edge.subject), edge.predicate, _key(edge.object))
+                    grouped.setdefault(claim, []).append((float(overlap), edge.epoch, edge))
+            aggregate_rows: list[EvidenceEdge] = []
+            for claim in sorted(grouped):
+                selected_claim = self._select_authoritative(grouped[claim], namespace=session_id)
+                if selected_claim is not None:
+                    aggregate_rows.append(selected_claim[1])
+            if aggregate_rows:
+                return self._result(
+                    "HIT",
+                    aggregate_rows,
+                    confidence=min(0.8, min(edge.confidence for edge in aggregate_rows)),
+                    namespace=session_id,
+                )
+
         anchored: list[tuple[float, int, EvidenceEdge]] = []
         for edge in relations:
             overlap = len(qtokens & (_tokens(edge.subject) | _tokens(edge.object)))
