@@ -49,6 +49,7 @@ class NativeRuntime:
             "memoria_mobile_resolve_context_json",
             "memoria_mobile_store_episode_json",
             "memoria_mobile_recall_episode_json",
+            "memoria_mobile_export_snapshot_json",
         ):
             function = getattr(self._lib, name)
             function.argtypes = [ctypes.c_void_p, NativeBuffer, ctypes.POINTER(NativeBuffer)]
@@ -191,4 +192,4 @@ _DEFAULT_RUNTIME_MANAGER = NativeRuntimeManager()
 
 
 def default_native_runtime_manager() -> NativeRuntimeManager:
-    return _DEFAULT_RUNTIME_MANAGER
+    return _DEFAULT_RUNTIME_MANAGER()
