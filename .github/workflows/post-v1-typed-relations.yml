@@ -1,0 +1,26 @@
+name: Post-v1 typed relation extractor
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-typed-relations-impl
+  pull_request:
+    paths:
+      - 'native/mobile/typed_relation_extractor.*'
+      - 'native/mobile/test_typed_relation_extractor.c'
+      - '.github/workflows/post-v1-typed-relations.yml'
+
+jobs:
+  typed-relations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build strict typed relation extractor
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror \
+            native/mobile/typed_relation_extractor.c \
+            native/mobile/test_typed_relation_extractor.c \
+            -I native/mobile \
+            -o /tmp/test_typed_relations
+      - name: Run typed relation tests
+        run: /tmp/test_typed_relations
