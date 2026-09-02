@@ -36,6 +36,7 @@ add_library(memoria_mobile SHARED
   relation_promoting_extractor.c
   relation_adapter.c
   diagnostic_export.c
+  resolutive_inference_kernel.c
 )
 set_source_files_properties(composed_state_runtime.c PROPERTIES COMPILE_DEFINITIONS MEMORIA_RELATION_PROMOTION_FILTER)
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
@@ -52,6 +53,11 @@ if(NOT ANDROID)
   target_link_libraries(memoria_mobile_restart PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_restart PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_restart COMMAND memoria_mobile_restart)
+
+  add_executable(memoria_mobile_resolutive_inference tests/resolutive_inference_mobile.c)
+  target_link_libraries(memoria_mobile_resolutive_inference PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_resolutive_inference PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
+  add_test(NAME memoria_mobile_resolutive_inference COMMAND memoria_mobile_resolutive_inference)
 
   add_executable(memoria_mobile_dynamic_turn_capacity tests/dynamic_turn_capacity.c)
   target_link_libraries(memoria_mobile_dynamic_turn_capacity PRIVATE memoria_mobile)
