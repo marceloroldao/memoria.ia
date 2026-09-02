@@ -1,6 +1,13 @@
-# Known Limitations — memoria.ia v1.0.0-rc2
+# Known Limitations — memoria.ia v1.0.0-rc3
 
-This document records the scientific and engineering limits of the v1.0 release-candidate line. The RC is a freeze candidate, not a claim of production-secure general intelligence.
+This document records the scientific and engineering limits of the v1.0 release-candidate line. RC3 is a corrective freeze candidate, not a claim of production-secure general intelligence.
+
+## Corrective-release status
+
+- `v1.0.0-rc3` supersedes `v1.0.0-rc2` because RC2 was published with a release-tag alignment error.
+- RC3 does not introduce a new functional capability over the validated RC2 freeze lineage.
+- The purpose of RC3 is to make the release tag, package version and publication metadata refer to the intended frozen codebase.
+- The RC2 DOI `10.5281/zenodo.22244038` remains historical metadata for RC2 and must not be reused as the DOI of RC3.
 
 ## Scope
 
@@ -33,13 +40,13 @@ This document records the scientific and engineering limits of the v1.0 release-
 ## Distributed memory and MA2A
 
 - `related` does not establish identity and never authorizes destructive automatic merge.
-- MA2A federation, PKI, Byzantine-fault tolerance, network partition reconciliation, and production distributed consensus remain outside the local v1.0.0-rc2 freeze boundary.
+- MA2A federation, PKI, Byzantine-fault tolerance, network partition reconciliation, and production distributed consensus remain outside the local v1.0.0-rc3 freeze boundary.
 
 ## Security and deployment
 
 - The Enterprise/HTTP layer has not completed a formal production security review.
 - The RC must not be described as production-secure until the documented security gate is completed.
-- Android ARM64 ABI compilation is continuously validated, but OFF.IA application-level UX/device testing is a separate downstream validation step.
+- Android ARM64 ABI compilation is validated on the frozen functional lineage, but OFF.IA application-level UX/device testing is a separate downstream validation step.
 
 ## Performance
 
@@ -49,9 +56,8 @@ This document records the scientific and engineering limits of the v1.0 release-
 
 ## Compatibility
 
-- Resolutive Science baseline remains v0.1.1 / RSPS 1.0-draft with RSMS 1.0-rc.1 candidate compatibility until the repository-wide compatibility metadata is re-audited.
-- RSMS compatibility must be re-audited before promoting this release candidate to stable v1.0.0 if the normative RSMS baseline changes.
+- Resolutive Science / RSMS compatibility must be re-audited before promoting this release candidate to stable v1.0.0 if the normative baseline changes.
 
 ## Release status
 
-v1.0.0-rc2 freezes the post-RC1 feature set around durable memory, Retrieval v2, provenance-aware relations, episodic continuity, explicit resolution modes, and bounded typed Resolutive Inference. Stable v1.0.0 requires stabilization evidence, final metadata review, immutable tag/release preparation, compatibility re-audit, and archival publication preparation; no additional feature work is required for this freeze candidate.
+v1.0.0-rc3 is the corrective publication candidate for the already frozen post-RC1 feature set around durable memory, Retrieval v2, provenance-aware relations, episodic continuity, explicit resolution modes and bounded typed Resolutive Inference. No additional feature work is required for this corrective candidate.
