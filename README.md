@@ -1,135 +1,135 @@
+<p align="center">
+  <img src="assets/brand/logo-official.svg" alt="Memoria.ia — Memória Resolutiva" width="760" />
+</p>
+
+<p align="center"><strong>Resolutive Memory for persistent state, relations, trajectories and AI context.</strong></p>
+
 # memoria.ia
 
-Experimental implementation of **Resolutive Memory**, a memory architecture built around reusable knowledge nodes, multiple trajectories, online lifecycle dynamics, distributed consensus, and persistence.
+Experimental implementation of **Resolutive Memory**, a local-first memory architecture built around persistent state, reusable knowledge nodes, multiple trajectories, provenance, online lifecycle dynamics and conservative resolution.
 
-## Enterprise product alpha
+## v1.0 Release Candidate 2
 
-Current product release candidate: **v0.99.0-alpha.1** (`0.99.0a1` package version).
+Current freeze candidate: **v1.0.0-rc2** (`1.0.0rc2` package version).
 
-The first installable PC/VPS/server product alpha is now integrated into `main` while preserving the validated research core. The current alpha layer includes:
+RC2 starts from the published `v1.0.0-rc1` baseline and incorporates the post-v1 capabilities that were intentionally excluded from RC1. The feature set is now frozen; this branch accepts only bug fixes, regression tests, documentation, metadata, packaging and release-gate work.
 
-- organization-scoped memory isolation;
-- node and entitlement metadata boundaries;
-- FastAPI `/api/v1` service;
+The runtime architecture remains:
+
+```text
+application / OFF.IA / agent
+          ↓
+      Memoria.ia
+          ↓
+   Resolutive-DB / BDR
+```
+
+Memoria.ia owns memory semantics, state, relations, provenance, trajectories, retrieval and bounded inference. BDR owns durable persistence. LLMs remain optional consumers and do not become the authoritative memory store.
+
+The v1.0.0-rc2 line includes:
+
+- organization and namespace isolation;
+- FastAPI `/api/v1` PC/server product interface;
 - administrator and scoped application credentials;
-- append-only logical memory versions and revocation;
 - persistent restart/recovery;
 - Docker/Compose deployment;
-- minimal web chat/admin UI;
-- provider-neutral LLM adapter with mock, Gemini and OpenAI implementations;
-- per-request memory/context/token/latency/external-call metrics;
-- baseline-vs-Memoria context comparison;
-- live sanitized integration evidence for Gemini and OpenAI;
-- validated product-state backup/restore with SHA-256 integrity and organization checks;
-- operator backup/restore CLI and clean deployment runbook;
-- dedicated product-alpha acceptance, security-negative and CI workflows.
+- provider-neutral LLM adapters;
+- memory/context/token/latency metrics;
+- integrity-checked backup/restore;
+- native production runtime path;
+- Android arm64-v8a mobile ABI;
+- BDR-backed durable native memory state;
+- semantic, episodic, temporal and relation kernels;
+- provenance and lineage safeguards;
+- Retrieval v2 with deterministic normalization, ambiguity checks and conceptual-coverage gates;
+- separated evidence dimensions: source authority, retrieval relevance, semantic confidence and freshness;
+- automatic episodic capture for identified sessions;
+- relation semantic validation before graph promotion;
+- `assistant_generated` content blocked from automatic factual relation promotion by default;
+- explicit resolution modes: `DIRECT`, `INFERRED`, `UNRESOLVED`, `CONFLICT`;
+- bounded deterministic 2-hop Resolutive Inference with proof memory IDs and path confidence;
+- strict typed transitive relations: `esta_em`, `parte_de`, `subclasse_de`;
+- generic `is` / `é` remains non-transitive;
+- inferred conclusions are calculated but are not persisted as new facts.
 
-Semantic routing from v0.96 remains experimental and is not required for the exact-key product-alpha contract. MA2A federation/PKI also remains outside the local product-alpha boundary.
+## Validation status
 
-Product-alpha documentation:
+The final functional slice before RC2 stabilization was PR #153, merged as:
 
-- `docs/PRODUCT_ALPHA_RC1.md`
-- `docs/PRODUCT_ALPHA_OPERATIONS.md`
-- `docs/ENTERPRISE_ALPHA_GAP_ANALYSIS.md`
-- `docs/SECURITY_ALPHA.md`
+`d893abe1001c74c19a36003f1ee631e266e58cff`
 
-The alpha must not be described as production-secure. The HTTP status surface intentionally retains `security_status: not-security-reviewed` until the documented security gate is completed.
+Before merge, the corrected head passed the required gates including Retrieval v2 adapter/matrix, relation validation, typed relation extraction, external relevance, evidence metrics/runtime, automatic episodes, durable restart behavior and Android ARM64 ABI.
 
-## Archived release
+The RC2 stabilization branch must remain fully green before tagging.
 
-Latest already archived research release: **v0.95.1**  
-Zenodo DOI: **10.5281/zenodo.21973472**
+## Conservative resolution behavior
 
-The Product Alpha `v0.99.0-alpha.1` is the current release candidate and must not be tagged/published until the pre-release metadata gate passes.
+Memoria.ia intentionally treats uncertainty as a valid outcome.
 
-## Current maturity — v0.95 research series
+```text
+DIRECT
+INFERRED
+UNRESOLVED
+CONFLICT
+```
 
-The v0.95 stable research line consolidates controlled experimental stages covering:
+Direct persisted evidence has precedence. Inference is attempted only after a direct miss and only with explicit structured subject/predicate input. Unsupported relations, insufficient conceptual coverage or equally strong contradictory inference paths fail closed instead of fabricating certainty.
 
-- hierarchical and temporal memory layers;
-- online support/contradiction updates without neural retraining;
-- consolidation, deconsolidation and reactivation;
-- saturation-based stability/plasticity control;
-- polysemy and sense-consolidation experiments;
-- multinodal and multimodal trajectories;
-- individual and collective memory routes;
-- shared payloads with independent route confidence;
-- conservative distributed consensus (`same`, `related`, `conflict`, `distinct`);
-- atomic persistent snapshots with CRC validation;
-- compact snapshot transport format;
-- scaling, memory-cost, stress and continual-learning benchmarks.
+Retrieval and inference remain separate layers: similarity retrieves existing evidence; only explicitly typed and allowlisted transitive relations may produce a new inferred conclusion.
 
-The validated temporal rule remains:
+## Security status
+
+**v1.0.0-rc2 is not represented as production-security certified.**
+
+The repository includes authentication boundaries, application isolation, integrity-checked backup/restore and negative security tests, but no independent production security audit is claimed.
+
+## Previous releases
+
+- **v1.0.0-rc1** — first v1 publication candidate; archival DOI **10.5281/zenodo.22170165**.
+- **v0.99.0-alpha.1** — first PC/server product alpha.
+- **v0.95.1** — archived stable research metadata patch.
+- **v0.95.0** — stable research release.
+
+The RC1 DOI must not be reused for RC2. RC2 receives its own archival DOI only after the exact freeze commit is tagged/published.
+
+## Research lineage
+
+The v0.95 research line established controlled experimental stages covering hierarchical and temporal memory, online lifecycle dynamics, consolidation/deconsolidation, polysemy, trajectories, conservative distributed consensus, atomic persistence and scaling/stress benchmarks.
+
+The validated temporal research rule remains:
 
 `r_L = 2^-L`
 
-with the v0.95 default configuration:
+with the v0.95 research default configuration:
 
 - levels = 5
 - max_strength = 1.25
 
-## MA2A — Agent-to-Agent Protocol
+## MA2A boundary
 
-The project includes the experimental **Memoria.ia Agent-to-Agent Protocol (MA2A) v0.1** specification:
-
-- `docs/RFC_MA2A_v0.1.md`
-
-MA2A defines deterministic agent discovery, authenticated session negotiation, canonical trajectory addressing, `RESOLVE_REQ` / `RESOLVE_RESP`, delta synchronization, reinforcement signaling, deterministic conflict resolution, replay protection, and hard namespace isolation.
-
-Its core interoperability principle is:
-
-> **Agents exchange state, not conversation.**
-
-The base privacy invariant is structural: trajectories under `("user", "private", ...)` MUST be rejected before transport serialization and MUST NOT be persisted or processed by L2/L3 synchronization infrastructure.
-
-The MA2A RFC is currently an experimental protocol specification. Performance claims for local Resolutive Memory remain separate from end-to-end network behavior and require reproducible benchmark validation. The local Enterprise product alpha does not depend on federation/PKI being production-ready.
-
-## Validation
-
-The v0.95 implementation was promoted from `v0.95.0rc1` after a clean Google Colab checkout on Python 3.12 completed the full release gate:
-
-- 267 tests passed;
-- 0 failures;
-- `python scripts/release_gate_v95.py`;
-- final output: `v0.95 release gate: PASS`.
-
-The `v0.95.1` release is a metadata-only citation interoperability fix over the validated v0.95.0 implementation.
-
-The `v0.99.0-alpha.1` product candidate passed the product-alpha container, persistence/restart, backup/restore, application-isolation, security-negative, context-benchmark and acceptance gates before merge to `main`.
+The local v1.0.0-rc2 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
 
 ## Install and test
 
-Research baseline:
-
-```bash
-python -m pip install -e '.[test]'
-python scripts/release_gate_v95.py
-```
-
-Product-alpha development install:
+Development/test install:
 
 ```bash
 python -m pip install -e '.[product,test]'
 python -m pytest -q
 ```
 
-Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.example`.
-
-Representative recent experiments:
+Research baseline gate:
 
 ```bash
-python experiments/compact_stress_v63.py
-python experiments/scaling_v64.py
-python experiments/stability_plasticity_v82.py
-python experiments/stochastic_stability_v83.py
-python experiments/multitrajectory_v87.py
-python experiments/compact_snapshot_v93.py
-python experiments/incompressible_snapshot_v94.py
+python -m pip install -e '.[test]'
+python scripts/release_gate_v95.py
 ```
 
-## Public API
+Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.example`.
 
-The v0.95 facade exposes:
+## Public interfaces
+
+The original research facade exposes:
 
 - `remember(...)`
 - `reinforce(...)`
@@ -140,31 +140,31 @@ The v0.95 facade exposes:
 - `save(...)`
 - `load(...)`
 
-See `docs/API_V090.md` and subsequent persistence/result notes.
+The product layer wraps stable memory behavior behind a versioned HTTP/service boundary. The native/mobile path adds a C ABI with conservative resolution, learning, restart persistence, provenance-aware state and bounded inference behavior.
 
-The product layer wraps the stable memory facade behind a versioned HTTP/service boundary; experimental semantic-router internals are intentionally not part of the product-alpha API contract.
+## Research and claims status
 
-## Research status
+Memoria.ia remains an experimental architecture. v1.0.0-rc2 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
 
-The research line remains an experimental implementation, not a claim of general intelligence or a final v1.0 architecture. Claims are limited to controlled tests in this repository. Negative results, failed hypotheses and known limits are retained.
+Important limitations include:
 
-Important known limitations include:
+- deterministic Retrieval v2 does not claim universal language understanding;
+- Resolutive Inference is bounded to explicit typed 2-hop transitive relations in this RC;
+- no claim is made that Memoria.ia eliminates the need for a language model in general conversational tasks;
+- performance measurements are workload- and environment-specific;
+- distributed/federated operation remains outside the stable local runtime boundary;
+- security controls have not undergone independent production certification.
 
-- payload and trajectory persistence currently requires JSON-serializable values;
-- compact snapshot compression depends on data redundancy and may trade CPU time for storage savings;
-- semantic consolidation remains experimental and does not claim general language understanding;
-- no claim is made that this replaces a general neural model or LLM;
-- distributed consensus is conservative and deliberately avoids automatic destructive merge for merely related knowledge;
-- the current Enterprise layer is a product alpha and has not completed a formal production security review.
+See `KNOWN_LIMITATIONS.md` for the full release boundary.
 
 ## License
 
-Source is publicly visible under the **Resolutive Research and Non-Commercial License (RRNCL) v1.0**. Academic, educational and non-commercial research use is permitted under its terms. Commercial use requires separate authorization. Because commercial use is restricted, this project should not be represented as OSI-approved Open Source.
+Source is publicly visible under the **Resolutive Research and Non-Commercial License (RRNCL) v1.0**. Academic, educational and permitted non-commercial research use is allowed under its terms. Commercial use requires separate authorization. Because commercial use is restricted, this project should not be represented as OSI-approved Open Source.
 
 ## Resolutive Science compatibility
 
-- Resolutive Science repository baseline: **v0.1.1**
-- Project governance baseline: **RSPS 1.0-draft**
-- RSMS compatibility: **1.0-rc.1 — candidate compatibility**
+Compatibility metadata must be re-audited before stable `v1.0.0`. RC2 remains a release candidate until the project-wide RSMS/Resolutive Science compatibility declaration and final publication metadata are confirmed.
 
-The current declaration is pinned to the published RSMS release-candidate specification in `resolutive-science`. It must be re-audited when RSMS 1.0 becomes stable and before a stable `memoria.ia` v1.0 release. Project-specific computational semantics remain subordinate to explicit RSMS definitions where shared terminology is used.
+## Release notes
+
+See `RELEASE_NOTES_v1.0.0-rc2.md` for the RC2 scope, validation evidence and freeze discipline.
