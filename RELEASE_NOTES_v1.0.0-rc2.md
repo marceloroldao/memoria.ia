@@ -73,4 +73,5 @@ See `KNOWN_LIMITATIONS.md`. RC2 does not claim unrestricted general reasoning, g
 - Author: Marcelo Roldão Matos
 - ORCID: `0009-0003-6075-4680`
 - RC1 archival DOI remains: `10.5281/zenodo.22170165`
-- RC2 DOI: assign only after the RC2 release is frozen and archived; do not reuse the RC1 DOI.
+- RC1 archival DOI must not be reused for RC2.
+- RC2 DOI: assign only after the RC2 release is frozen and archived.
