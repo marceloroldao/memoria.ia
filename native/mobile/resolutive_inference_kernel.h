@@ -32,15 +32,25 @@ typedef struct {
     double path_confidence;
 } memoria_inference_result_t;
 
-/*
- * Conservative first inference slice:
- *   subject --predicate--> intermediate --predicate--> answer
- *
- * Only identical transitive predicates are eligible. The kernel does not
- * invent predicate equivalences and does not mutate persisted memory.
- * Multiple distinct answers at the best confidence return CONFLICT.
- */
+/* Explicit ontology policy. Generic copulas such as `is` are deliberately not
+ * considered transitive. Only typed predicates admitted here may be used by
+ * the policy-enforced inference entry point. */
+int memoria_inference_predicate_is_transitive(const char *predicate);
+
+/* Legacy bounded compositor kept for compatibility/diagnostics. It composes
+ * identical predicates but does not itself decide whether the predicate is
+ * ontologically transitive. */
 int memoria_infer_two_hop_same_predicate(
+    const memoria_inference_edge_t *edges,
+    size_t edge_count,
+    const char *subject,
+    const char *predicate,
+    memoria_inference_result_t *result
+);
+
+/* Policy-enforced compositor used by the next inference stage. If `predicate`
+ * is not explicitly transitive, the result is UNRESOLVED and no path is tried. */
+int memoria_infer_two_hop_transitive(
     const memoria_inference_edge_t *edges,
     size_t edge_count,
     const char *subject,

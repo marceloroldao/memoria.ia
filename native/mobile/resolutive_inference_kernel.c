@@ -6,6 +6,19 @@
 static int nonempty(const char *s) { return s && s[0] != '\0'; }
 static double min2(double a, double b) { return a < b ? a : b; }
 
+int memoria_inference_predicate_is_transitive(const char *predicate) {
+    static const char *const allowed[] = {
+        "esta_em",
+        "parte_de",
+        "subclasse_de"
+    };
+    size_t i;
+    if (!nonempty(predicate)) return 0;
+    for (i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i)
+        if (strcmp(predicate, allowed[i]) == 0) return 1;
+    return 0;
+}
+
 int memoria_infer_two_hop_same_predicate(
     const memoria_inference_edge_t *edges,
     size_t edge_count,
@@ -66,4 +79,18 @@ int memoria_infer_two_hop_same_predicate(
     result->evidence_memory_id_2 = best_m2;
     result->path_confidence = best;
     return 0;
+}
+
+int memoria_infer_two_hop_transitive(
+    const memoria_inference_edge_t *edges,
+    size_t edge_count,
+    const char *subject,
+    const char *predicate,
+    memoria_inference_result_t *result
+) {
+    if (!result) return -1;
+    memset(result, 0, sizeof(*result));
+    result->status = MEMORIA_INFERENCE_UNRESOLVED;
+    if (!memoria_inference_predicate_is_transitive(predicate)) return 0;
+    return memoria_infer_two_hop_same_predicate(edges, edge_count, subject, predicate, result);
 }
