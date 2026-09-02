@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "memoria-resolutiva"
-version = "1.0.0rc1"
+version = "1.0.0rc2"
 description = "Resolutive Memory local-first runtime for persistent AI state on PC, server and mobile targets"
 requires-python = ">=3.10"
 license = {text = "Resolutive Research and Non-Commercial License (RRNCL) v1.0"}
