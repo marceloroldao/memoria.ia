@@ -1,0 +1,29 @@
+name: Post-v1 Retrieval v2 realistic matrix
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-retrieval-v2-realistic-matrix
+  pull_request:
+    paths:
+      - 'native/mobile/tests/retrieval_v2_semantic_matrix.c'
+      - 'native/mobile/retrieval_v2_semantic_adapter.c'
+      - 'native/mobile/retrieval_v2_normalization.c'
+      - '.github/workflows/post-v1-retrieval-v2-realistic-matrix.yml'
+
+jobs:
+  realistic-matrix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build realistic Retrieval v2 matrix
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror \
+            -Inative/mobile \
+            native/mobile/tests/retrieval_v2_semantic_matrix.c \
+            native/mobile/retrieval_v2_semantic_adapter.c \
+            native/mobile/retrieval_v2_normalization.c \
+            native/mobile/semantic_kernel.c \
+            -lm -o /tmp/retrieval-v2-realistic-matrix
+      - name: Run realistic Retrieval v2 matrix
+        run: /tmp/retrieval-v2-realistic-matrix

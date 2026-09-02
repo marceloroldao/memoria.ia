@@ -158,6 +158,11 @@ static int minimum_concept_coverage(
         overlap = query_overlap(normalized_query, normalized_texts[i]);
         if (overlap > best_overlap) best_overlap = overlap;
     }
+    /* Short queries stay permissive enough for compact fact lookup. Longer
+     * queries carry more subject/detail information, so require at least 75%
+     * concept coverage; this prevents generic attribute/modifier overlap from
+     * substituting a different subject (e.g. router vs OLT). */
+    if (nq >= 3u) return best_overlap * 4u >= nq * 3u;
     return best_overlap * 2u >= nq;
 }
 

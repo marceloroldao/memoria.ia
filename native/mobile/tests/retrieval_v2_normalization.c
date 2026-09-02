@@ -20,6 +20,10 @@ int main(void) {
     expect("baterias", "bateria");
     expect("módulos", "modulo");
     expect("portas", "porta");
+    expect("principais", "principal");
+    expect("banham", "banhar");
+    expect("banhado", "banhar");
+    expect("banhadas", "banhar");
     expect("país", "pais");
     expect("países", "pais");
     expect("mais", "mais");
