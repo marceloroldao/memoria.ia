@@ -23,3 +23,8 @@
 /* Experimental inference remains additive: it reads the already reconstructed
  * persisted turn/relation graph and never mutates retrieval or stored facts. */
 #include "resolutive_inference_mobile.c"
+
+/* Resolution mode makes provenance of the answer explicit. Direct retrieval is
+ * authoritative when it resolves; inference is attempted only after a direct
+ * miss and only when subject/predicate were supplied explicitly. */
+#include "resolution_mode_mobile.c"

@@ -67,6 +67,25 @@ memoria_mobile_status memoria_mobile_inspect_external_consolidation_json(
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *handle,memoria_mobile_buffer request_json,memoria_mobile_buffer *response_json);
 
+/* Read-only conservative 2-hop inference over already-promoted persisted
+ * relations. Request requires subject and predicate, with optional namespace.
+ * The result never persists an inferred fact. */
+memoria_mobile_status memoria_mobile_infer_two_hop_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/* Explicit answer-origin resolver. Request requires query; subject/predicate are
+ * optional inference hints. DIRECT always wins when retrieval resolves. Only a
+ * direct miss may fall through to conservative inference. Returned resolution is
+ * one of DIRECT, INFERRED, UNRESOLVED or CONFLICT. */
+memoria_mobile_status memoria_mobile_resolve_mode_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 /* Explicit post-v1 read-only state composition. Request requires entity and a
  * non-empty properties array (maximum 8), with optional namespace. The result
  * combines only already-promoted current facts and returns each property's exact
