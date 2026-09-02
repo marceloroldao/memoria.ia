@@ -1,0 +1,42 @@
+name: Release freeze metadata
+
+on:
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'CITATION.cff'
+      - '.zenodo.json'
+      - 'README.md'
+      - 'KNOWN_LIMITATIONS.md'
+      - 'RELEASE_NOTES_v1.0.0-rc2.md'
+      - '.github/workflows/release-freeze-metadata.yml'
+  push:
+    branches:
+      - release/post-v1-freeze-stabilization
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate rc2 version alignment
+        run: |
+          set -euo pipefail
+          grep -q 'version = "1.0.0rc2"' pyproject.toml
+          grep -q 'version: "1.0.0-rc.2"' CITATION.cff
+          grep -q '"version": "1.0.0-rc.2"' .zenodo.json
+          grep -q 'v1.0.0-rc2' README.md
+          grep -q 'v1.0.0-rc2' KNOWN_LIMITATIONS.md
+          test -f RELEASE_NOTES_v1.0.0-rc2.md
+          grep -q 'v1.0.0-rc2' RELEASE_NOTES_v1.0.0-rc2.md
+      - name: Protect RC1 archival DOI
+        run: |
+          set -euo pipefail
+          grep -q '10.5281/zenodo.22170165' README.md
+          grep -q 'must not be reused for RC2' RELEASE_NOTES_v1.0.0-rc2.md
+          ! grep -q '22170165' .zenodo.json
+      - name: Enforce freeze notes
+        run: |
+          set -euo pipefail
+          grep -qi 'no new functional capabilities' RELEASE_NOTES_v1.0.0-rc2.md
+          grep -qi 'not persisted as new facts' RELEASE_NOTES_v1.0.0-rc2.md
