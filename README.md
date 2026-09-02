@@ -12,9 +12,9 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 ## v1.0 release candidate
 
-Current publication candidate: **v1.0.0-rc1** (`1.0.0rc1` package version).
+Current publication candidate: **v1.0.0-rc2** (`1.0.0rc2` package version).
 
-Archival DOI: **[10.5281/zenodo.22170165](https://doi.org/10.5281/zenodo.22170165)**.
+Archival DOI: **[10.5281/zenodo.22244038](https://doi.org/10.5281/zenodo.22244038)**.
 
 This release candidate consolidates the validated research core and the first deployable PC/server/mobile runtime boundary while preserving the architecture:
 
@@ -28,7 +28,7 @@ application / OFF.IA / agent
 
 Memoria.ia owns memory semantics, state, relations, provenance, trajectories and context selection. BDR owns durable persistence. LLMs remain optional consumers and do not become the authoritative memory store.
 
-The v1.0.0-rc1 line includes:
+The v1.0.0-rc2 line includes:
 
 - organization-scoped memory isolation;
 - FastAPI `/api/v1` PC/server product interface;
@@ -71,17 +71,18 @@ The final v1.0 release will only be promoted after the release-candidate gates r
 
 ## Security status
 
-**v1.0.0-rc1 is not represented as production-security certified.**
+**v1.0.0-rc2 is not represented as production-security certified.**
 
 The repository includes authentication boundaries, application isolation, integrity-checked backup/restore and negative security tests, but no independent production security audit is claimed.
 
 ## Previous releases
 
+- **v1.0.0-rc1** — first v1.0 release candidate; DOI `10.5281/zenodo.22170165`.
 - **v0.99.0-alpha.1** — first PC/server product alpha.
 - **v0.95.1** — archived stable research metadata patch.
 - **v0.95.0** — stable research release.
 
-Memoria.ia v1.0.0-rc1 DOI: **10.5281/zenodo.22170165**.
+Memoria.ia v1.0.0-rc2 DOI: **10.5281/zenodo.22244038**.
 
 Archived v0.95 DOI: **10.5281/zenodo.21973472**.
 
@@ -115,7 +116,7 @@ with the v0.95 research default configuration:
 
 The repository retains historical experimental MA2A material, but the network protocol is now treated as a separate architectural boundary/project.
 
-The local v1.0.0-rc1 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
+The local v1.0.0-rc2 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
 
 See:
 
@@ -162,7 +163,7 @@ See the documentation under `docs/` for API, Android runtime, BDR integration, r
 
 ## Research and claims status
 
-Memoria.ia remains an experimental architecture. v1.0.0-rc1 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
+Memoria.ia remains an experimental architecture. v1.0.0-rc2 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
 
 Important limitations include:
 
@@ -185,8 +186,8 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 - Project governance baseline: **RSPS 1.0-draft**
 - RSMS compatibility for this candidate: **RSMS 1.0-rc.1**
 
-v1.0.0-rc1 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
+v1.0.0-rc2 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
 
 ## Release notes
 
-See `RELEASE_NOTES_v1.0.0-rc1.md` for the publication scope, validation evidence and known boundaries of this candidate.
+See `RELEASE_NOTES_v1.0.0-rc2.md` for the publication scope, validation evidence and known boundaries of this candidate.
