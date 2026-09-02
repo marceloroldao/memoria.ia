@@ -55,6 +55,20 @@ def _append_unique(items: list[str], value: str) -> None:
         items.append(normalized)
 
 
+def profile_namespace(scope: MemoryScope) -> str | None:
+    """Stable semantic namespace shared by conversations of the same profile.
+
+    Session memory remains isolated in scope.agent_id. The profile namespace is
+    intentionally derived without agent_id so a new chat can recover facts that
+    the same application/user promoted from an earlier conversation.
+    """
+    application = (scope.application_id or "default").strip()
+    user = (scope.user_id or "").strip()
+    if not application and not user:
+        return None
+    return f"profile:{application}:{user}" if user else f"profile:{application}"
+
+
 class ProductChatService:
     def __init__(
         self,
@@ -88,21 +102,36 @@ class ProductChatService:
         else:
             start = perf_counter()
 
-            # First-stage automatic context: the chat session id is carried in
-            # scope.agent_id by the server UI. Resolve the user's current query
-            # against Memoria.ia's conversational memory before asking the LLM.
             if self.conversation_resolver is not None:
-                resolved = self.conversation_resolver.resolve(
-                    query=message,
-                    session_id=scope.agent_id,
-                )
-                if str(getattr(resolved, "status", "")) == "HIT":
+                # Resolve from the narrowest namespace first. If the current
+                # session does not contain enough evidence, widen to the stable
+                # profile namespace shared by this application/user.
+                namespaces: list[str | None] = []
+                if scope.agent_id:
+                    namespaces.append(scope.agent_id)
+                profile = profile_namespace(scope)
+                if profile and profile not in namespaces:
+                    namespaces.append(profile)
+                if not namespaces:
+                    namespaces.append(None)
+
+                resolver_hit = False
+                for namespace in namespaces:
+                    resolved = self.conversation_resolver.resolve(
+                        query=message,
+                        session_id=namespace,
+                    )
+                    if str(getattr(resolved, "status", "")) != "HIT":
+                        continue
                     selected = str(getattr(resolved, "selected_context", "") or "")
                     if selected.strip():
-                        hits += 1
+                        resolver_hit = True
                         _append_unique(retrieved, selected)
-                    else:
-                        misses += 1
+                        # Session evidence has priority. A profile lookup is only
+                        # needed when the current session misses.
+                        break
+                if resolver_hit:
+                    hits += 1
                 else:
                     misses += 1
 
