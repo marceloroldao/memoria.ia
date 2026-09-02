@@ -28,7 +28,7 @@ _QUERY_STOPWORDS = {
     "quais", "um", "uma", "uns", "umas", "voce", "você",
 }
 _RELATION_NOISE = _QUERY_STOPWORDS | {"outro", "outra"}
-_AGGREGATE_QUERY = re.compile(r"^\\s*(?:quais|liste|listar|mostre|enumere)\\b", re.IGNORECASE)
+_AGGREGATE_QUERY = re.compile(r"^\s*(?:quais|liste|listar|mostre|enumere)\b", re.IGNORECASE)
 
 
 def _key(value: str) -> str:
