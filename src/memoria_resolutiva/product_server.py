@@ -52,13 +52,15 @@ def _env_bool(name: str, default: bool = True) -> bool:
 def _build_chat_service(
     memory: EnterpriseMemoryService,
     configuration: ProductConfigurationStore,
+    *,
+    conversation_resolver=None,
 ) -> ProductChatService | None:
     persisted = configuration.llm()
     provider = os.getenv("MEMORIA_LLM_PROVIDER", persisted.provider or "").strip().lower()
     if not provider:
         return None
     if provider == "mock":
-        return ProductChatService(memory, MockLLMAdapter())
+        return ProductChatService(memory, MockLLMAdapter(), conversation_resolver=conversation_resolver)
 
     model = os.getenv("MEMORIA_LLM_MODEL", persisted.model or "").strip()
     if not model:
@@ -77,7 +79,7 @@ def _build_chat_service(
                 output_usd_per_million=_optional_float("MEMORIA_LLM_OUTPUT_USD_PER_MILLION"),
             ),
         )
-        return ProductChatService(memory, adapter)
+        return ProductChatService(memory, adapter, conversation_resolver=conversation_resolver)
     if provider == "gemini":
         api_key = os.getenv("GEMINI_API_KEY", persisted.api_key or "")
         if not api_key:
@@ -91,7 +93,7 @@ def _build_chat_service(
                 output_usd_per_million=_optional_float("MEMORIA_LLM_OUTPUT_USD_PER_MILLION"),
             ),
         )
-        return ProductChatService(memory, adapter)
+        return ProductChatService(memory, adapter, conversation_resolver=conversation_resolver)
     raise RuntimeError(f"unsupported MEMORIA_LLM_PROVIDER: {provider}")
 
 
@@ -229,12 +231,17 @@ def build_app():
             if isinstance(episodic_service, NativeEpisodicService):
                 episodic_service.close()
 
+    chat_service = _build_chat_service(
+        service,
+        configuration,
+        conversation_resolver=conversation_service,
+    )
     app = create_app(
         service,
         api_key=api_key,
         data_dir=data_dir,
         node_identity=node_identity,
-        chat_service=_build_chat_service(service, configuration),
+        chat_service=chat_service,
         application_registry=application_registry,
         lifespan=lifespan,
     )
