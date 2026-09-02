@@ -69,6 +69,8 @@ static void apply_alias(char *w) {
         {"servidores", "servidor"}, {"valores", "valor"},
         {"portas", "porta"}, {"temperaturas", "temperatura"},
         {"principais", "principal"},
+        {"banham", "banhar"}, {"banha", "banhar"}, {"banhado", "banhar"},
+        {"banhada", "banhar"}, {"banhados", "banhar"}, {"banhadas", "banhar"},
         {"nacoes", "pais"}, {"nacao", "pais"}, {"paises", "pais"},
         {"idiomas", "lingua"}, {"idioma", "lingua"}, {"linguas", "lingua"},
         {"oceans", "ocean"}, {"countries", "country"}, {"languages", "language"}
