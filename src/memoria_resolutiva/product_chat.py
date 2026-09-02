@@ -3,13 +3,17 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import json
 from time import perf_counter
-from typing import Iterable, Literal, Sequence
+from typing import Iterable, Literal, Protocol, Sequence
 
 from .llm_adapter import LLMAdapter, estimate_tokens
 from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
 
 ChatMode = Literal["baseline", "memoria"]
+
+
+class ConversationResolver(Protocol):
+    def resolve(self, *, query: str, session_id: str | None = None): ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,10 +49,23 @@ def _materialize(payload: object) -> str:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+def _append_unique(items: list[str], value: str) -> None:
+    normalized = " ".join(str(value).split()).strip()
+    if normalized and normalized not in items:
+        items.append(normalized)
+
+
 class ProductChatService:
-    def __init__(self, memory: EnterpriseMemoryService, adapter: LLMAdapter):
+    def __init__(
+        self,
+        memory: EnterpriseMemoryService,
+        adapter: LLMAdapter,
+        *,
+        conversation_resolver: ConversationResolver | None = None,
+    ):
         self.memory = memory
         self.adapter = adapter
+        self.conversation_resolver = conversation_resolver
 
     def run(
         self,
@@ -70,13 +87,35 @@ class ProductChatService:
             context = tuple(str(item) for item in baseline_context)
         else:
             start = perf_counter()
+
+            # First-stage automatic context: the chat session id is carried in
+            # scope.agent_id by the server UI. Resolve the user's current query
+            # against Memoria.ia's conversational memory before asking the LLM.
+            if self.conversation_resolver is not None:
+                resolved = self.conversation_resolver.resolve(
+                    query=message,
+                    session_id=scope.agent_id,
+                )
+                if str(getattr(resolved, "status", "")) == "HIT":
+                    selected = str(getattr(resolved, "selected_context", "") or "")
+                    if selected.strip():
+                        hits += 1
+                        _append_unique(retrieved, selected)
+                    else:
+                        misses += 1
+                else:
+                    misses += 1
+
+            # Explicit keys remain supported for applications that already know
+            # which structured memories they want to request.
             for key in memory_keys:
                 record = self.memory.recall(scope, ("key", key))
                 if record is None:
                     misses += 1
                     continue
                 hits += 1
-                retrieved.append(_materialize(record.payload))
+                _append_unique(retrieved, _materialize(record.payload))
+
             memory_ms = (perf_counter() - start) * 1000.0
             context = tuple(retrieved)
 
