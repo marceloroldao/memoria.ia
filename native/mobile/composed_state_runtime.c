@@ -19,3 +19,7 @@
 #undef memoria_semantic_resolve_sources
 
 #include "composed_state_mobile.c"
+
+/* Experimental inference remains additive: it reads the already reconstructed
+ * persisted turn/relation graph and never mutates retrieval or stored facts. */
+#include "resolutive_inference_mobile.c"
