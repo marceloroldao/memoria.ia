@@ -12,6 +12,8 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 Current corrective freeze candidate: **v1.0.0-rc3** (`1.0.0rc3` package version).
 
+**Archival DOI:** 10.5281/zenodo.22253566
+
 RC3 supersedes the published `v1.0.0-rc2` because RC2 was created with a release-tag alignment error. RC3 does **not** add a new functional capability over the validated frozen runtime; it corrects the publication lineage so the tag, package version and archival metadata point to the intended codebase.
 
 The runtime architecture remains:
@@ -48,9 +50,9 @@ The frozen v1.0 RC runtime includes:
 
 ## Corrective publication status
 
-The RC2 archival DOI is **10.5281/zenodo.22244038**. It remains historical metadata for RC2 and must not be reused for RC3.
+RC3 archival DOI: **10.5281/zenodo.22253566**.
 
-RC3 must receive a **new DOI** after the exact `v1.0.0-rc3` tag is created on the final corrective freeze commit.
+The RC2 archival DOI is **10.5281/zenodo.22244038**. It remains historical metadata for RC2 and is not reused for RC3.
 
 ## Validation status
 
