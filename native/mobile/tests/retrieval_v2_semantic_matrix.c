@@ -71,7 +71,7 @@ int main(void) {
     /* Realistic OFF.IA-style distractors: a highly authoritative source must not
      * win merely because it shares a generic entity token with the query. */
     memoria_semantic_source brasil_oceanos[] = {
-        {"coast", "O Brasil possui costa voltada para o oceano Atlântico.", 0.85, 1, "external_import", "coast"},
+        {"coast", "O Brasil é banhado pelo oceano Atlântico.", 0.85, 1, "external_import", "coast"},
         {"company", "Brasil Ocean Logística opera terminais privados e serviços portuários.", 0.99, 2, "external_import", "company"},
         {"assistant", "O Brasil possui acesso aos oceanos Atlântico e Pacífico.", 0.35, 3, "assistant_generated", "question-oceanos"}
     };
