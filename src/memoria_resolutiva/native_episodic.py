@@ -13,8 +13,6 @@ MEMORIA_MOBILE_INVALID_ARGUMENT = 1
 MEMORIA_MOBILE_UNRESOLVED = 2
 
 
-
-
 @dataclass(frozen=True, slots=True)
 class NativeEpisodeEdge:
     evidence_id: str
@@ -23,12 +21,7 @@ class NativeEpisodeEdge:
 
 @dataclass(frozen=True, slots=True)
 class NativeEpisodeReceipt:
-    """Truthful durable-write receipt for the native BDR path.
-
-    The mobile ABI currently guarantees a durable atomic write but does not expose
-    the EvidenceCore snapshot state_id/sha256 contract. Those fields therefore
-    remain explicitly unavailable instead of being synthesized.
-    """
+    """Truthful durable-write receipt for the native BDR path."""
 
     backend: str = "bdr-native"
     durable: bool = True
@@ -53,12 +46,7 @@ def _normalized_topics(values: list[str]) -> tuple[str, ...]:
 
 
 class NativeEpisodicService:
-    """Thin Python boundary over the authoritative native episodic runtime.
-
-    FastAPI/Pydantic stay in Python. Episodic persistence, candidate selection,
-    ambiguity handling and recency resolution are delegated to libmemoria_mobile.
-    No Python episodic algorithm is consulted as a fallback.
-    """
+    """Thin Python boundary over the authoritative native episodic runtime."""
 
     def __init__(
         self,
@@ -148,6 +136,50 @@ class NativeEpisodicService:
             float(response["source_authority"]) if response.get("source_authority") is not None else None,
             str(response["ultimate_source_memory_id"]) if response.get("ultimate_source_memory_id") else None,
         )
+
+    def history(
+        self,
+        *,
+        session_id: str | None = None,
+        event_type: str | None = None,
+        limit: int = 1000,
+    ) -> list[dict[str, object]]:
+        wanted_event = _key(event_type) if event_type else None
+        collected: list[dict[str, object]] = []
+        offset = 0
+        page_size = 64
+        while len(collected) < limit:
+            status, snapshot = self._call(
+                "memoria_mobile_export_snapshot_json",
+                {
+                    "turn_offset": 0,
+                    "turn_limit": 1,
+                    "episode_offset": offset,
+                    "episode_limit": page_size,
+                },
+            )
+            if status != MEMORIA_MOBILE_OK or snapshot.get("status") != "OK":
+                raise RuntimeError(f"native diagnostic snapshot failed: status={status}")
+            episodes = snapshot.get("episodes") or []
+            if not isinstance(episodes, list):
+                raise RuntimeError("native diagnostic snapshot returned invalid episodes")
+            for episode in episodes:
+                if not isinstance(episode, dict):
+                    continue
+                if session_id is not None and str(episode.get("session_id") or "") != session_id:
+                    continue
+                if wanted_event is not None and _key(str(episode.get("event_type") or "")) != wanted_event:
+                    continue
+                collected.append(dict(episode))
+                if len(collected) >= limit:
+                    break
+            page = snapshot.get("episode_page") or {}
+            next_offset = page.get("next_offset") if isinstance(page, dict) else None
+            if next_offset is None:
+                break
+            offset = int(next_offset)
+        collected.sort(key=lambda item: (str(item.get("session_id") or ""), int(item.get("order") or 0)))
+        return collected
 
     def flush(self) -> None:
         if not self._closed:
