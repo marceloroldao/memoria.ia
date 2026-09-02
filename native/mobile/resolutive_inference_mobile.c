@@ -19,10 +19,10 @@ static memoria_mobile_status inference_result_json(
     memoria_mobile_status status;
     if (!result || !response_json) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     if (result->status == MEMORIA_INFERENCE_UNRESOLVED)
-        return unresolved(response_json, "no conservative 2-hop path");
+        return unresolved(response_json, "no allowed transitive 2-hop path");
     if (result->status == MEMORIA_INFERENCE_CONFLICT)
         return set_response(response_json,
-            "{\"status\":\"CONFLICT\",\"inference\":\"two_hop_same_predicate\",\"proof\":[]}",
+            "{\"status\":\"CONFLICT\",\"inference\":\"two_hop_transitive\",\"proof\":[]}",
             MEMORIA_MOBILE_UNRESOLVED);
 
     answer = json_escape(result->answer);
@@ -35,7 +35,7 @@ static memoria_mobile_status inference_result_json(
     }
     status = set_responsef(response_json, MEMORIA_MOBILE_OK,
         "{\"status\":\"OK\",\"resolution\":\"INFERRED\","
-        "\"inference\":\"two_hop_same_predicate\",\"answer\":\"%s\","
+        "\"inference\":\"two_hop_transitive\",\"answer\":\"%s\","
         "\"via\":\"%s\",\"path_confidence\":%.17g,"
         "\"proof\":[\"%s\",\"%s\"]}",
         answer, via, result->path_confidence, m1, m2);
@@ -95,7 +95,7 @@ memoria_mobile_status memoria_mobile_infer_two_hop_json(
         }
     }
 
-    if (memoria_infer_two_hop_same_predicate(edges, edge_count, subject, predicate, &result) != 0)
+    if (memoria_infer_two_hop_transitive(edges, edge_count, subject, predicate, &result) != 0)
         goto done;
     status = inference_result_json(&result, response_json);
 

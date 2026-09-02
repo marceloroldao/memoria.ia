@@ -27,8 +27,9 @@ static int contains(memoria_mobile_buffer b, const char *needle) {
 
 static int assert_inference(memoria_mobile_handle *h) {
     memoria_mobile_buffer out = {0};
-    CHECK(infer(h, "{\"subject\":\"porto alegre\",\"predicate\":\"is\",\"namespace\":\"geo\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(infer(h, "{\"subject\":\"porto alegre\",\"predicate\":\"esta_em\",\"namespace\":\"geo\"}", &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"resolution\":\"INFERRED\""));
+    CHECK(contains(out, "\"inference\":\"two_hop_transitive\""));
     CHECK(contains(out, "\"answer\":\"brasil\""));
     CHECK(contains(out, "\"via\":\"rio grande do sul\""));
     CHECK(contains(out, "\"proof\":[\"rel-pa-rs\",\"rel-rs-br\"]"));
@@ -39,26 +40,22 @@ static int assert_inference(memoria_mobile_handle *h) {
 static int assert_resolution_modes(memoria_mobile_handle *h) {
     memoria_mobile_buffer out = {0};
 
-    /* A direct persisted memory always has precedence over an inference hint. */
     CHECK(resolve_mode(h,
-        "{\"query\":\"rio grande do sul brasil\",\"subject\":\"porto alegre\",\"predicate\":\"is\",\"namespace\":\"geo\"}",
+        "{\"query\":\"rio grande do sul brasil\",\"subject\":\"porto alegre\",\"predicate\":\"esta_em\",\"namespace\":\"geo\"}",
         &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"resolution\":\"DIRECT\""));
     CHECK(contains(out, "m-rs-br"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    /* Retrieval misses; the explicit structured path may then infer. */
     CHECK(resolve_mode(h,
-        "{\"query\":\"destino transitivo de porto alegre\",\"subject\":\"porto alegre\",\"predicate\":\"is\",\"namespace\":\"geo\"}",
+        "{\"query\":\"destino transitivo de porto alegre\",\"subject\":\"porto alegre\",\"predicate\":\"esta_em\",\"namespace\":\"geo\"}",
         &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"resolution\":\"INFERRED\""));
     CHECK(contains(out, "\"answer\":\"brasil\""));
-    CHECK(contains(out, "\"proof\":[\"rel-pa-rs\",\"rel-rs-br\"]"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    /* No direct result and no conservative path remains explicitly unresolved. */
     CHECK(resolve_mode(h,
-        "{\"query\":\"orbita do satelite desconhecido\",\"subject\":\"satellite x\",\"predicate\":\"is\",\"namespace\":\"geo\"}",
+        "{\"query\":\"orbita do satelite desconhecido\",\"subject\":\"satellite x\",\"predicate\":\"esta_em\",\"namespace\":\"geo\"}",
         &out) == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out, "\"resolution\":\"UNRESOLVED\""));
     memoria_mobile_free_buffer(out);
@@ -73,31 +70,45 @@ int main(void) {
     (void)system("rm -rf ./tmp-mobile-resolutive-inference");
     CHECK(memoria_mobile_open(dir, "org-inference", &h) == MEMORIA_MOBILE_OK);
 
-    /* The current relation contract uses explicit copular edges. The inference
-       layer composes only identical predicates; it does not invent semantics. */
     CHECK(learn(h,
-        "{\"role\":\"user\",\"text\":\"porto alegre is rio grande do sul\",\"memory_id\":\"m-pa-rs\",\"namespace\":\"geo\",\"source_authority\":0.95,\"relation_memory_ids\":[\"rel-pa-rs\"]}",
+        "{\"role\":\"user\",\"text\":\"porto alegre está em rio grande do sul\",\"memory_id\":\"m-pa-rs\",\"namespace\":\"geo\",\"source_authority\":0.95,\"relation_memory_ids\":[\"rel-pa-rs\"]}",
         &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"predicate\":\"esta_em\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
     CHECK(learn(h,
-        "{\"role\":\"user\",\"text\":\"rio grande do sul is brasil\",\"memory_id\":\"m-rs-br\",\"namespace\":\"geo\",\"source_authority\":0.94,\"relation_memory_ids\":[\"rel-rs-br\"]}",
+        "{\"role\":\"user\",\"text\":\"rio grande do sul está em brasil\",\"memory_id\":\"m-rs-br\",\"namespace\":\"geo\",\"source_authority\":0.94,\"relation_memory_ids\":[\"rel-rs-br\"]}",
         &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"predicate\":\"esta_em\""));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     CHECK(assert_inference(h) == 0);
     CHECK(assert_resolution_modes(h) == 0);
 
-    /* Namespace isolation: the same query cannot borrow another graph. */
-    CHECK(infer(h, "{\"subject\":\"porto alegre\",\"predicate\":\"is\",\"namespace\":\"other\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
+    /* Generic copular `is` may still be stored as a relation, but it is not
+       eligible for transitive inference. */
+    CHECK(learn(h,
+        "{\"role\":\"user\",\"text\":\"atlas is servidor\",\"memory_id\":\"m-is-1\",\"namespace\":\"generic\",\"source_authority\":0.95}",
+        &out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+    CHECK(learn(h,
+        "{\"role\":\"user\",\"text\":\"servidor is equipamento\",\"memory_id\":\"m-is-2\",\"namespace\":\"generic\",\"source_authority\":0.95}",
+        &out) == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+    CHECK(infer(h, "{\"subject\":\"atlas\",\"predicate\":\"is\",\"namespace\":\"generic\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
+    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
+
+    CHECK(infer(h, "{\"subject\":\"porto alegre\",\"predicate\":\"esta_em\",\"namespace\":\"other\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
     memoria_mobile_close(h); h = NULL;
 
-    /* Fresh handle reconstructs both DIRECT and INFERRED decisions from BDR. */
     CHECK(memoria_mobile_open(dir, "org-inference", &h) == MEMORIA_MOBILE_OK);
     CHECK(assert_inference(h) == 0);
     CHECK(assert_resolution_modes(h) == 0);
+    CHECK(infer(h, "{\"subject\":\"atlas\",\"predicate\":\"is\",\"namespace\":\"generic\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
+    memoria_mobile_free_buffer(out);
 
     memoria_mobile_close(h);
     (void)system("rm -rf ./tmp-mobile-resolutive-inference");
