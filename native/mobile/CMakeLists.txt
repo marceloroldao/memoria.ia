@@ -103,6 +103,11 @@ if(NOT ANDROID)
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_semantic_kernel_test COMMAND memoria_semantic_kernel_test)
 
+  add_executable(memoria_semantic_consolidation_kernel_test tests/semantic_consolidation_kernel.c semantic_consolidation_kernel.c)
+  target_include_directories(memoria_semantic_consolidation_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_semantic_consolidation_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_semantic_consolidation_kernel_test COMMAND memoria_semantic_consolidation_kernel_test)
+
   add_executable(memoria_trajectory_kernel_test tests/trajectory_kernel.c trajectory_kernel.c)
   target_include_directories(memoria_trajectory_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_trajectory_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
