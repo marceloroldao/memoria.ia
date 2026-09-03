@@ -27,7 +27,15 @@ _QUERY_STOPWORDS = {
     "foi", "me", "meu", "meus", "minha", "minhas", "o", "os", "para", "por", "que", "qual",
     "quais", "um", "uma", "uns", "umas", "voce", "você",
 }
-_RELATION_NOISE = _QUERY_STOPWORDS | {"outro", "outra"}
+_CONTEXT_DEPENDENT_RELATION_TERMS = {
+    "isso", "isto", "aquilo",
+    "ele", "ela", "eles", "elas",
+    "esse", "essa", "esses", "essas", "este", "esta", "estes", "estas",
+    "aquele", "aquela", "aqueles", "aquelas",
+    "aqui", "ali", "la", "lá",
+    "quem", "onde", "como", "quando", "porque", "porquê",
+}
+_RELATION_NOISE = _QUERY_STOPWORDS | {"outro", "outra"} | _CONTEXT_DEPENDENT_RELATION_TERMS
 _AGGREGATE_QUERY = re.compile(r"^\s*(?:quais|liste|listar|mostre|enumere)\b", re.IGNORECASE)
 
 
@@ -52,7 +60,7 @@ def _aggregate_overlap(query_tokens: set[str], edge_tokens: set[str]) -> int:
 
 def _relation_term(value: str) -> str | None:
     value = value.strip().strip(".,;:!?\"")
-    if not value or _key(value) in _RELATION_NOISE:
+    if not value or _key(value) in {_key(term) for term in _RELATION_NOISE}:
         return None
     return value
 
@@ -258,79 +266,41 @@ class ConversationSemanticService:
         active = list(self.evidence.core.active_edges(namespace=session_id))
         qtokens = _tokens(query)
         if not qtokens:
-            return self._result("UNRESOLVED", [])
+            return self._result("UNRESOLVED", [], namespace=session_id)
 
-        relations = [e for e in active if e.predicate != "conversation_text" and not e.predicate.startswith("provenance_")]
-        if _AGGREGATE_QUERY.search(query):
-            grouped: dict[tuple[str, str, str], list[tuple[float, int, EvidenceEdge]]] = {}
-            for edge in relations:
-                overlap = _aggregate_overlap(qtokens, _tokens(edge.subject) | _tokens(edge.object))
-                if overlap:
-                    claim = (_key(edge.subject), edge.predicate, _key(edge.object))
-                    grouped.setdefault(claim, []).append((float(overlap), edge.epoch, edge))
-            aggregate_rows: list[EvidenceEdge] = []
-            for claim in sorted(grouped):
-                selected_claim = self._select_authoritative(grouped[claim], namespace=session_id)
-                if selected_claim is not None:
-                    aggregate_rows.append(selected_claim[1])
-            if aggregate_rows:
-                return self._result(
-                    "HIT",
-                    aggregate_rows,
-                    confidence=min(0.8, min(edge.confidence for edge in aggregate_rows)),
-                    namespace=session_id,
-                )
+        candidates: list[tuple[float, int, EvidenceEdge]] = []
+        for edge in active:
+            if edge.predicate == "conversation_text" or edge.predicate.startswith("provenance_"):
+                continue
+            edge_tokens = _tokens(" ".join((edge.subject, edge.predicate, edge.object, edge.source_text)))
+            overlap = len(qtokens & edge_tokens) / max(1, len(qtokens))
+            if overlap <= 0.0:
+                continue
+            direct = self.provenance.inspect(edge.evidence_id, namespace=session_id)
+            candidates.append((overlap, direct.created_order or -1, edge))
 
-        anchored: list[tuple[float, int, EvidenceEdge]] = []
-        for edge in relations:
-            overlap = len(qtokens & (_tokens(edge.subject) | _tokens(edge.object)))
-            if overlap:
-                anchored.append((float(overlap), edge.epoch, edge))
-        if anchored:
-            best_overlap = max(score for score, _order, _edge in anchored)
-            exact_best = [row for row in anchored if row[0] == best_overlap]
-            if len(self._distinct_claims(exact_best)) > 1 and len(self._ultimate_source_ids(exact_best, namespace=session_id)) > 1:
-                return self._result("UNRESOLVED", [])
-        selected = self._select_authoritative(anchored, namespace=session_id)
-        if selected is not None:
-            _relevance, edge = selected
-            return self._result(
-                "HIT", [edge],
-                confidence=self._native_reference_confidence(qtokens=qtokens, edge=edge, namespace=session_id),
-                namespace=session_id,
-            )
+        if not candidates:
+            return self._result("UNRESOLVED", [], namespace=session_id)
 
-        turns = [edge for edge in active if edge.predicate == "conversation_text"]
-        ranked: list[tuple[float, int, EvidenceEdge]] = []
-        for edge in turns:
-            overlap = len(qtokens & _tokens(edge.source_text))
-            if overlap:
-                ranked.append((overlap / max(1, len(qtokens)), edge.epoch, edge))
-        if ranked:
-            best_score = max(score for score, _order, _edge in ranked)
-            exact_best = [row for row in ranked if abs(row[0] - best_score) < 1e-12]
-            if len(exact_best) > 1:
-                roots = self._ultimate_source_ids(exact_best, namespace=session_id)
-                contexts = {_key(edge.source_text) for _score, _order, edge in exact_best}
-                if len(roots) > 1 and len(contexts) > 1:
-                    return self._result("UNRESOLVED", [])
-        selected = self._select_authoritative(ranked, namespace=session_id)
+        best_score = max(score for score, _order, _edge in candidates)
+        close = [row for row in candidates if row[0] >= best_score - 0.15]
+        if len(self._distinct_claims(close)) > 1 and len(self._ultimate_source_ids(close, namespace=session_id)) > 1:
+            return self._result("AMBIGUOUS", [edge for _score, _order, edge in close], confidence=best_score, namespace=session_id)
+
+        selected = self._select_authoritative(candidates, namespace=session_id)
         if selected is None:
-            return self._result("UNRESOLVED", [])
+            return self._result("UNRESOLVED", [], namespace=session_id)
         _score, edge = selected
-        return self._result(
-            "HIT", [edge],
-            confidence=self._native_reference_confidence(qtokens=qtokens, edge=edge, namespace=session_id),
-            namespace=session_id,
-        )
+        confidence = self._native_reference_confidence(qtokens=qtokens, edge=edge, namespace=session_id)
+        return self._result("HIT", [edge], confidence=confidence, namespace=session_id)
 
 
 class ConversationIngestRequest(BaseModel):
     role: str = Field(pattern="^(user|assistant)$")
     text: str = Field(min_length=1, max_length=20000)
     session_id: str | None = Field(default=None, max_length=256)
-    timestamp: str | None = Field(default=None, max_length=128)
     order: int | None = Field(default=None, ge=0)
+    timestamp: str | None = Field(default=None, max_length=128)
     parent_memory_ids: list[str] = Field(default_factory=list)
     corrects_memory_ids: list[str] = Field(default_factory=list)
 
@@ -340,23 +310,36 @@ class ConversationResolveRequest(BaseModel):
     session_id: str | None = Field(default=None, max_length=256)
 
 
-def attach_conversation_routes(app: FastAPI, *, api_key: str, service: ConversationSemanticService) -> None:
+def attach_conversation_routes(
+    app: FastAPI,
+    *,
+    api_key: str,
+    service,
+) -> None:
     def require_admin(x_memoria_key: str | None = Header(default=None)) -> None:
         if x_memoria_key is None or not hmac.compare_digest(x_memoria_key, api_key):
             raise HTTPException(status_code=401, detail="invalid API credentials")
 
-    @app.post("/api/v1/conversation/ingest", dependencies=[Depends(require_admin)])
+    @app.post("/api/v1/conversation/ingest", status_code=201, dependencies=[Depends(require_admin)])
     def ingest(request: ConversationIngestRequest):
         try:
             result = service.ingest(
-                role=request.role, text=request.text, session_id=request.session_id,
-                timestamp=request.timestamp, order=request.order,
-                parent_memory_ids=request.parent_memory_ids,
-                corrects_memory_ids=request.corrects_memory_ids,
+                role=request.role,
+                text=request.text,
+                session_id=request.session_id,
+                order=request.order,
+                timestamp=request.timestamp,
+                parent_memory_ids=tuple(request.parent_memory_ids),
+                corrects_memory_ids=tuple(request.corrects_memory_ids),
             )
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        return {"stored_memory_ids": list(result.memory_ids), "relations": list(result.relations), "unresolved": result.unresolved}
+        return {
+            "stored": True,
+            "memory_ids": list(result.memory_ids),
+            "relations": list(result.relations),
+            "unresolved": result.unresolved,
+        }
 
     @app.post("/api/v1/conversation/resolve", dependencies=[Depends(require_admin)])
     def resolve(request: ConversationResolveRequest):
