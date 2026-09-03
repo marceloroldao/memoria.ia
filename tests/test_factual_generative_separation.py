@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from memoria_resolutiva.evidence_core import EvidenceCore
+from memoria_resolutiva.memory_inspection import MemoryInspectionService
 from memoria_resolutiva.memory_provenance import MemoryProvenanceIndex, ProvenanceCandidate
 from memoria_resolutiva.product_conversation import ConversationSemanticService
 from memoria_resolutiva.product_evidence import ProductEvidenceService
@@ -16,6 +17,7 @@ def test_generated_root_is_persisted_but_not_active_factual_authority():
     index.register("generated", source_type="assistant_generated", created_order=1, namespace="s")
 
     assert index.inspect("generated", namespace="s").source_type == "assistant_generated"
+    assert MemoryInspectionService(index).inspect("generated", namespace="s")["memory_space"] == "generative"
     assert index.active_ultimate_source("generated", namespace="s") is None
     assert index.ultimate_source("generated", namespace="s").source_type == "assistant_generated"
     assert index.select([ProvenanceCandidate("generated", 1.0, 1)], namespace="s") is None
@@ -37,6 +39,9 @@ def test_assistant_echo_with_user_root_stays_in_user_factual_lineage():
     assert root is not None
     assert root.memory_id == "user-fact"
     assert root.source_type == "user_assertion"
+    inspected = MemoryInspectionService(index).inspect("assistant-echo", namespace="s")
+    assert inspected["memory_space"] == "generative"
+    assert inspected["factual_active"] is True
 
 
 def test_assistant_invention_cannot_become_fact_or_create_false_conflict(tmp_path: Path):
