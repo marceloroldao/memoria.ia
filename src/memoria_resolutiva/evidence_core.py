@@ -137,6 +137,16 @@ class EvidenceCore:
             rows = [e for e in rows if e.epoch <= epoch]
         return tuple(rows)
 
+    def evidence_history(self, *, namespace: str | None = None, epoch: int | None = None) -> tuple[EvidenceEdge, ...]:
+        """Return preserved evidence rows without collapsing them to current state.
+
+        ``active_edges`` intentionally projects the latest state for each
+        subject/predicate slot. Consolidation and audit need the complementary
+        view: every persisted observation, while provenance decides whether a
+        historical support still has active factual lineage.
+        """
+        return self._visible(namespace, epoch)
+
     def conflicts(self, *, namespace: str | None = None, epoch: int | None = None) -> tuple[EvidenceConflict, ...]:
         grouped: dict[tuple[str, str], list[EvidenceEdge]] = defaultdict(list)
         for edge in self._visible(namespace, epoch):
