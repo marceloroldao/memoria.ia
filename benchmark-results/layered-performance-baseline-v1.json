@@ -1,0 +1,59 @@
+{
+  "schema": "memoria.ia.layered-performance-baseline.v1",
+  "source_workflow_run": 33763767446,
+  "source_artifact_id": 9896590092,
+  "artifact_commit": "e47a361e5786da854cc10c76f79e9cf7589d12e4",
+  "recorded_after_merge_commit": "2d1670217d161df646eabeec3ca93fb24e581d90",
+  "runner": {
+    "machine": "x86_64",
+    "os": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "python": "3.12.14 (main, Aug 13 2026, 02:47:42) [GCC 13.3.0]"
+  },
+  "notes": [
+    "Timing values are runner-dependent and should be compared only with the same methodology.",
+    "Peak heap uses Python tracemalloc and is not total process RSS.",
+    "No LLM, network or external service participates in this benchmark."
+  ],
+  "results": [
+    {
+      "target_nodes": 100,
+      "actual_nodes": 127,
+      "build_ms": 1.459315999966293,
+      "incremental_ms": 0.0720170000363396,
+      "full_ms": 0.5472440000175993,
+      "peak_heap_bytes": 140146,
+      "incremental_touched": 7,
+      "full_touched": 127,
+      "touched_reduction_ratio": 0.9448818897637795,
+      "full_to_incremental_latency_ratio": 7.598815331207609,
+      "snapshots_equal": true
+    },
+    {
+      "target_nodes": 1000,
+      "actual_nodes": 1023,
+      "build_ms": 11.02671600000349,
+      "incremental_ms": 0.08460499998363957,
+      "full_ms": 3.9160310000170284,
+      "peak_heap_bytes": 1134706,
+      "incremental_touched": 10,
+      "full_touched": 1023,
+      "touched_reduction_ratio": 0.9902248289345064,
+      "full_to_incremental_latency_ratio": 46.2860485106921,
+      "snapshots_equal": true
+    },
+    {
+      "target_nodes": 10000,
+      "actual_nodes": 16383,
+      "build_ms": 201.51814199999762,
+      "incremental_ms": 0.1251930000307766,
+      "full_ms": 75.71575499997607,
+      "peak_heap_bytes": 18319408,
+      "incremental_touched": 14,
+      "full_touched": 16383,
+      "touched_reduction_ratio": 0.9991454556552524,
+      "full_to_incremental_latency_ratio": 604.7931998545514,
+      "snapshots_equal": true
+    }
+  ]
+}
