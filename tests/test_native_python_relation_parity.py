@@ -23,6 +23,15 @@ VECTORS = (
     ),
     ("sensor = active; sensor = active", (("sensor", "is", "active", 0.95),)),
     ("o outro é ativo", ()),
+    ("isso é verdade", ()),
+    ("isto é importante", ()),
+    ("aquilo é estranho", ()),
+    ("ele é azul", ()),
+    ("ela é engenheira", ()),
+    ("aqui é frio", ()),
+    ("quem é atlas", ()),
+    ("onde é norte", ()),
+    ("como é azul", ()),
 )
 
 

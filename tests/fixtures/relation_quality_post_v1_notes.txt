@@ -1,0 +1,3 @@
+Accepted vectors are explicit compact factual relations.
+Rejected vectors depend on unresolved deixis, pronouns, or interrogative terms.
+This fixture is intentionally precision-first and language-model-free.
