@@ -34,9 +34,16 @@ def _switches(modes: list[str]) -> int:
 
 
 def workload_counts(cycles: int = 8) -> list[int]:
-    # On a ~127-node balanced graph these batches straddle the adaptive
-    # boundary: low -> medium -> high -> medium -> low.
-    pattern = [1, 20, 28, 32, 28, 20]
+    # On the 127-node balanced graph:
+    #   24 roots affect ~38.6% (below the single 40% threshold),
+    #   26 roots affect ~42.5% (above it),
+    #   32 roots affect ~50.4% (above hysteresis enter=45%), and
+    #    1 root affects  ~5.5% (below hysteresis exit=30%).
+    #
+    # Each cycle first enters full mode, then deliberately oscillates *inside*
+    # the hysteresis dead band. A single threshold chatters between modes while
+    # hysteresis remains stable until the final sparse batch exits full mode.
+    pattern = [1, 32, 24, 26, 24, 26, 24, 1]
     return pattern * cycles
 
 
