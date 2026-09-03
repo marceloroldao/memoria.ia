@@ -67,3 +67,33 @@ def test_unregistered_generic_evidence_remains_available_to_generic_core_only():
 
     assert core.infer_path("A", "B", namespace="s").inferred is True
     assert FactualInferenceService(core).infer_path("A", "B", namespace="s").inferred is False
+
+
+def test_derived_relation_is_invalidated_when_any_required_parent_is_superseded():
+    core = EvidenceCore()
+    prov = MemoryProvenanceIndex(core)
+
+    prov.register("premise-a", source_type="user_assertion", namespace="s")
+    prov.register("premise-b", source_type="user_assertion", namespace="s")
+    _edge(core, "A", "derived_link", "C", "derived")
+    prov.register(
+        "derived",
+        source_type="derived_relation",
+        parent_memory_ids=("premise-a", "premise-b"),
+        namespace="s",
+    )
+
+    before = FactualInferenceService(core).infer_path("A", "C", namespace="s")
+    assert before.inferred is True
+    assert prov.factual_ultimate_source("derived", namespace="s") is not None
+
+    prov.register("premise-b-corrected", source_type="user_correction", namespace="s")
+    prov.supersede("premise-b", by_memory_id="premise-b-corrected", namespace="s")
+
+    # The relation stays in history/audit storage, but its old conjunction is no
+    # longer a current factual premise until the derivation is recomputed.
+    assert core.infer_path("A", "C", namespace="s").inferred is True
+    assert prov.factual_ultimate_source("derived", namespace="s") is None
+    after = FactualInferenceService(core).infer_path("A", "C", namespace="s")
+    assert after.inferred is False
+    assert after.paths == ()
