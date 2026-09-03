@@ -22,13 +22,20 @@ int main(void) {
     assert(strcmp(r.ultimate_source_memory_id, "user") == 0);
     assert(r.source_authority == 1.0);
 
+    /* Generated memories without the factual root present remain historical
+       context only and must not resolve a factual query. */
     memoria_semantic_source same_root_only_echoes[] = {
         {"echo1", "atlas code 4729", 0.35, 2, "assistant_generated", "source-root"},
         {"echo2", "atlas code is 4729", 0.35, 3, "assistant_generated", "source-root"}
     };
     r = memoria_semantic_resolve_sources("atlas code 4729", same_root_only_echoes, 2);
-    assert(r.hit == 1);
-    assert(strcmp(r.ultimate_source_memory_id, "source-root") == 0);
+    assert(r.hit == 0);
+
+    memoria_semantic_source generated_only[] = {
+        {"generated", "internal forecast is 17 units", 0.35, 1, "assistant_generated", "generated"}
+    };
+    r = memoria_semantic_resolve_sources("internal forecast", generated_only, 1);
+    assert(r.hit == 0);
 
     memoria_semantic_source ambiguous[] = {
         {"a", "north laboratory server is atlas", 1.0, 1, "user_assertion", "a"},
@@ -47,8 +54,8 @@ int main(void) {
     r = memoria_semantic_resolve_sources("delta node capacity", question_vs_fact, 2);
     assert(r.hit == 1 && strcmp(r.memory_id, "fact") == 0);
 
-    /* A verbose generated contradiction must not beat a shorter direct fact
-       merely because it repeats more of the query. */
+    /* A verbose generated contradiction rooted in a question cannot compete
+       with an independent direct factual source. */
     memoria_semantic_source generated_conflict[] = {
         {"direct", "orion module threshold is 37 units", 1.0, 1, "user_assertion", "direct"},
         {"q", "what is the orion module threshold?", 1.0, 2, "user_assertion", "q"},
@@ -58,14 +65,22 @@ int main(void) {
     assert(r.hit == 1 && strcmp(r.memory_id, "direct") == 0);
     assert(strcmp(r.source_type, "user_assertion") == 0);
 
-    /* If a generated answer is the only retrievable member of a query-rooted
-       lineage, do not canonicalize back to the question itself. */
+    /* A generated answer rooted only in a question remains non-factual. */
     memoria_semantic_source query_root_only[] = {
         {"qroot", "which port is assigned to the beacon?", 1.0, 1, "user_assertion", "qroot"},
         {"answer", "beacon port is seven", 0.35, 2, "assistant_generated", "qroot"}
     };
     r = memoria_semantic_resolve_sources("beacon port seven", query_root_only, 2);
-    assert(r.hit == 1 && strcmp(r.memory_id, "answer") == 0);
+    assert(r.hit == 0);
+
+    /* A generated echo tied to an explicit factual root remains part of that
+       factual lineage and canonicalizes back to the root. */
+    memoria_semantic_source factual_echo[] = {
+        {"fact", "beacon port is seven", 1.0, 1, "user_assertion", "fact"},
+        {"answer", "the beacon port is seven", 0.35, 2, "assistant_generated", "fact"}
+    };
+    r = memoria_semantic_resolve_sources("beacon port seven", factual_echo, 2);
+    assert(r.hit == 1 && strcmp(r.memory_id, "fact") == 0);
 
     r = memoria_semantic_resolve_sources("unknown satellite frequency", one, 2);
     assert(r.hit == 0);
