@@ -18,7 +18,7 @@ class _FactualEvidenceView(EvidenceCore):
         self._source = source
         provenance = MemoryProvenanceIndex(source)
         for edge in source.active_edges(namespace=namespace, epoch=epoch):
-            root = provenance.active_ultimate_source(edge.evidence_id, namespace=namespace)
+            root = provenance.factual_ultimate_source(edge.evidence_id, namespace=namespace)
             if root is None:
                 continue
             self.observe_relation(
@@ -44,7 +44,8 @@ class FactualInferenceService:
     Generated and replayed memories remain in the source EvidenceCore for history
     and auditability. They enter this factual view only when their provenance
     explicitly traces to an active factual root, preventing a standalone LLM
-    hallucination from becoming an inference premise.
+    hallucination from becoming an inference premise. Derived relations with
+    explicit parents additionally require every premise to remain active.
     """
 
     def __init__(self, core: EvidenceCore) -> None:

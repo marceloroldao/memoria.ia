@@ -140,6 +140,42 @@ class MemoryProvenanceIndex:
             superseded_by=by_predicate.get(self.META_SUPERSEDED),
         )
 
+    def has_active_factual_lineage(
+        self,
+        memory_id: str,
+        *,
+        namespace: str | None = None,
+        _stack: frozenset[str] = frozenset(),
+    ) -> bool:
+        """Return whether a memory still has a complete active factual lineage.
+
+        Explicit parents of ``derived_relation`` are conjunctive premises: every
+        parent must remain factually active. If one premise is corrected or loses
+        factual authority, the old derivation becomes historical until recomputed.
+
+        Generated/replayed memories use lineage semantics rather than conjunction:
+        one active factual parent is enough to keep an echo tied to its factual
+        source. This preserves assistant-history behavior while preventing it from
+        becoming an independent factual root.
+        """
+        if memory_id in _stack:
+            return False
+        meta = self.inspect(memory_id, namespace=namespace)
+        if meta.superseded_by is not None:
+            return False
+        stack = _stack | {memory_id}
+        if meta.source_type == "derived_relation" and meta.parent_memory_ids:
+            return all(
+                self.has_active_factual_lineage(parent, namespace=namespace, _stack=stack)
+                for parent in meta.parent_memory_ids
+            )
+        if meta.source_type in {"assistant_generated", "retrieved_replay"} and meta.parent_memory_ids:
+            return any(
+                self.has_active_factual_lineage(parent, namespace=namespace, _stack=stack)
+                for parent in meta.parent_memory_ids
+            )
+        return self.is_factual_root_type(meta.source_type)
+
     def active_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
         """Return the strongest active factual root, if one exists.
 
@@ -173,7 +209,9 @@ class MemoryProvenanceIndex:
         return source
 
     def factual_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
-        """Return the active ultimate source only when it is a factual root."""
+        """Return an ultimate source only when the complete factual lineage is active."""
+        if not self.has_active_factual_lineage(memory_id, namespace=namespace):
+            return None
         return self.active_ultimate_source(memory_id, namespace=namespace)
 
     def ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
@@ -183,7 +221,7 @@ class MemoryProvenanceIndex:
         record when no active factual root exists, preserving generated/history
         metadata without granting it factual authority.
         """
-        source = self.active_ultimate_source(memory_id, namespace=namespace)
+        source = self.factual_ultimate_source(memory_id, namespace=namespace)
         if source is not None:
             return source
         return self.inspect(memory_id, namespace=namespace)
