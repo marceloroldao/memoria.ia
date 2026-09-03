@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from .evidence_core import EvidenceCore
 from .evidence_state import EvidenceCorePersistence, EvidenceStateReceipt
+from .factual_inference import FactualInferenceService
 
 
 class EvidenceRelationRequest(BaseModel):
@@ -36,6 +37,7 @@ class EvidenceInferRequest(BaseModel):
     min_independent_origins: int = Field(default=1, ge=1)
     min_origin_reliability: float | None = Field(default=None, ge=0.0, le=1.0)
     reliability_metric: str = Field(default="posterior", pattern="^(posterior|wilson)$")
+    factual_only: bool = False
 
 
 @dataclass(slots=True)
@@ -144,7 +146,8 @@ def attach_evidence_routes(
     @app.post("/api/v1/evidence/infer", dependencies=[Depends(require_admin)])
     def infer(request: EvidenceInferRequest):
         try:
-            result = service.core.infer_path(
+            inference = FactualInferenceService(service.core) if request.factual_only else service.core
+            result = inference.infer_path(
                 request.source,
                 request.target,
                 namespace=request.namespace,
@@ -162,6 +165,7 @@ def attach_evidence_routes(
             "source": result.source,
             "target": result.target,
             "inferred": result.inferred,
+            "factual_only": request.factual_only,
             "unsupported_claims": result.unsupported_claims,
             "paths": [
                 {
