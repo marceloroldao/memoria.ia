@@ -25,7 +25,9 @@ def test_burst_profile_executes_adaptive_and_preserves_equivalence():
     graph, _, _ = build_balanced_graph(100)
     executor = WorkloadStrategyExecutor()
     updates = {f"r{i}": -float(i + 1) for i in range(24)}
-    result = executor.execute(graph, updates, [0.03, 0.04, 0.70, 0.05])
+    # One sustained dense burst after a sparse period: high peak, low mean,
+    # but no repeated boundary crossing that would characterize oscillation.
+    result = executor.execute(graph, updates, [0.03, 0.04, 0.70, 0.72])
     assert result.profile.name == "burst"
     assert result.requested_strategy == "adaptive"
     assert result.executed_strategy == "adaptive"
