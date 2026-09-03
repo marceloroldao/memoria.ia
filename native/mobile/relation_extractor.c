@@ -87,6 +87,14 @@ static int string_equal_ci_ascii(const char *a, const char *b) {
     return *a == 0 && *b == 0;
 }
 
+static int listed_ci(const char *value, const char *const *items, size_t count) {
+    size_t i;
+    for (i = 0; i < count; ++i) {
+        if (string_equal_ci_ascii(value, items[i])) return 1;
+    }
+    return 0;
+}
+
 static int is_noise_term(const char *value) {
     static const char *noise[] = {
         "a", "ao", "aos", "as", "da", "das", "de", "do", "dos", "e", "eh",
@@ -94,11 +102,23 @@ static int is_noise_term(const char *value) {
         "para", "por", "que", "qual", "quais", "um", "uma", "uns", "umas", "voce",
         "você", "outro", "outra", "é"
     };
-    size_t i;
-    for (i = 0; i < sizeof(noise) / sizeof(noise[0]); ++i) {
-        if (string_equal_ci_ascii(value, noise[i])) return 1;
-    }
-    return 0;
+    return listed_ci(value, noise, sizeof(noise) / sizeof(noise[0]));
+}
+
+static int is_context_dependent_term(const char *value) {
+    static const char *weak[] = {
+        "isso", "isto", "aquilo",
+        "ele", "ela", "eles", "elas",
+        "esse", "essa", "esses", "essas", "este", "esta", "estes", "estas",
+        "aquele", "aquela", "aqueles", "aquelas",
+        "aqui", "ali", "la", "lá",
+        "quem", "onde", "como", "quando", "porque", "porquê"
+    };
+    return listed_ci(value, weak, sizeof(weak) / sizeof(weak[0]));
+}
+
+static int is_stable_relation_term(const char *value) {
+    return value && value[0] && !is_noise_term(value) && !is_context_dependent_term(value);
 }
 
 static int match_product_copula(const char *p, const char **end_out) {
@@ -147,7 +167,7 @@ static int parse_legacy_is_clause(
             r = skip_spaces(kw_end);
             r = skip_object_article(r);
             trim_range_copy(r, clause + strlen(clause), right, sizeof(right));
-            if (!left[0] || !right[0]) return 0;
+            if (!is_stable_relation_term(left) || !is_stable_relation_term(right)) return 0;
             strncpy(row->subject, left, sizeof(row->subject) - 1);
             row->subject[sizeof(row->subject) - 1] = 0;
             strcpy(row->predicate, "is");
@@ -170,13 +190,13 @@ static int parse_copular_at(
     const char *p, *after_left, *after_copula, *after_right;
     if (!is_token_start(text, start)) return 0;
     if (!copy_word(start, left, sizeof(left), &after_left)) return 0;
-    if (is_noise_term(left)) return 0;
+    if (!is_stable_relation_term(left)) return 0;
     p = skip_spaces(after_left);
     if (!match_product_copula(p, &after_copula)) return 0;
     p = skip_spaces(after_copula);
     p = skip_object_article(p);
     if (!copy_word(p, right, sizeof(right), &after_right)) return 0;
-    if (is_noise_term(right)) return 0;
+    if (!is_stable_relation_term(right)) return 0;
 
     strncpy(row->subject, left, sizeof(row->subject) - 1);
     row->subject[sizeof(row->subject) - 1] = 0;
@@ -215,13 +235,13 @@ static int parse_elliptic_at(
     if (!*end || !isspace((unsigned char)*end)) return 0;
     p = skip_spaces(end);
     if (!copy_word(p, left, sizeof(left), &after_left)) return 0;
-    if (is_noise_term(left)) return 0;
+    if (!is_stable_relation_term(left)) return 0;
     p = skip_spaces(after_left);
     if (!(keyword_at(p, "um", &end) || keyword_at(p, "uma", &end))) return 0;
     if (!*end || !isspace((unsigned char)*end)) return 0;
     p = skip_spaces(end);
     if (!copy_word(p, right, sizeof(right), &after_right)) return 0;
-    if (is_noise_term(right)) return 0;
+    if (!is_stable_relation_term(right)) return 0;
 
     strncpy(row->subject, left, sizeof(row->subject) - 1);
     row->subject[sizeof(row->subject) - 1] = 0;
