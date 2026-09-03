@@ -11,8 +11,8 @@ class MemoryPromotion:
     """Result of explicitly validating a generative memory candidate.
 
     Promotion never mutates the generative record. It creates a new factual
-    memory whose authority comes from independent validating evidence and keeps
-    lineage to both the candidate and validator for auditability.
+    derived memory whose authority remains rooted in independent validating
+    evidence and keeps audit lineage to the original candidate.
     """
 
     candidate_memory_id: str
@@ -48,13 +48,13 @@ class MemoryPromotionService:
         if validator is None:
             raise ValueError("promotion requires independent active factual validation")
 
-        # The promoted memory inherits the validator's factual source class rather
-        # than the candidate's generative authority. Only the validator is a
-        # factual parent; the generative candidate is stored in separate audit
-        # metadata so it cannot become a conjunctive factual premise by accident.
+        # Promotion is a factual derivation, not a new independent assertion.
+        # Only the validating memory is a factual parent. The original generative
+        # candidate is retained in separate audit metadata, so it can never become
+        # a conjunctive factual premise or bootstrap its own authority.
         promoted = self.provenance.register(
             promoted_memory_id,
-            source_type=validator.source_type,
+            source_type="derived_relation",
             parent_memory_ids=(validating_memory_id,),
             created_order=created_order,
             created_time=created_time,
