@@ -212,6 +212,17 @@ def build_app():
         AutoEpisodicConversationService(conversation_backend, episodic_service)
         if automatic_episode_formation else conversation_backend
     )
+    automatic_semantic_consolidation = not conversation_is_native
+    if automatic_semantic_consolidation:
+        # Keep Python factual/provenance semantics out of native production startup.
+        # Native consolidation is intentionally disabled until equivalent native
+        # lineage and persistence behavior is implemented and parity-tested.
+        from .conversation_semantic_bridge import AutoSemanticConsolidationConversationService
+
+        conversation_service = AutoSemanticConsolidationConversationService(
+            conversation_service,
+            evidence_service,
+        )
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -266,6 +277,7 @@ def build_app():
             "conversation_runtime": "native" if conversation_is_native else "python",
             "episodic_runtime": "native" if episodic_is_native else "python",
             "automatic_episode_formation": automatic_episode_formation,
+            "automatic_semantic_consolidation": automatic_semantic_consolidation,
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
