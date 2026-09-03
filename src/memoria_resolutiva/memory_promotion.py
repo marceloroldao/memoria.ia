@@ -25,6 +25,8 @@ class MemoryPromotion:
 class MemoryPromotionService:
     """Conservative bridge from generative candidates into factual memory."""
 
+    META_CANDIDATE = "promotion_candidate_memory_id"
+
     def __init__(self, provenance: MemoryProvenanceIndex) -> None:
         self.provenance = provenance
 
@@ -47,14 +49,27 @@ class MemoryPromotionService:
             raise ValueError("promotion requires independent active factual validation")
 
         # The promoted memory inherits the validator's factual source class rather
-        # than the candidate's generative authority. The candidate is preserved as
-        # lineage only; it is never converted in place.
+        # than the candidate's generative authority. Only the validator is a
+        # factual parent; the generative candidate is stored in separate audit
+        # metadata so it cannot become a conjunctive factual premise by accident.
         promoted = self.provenance.register(
             promoted_memory_id,
             source_type=validator.source_type,
             parent_memory_ids=(validating_memory_id,),
             created_order=created_order,
             created_time=created_time,
+            namespace=namespace,
+        )
+        subject = self.provenance._subject(promoted_memory_id)
+        self.provenance.core.observe_relation(
+            subject,
+            self.META_CANDIDATE,
+            candidate_memory_id,
+            evidence_id=f"promotion:{promoted_memory_id}:candidate",
+            source_text=f"promotion:{promoted_memory_id}",
+            provenance="memory-promotion",
+            origin="memory-promotion",
+            confidence=1.0,
             namespace=namespace,
         )
         return MemoryPromotion(
@@ -64,6 +79,13 @@ class MemoryPromotionService:
             source_type=promoted.source_type,
             memory_space=memory_space_for_source_type(promoted.source_type),
         )
+
+    def candidate_for_promotion(self, promoted_memory_id: str, *, namespace: str | None = None) -> str | None:
+        subject = self.provenance._subject(promoted_memory_id).casefold()
+        for edge in self.provenance.core.active_edges(namespace=namespace):
+            if edge.subject.casefold() == subject and edge.predicate == self.META_CANDIDATE:
+                return edge.object
+        return None
 
     def inspect_candidate(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
         """Expose the unchanged source record for audit/history UIs."""
