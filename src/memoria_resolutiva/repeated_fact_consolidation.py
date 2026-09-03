@@ -43,6 +43,10 @@ class RepeatedFactConsolidator:
     roots. Multiple derived relations from the same root count once. Generative
     roots never count because ``factual_ultimate_source`` rejects them.
 
+    Candidate discovery scans preserved evidence history rather than the collapsed
+    current-state projection returned by ``active_edges``. Each historical row is
+    still accepted only when its complete factual provenance remains active.
+
     The resulting memory is a normal ``FactualConsolidationService`` abstraction,
     so its support memories remain explicit conjunctive parents and correction
     invalidation continues to flow through provenance.
@@ -68,7 +72,7 @@ class RepeatedFactConsolidator:
             raise ValueError("min_independent_roots must be >= 2")
 
         grouped: dict[tuple[str, str, str], list[EvidenceEdge]] = {}
-        for edge in self.core.active_edges(namespace=namespace):
+        for edge in self.core.evidence_history(namespace=namespace):
             if self._ignored(edge):
                 continue
             grouped.setdefault(_claim_key(edge), []).append(edge)
@@ -149,11 +153,11 @@ class RepeatedFactConsolidator:
     def _already_consolidated(self, memory_id: str, *, namespace: str | None) -> bool:
         return any(
             edge.evidence_id == memory_id and edge.origin == "factual-consolidation"
-            for edge in self.core.active_edges(namespace=namespace)
+            for edge in self.core.evidence_history(namespace=namespace)
         )
 
     def _edge_by_id(self, *, memory_id: str, namespace: str | None) -> EvidenceEdge:
-        for edge in self.core.active_edges(namespace=namespace):
+        for edge in self.core.evidence_history(namespace=namespace):
             if edge.evidence_id == memory_id:
                 return edge
-        raise ValueError(f"support memory is not active: {memory_id}")
+        raise ValueError(f"support memory was not found: {memory_id}")
