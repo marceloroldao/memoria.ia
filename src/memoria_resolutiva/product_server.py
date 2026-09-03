@@ -205,7 +205,13 @@ def build_app():
         organization_id=organization_id,
         native_data_dir=native_shared_data_dir,
     )
-    conversation_service = AutoEpisodicConversationService(conversation_backend, episodic_service)
+    conversation_is_native = isinstance(conversation_backend, NativeConversationService)
+    episodic_is_native = isinstance(episodic_service, NativeEpisodicService)
+    automatic_episode_formation = conversation_is_native == episodic_is_native
+    conversation_service = (
+        AutoEpisodicConversationService(conversation_backend, episodic_service)
+        if automatic_episode_formation else conversation_backend
+    )
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -257,9 +263,9 @@ def build_app():
             "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
             "evidence_backend": evidence_service.backend,
             "evidence_persisted": evidence_service.receipt is not None,
-            "conversation_runtime": "native" if isinstance(conversation_backend, NativeConversationService) else "python",
-            "episodic_runtime": "native" if isinstance(episodic_service, NativeEpisodicService) else "python",
-            "automatic_episode_formation": True,
+            "conversation_runtime": "native" if conversation_is_native else "python",
+            "episodic_runtime": "native" if episodic_is_native else "python",
+            "automatic_episode_formation": automatic_episode_formation,
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
