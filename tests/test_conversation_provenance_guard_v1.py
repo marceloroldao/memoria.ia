@@ -57,13 +57,14 @@ def test_user_correction_supersedes_prior_user_fact_and_survives_restart(tmp_pat
     assert after.selected_context == "device alpha mode is active"
 
 
-def test_generated_only_result_exposes_generated_provenance(tmp_path: Path):
+def test_generated_only_memory_is_preserved_but_not_factual_authority(tmp_path: Path):
     service = _service(tmp_path / "evidence")
-    service.ingest(role="assistant", text="a previsão interna é 17 unidades", session_id="s", order=1)
+    stored = service.ingest(role="assistant", text="a previsão interna é 17 unidades", session_id="s", order=1)
     result = service.resolve(query="qual é a previsão interna?", session_id="s")
-    assert result.status == "HIT"
-    assert result.provenance[0]["source_type"] == "assistant_generated"
-    assert result.provenance[0]["source_authority"] < 0.5
+    assert result.status == "UNRESOLVED"
+    meta = service.provenance.inspect(stored.memory_ids[0], namespace="s")
+    assert meta.source_type == "assistant_generated"
+    assert meta.authority < 0.5
 
 
 def test_provenance_survives_restart(tmp_path: Path):

@@ -16,6 +16,7 @@ SOURCE_AUTHORITY = {
 }
 
 _VALID_TYPES = frozenset(SOURCE_AUTHORITY)
+_NON_FACTUAL_ROOT_TYPES = frozenset({"assistant_generated", "retrieved_replay"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +59,20 @@ class MemoryProvenanceIndex:
         if source_type not in _VALID_TYPES:
             raise ValueError(f"unsupported source_type: {source_type}")
         return SOURCE_AUTHORITY[source_type]
+
+    @staticmethod
+    def is_factual_root_type(source_type: str) -> bool:
+        """Return whether a root source may independently support factual state.
+
+        Generated/replayed material remains persisted and inspectable, but it
+        cannot become authoritative factual evidence merely because it exists in
+        memory. A derived memory is factual only when its active ultimate root is
+        factual (for example, an assistant echo whose lineage points back to a
+        user assertion remains part of that user's factual lineage).
+        """
+        if source_type not in _VALID_TYPES:
+            raise ValueError(f"unsupported source_type: {source_type}")
+        return source_type not in _NON_FACTUAL_ROOT_TYPES
 
     @staticmethod
     def _subject(memory_id: str) -> str:
@@ -126,13 +141,12 @@ class MemoryProvenanceIndex:
         )
 
     def active_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
-        """Return the strongest currently authoritative root, if one exists.
+        """Return the strongest active factual root, if one exists.
 
         Historical/derived memories are retained after a correction, but a
         derivation whose entire explicit lineage terminates in superseded sources
-        must not reappear as a fresh independent factual root. This distinction
-        preserves history for temporal reasoning while keeping current factual
-        resolution correction-aware.
+        must not reappear as a fresh independent factual root. Generated or replayed
+        roots remain inspectable history but are not active factual authority.
         """
         queue = [memory_id]
         seen: set[str] = set()
@@ -153,14 +167,21 @@ class MemoryProvenanceIndex:
         if not roots:
             return None
         roots.sort(key=lambda m: (-m.authority, -(m.created_order or 0), m.memory_id))
-        return roots[0]
+        source = roots[0]
+        if not self.is_factual_root_type(source.source_type):
+            return None
+        return source
+
+    def factual_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
+        """Return the active ultimate source only when it is a factual root."""
+        return self.active_ultimate_source(memory_id, namespace=namespace)
 
     def ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
-        """Trace a memory to its strongest root source.
+        """Trace a memory to its strongest factual root source when available.
 
         For backward-compatible inspection this method still returns the direct
-        record when no active root exists. Selection/ambiguity logic must use
-        active_ultimate_source() when deciding current factual authority.
+        record when no active factual root exists, preserving generated/history
+        metadata without granting it factual authority.
         """
         source = self.active_ultimate_source(memory_id, namespace=namespace)
         if source is not None:
@@ -168,18 +189,20 @@ class MemoryProvenanceIndex:
         return self.inspect(memory_id, namespace=namespace)
 
     def select(self, candidates: list[ProvenanceCandidate], *, namespace: str | None = None) -> ProvenanceCandidate | None:
-        """Select by active root source authority, never by echo count.
+        """Select by active factual-root authority, never by echo count.
 
         Candidates sharing one ultimate source form a single factual lineage. A
         candidate whose explicit lineage has only superseded roots is historical
         evidence and is intentionally excluded from current factual selection.
+        Purely generated/replayed roots are also excluded from factual selection;
+        they remain persisted for history/generative continuity.
         """
         lineages: dict[str, list[tuple[ProvenanceCandidate, MemoryProvenance]]] = {}
         for candidate in candidates:
             direct = self.inspect(candidate.memory_id, namespace=namespace)
             if direct.superseded_by is not None:
                 continue
-            source = self.active_ultimate_source(candidate.memory_id, namespace=namespace)
+            source = self.factual_ultimate_source(candidate.memory_id, namespace=namespace)
             if source is None:
                 continue
             lineages.setdefault(source.memory_id, []).append((candidate, source))
