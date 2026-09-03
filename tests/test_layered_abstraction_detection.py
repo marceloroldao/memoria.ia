@@ -56,8 +56,15 @@ def test_layers_are_not_mixed_implicitly():
     _fact(core, prov, "u3", "C", "base", "x")
     svc.consolidate(memory_id="a1", subject="Group", predicate="kind", object="shared", support_memory_ids=("u2", "u3"), namespace="s")
 
-    assert StructuralAbstractionDetector(core).discover(namespace="s", support_level=0) == ()
-    assert StructuralAbstractionDetector(core).discover(namespace="s", support_level=1) == ()
+    level0 = StructuralAbstractionDetector(core).discover(namespace="s", support_level=0)
+    assert len(level0) == 1
+    assert level0[0].predicate == "base"
+    assert level0[0].support_memory_ids == ("u2", "u3")
+    assert "u1" not in level0[0].support_memory_ids
+    assert "a1" not in level0[0].support_memory_ids
+
+    level1 = StructuralAbstractionDetector(core).discover(namespace="s", support_level=1)
+    assert level1 == ()
 
 
 def test_negative_support_level_is_rejected():
