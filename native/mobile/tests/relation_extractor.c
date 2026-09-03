@@ -63,6 +63,28 @@ int main(void) {
     n = memoria_extract_relations("o outro é ativo", rows, 8);
     assert(n == 0);
 
+    /* Deictic/pronominal references are context-dependent, not stable entities. */
+    n = memoria_extract_relations("isso é verdade", rows, 8);
+    assert(n == 0);
+    n = memoria_extract_relations("isto é importante", rows, 8);
+    assert(n == 0);
+    n = memoria_extract_relations("aquilo é estranho", rows, 8);
+    assert(n == 0);
+    n = memoria_extract_relations("ele é azul", rows, 8);
+    assert(n == 0);
+    n = memoria_extract_relations("ela é engenheira", rows, 8);
+    assert(n == 0);
+    n = memoria_extract_relations("aqui é frio", rows, 8);
+    assert(n == 0);
+
+    /* Interrogative words must not become relation endpoints. */
+    n = memoria_extract_relations("quem é atlas", rows, 8);
+    assert(n == 0);
+    n = memoria_extract_relations("onde é norte", rows, 8);
+    assert(n == 0);
+    n = memoria_extract_relations("como é azul", rows, 8);
+    assert(n == 0);
+
     n = memoria_extract_relations("conversation without explicit relation", rows, 8);
     assert(n == 0);
     return 0;
