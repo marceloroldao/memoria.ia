@@ -1,0 +1,18 @@
+{
+  "accepted": [
+    {"text": "sensor = active", "subject": "sensor", "predicate": "is", "object": "active"},
+    {"text": "meu servidor é um atlas", "subject": "servidor", "predicate": "is", "object": "atlas"},
+    {"text": "Minha bateria = carregada", "subject": "bateria", "predicate": "is", "object": "carregada"}
+  ],
+  "rejected": [
+    "isso é verdade",
+    "isto é importante",
+    "aquilo é estranho",
+    "ele é azul",
+    "ela é engenheira",
+    "aqui é frio",
+    "quem é atlas",
+    "onde é norte",
+    "como é azul"
+  ]
+}
