@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 
 from .evidence_core import EvidenceCore
 from .evidence_state import EvidenceCorePersistence, EvidenceStateReceipt
-from .factual_inference import FactualInferenceService
 
 
 class EvidenceRelationRequest(BaseModel):
@@ -146,7 +145,15 @@ def attach_evidence_routes(
     @app.post("/api/v1/evidence/infer", dependencies=[Depends(require_admin)])
     def infer(request: EvidenceInferRequest):
         try:
-            inference = FactualInferenceService(service.core) if request.factual_only else service.core
+            if request.factual_only:
+                # Keep native production startup isolated from the Python factual
+                # reference implementation. The provenance/inference stack is
+                # loaded only when this explicitly Python factual endpoint is used.
+                from .factual_inference import FactualInferenceService
+
+                inference = FactualInferenceService(service.core)
+            else:
+                inference = service.core
             result = inference.infer_path(
                 request.source,
                 request.target,

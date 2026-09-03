@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 
 from .conversation_contract import attach_conversation_routes
+from .conversation_episodic_bridge import AutoEpisodicConversationService
 from .episodic_contract import attach_episodic_routes
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
@@ -192,7 +193,7 @@ def build_app():
         allow_fallback=storage_allow_fallback,
     )
     native_shared_data_dir = _native_shared_data_dir(data_dir)
-    conversation_service = _build_conversation_service(
+    conversation_backend = _build_conversation_service(
         evidence_service=evidence_service,
         data_dir=data_dir,
         organization_id=organization_id,
@@ -203,6 +204,13 @@ def build_app():
         data_dir=data_dir,
         organization_id=organization_id,
         native_data_dir=native_shared_data_dir,
+    )
+    conversation_is_native = isinstance(conversation_backend, NativeConversationService)
+    episodic_is_native = isinstance(episodic_service, NativeEpisodicService)
+    automatic_episode_formation = conversation_is_native == episodic_is_native
+    conversation_service = (
+        AutoEpisodicConversationService(conversation_backend, episodic_service)
+        if automatic_episode_formation else conversation_backend
     )
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
@@ -226,8 +234,8 @@ def build_app():
         try:
             yield
         finally:
-            if isinstance(conversation_service, NativeConversationService):
-                conversation_service.close()
+            if isinstance(conversation_backend, NativeConversationService):
+                conversation_backend.close()
             if isinstance(episodic_service, NativeEpisodicService):
                 episodic_service.close()
 
@@ -255,8 +263,9 @@ def build_app():
             "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
             "evidence_backend": evidence_service.backend,
             "evidence_persisted": evidence_service.receipt is not None,
-            "conversation_runtime": "native" if isinstance(conversation_service, NativeConversationService) else "python",
-            "episodic_runtime": "native" if isinstance(episodic_service, NativeEpisodicService) else "python",
+            "conversation_runtime": "native" if conversation_is_native else "python",
+            "episodic_runtime": "native" if episodic_is_native else "python",
+            "automatic_episode_formation": automatic_episode_formation,
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)

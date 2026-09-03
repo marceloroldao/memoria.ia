@@ -29,8 +29,8 @@ int main(void) {
     CHECK(memoria_mobile_open("./tmp-mobile","org-test",&h) == MEMORIA_MOBILE_OK);
 
     /* A fresh install has no turns yet; resolving must be a normal miss, not an internal error. */
-    CHECK(call(h,2,"{\\\"query\\\":\\\"ola\\\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
-    CHECK(contains(out,"\\\"status\\\":\\\"UNRESOLVED\\\""));
+    CHECK(call(h,2,"{\"query\":\"ola\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out,"\"status\":\"UNRESOLVED\""));
     CHECK(contains(out,"native memory store is empty"));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 

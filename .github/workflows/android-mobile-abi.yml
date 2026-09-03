@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - integration/v1.0-candidate
+      - main
     paths:
       - "include/memoria_mobile.h"
       - "native/mobile/**"

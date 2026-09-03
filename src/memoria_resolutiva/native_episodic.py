@@ -72,14 +72,9 @@ class NativeEpisodicService:
             raise RuntimeError("native episodic runtime is closed")
         return self._runtime_lease.call(function_name, payload)
 
-    def store(self, request: EpisodeStoreRequest) -> tuple[NativeEpisodeEdge, NativeEpisodeReceipt]:
-        if request.parent_memory_ids:
-            raise ValueError(
-                "native episodic parent lineage is not yet supported; refusing to drop provenance"
-            )
+    def _store_payload(self, request: EpisodeStoreRequest, *, source_type: str, source_authority: float,
+                       ultimate_source_memory_id: str) -> tuple[NativeEpisodeEdge, NativeEpisodeReceipt]:
         topics = _normalized_topics(request.topics)
-        source_type = "user_assertion" if request.role == "user" else "assistant_generated"
-        source_authority = 0.95 if request.role == "user" else 0.25
         payload: dict[str, object] = {
             "episode_id": request.episode_id,
             "session_id": request.session_id or "",
@@ -91,7 +86,7 @@ class NativeEpisodicService:
             "topics_csv": ",".join(topics),
             "source_type": source_type,
             "source_authority": source_authority,
-            "ultimate_source_memory_id": request.episode_id,
+            "ultimate_source_memory_id": ultimate_source_memory_id,
         }
         status, response = self._call("memoria_mobile_store_episode_json", payload)
         if status == MEMORIA_MOBILE_INVALID_ARGUMENT:
@@ -104,6 +99,39 @@ class NativeEpisodicService:
         if returned_id != request.episode_id:
             raise RuntimeError("native episodic store returned an unexpected episode_id")
         return NativeEpisodeEdge(request.episode_id, request.session_id), NativeEpisodeReceipt()
+
+    def store(self, request: EpisodeStoreRequest) -> tuple[NativeEpisodeEdge, NativeEpisodeReceipt]:
+        if request.parent_memory_ids:
+            raise ValueError(
+                "native episodic parent lineage is not yet supported on the public store path; refusing to drop provenance"
+            )
+        source_type = "user_assertion" if request.role == "user" else "assistant_generated"
+        source_authority = 0.95 if request.role == "user" else 0.25
+        return self._store_payload(
+            request,
+            source_type=source_type,
+            source_authority=source_authority,
+            ultimate_source_memory_id=request.episode_id,
+        )
+
+    def store_derived(self, request: EpisodeStoreRequest) -> tuple[NativeEpisodeEdge, NativeEpisodeReceipt]:
+        """Persist an internal automatic episode with one already-validated factual parent.
+
+        The bridge is intentionally narrower than the public episode store. Native
+        schema v1 stores one ultimate-source pointer, so multi-parent provenance is
+        rejected rather than silently flattened.
+        """
+        if len(request.parent_memory_ids) != 1:
+            raise ValueError("automatic derived episode requires exactly one factual parent memory")
+        parent_id = request.parent_memory_ids[0]
+        if not parent_id.strip():
+            raise ValueError("automatic derived episode parent must be non-empty")
+        return self._store_payload(
+            request,
+            source_type="derived_relation",
+            source_authority=0.75,
+            ultimate_source_memory_id=parent_id,
+        )
 
     def resolve(self, request: EpisodeRecallRequest) -> EpisodicRecallResult:
         topics = _normalized_topics(request.topics)

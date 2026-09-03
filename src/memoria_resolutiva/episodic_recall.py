@@ -68,13 +68,16 @@ class EpisodicRecallService:
         self.core = core
         self.provenance = MemoryProvenanceIndex(core)
 
-    def record(self, episode: Episode) -> EvidenceEdge:
+    def record(self, episode: Episode, *, source_type: str | None = None) -> EvidenceEdge:
         if episode.role not in {"user", "assistant"}:
             raise ValueError("role must be 'user' or 'assistant'")
         if not episode.episode_id.strip() or not episode.text.strip():
             raise ValueError("episode_id and text must be non-empty")
         if episode.order < 0:
             raise ValueError("order must be >= 0")
+        effective_source_type = source_type or ("user_assertion" if episode.role == "user" else "assistant_generated")
+        if effective_source_type == "derived_relation" and not episode.parent_memory_ids:
+            raise ValueError("derived episode requires factual parent lineage")
         event_type = _key(episode.event_type) if episode.event_type else ""
         topics = tuple(sorted({_key(t) for t in episode.topics if _key(t)}))
         metadata = "|".join((episode.role, str(episode.order), episode.timestamp or "", event_type, ",".join(topics)))
@@ -84,9 +87,8 @@ class EpisodicRecallService:
             provenance="conversation-episode", origin=f"conversation-{episode.role}",
             confidence=1.0, namespace=episode.namespace,
         )
-        source_type = "user_assertion" if episode.role == "user" else "assistant_generated"
         self.provenance.register(
-            episode.episode_id, source_type=source_type,
+            episode.episode_id, source_type=effective_source_type,
             parent_memory_ids=episode.parent_memory_ids,
             created_order=episode.order, created_time=episode.timestamp,
             namespace=episode.namespace,
