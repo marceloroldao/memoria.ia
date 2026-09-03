@@ -1,5 +1,5 @@
 from benchmarks.recompute_workload_matrix import workload_profiles
-from memoria_resolutiva.workload_classifier import classify_workload
+from memoria_resolutiva.workload_profile import classify_workload
 
 
 EXPECTED = {
@@ -21,5 +21,5 @@ def test_classifier_matches_all_matrix_profiles():
     for name, counts in workload_profiles().items():
         result = classify_workload(_fractions_for_counts(counts))
         expected_profile, expected_strategy = EXPECTED[name]
-        assert result.profile == expected_profile, (name, result)
+        assert result.name == expected_profile, (name, result)
         assert result.recommended_strategy == expected_strategy, (name, result)
