@@ -36,7 +36,7 @@ def _fact(core: EvidenceCore, prov: MemoryProvenanceIndex, memory_id: str, subje
 def run_shared_hierarchy() -> SharedHierarchyResult:
     core = EvidenceCore()
     prov = MemoryProvenanceIndex(core)
-    svc = FactualConsolidationService(core, max_level=4)
+    svc = FactualConsolidationService(core)
 
     _fact(core, prov, "a1", "Alt", "is_a", "cat")
     _fact(core, prov, "a2", "Alt2", "is_a", "cat")
@@ -77,6 +77,7 @@ def run_shared_hierarchy() -> SharedHierarchyResult:
         object="cat-groups",
         support_memory_ids=("abs-a", "abs-b"),
         namespace="hier",
+        max_level=4,
     )
     svc.consolidate(
         memory_id="root-b",
@@ -85,6 +86,7 @@ def run_shared_hierarchy() -> SharedHierarchyResult:
         object="mixed-groups",
         support_memory_ids=("abs-b", "abs-c"),
         namespace="hier",
+        max_level=4,
     )
 
     before = dict(
