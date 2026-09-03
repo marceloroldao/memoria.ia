@@ -127,7 +127,7 @@ class EpisodicRecallService:
                 continue
             if factual_only:
                 source = self.provenance.active_ultimate_source(episode.episode_id, namespace=namespace)
-                if source is None or not self.provenance.is_factual_source_type(source.source_type):
+                if source is None or not self.provenance.is_factual_root_type(source.source_type):
                     continue
             if requested_type is not None and _key(episode.event_type or "") != requested_type:
                 continue
