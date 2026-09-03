@@ -6,7 +6,6 @@ import os
 
 from .conversation_contract import attach_conversation_routes
 from .conversation_episodic_bridge import AutoEpisodicConversationService
-from .conversation_semantic_bridge import AutoSemanticConsolidationConversationService
 from .episodic_contract import attach_episodic_routes
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
@@ -215,6 +214,11 @@ def build_app():
     )
     automatic_semantic_consolidation = not conversation_is_native
     if automatic_semantic_consolidation:
+        # Keep Python factual/provenance semantics out of native production startup.
+        # Native consolidation is intentionally disabled until equivalent native
+        # lineage and persistence behavior is implemented and parity-tested.
+        from .conversation_semantic_bridge import AutoSemanticConsolidationConversationService
+
         conversation_service = AutoSemanticConsolidationConversationService(
             conversation_service,
             evidence_service,
