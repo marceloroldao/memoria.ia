@@ -141,13 +141,12 @@ class MemoryProvenanceIndex:
         )
 
     def active_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
-        """Return the strongest currently authoritative root, if one exists.
+        """Return the strongest active factual root, if one exists.
 
         Historical/derived memories are retained after a correction, but a
         derivation whose entire explicit lineage terminates in superseded sources
-        must not reappear as a fresh independent factual root. This distinction
-        preserves history for temporal reasoning while keeping current factual
-        resolution correction-aware.
+        must not reappear as a fresh independent factual root. Generated or replayed
+        roots remain inspectable history but are not active factual authority.
         """
         queue = [memory_id]
         seen: set[str] = set()
@@ -168,21 +167,21 @@ class MemoryProvenanceIndex:
         if not roots:
             return None
         roots.sort(key=lambda m: (-m.authority, -(m.created_order or 0), m.memory_id))
-        return roots[0]
-
-    def factual_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
-        """Return the active ultimate source only when it is a factual root."""
-        source = self.active_ultimate_source(memory_id, namespace=namespace)
-        if source is None or not self.is_factual_root_type(source.source_type):
+        source = roots[0]
+        if not self.is_factual_root_type(source.source_type):
             return None
         return source
 
+    def factual_ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance | None:
+        """Return the active ultimate source only when it is a factual root."""
+        return self.active_ultimate_source(memory_id, namespace=namespace)
+
     def ultimate_source(self, memory_id: str, *, namespace: str | None = None) -> MemoryProvenance:
-        """Trace a memory to its strongest root source.
+        """Trace a memory to its strongest factual root source when available.
 
         For backward-compatible inspection this method still returns the direct
-        record when no active root exists. Selection/ambiguity logic must use
-        active_ultimate_source() when deciding current factual authority.
+        record when no active factual root exists, preserving generated/history
+        metadata without granting it factual authority.
         """
         source = self.active_ultimate_source(memory_id, namespace=namespace)
         if source is not None:
