@@ -27,7 +27,13 @@ _QUERY_STOPWORDS = {
     "foi", "me", "meu", "meus", "minha", "minhas", "o", "os", "para", "por", "que", "qual",
     "quais", "um", "uma", "uns", "umas", "voce", "você",
 }
-_RELATION_NOISE = _QUERY_STOPWORDS | {"outro", "outra"}
+_RELATION_NOISE = _QUERY_STOPWORDS | {
+    "outro", "outra",
+    "isso", "isto", "aquilo", "esse", "essa", "este", "esta",
+    "ele", "ela", "eles", "elas",
+    "aqui", "ali", "la", "lá",
+    "quem", "onde", "como", "quando",
+}
 _AGGREGATE_QUERY = re.compile(r"^\s*(?:quais|liste|listar|mostre|enumere)\b", re.IGNORECASE)
 
 
