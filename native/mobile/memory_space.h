@@ -20,4 +20,12 @@ static inline int memoria_may_be_factual_root(const char *source_type) {
     return memoria_memory_space_for_source_type(source_type) == MEMORIA_MEMORY_SPACE_FACTUAL;
 }
 
+/*
+ * Native lineage integration rule:
+ * active_lineage_root() may traverse generative/replayed records to reach a
+ * factual parent, but a terminal root must satisfy memoria_may_be_factual_root().
+ * This mirrors Python MemoryProvenanceIndex semantics and prevents an unparented
+ * assistant-generated turn from becoming current factual state.
+ */
+
 #endif
