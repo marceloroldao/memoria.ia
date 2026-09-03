@@ -68,6 +68,14 @@ static int source_is_retrievable(const memoria_semantic_source *source) {
     return 1;
 }
 
+static int source_type_is_factual_root(const char *source_type) {
+    if (!source_type) return 0;
+    return strcmp(source_type, "direct_observation") == 0 ||
+           strcmp(source_type, "user_correction") == 0 ||
+           strcmp(source_type, "user_assertion") == 0 ||
+           strcmp(source_type, "external_import") == 0;
+}
+
 static const char *root_id(const memoria_semantic_source *source) {
     if (source->ultimate_source_memory_id && source->ultimate_source_memory_id[0]) return source->ultimate_source_memory_id;
     return source->memory_id;
@@ -78,12 +86,31 @@ static int same_root(const memoria_semantic_source *a, const memoria_semantic_so
     return ra && rb && strcmp(ra, rb) == 0;
 }
 
+static int root_is_factual(const memoria_semantic_source *sources, size_t source_count, size_t selected) {
+    const char *root = root_id(&sources[selected]);
+    size_t i;
+    if (!root) return 0;
+    for (i = 0; i < source_count; ++i) {
+        if (!sources[i].memory_id || strcmp(sources[i].memory_id, root) != 0) continue;
+        if (!source_is_retrievable(&sources[i])) return 0;
+        return source_type_is_factual_root(sources[i].source_type);
+    }
+    return 0;
+}
+
+static int source_is_factual_candidate(const memoria_semantic_source *sources, size_t source_count, size_t selected) {
+    const memoria_semantic_source *source = &sources[selected];
+    if (!source_is_retrievable(source)) return 0;
+    if (source_type_is_factual_root(source->source_type) && source->memory_id && root_id(source) && strcmp(source->memory_id, root_id(source)) == 0) return 1;
+    return root_is_factual(sources, source_count, selected);
+}
+
 static size_t canonical_source_for_root(const memoria_semantic_source *sources, size_t source_count, size_t selected) {
     const char *root = root_id(&sources[selected]);
     size_t i, best = selected;
     if (!root) return selected;
     for (i = 0; i < source_count; ++i) {
-        if (!same_root(&sources[i], &sources[selected]) || !source_is_retrievable(&sources[i])) continue;
+        if (!same_root(&sources[i], &sources[selected]) || !source_is_factual_candidate(sources, source_count, i)) continue;
         if (sources[i].memory_id && strcmp(sources[i].memory_id, root) == 0) return i;
         if (sources[i].authority > sources[best].authority + 1e-12) best = i;
         else if (fabs(sources[i].authority - sources[best].authority) < 1e-12 && sources[i].order < sources[best].order) best = i;
@@ -101,7 +128,7 @@ memoria_semantic_result memoria_semantic_resolve_sources(const char *query, cons
 
     for (i = 0; i < source_count; ++i) {
         double overlap, authority, rank;
-        if (!source_is_retrievable(&sources[i])) continue;
+        if (!source_is_factual_candidate(sources, source_count, i)) continue;
         overlap = overlap_score(query, sources[i].text);
         if (overlap <= 0.0) continue;
         authority = sources[i].authority;
@@ -109,8 +136,8 @@ memoria_semantic_result memoria_semantic_resolve_sources(const char *query, cons
         if (authority > 1.0) authority = 1.0;
 
         /* Authority is intentionally slightly stronger than lexical overlap.
-           This prevents a verbose generated echo/hallucination from outranking
-           a shorter direct factual source merely because it repeats more query words. */
+           Generated descendants can participate only when their explicit root is
+           a retrievable factual source present in this resolution set. */
         rank = 0.45 * overlap + 0.55 * authority;
 
         if (!found || rank > best_rank + 1e-12 ||
