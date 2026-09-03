@@ -5,23 +5,28 @@ from collections import deque
 from typing import Hashable, Callable
 
 
+CombineFn = Callable[[list[float]], float]
+
+
 @dataclass(slots=True)
 class ComputeNode:
     node_id: Hashable
     parents: tuple[Hashable, ...]
     value: float = 0.0
     history: list[float] = field(default_factory=list)
+    combine: CombineFn | None = None
 
 
 class IncrementalRecomputeGraph:
     """DAG recomputation with reverse dependency tracking.
 
     Root nodes may be updated directly. Derived nodes are recomputed only when
-    reachable from a changed root. A full recomputation method is provided for
-    equivalence testing.
+    reachable from a changed root. Each derived node may optionally provide its
+    own combine rule; nodes without one inherit the graph default. A full
+    recomputation method is provided for equivalence testing.
     """
 
-    def __init__(self, combine: Callable[[list[float]], float] | None = None):
+    def __init__(self, combine: CombineFn | None = None):
         self.nodes: dict[Hashable, ComputeNode] = {}
         self.children: dict[Hashable, set[Hashable]] = {}
         self.combine = combine or (lambda xs: sum(xs) / len(xs) if xs else 0.0)
@@ -30,13 +35,25 @@ class IncrementalRecomputeGraph:
         self.nodes[node_id] = ComputeNode(node_id, (), value, [value])
         self.children.setdefault(node_id, set())
 
-    def add_derived(self, node_id: Hashable, parents: list[Hashable]) -> None:
+    def _combine_node(self, node: ComputeNode) -> float:
+        combine = node.combine or self.combine
+        return combine([self.nodes[p].value for p in node.parents])
+
+    def add_derived(
+        self,
+        node_id: Hashable,
+        parents: list[Hashable],
+        *,
+        combine: CombineFn | None = None,
+    ) -> None:
         if not parents:
             raise ValueError("derived node requires parents")
         if any(p not in self.nodes for p in parents):
             raise KeyError("all parents must exist")
-        value = self.combine([self.nodes[p].value for p in parents])
-        self.nodes[node_id] = ComputeNode(node_id, tuple(parents), value, [value])
+        node = ComputeNode(node_id, tuple(parents), combine=combine)
+        node.value = self._combine_node(node)
+        node.history.append(node.value)
+        self.nodes[node_id] = node
         self.children.setdefault(node_id, set())
         for p in parents:
             self.children.setdefault(p, set()).add(node_id)
@@ -82,7 +99,7 @@ class IncrementalRecomputeGraph:
                 touched.append(n)
                 continue
             current = self.nodes[n]
-            current.value = self.combine([self.nodes[p].value for p in current.parents])
+            current.value = self._combine_node(current)
             current.history.append(current.value)
             touched.append(n)
         return touched
@@ -94,7 +111,7 @@ class IncrementalRecomputeGraph:
         for n in order:
             current = self.nodes[n]
             if current.parents:
-                current.value = self.combine([self.nodes[p].value for p in current.parents])
+                current.value = self._combine_node(current)
                 current.history.append(current.value)
             touched.append(n)
         return touched
