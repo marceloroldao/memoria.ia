@@ -54,6 +54,12 @@ application / OFF.IA / agent
 
 Memoria.ia owns memory semantics, lineage, abstraction and recomputation policy. Resolutive-DB / BDR owns durable persistence.
 
+## Known RC4 boundaries
+
+- Mobile ABI does not yet expose the `external_public` learning path required for Curiosidade to persist public-source evidence directly from the mobile/native boundary. This remains a post-RC4 integration item and must not be represented as available in RC4.
+- `live-openai` is classified as an optional external-provider validation, not a release-blocking gate. It runs only on `product/enterprise-alpha` pushes or by manual dispatch, requires the repository `OPENAI_API_KEY`, and can fail because of provider credentials, quota, model availability or network conditions independently of Memoria.ia core correctness.
+- RC4 release blocking remains based on deterministic semantic/product/credentials/performance/metadata gates that run without requiring a live external LLM provider.
+
 ## Release status
 
 This is a release candidate and must be published as a pre-release.
