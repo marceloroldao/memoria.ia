@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from collections import deque
-from typing import Hashable, Callable
+from typing import Hashable, Callable, Mapping
 
 
 CombineFn = Callable[[list[float]], float]
@@ -21,7 +21,7 @@ class IncrementalRecomputeGraph:
     """DAG recomputation with reverse dependency tracking.
 
     Root nodes may be updated directly. Derived nodes are recomputed only when
-    reachable from a changed root. Each derived node may optionally provide its
+    reachable from changed roots. Each derived node may optionally provide its
     own combine rule; nodes without one inherit the graph default. A full
     recomputation method is provided for equivalence testing.
     """
@@ -85,24 +85,41 @@ class IncrementalRecomputeGraph:
             raise ValueError("cycle detected")
         return order
 
-    def update_root_incremental(self, node_id: Hashable, value: float) -> list[Hashable]:
-        node = self.nodes[node_id]
-        if node.parents:
-            raise ValueError("only root nodes can be updated directly")
-        node.value = value
-        node.history.append(value)
-        affected = self._affected({node_id})
+    def update_roots_incremental(self, updates: Mapping[Hashable, float]) -> list[Hashable]:
+        """Apply several root changes and recompute their affected union once.
+
+        Shared descendants are recomputed at most once for the batch, which
+        avoids repeated work when several changed roots converge higher in the
+        DAG. The returned order is the topological order of touched nodes.
+        """
+        if not updates:
+            return []
+
+        changed = set(updates)
+        for node_id in changed:
+            if node_id not in self.nodes:
+                raise KeyError(node_id)
+            if self.nodes[node_id].parents:
+                raise ValueError("only root nodes can be updated directly")
+
+        for node_id, value in updates.items():
+            node = self.nodes[node_id]
+            node.value = value
+            node.history.append(value)
+
+        affected = self._affected(changed)
         order = self._topological_subset(affected)
         touched = []
-        for n in order:
-            if n == node_id:
-                touched.append(n)
-                continue
-            current = self.nodes[n]
-            current.value = self._combine_node(current)
-            current.history.append(current.value)
-            touched.append(n)
+        for node_id in order:
+            if node_id not in changed:
+                current = self.nodes[node_id]
+                current.value = self._combine_node(current)
+                current.history.append(current.value)
+            touched.append(node_id)
         return touched
+
+    def update_root_incremental(self, node_id: Hashable, value: float) -> list[Hashable]:
+        return self.update_roots_incremental({node_id: value})
 
     def full_recompute(self) -> list[Hashable]:
         subset = set(self.nodes)
