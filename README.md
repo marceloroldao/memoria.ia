@@ -12,11 +12,13 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 ## v1.0 release candidate
 
-Current publication candidate: **v1.0.0-rc2** (`1.0.0rc2` package version).
+Current publication candidate: **v1.0.0-rc4** (`1.0.0rc4` package version).
 
-Archival DOI: **[10.5281/zenodo.22244038](https://doi.org/10.5281/zenodo.22244038)**.
+RC4 functional freeze: **`b4a891eb76e7fc51a272120b55dff07abe58e451`**.
 
-This release candidate consolidates the validated research core and the first deployable PC/server/mobile runtime boundary while preserving the architecture:
+The most recent archived DOI in this release lineage remains the RC2 record: **[10.5281/zenodo.22244038](https://doi.org/10.5281/zenodo.22244038)**. A dedicated RC4 DOI is added only after the archival record exists.
+
+This release candidate consolidates the validated research core and deployable PC/server/mobile runtime boundary while preserving the architecture:
 
 ```text
 application / OFF.IA / agent
@@ -26,9 +28,9 @@ application / OFF.IA / agent
    Resolutive-DB / BDR
 ```
 
-Memoria.ia owns memory semantics, state, relations, provenance, trajectories and context selection. BDR owns durable persistence. LLMs remain optional consumers and do not become the authoritative memory store.
+Memoria.ia owns memory semantics, state, relations, provenance, trajectories, abstraction, recomputation policy and context selection. BDR owns durable persistence. LLMs remain optional consumers and do not become the authoritative memory store.
 
-The v1.0.0-rc2 line includes:
+The v1.0.0-rc4 line includes:
 
 - organization-scoped memory isolation;
 - FastAPI `/api/v1` PC/server product interface;
@@ -45,21 +47,30 @@ The v1.0.0-rc2 line includes:
 - namespace isolation and provenance lineage;
 - conservative `HIT` / `MISS` / `UNRESOLVED` behavior;
 - indexed native resolve path for large-memory workloads;
+- explicit layered factual abstraction with provenance;
+- vertical dependency edges between abstraction levels;
+- selective invalidation of dependent facts and abstractions;
+- incremental recomputation of affected branches;
+- multi-root batch recomputation with shared-ancestor deduplication;
+- adaptive incremental/full recomputation by affected graph density;
+- optional hysteresis for oscillating workloads;
+- deterministic workload profiling and audited strategy execution;
+- reproducible layered scale and performance baselines;
 - official Memoria.ia visual identity assets.
 
-The candidate is intentionally frozen from post-v1 feature expansion. External/public knowledge learning tracked by issue #114 / PR #116 is post-v1 work and is **not** part of this release candidate.
+The RC4 candidate is intentionally frozen from further feature expansion. After the functional freeze, changes on this release line are restricted to stabilization, regression fixes, documentation, packaging and publication validation.
 
 ## Validation status
 
-The exact v1 candidate lineage integrated through PR #112 passed the required native/mobile validation gates before the RC branch was created:
+The RC4 functional lineage passed the semantic, product, credentials and layered-performance gates before the release branch was prepared.
 
-- Android mobile ABI: PASS;
-- native production image: PASS;
-- Ubuntu/Windows candidate regression: PASS;
-- BDR Linux/Ubuntu/Windows integration: PASS;
-- native 100 / 1k / 10k benchmark matrix: PASS.
+Representative deterministic layered baseline:
 
-The indexed native resolver improved the measured 10k-memory workload from approximately **693.233 ms to 6.288 ms p50** and **710.630 ms to 6.391 ms p95** on the recorded validation environment. These are benchmark-specific results, not a universal latency guarantee.
+- 127 nodes: 7 incremental nodes touched versus 127 full;
+- 1,023 nodes: 10 incremental nodes touched versus 1,023 full;
+- 16,383 nodes: 14 incremental nodes touched versus 16,383 full.
+
+The recorded 16,383-node CI baseline measured roughly **0.125 ms** for the local incremental update versus **75.716 ms** for full recomputation on that specific runner. These are environment-specific measurements; exact snapshot equivalence and touched-node locality are the deterministic correctness criteria.
 
 Release-candidate metadata is checked by:
 
@@ -71,18 +82,18 @@ The final v1.0 release will only be promoted after the release-candidate gates r
 
 ## Security status
 
-**v1.0.0-rc2 is not represented as production-security certified.**
+**v1.0.0-rc4 is not represented as production-security certified.**
 
 The repository includes authentication boundaries, application isolation, integrity-checked backup/restore and negative security tests, but no independent production security audit is claimed.
 
 ## Previous releases
 
+- **v1.0.0-rc3** — corrective release candidate that fixed RC2 tag/provenance alignment.
+- **v1.0.0-rc2** — archived candidate; DOI `10.5281/zenodo.22244038`.
 - **v1.0.0-rc1** — first v1.0 release candidate; DOI `10.5281/zenodo.22170165`.
 - **v0.99.0-alpha.1** — first PC/server product alpha.
 - **v0.95.1** — archived stable research metadata patch.
 - **v0.95.0** — stable research release.
-
-Memoria.ia v1.0.0-rc2 DOI: **10.5281/zenodo.22244038**.
 
 Archived v0.95 DOI: **10.5281/zenodo.21973472**.
 
@@ -116,7 +127,7 @@ with the v0.95 research default configuration:
 
 The repository retains historical experimental MA2A material, but the network protocol is now treated as a separate architectural boundary/project.
 
-The local v1.0.0-rc2 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
+The local v1.0.0-rc4 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
 
 See:
 
@@ -163,7 +174,7 @@ See the documentation under `docs/` for API, Android runtime, BDR integration, r
 
 ## Research and claims status
 
-Memoria.ia remains an experimental architecture. v1.0.0-rc2 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
+Memoria.ia remains an experimental architecture. v1.0.0-rc4 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
 
 Important limitations include:
 
@@ -172,7 +183,7 @@ Important limitations include:
 - performance measurements are workload- and environment-specific;
 - distributed/federated operation remains outside the stable local runtime boundary;
 - security controls have not undergone an independent production certification;
-- post-v1 external/public learning and autonomous curiosity are still under development.
+- post-v1 external/public learning and autonomous curiosity remain separate development tracks.
 
 Negative results, failed hypotheses and known limitations are intentionally retained where applicable.
 
@@ -186,8 +197,8 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 - Project governance baseline: **RSPS 1.0-draft**
 - RSMS compatibility for this candidate: **RSMS 1.0-rc.1**
 
-v1.0.0-rc2 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
+v1.0.0-rc4 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
 
 ## Release notes
 
-See `RELEASE_NOTES_v1.0.0-rc2.md` for the publication scope, validation evidence and known boundaries of this candidate.
+See `RELEASE_NOTES_v1.0.0-rc4.md` for the publication scope, validation evidence and known boundaries of this candidate.
