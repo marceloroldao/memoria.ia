@@ -93,6 +93,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
 
+  add_executable(memoria_mobile_memory_space tests/memory_space.c)
+  target_include_directories(memoria_mobile_memory_space PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_mobile_memory_space PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_mobile_memory_space COMMAND memoria_mobile_memory_space)
+
   add_executable(memoria_semantic_kernel_test tests/semantic_kernel.c semantic_kernel.c)
   target_include_directories(memoria_semantic_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)

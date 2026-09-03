@@ -21,6 +21,15 @@
       "query":"project atlas code",
       "expected_status":"HIT",
       "expected_context":"project atlas code is 5831"
+    },
+    {
+      "name": "assistant_generated_root_is_not_fact",
+      "sources": [
+        {"memory_id":"generated","role":"assistant","text":"project zephyr code is 9999","order":1}
+      ],
+      "query":"project zephyr code",
+      "expected_status":"UNRESOLVED",
+      "expected_context":""
     }
   ]
 }

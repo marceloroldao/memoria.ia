@@ -7,6 +7,8 @@ from typing import Protocol
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from .memory_space import memory_space_for_source_type
+
 
 @dataclass(frozen=True, slots=True)
 class ConversationIngestResult:
@@ -56,6 +58,16 @@ class ConversationService(Protocol):
     def resolve(self, *, query: str, session_id: str | None = None) -> ConversationResolveResult: ...
 
 
+def _provenance_with_memory_space(row: dict) -> dict:
+    """Add epistemic-space metadata without breaking existing provenance fields."""
+    payload = dict(row)
+    ultimate_type = str(payload.get("source_type") or "retrieved_replay")
+    immediate_type = str(payload.get("immediate_source_type") or ultimate_type)
+    payload["memory_space"] = memory_space_for_source_type(immediate_type).value
+    payload["ultimate_memory_space"] = memory_space_for_source_type(ultimate_type).value
+    return payload
+
+
 def attach_conversation_routes(app: FastAPI, *, api_key: str, service: ConversationService) -> None:
     """Attach the stable HTTP contract without importing a semantic implementation."""
 
@@ -95,5 +107,5 @@ def attach_conversation_routes(app: FastAPI, *, api_key: str, service: Conversat
             "memory_ids": list(result.memory_ids),
             "selected_context": result.selected_context,
             "relations": list(result.relations),
-            "provenance": list(result.provenance),
+            "provenance": [_provenance_with_memory_space(row) for row in result.provenance],
         }
