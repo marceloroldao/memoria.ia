@@ -34,8 +34,9 @@ class ProductEpisodicService:
         self.evidence = evidence
         self.recall = EpisodicRecallService(evidence.core)
 
-    def store(self, request: EpisodeStoreRequest):
-        edge = self.recall.record(Episode(
+    @staticmethod
+    def _episode(request: EpisodeStoreRequest) -> Episode:
+        return Episode(
             request.episode_id,
             request.role,
             request.text,
@@ -45,7 +46,21 @@ class ProductEpisodicService:
             request.event_type,
             tuple(request.topics),
             tuple(request.parent_memory_ids),
-        ))
+        )
+
+    def store(self, request: EpisodeStoreRequest):
+        edge = self.recall.record(self._episode(request))
+        receipt = self.evidence.save()
+        return edge, receipt
+
+    def store_derived(self, request: EpisodeStoreRequest):
+        if len(request.parent_memory_ids) != 1:
+            raise ValueError("automatic derived episode requires exactly one factual parent memory")
+        parent_id = request.parent_memory_ids[0]
+        source = self.recall.provenance.factual_ultimate_source(parent_id, namespace=request.session_id)
+        if source is None:
+            raise ValueError("automatic derived episode requires an active factual parent")
+        edge = self.recall.record(self._episode(request), source_type="derived_relation")
         receipt = self.evidence.save()
         return edge, receipt
 
@@ -57,6 +72,38 @@ class ProductEpisodicService:
             event_type=request.event_type,
             topics=tuple(request.topics),
         )
+
+    def history(
+        self,
+        *,
+        session_id: str | None = None,
+        event_type: str | None = None,
+        limit: int = 1000,
+    ) -> list[dict[str, object]]:
+        wanted_type = event_type.casefold().strip() if event_type else None
+        rows: list[dict[str, object]] = []
+        for episode in self.recall.episodes(namespace=session_id):
+            if wanted_type is not None and (episode.event_type or "").casefold() != wanted_type:
+                continue
+            direct = self.recall.provenance.inspect(episode.episode_id, namespace=session_id)
+            source = self.recall.provenance.factual_ultimate_source(episode.episode_id, namespace=session_id)
+            rows.append({
+                "episode_id": episode.episode_id,
+                "session_id": episode.namespace or "",
+                "role": episode.role,
+                "text": episode.text,
+                "order": episode.order,
+                "timestamp": episode.timestamp or "",
+                "event_type": episode.event_type or "",
+                "topics_csv": ",".join(episode.topics),
+                "source_type": direct.source_type,
+                "source_authority": direct.authority,
+                "ultimate_source_memory_id": None if source is None else source.memory_id,
+                "superseded": direct.superseded_by is not None,
+            })
+            if len(rows) >= limit:
+                break
+        return rows
 
 
 def attach_episodic_routes(app: FastAPI, *, api_key: str, service: ProductEpisodicService) -> None:
