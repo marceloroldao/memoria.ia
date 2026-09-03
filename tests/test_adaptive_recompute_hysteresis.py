@@ -19,9 +19,10 @@ def test_hysteresis_prevents_ping_pong_near_boundary():
     dense = policy.apply(graph, _updates(32, -20.0))
     assert dense.mode == "full"
 
-    # A medium-density batch below the enter threshold does not immediately
-    # switch back because it is still above the lower exit threshold.
-    medium = policy.apply(graph, _updates(16, -30.0))
+    # On this 127-node tree, 20 adjacent changed roots affect ~33% of nodes:
+    # below the enter threshold but still above the lower exit threshold.
+    medium = policy.apply(graph, _updates(20, -30.0))
+    assert 0.30 <= medium.affected_fraction < 0.50
     assert medium.mode == "full"
 
     sparse_again = policy.apply(graph, _updates(1, -40.0))
