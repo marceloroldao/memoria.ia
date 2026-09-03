@@ -1,0 +1,24 @@
+name: Post-v1 Retrieval v2 A/B
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-retrieval-v2-ab-benchmark
+  pull_request:
+    branches:
+      - post-v1/core-base
+
+jobs:
+  retrieval-v2-ab:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Retrieval v2 A/B benchmark
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror \
+            -Inative/mobile \
+            native/mobile/retrieval_v2_normalization.c \
+            native/mobile/tests/retrieval_v2_ab_benchmark.c \
+            -o /tmp/retrieval_v2_ab
+      - name: Run Retrieval v2 A/B benchmark
+        run: /tmp/retrieval_v2_ab
