@@ -56,9 +56,10 @@ class EpisodicRecallResult:
 class EpisodicRecallService:
     """Generic temporal recall over EvidenceCore with provenance transparency.
 
-    Semantic fit determines the candidate set; recency selects the latest justified
-    episode. Provenance is exposed and superseded episodes are ignored, but source
-    authority does not override an explicit temporal request such as "latest".
+    Historical recall keeps assistant-generated episodes available as history.
+    Callers that need factual evidence can request ``factual_only=True``; in that
+    mode an episode must resolve to an active factual root instead of becoming
+    factual merely because it was generated or replayed.
     """
 
     PREDICATE = "conversation_episode"
@@ -110,7 +111,8 @@ class EpisodicRecallService:
         return tuple(sorted(episodes, key=lambda e: (e.order, e.episode_id)))
 
     def recall_latest(self, *, query: str, namespace: str | None = None, role: str | None = None,
-                      event_type: str | None = None, topics: tuple[str, ...] | list[str] = ()) -> EpisodicRecallResult:
+                      event_type: str | None = None, topics: tuple[str, ...] | list[str] = (),
+                      factual_only: bool = False) -> EpisodicRecallResult:
         query = query.strip()
         if not query:
             raise ValueError("query must be non-empty")
@@ -123,6 +125,10 @@ class EpisodicRecallService:
         for episode in self.episodes(namespace=namespace):
             if role is not None and episode.role != role:
                 continue
+            if factual_only:
+                source = self.provenance.active_ultimate_source(episode.episode_id, namespace=namespace)
+                if source is None or not self.provenance.is_factual_root_type(source.source_type):
+                    continue
             if requested_type is not None and _key(episode.event_type or "") != requested_type:
                 continue
             episode_topics = {_key(t) for t in episode.topics}

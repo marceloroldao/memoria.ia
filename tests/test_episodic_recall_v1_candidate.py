@@ -59,3 +59,30 @@ def test_assistant_episode_with_parent_exposes_ultimate_user_source():
     assert result.episode_ids == ("a1",)
     assert result.source_type == "user_assertion"
     assert result.ultimate_source_memory_id == "u1"
+
+
+def test_factual_only_rejects_pure_generated_episode_but_history_keeps_it():
+    core = EvidenceCore()
+    svc = EpisodicRecallService(core)
+    svc.record(Episode("a1", "assistant", "Atlas usa bateria de 93 volts", "s", 1, None, "summary", ("atlas",)))
+
+    historical = svc.recall_latest(query="bateria do Atlas", namespace="s", topics=("atlas",))
+    factual = svc.recall_latest(query="bateria do Atlas", namespace="s", topics=("atlas",), factual_only=True)
+
+    assert historical.status == "HIT"
+    assert historical.source_type == "assistant_generated"
+    assert factual.status == "UNRESOLVED"
+
+
+def test_factual_only_accepts_generated_episode_with_active_user_root():
+    core = EvidenceCore()
+    svc = EpisodicRecallService(core)
+    svc.record(Episode("u1", "user", "Atlas usa bateria de 24 volts", "s", 1, None, "observation", ("atlas",)))
+    svc.record(Episode("a1", "assistant", "Resumo: Atlas usa bateria de 24 volts", "s", 2, None, "summary", ("atlas",), ("u1",)))
+
+    result = svc.recall_latest(query="bateria do Atlas", namespace="s", topics=("atlas",), factual_only=True)
+
+    assert result.status == "HIT"
+    assert result.episode_ids == ("a1",)
+    assert result.source_type == "user_assertion"
+    assert result.ultimate_source_memory_id == "u1"
