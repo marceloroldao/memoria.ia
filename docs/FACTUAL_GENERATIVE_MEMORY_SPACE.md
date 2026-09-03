@@ -68,3 +68,5 @@ The host parity vectors include an assistant-only invention and require both Pyt
 8. Python and native/mobile apply the same terminal-root rule.
 9. The public API exposes direct and ultimate memory spaces additively.
 10. Existing RC4 persistence remains readable; the logical discriminator is derived from existing provenance metadata during this experiment.
+
+Issue #156 is considered complete only after the Python/product regression suites, semantic validation, native host parity and persistence/restart gates are green for the implementation commit.
