@@ -41,7 +41,7 @@ def test_generated_candidate_can_be_promoted_by_independent_user_evidence():
     )
 
     assert result.memory_space is MemorySpace.FACTUAL
-    assert result.source_type == "user_assertion"
+    assert result.source_type == "derived_relation"
     assert service.inspect_candidate("g1", namespace="s").source_type == "assistant_generated"
     assert memory_space_for_source_type(service.inspect_candidate("g1", namespace="s").source_type) is MemorySpace.GENERATIVE
     assert service.candidate_for_promotion("p1", namespace="s") == "g1"
