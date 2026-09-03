@@ -53,7 +53,11 @@ def build_balanced_graph(target_nodes: int) -> tuple[IncrementalRecomputeGraph, 
         nxt: list[str] = []
         for idx in range(0, len(current), 2):
             node_id = f"l{depth + 1}_{idx // 2}"
-            graph.add_derived(node_id, (current[idx], current[idx + 1]), _sum)
+            graph.add_derived(
+                node_id,
+                [current[idx], current[idx + 1]],
+                combine=_sum,
+            )
             nxt.append(node_id)
         current = nxt
         depth += 1
@@ -71,8 +75,12 @@ def run_scale(target_nodes: int) -> ScaleResult:
     incremental_snapshot = graph.snapshot()
 
     # Rebuild the same graph so the full path starts from the identical state.
+    # Apply the same root mutation without triggering incremental propagation,
+    # then force a complete derived-node recomputation.
     full_graph, _, _ = build_balanced_graph(target_nodes)
-    full_graph.set_root(changed_root, -1.0)
+    full_root = full_graph.nodes[changed_root]
+    full_root.value = -1.0
+    full_root.history.append(-1.0)
     started = time.perf_counter()
     full_touched = full_graph.full_recompute()
     full_ms = (time.perf_counter() - started) * 1000.0
