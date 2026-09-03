@@ -7,6 +7,7 @@
 #include "temporal_state_adapter.h"
 #include "mobile_persistence.h"
 #include "diagnostic_export.h"
+#include "memory_space.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -564,6 +565,7 @@ static int active_lineage_root(memoria_mobile_handle *h, const char *memory_id, 
             queue[tail++] = ref.turn->ultimate_source_memory_id;
             continue;
         }
+        if (!memoria_may_be_factual_root(ref.turn->source_type)) continue;
         {
             lineage_root candidate = {
                 ref.turn->memory_id,
