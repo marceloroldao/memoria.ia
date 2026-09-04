@@ -38,11 +38,11 @@ int main(void) {
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     CHECK(learn(h,
-        "{\"role\":\"assistant\",\"text\":\"device class is trusted\",\"memory_id\":\"derived\",\"namespace\":\"s\",\"order\":3,\"source_type\":\"derived_relation\",\"source_authority\":0.9,\"parent_memory_ids\":[\"root-a-rel\",\"root-b-rel\"],\"relation_memory_ids\":[\"derived-rel\"]}",
+        "{\"role\":\"assistant\",\"text\":\"device is trusted\",\"memory_id\":\"derived\",\"namespace\":\"s\",\"order\":3,\"source_type\":\"derived_relation\",\"source_authority\":0.9,\"parent_memory_ids\":[\"root-a-rel\",\"root-b-rel\"],\"relation_memory_ids\":[\"derived-rel\"]}",
         &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    CHECK(resolve(h, "{\"query\":\"device class\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(resolve(h, "{\"query\":\"device\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "trusted"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
@@ -52,7 +52,7 @@ int main(void) {
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     /* Runtime contract: a conjunctive derived fact must disappear when any support is superseded. */
-    CHECK(resolve(h, "{\"query\":\"device class\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(resolve(h, "{\"query\":\"device\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out, "UNRESOLVED"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
@@ -60,7 +60,7 @@ int main(void) {
     memoria_mobile_close(h); h = NULL;
 
     CHECK(memoria_mobile_open("./tmp-mobile-runtime-lineage-gate", "org-runtime-lineage", &h) == MEMORIA_MOBILE_OK);
-    CHECK(resolve(h, "{\"query\":\"device class\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(resolve(h, "{\"query\":\"device\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out, "UNRESOLVED"));
     memoria_mobile_free_buffer(out);
 
