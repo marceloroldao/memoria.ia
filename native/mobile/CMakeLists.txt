@@ -21,6 +21,7 @@ add_library(memoria_mobile SHARED
   semantic_kernel.c
   semantic_consolidation_kernel.c
   lineage_kernel.c
+  lineage_adapter.c
   trajectory_kernel.c
   trajectory_json_adapter.c
   episodic_kernel.c
@@ -114,6 +115,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_lineage_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_lineage_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_lineage_kernel_test COMMAND memoria_lineage_kernel_test)
+
+  add_executable(memoria_lineage_adapter_test tests/lineage_adapter.c lineage_adapter.c lineage_kernel.c)
+  target_include_directories(memoria_lineage_adapter_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_lineage_adapter_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_lineage_adapter_test COMMAND memoria_lineage_adapter_test)
 
   add_executable(memoria_trajectory_kernel_test tests/trajectory_kernel.c trajectory_kernel.c)
   target_include_directories(memoria_trajectory_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
