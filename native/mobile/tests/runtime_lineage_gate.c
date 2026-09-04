@@ -42,6 +42,7 @@ int main(void) {
         &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
+    /* The derived fact must be visible while every factual support is active. */
     CHECK(resolve(h, "{\"query\":\"device\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "trusted"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
