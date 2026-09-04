@@ -11,7 +11,8 @@
  * turn rows. Only direct factual evidence contributes support. Generated,
  * replayed and already-derived memories never become independent evidence.
  * Existing active derived memories suppress duplicate candidates for the same
- * exact normalized claim.
+ * exact normalized claim. The factual-lineage graph is evaluated over the
+ * supplied in-memory rows; this layer does not perform persistence I/O.
  */
 size_t memoria_semantic_consolidation_from_turns(
     const memoria_persist_turn *turns,
