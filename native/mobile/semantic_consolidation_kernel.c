@@ -50,7 +50,9 @@ static int root_seen(const memoria_semantic_candidate *c, const char *root) {
 }
 
 static int valid_support(const memoria_semantic_support *s) {
-    return s && s->factual_active && s->subject && *s->subject &&
+    return s && s->factual_active &&
+           s->confidence >= MEMORIA_SEMANTIC_CONSOLIDATION_MIN_CONFIDENCE &&
+           s->subject && *s->subject &&
            s->predicate && *s->predicate && s->object && *s->object &&
            s->support_memory_id && *s->support_memory_id &&
            s->factual_root_id && *s->factual_root_id;
