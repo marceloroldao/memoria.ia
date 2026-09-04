@@ -91,6 +91,30 @@ def test_two_independent_factual_roots_form_one_semantic_abstraction():
     assert consolidator.consolidate_all() == ()
 
 
+def test_low_confidence_repetition_does_not_promote_to_semantic_fact():
+    core = EvidenceCore()
+    provenance = MemoryProvenanceIndex(core)
+    _root(core, provenance, memory_id="u1", order=1)
+    _root(core, provenance, memory_id="u2", order=2)
+    _relation(core, provenance, memory_id="r1", parent_id="u1", confidence=0.85)
+    _relation(core, provenance, memory_id="r2", parent_id="u2", confidence=0.85)
+
+    consolidator = RepeatedFactConsolidator(core)
+    assert consolidator.candidates() == ()
+    assert consolidator.consolidate_all() == ()
+
+
+def test_weak_second_support_cannot_confirm_strong_claim():
+    core = EvidenceCore()
+    provenance = MemoryProvenanceIndex(core)
+    _root(core, provenance, memory_id="u1", order=1)
+    _root(core, provenance, memory_id="u2", order=2)
+    _relation(core, provenance, memory_id="r1", parent_id="u1", confidence=0.95)
+    _relation(core, provenance, memory_id="r2", parent_id="u2", confidence=0.85)
+
+    assert RepeatedFactConsolidator(core).candidates() == ()
+
+
 def test_two_relations_from_same_factual_root_count_once():
     core = EvidenceCore()
     provenance = MemoryProvenanceIndex(core)
