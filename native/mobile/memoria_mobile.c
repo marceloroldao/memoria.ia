@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #define INITIAL_TURN_CAPACITY 256u
 #define INITIAL_MEMORY_INDEX_CAPACITY 1024u
@@ -69,6 +70,21 @@ static char *buffer_to_string(memoria_mobile_buffer input) {
     memcpy(s, input.data, input.size);
     s[input.size] = 0;
     return s;
+}
+
+static char *utc_now_iso8601(void) {
+    time_t now;
+    struct tm utc;
+    char buf[32];
+    now = time(NULL);
+    if (now == (time_t)-1) return NULL;
+#if defined(_WIN32)
+    if (gmtime_s(&utc, &now) != 0) return NULL;
+#else
+    if (!gmtime_r(&now, &utc)) return NULL;
+#endif
+    if (strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &utc) == 0) return NULL;
+    return dup_string(buf);
 }
 
 static char *json_string(const char *json, const char *key) {
@@ -867,7 +883,10 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     source_type = json_string(json, "source_type");
     root = json_string(json, "ultimate_source_memory_id");
     created_time = json_string(json, "timestamp");
-    if (!created_time) created_time = dup_string("");
+    if (!created_time || !created_time[0]) {
+        free(created_time);
+        created_time = utc_now_iso8601();
+    }
     correction_count = json_string_array(json, "corrects_memory_ids", corrections, MAX_CORRECTIONS);
     parent_count = json_string_array(json, "parent_memory_ids", parents, MAX_PARENTS);
     order = json_long(json, "order", (long)h->turn_count + 1);
@@ -1227,7 +1246,10 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
     if (!source_type) source_type = dup_string(strcmp(role, "user") == 0 ? "user_assertion" : "assistant_generated");
     if (authority < 0.0) authority = strcmp(source_type, "user_assertion") == 0 ? 1.0 : 0.35;
     if (!root) root = dup_string(id);
-    if (!timestamp) timestamp = dup_string("");
+    if (!timestamp || !timestamp[0]) {
+        free(timestamp);
+        timestamp = utc_now_iso8601();
+    }
     if (!event_type) event_type = dup_string("");
     if (!topics) topics = dup_string("");
     if (!id || !session_id || !source_type || !root || !timestamp || !event_type || !topics) {
