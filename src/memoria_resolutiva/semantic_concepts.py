@@ -13,6 +13,7 @@ class SemanticConcept:
     namespace: str | None
     sense_key: str | None
     aliases: tuple[str, ...]
+    context_cues: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,7 +54,8 @@ class SemanticConceptIndex:
 
     A surface form may intentionally point to multiple concepts. Such collisions
     are preserved as separate senses and resolution returns UNRESOLVED rather
-    than silently merging them. The index contains no built-in synonym table.
+    than silently merging them. Context cues are explicit evidence attached to a
+    sense; they are never inferred from a language model or fuzzy vocabulary.
     """
 
     def __init__(self) -> None:
@@ -68,6 +70,7 @@ class SemanticConceptIndex:
         namespace: str | None = None,
         sense_key: str | None = None,
         concept_id: str | None = None,
+        context_cues: tuple[str, ...] | list[str] = (),
     ) -> SemanticConcept:
         canonical_name = " ".join(str(canonical_name).split()).strip()
         normalized_canonical = normalize_concept_surface(canonical_name)
@@ -91,6 +94,12 @@ class SemanticConceptIndex:
             if normalized not in explicit_aliases:
                 explicit_aliases.append(normalized)
 
+        normalized_cues: list[str] = []
+        for value in context_cues:
+            cue = normalize_concept_surface(value)
+            if cue and cue not in normalized_cues:
+                normalized_cues.append(cue)
+
         existing = self._concepts.get(key)
         if existing is not None:
             if (
@@ -99,6 +108,7 @@ class SemanticConceptIndex:
             ):
                 raise ValueError("concept_id already belongs to a different concept identity")
             merged_aliases = tuple(dict.fromkeys((*existing.aliases, *explicit_aliases)))
+            merged_cues = tuple(dict.fromkeys((*existing.context_cues, *normalized_cues)))
             concept = SemanticConcept(
                 concept_id=existing.concept_id,
                 canonical_name=existing.canonical_name,
@@ -106,6 +116,7 @@ class SemanticConceptIndex:
                 namespace=existing.namespace,
                 sense_key=existing.sense_key,
                 aliases=merged_aliases,
+                context_cues=merged_cues,
             )
         else:
             concept = SemanticConcept(
@@ -115,6 +126,7 @@ class SemanticConceptIndex:
                 namespace=namespace,
                 sense_key=normalized_sense,
                 aliases=tuple(explicit_aliases),
+                context_cues=tuple(normalized_cues),
             )
 
         self._concepts[key] = concept
@@ -132,6 +144,34 @@ class SemanticConceptIndex:
         if len(candidates) > 1:
             return ConceptResolution("UNRESOLVED", None, candidates, normalized, "ambiguous")
         return ConceptResolution("HIT", candidates[0], candidates, normalized, None)
+
+    def resolve_with_context(
+        self,
+        surface: str,
+        context: str,
+        *,
+        namespace: str | None = None,
+    ) -> ConceptResolution:
+        base = self.resolve(surface, namespace=namespace)
+        if base.status == "HIT" or base.reason != "ambiguous":
+            return base
+        normalized_context = normalize_concept_surface(context)
+        if not normalized_context:
+            return ConceptResolution("UNRESOLVED", None, base.candidate_ids, base.normalized_query, "ambiguous")
+        haystack = f" {normalized_context} "
+        supported: list[str] = []
+        for concept_id in base.candidate_ids:
+            concept = self.get(concept_id, namespace=namespace)
+            if concept is None:
+                continue
+            if any(f" {cue} " in haystack for cue in concept.context_cues):
+                supported.append(concept_id)
+        if len(supported) == 1:
+            selected = supported[0]
+            return ConceptResolution("HIT", selected, base.candidate_ids, base.normalized_query, "context_cue")
+        if len(supported) > 1:
+            return ConceptResolution("UNRESOLVED", None, base.candidate_ids, base.normalized_query, "ambiguous_context")
+        return ConceptResolution("UNRESOLVED", None, base.candidate_ids, base.normalized_query, "ambiguous")
 
     def get(self, concept_id: str, *, namespace: str | None = None) -> SemanticConcept | None:
         return self._concepts.get((namespace, concept_id))
