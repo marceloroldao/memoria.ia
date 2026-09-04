@@ -10,172 +10,20 @@ permissions:
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: experiment/post-v1-native-created-time
-      - name: Apply portable UTC timestamp fallback and tests
-        shell: bash
-        run: |
-          cat > /tmp/apply_created_time.py <<'PY'
-          from pathlib import Path
-
-          source = Path('native/mobile/memoria_mobile.c')
-          text = source.read_text()
-          if '#include <time.h>\n' not in text:
-              text = text.replace('#include <string.h>\n', '#include <string.h>\n#include <time.h>\n', 1)
-
-          marker = '''static char *buffer_to_string(memoria_mobile_buffer input) {
-              char *s;
-              if (!input.data || input.size == 0) return NULL;
-              s = (char *)malloc(input.size + 1);
-              if (!s) return NULL;
-              memcpy(s, input.data, input.size);
-              s[input.size] = 0;
-              return s;
-          }
-          '''
-          helper = '''
-          static char *utc_now_iso8601(void) {
-              time_t now;
-              struct tm utc;
-              char buf[32];
-              now = time(NULL);
-              if (now == (time_t)-1) return NULL;
-          #if defined(_WIN32)
-              if (gmtime_s(&utc, &now) != 0) return NULL;
-          #else
-              if (!gmtime_r(&now, &utc)) return NULL;
-          #endif
-              if (strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &utc) == 0) return NULL;
-              return dup_string(buf);
-          }
-          '''
-          if 'static char *utc_now_iso8601(void)' not in text:
-              if marker not in text:
-                  raise SystemExit('buffer_to_string marker not found')
-              text = text.replace(marker, marker + helper, 1)
-
-          old_turn = '''    created_time = json_string(json, "timestamp");
-              if (!created_time) created_time = dup_string("");
-          '''
-          new_turn = '''    created_time = json_string(json, "timestamp");
-              if (!created_time || !created_time[0]) {
-                  free(created_time);
-                  created_time = utc_now_iso8601();
-              }
-          '''
-          if old_turn in text:
-              text = text.replace(old_turn, new_turn, 1)
-          elif 'created_time = utc_now_iso8601();' not in text:
-              raise SystemExit('turn timestamp fallback marker not found')
-
-          old_episode = '''    if (!timestamp) timestamp = dup_string("");
-          '''
-          new_episode = '''    if (!timestamp || !timestamp[0]) {
-                  free(timestamp);
-                  timestamp = utc_now_iso8601();
-              }
-          '''
-          if old_episode in text:
-              text = text.replace(old_episode, new_episode, 1)
-          elif 'timestamp = utc_now_iso8601();' not in text:
-              raise SystemExit('episode timestamp fallback marker not found')
-          source.write_text(text)
-
-          Path('native/mobile/tests/created_time_mobile.c').write_text(r'''#include "memoria_mobile.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define CHECK(expr) do { if (!(expr)) { fprintf(stderr,"CHECK failed: %s (%s:%d)\n",#expr,__FILE__,__LINE__); return 1; } } while (0)
-
-static int contains(memoria_mobile_buffer b, const char *needle) {
-    return b.data && strstr((const char *)b.data, needle) != NULL;
-}
-
-static memoria_mobile_status learn(memoria_mobile_handle *h, const char *json, memoria_mobile_buffer *out) {
-    memoria_mobile_buffer in = {(const uint8_t *)json, strlen(json)};
-    return memoria_mobile_learn_turn_json(h, in, out);
-}
-
-static memoria_mobile_status episode(memoria_mobile_handle *h, const char *json, memoria_mobile_buffer *out) {
-    memoria_mobile_buffer in = {(const uint8_t *)json, strlen(json)};
-    return memoria_mobile_store_episode_json(h, in, out);
-}
-
-static int snapshot_contract(memoria_mobile_handle *h, char generated[32]) {
-    memoria_mobile_buffer req = {(const uint8_t *)"{}", 2};
-    memoria_mobile_buffer out = {0};
-    const char *p;
-    CHECK(memoria_mobile_export_snapshot_json(h, req, &out) == MEMORIA_MOBILE_OK);
-    p = strstr((const char *)out.data, "\"memory_id\":\"auto-time\"");
-    CHECK(p != NULL);
-    p = strstr(p, "\"created_time\":\"");
-    CHECK(p != NULL);
-    p += strlen("\"created_time\":\"");
-    CHECK(strlen(p) >= 20);
-    CHECK(p[4] == '-' && p[7] == '-' && p[10] == 'T' && p[13] == ':' && p[16] == ':' && p[19] == 'Z');
-    memcpy(generated, p, 20);
-    generated[20] = 0;
-    CHECK(contains(out, "\"timestamp\":\"2026-01-02T03:04:05Z\""));
-    memoria_mobile_free_buffer(out);
-    return 0;
-}
-
-int main(void) {
-    memoria_mobile_handle *h = NULL;
-    memoria_mobile_buffer out = {0};
-    char before[32] = {0};
-    char after[32] = {0};
-    (void)system("rm -rf ./tmp-mobile-created-time");
-
-    CHECK(memoria_mobile_open("./tmp-mobile-created-time", "org-created-time", &h) == MEMORIA_MOBILE_OK);
-    CHECK(learn(h, "{\"role\":\"user\",\"text\":\"clock is ready\",\"memory_id\":\"auto-time\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_OK);
-    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
-
-    CHECK(episode(h, "{\"role\":\"user\",\"text\":\"explicit episode\",\"episode_id\":\"explicit-episode\",\"session_id\":\"s\",\"timestamp\":\"2026-01-02T03:04:05Z\"}", &out) == MEMORIA_MOBILE_OK);
-    memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
-
-    CHECK(snapshot_contract(h, before) == 0);
-    CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
-    memoria_mobile_close(h); h = NULL;
-
-    CHECK(memoria_mobile_open("./tmp-mobile-created-time", "org-created-time", &h) == MEMORIA_MOBILE_OK);
-    CHECK(snapshot_contract(h, after) == 0);
-    CHECK(strcmp(before, after) == 0);
-    memoria_mobile_close(h);
-    (void)system("rm -rf ./tmp-mobile-created-time");
-    return 0;
-}
-''')
-
-          cmake = Path('native/mobile/CMakeLists.txt')
-          ctext = cmake.read_text()
-          if 'memoria_mobile_created_time' not in ctext:
-              anchor = '''  add_executable(memoria_mobile_provenance_lineage tests/provenance_lineage_mobile.c)
-              target_link_libraries(memoria_mobile_provenance_lineage PRIVATE memoria_mobile)
-              target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
-              add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
-          '''
-              addition = anchor + '''
-              add_executable(memoria_mobile_created_time tests/created_time_mobile.c)
-              target_link_libraries(memoria_mobile_created_time PRIVATE memoria_mobile)
-              target_include_directories(memoria_mobile_created_time PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
-              add_test(NAME memoria_mobile_created_time COMMAND memoria_mobile_created_time)
-          '''
-              if anchor not in ctext:
-                  raise SystemExit('CMake provenance anchor not found')
-              cmake.write_text(ctext.replace(anchor, addition, 1))
-          PY
-          python /tmp/apply_created_time.py
-      - name: Commit patch
+      - name: Apply patch
+        run: python .github/scripts/apply_native_created_time.py
+      - name: Commit patch when needed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add native/mobile/memoria_mobile.c native/mobile/CMakeLists.txt native/mobile/tests/created_time_mobile.c
+          if git diff --cached --quiet; then
+            exit 0
+          fi
           git commit -m "post-v1: generate native UTC created_time by default"
           git push origin HEAD:experiment/post-v1-native-created-time
