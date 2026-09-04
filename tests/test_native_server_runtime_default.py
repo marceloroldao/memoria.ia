@@ -61,6 +61,7 @@ def test_server_defaults_to_native_when_runtime_overrides_are_absent(tmp_path: P
     health = json.loads(result.stdout.strip().splitlines()[-1])
     assert health["conversation_runtime"] == "native"
     assert health["episodic_runtime"] == "native"
+    # Native consolidates inside the durable runtime rather than through the Python bridge.
     assert health["automatic_semantic_consolidation"] is True
 
 
