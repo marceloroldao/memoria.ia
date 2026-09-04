@@ -5,7 +5,11 @@
 
 #include <stddef.h>
 
-/* Build a deterministic internal learn-turn JSON request for one candidate. */
+/*
+ * Build a deterministic internal learn-turn JSON request for one candidate.
+ * The request is a derived_relation with explicit support-memory parents, so
+ * normal native persistence, lineage, correction and restart semantics apply.
+ */
 int memoria_semantic_consolidation_request_json(
     const memoria_semantic_candidate *candidate,
     long order,
