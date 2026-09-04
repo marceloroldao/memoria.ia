@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict, deque
 from dataclasses import dataclass
 
 from .evidence_core import EvidenceCore, EvidenceEdge
@@ -33,6 +34,23 @@ class ConceptBoundRelation:
 class ConceptRelationLookup:
     status: str
     relations: tuple[ConceptBoundRelation, ...]
+    reason: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ConceptRelationPath:
+    nodes: tuple[ConceptEndpoint, ...]
+    predicates: tuple[str, ...]
+    evidence_ids: tuple[str, ...]
+    source_texts: tuple[str, ...]
+    confidence: float
+    hops: int
+
+
+@dataclass(frozen=True, slots=True)
+class ConceptRelationPathResult:
+    status: str
+    paths: tuple[ConceptRelationPath, ...]
     reason: str | None = None
 
 
@@ -144,3 +162,100 @@ class ConceptRelationView:
             return ConceptRelationLookup("UNRESOLVED", (), "no_match")
         matches.sort(key=lambda row: (-row.epoch, row.evidence_id))
         return ConceptRelationLookup("HIT", tuple(matches), None)
+
+    def infer_path(
+        self,
+        source: str,
+        target: str,
+        *,
+        namespace: str | None = None,
+        context: str | None = None,
+        max_hops: int = 3,
+        max_paths: int = 5,
+        min_confidence: float = 0.0,
+    ) -> ConceptRelationPathResult:
+        """Traverse active relations by concept identity without changing evidence.
+
+        Two lexical surfaces connect only when they project to the exact same
+        explicit concept ID (or the same normalized lexical surface when neither
+        side has a registered concept). Ambiguous endpoints fail closed.
+        """
+        if max_hops < 1 or max_paths < 1:
+            raise ValueError("max_hops and max_paths must be >= 1")
+        if not 0.0 <= min_confidence <= 1.0:
+            raise ValueError("min_confidence must be in [0, 1]")
+        query_context = context or f"{source} {target}"
+        source_endpoint = self._query_endpoint(source, context=query_context)
+        target_endpoint = self._query_endpoint(target, context=query_context)
+        if source_endpoint.status == "AMBIGUOUS" or target_endpoint.status == "AMBIGUOUS":
+            return ConceptRelationPathResult("UNRESOLVED", (), "ambiguous_concept")
+
+        adjacency: dict[str, list[ConceptBoundRelation]] = defaultdict(list)
+        endpoint_by_key: dict[str, ConceptEndpoint] = {
+            source_endpoint.key: source_endpoint,
+            target_endpoint.key: target_endpoint,
+        }
+        for relation in self.active_relations(namespace=namespace):
+            if relation.confidence < min_confidence:
+                continue
+            if relation.subject.status == "AMBIGUOUS" or relation.object.status == "AMBIGUOUS":
+                continue
+            adjacency[relation.subject.key].append(relation)
+            endpoint_by_key.setdefault(relation.subject.key, relation.subject)
+            endpoint_by_key.setdefault(relation.object.key, relation.object)
+        for rows in adjacency.values():
+            rows.sort(key=lambda row: (row.object.key, row.predicate, row.evidence_id))
+
+        queue = deque([
+            (
+                source_endpoint.key,
+                (source_endpoint,),
+                (),
+                (),
+                (),
+                (),
+                frozenset({source_endpoint.key}),
+            )
+        ])
+        paths: list[ConceptRelationPath] = []
+        while queue and len(paths) < max_paths:
+            node_key, nodes, predicates, evidence_ids, source_texts, confidences, seen = queue.popleft()
+            if len(predicates) >= max_hops:
+                continue
+            for relation in adjacency.get(node_key, ()):
+                next_key = relation.object.key
+                if next_key in seen:
+                    continue
+                next_endpoint = endpoint_by_key[next_key]
+                next_nodes = (*nodes, next_endpoint)
+                next_predicates = (*predicates, relation.predicate)
+                next_evidence_ids = (*evidence_ids, relation.evidence_id)
+                next_source_texts = (*source_texts, relation.source_text)
+                next_confidences = (*confidences, relation.confidence)
+                if next_key == target_endpoint.key:
+                    paths.append(
+                        ConceptRelationPath(
+                            nodes=next_nodes,
+                            predicates=next_predicates,
+                            evidence_ids=next_evidence_ids,
+                            source_texts=next_source_texts,
+                            confidence=min(next_confidences),
+                            hops=len(next_predicates),
+                        )
+                    )
+                else:
+                    queue.append(
+                        (
+                            next_key,
+                            next_nodes,
+                            next_predicates,
+                            next_evidence_ids,
+                            next_source_texts,
+                            next_confidences,
+                            seen | {next_key},
+                        )
+                    )
+        if not paths:
+            return ConceptRelationPathResult("UNRESOLVED", (), "no_path")
+        paths.sort(key=lambda path: (-path.confidence, path.hops, path.evidence_ids))
+        return ConceptRelationPathResult("HIT", tuple(paths[:max_paths]), None)
