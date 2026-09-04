@@ -1,0 +1,26 @@
+name: one-shot native consolidation health
+on:
+  push:
+    branches:
+      - experiment/post-v1-native-consolidation-health
+    paths:
+      - tools/apply_native_consolidation_health.py
+      - .github/workflows/one-shot-native-consolidation-health.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-native-consolidation-health
+      - run: python tools/apply_native_consolidation_health.py
+      - run: |
+          rm tools/apply_native_consolidation_health.py
+          rm .github/workflows/one-shot-native-consolidation-health.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/memoria_resolutiva/product_server.py tools/apply_native_consolidation_health.py .github/workflows/one-shot-native-consolidation-health.yml
+          git commit -m "post-v1: advertise native automatic semantic consolidation"
+          git push origin HEAD:experiment/post-v1-native-consolidation-health
