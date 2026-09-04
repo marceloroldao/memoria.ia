@@ -21,6 +21,7 @@ add_library(memoria_mobile SHARED
   semantic_kernel.c
   semantic_consolidation_kernel.c
   semantic_consolidation_state.c
+  semantic_consolidation_request.c
   lineage_kernel.c
   lineage_adapter.c
   lineage_state.c
@@ -107,6 +108,11 @@ if(NOT ANDROID)
   target_link_libraries(memoria_mobile_lineage_state PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_lineage_state PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
   add_test(NAME memoria_mobile_lineage_state COMMAND memoria_mobile_lineage_state)
+
+  add_executable(memoria_mobile_automatic_semantic_consolidation tests/automatic_semantic_consolidation_mobile.c)
+  target_link_libraries(memoria_mobile_automatic_semantic_consolidation PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_automatic_semantic_consolidation PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
+  add_test(NAME memoria_mobile_automatic_semantic_consolidation COMMAND memoria_mobile_automatic_semantic_consolidation)
 
   add_executable(memoria_mobile_memory_space tests/memory_space.c)
   target_include_directories(memoria_mobile_memory_space PRIVATE ${CMAKE_CURRENT_LIST_DIR})
