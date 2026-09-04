@@ -61,6 +61,8 @@ def test_server_defaults_to_native_when_runtime_overrides_are_absent(tmp_path: P
     health = json.loads(result.stdout.strip().splitlines()[-1])
     assert health["conversation_runtime"] == "native"
     assert health["episodic_runtime"] == "native"
+    # Native consolidates inside the durable runtime rather than through the Python bridge.
+    assert health["automatic_semantic_consolidation"] is True
 
 
 def test_explicit_python_reference_mode_does_not_require_native_library(tmp_path: Path):
@@ -73,6 +75,7 @@ def test_explicit_python_reference_mode_does_not_require_native_library(tmp_path
     health = json.loads(result.stdout.strip().splitlines()[-1])
     assert health["conversation_runtime"] == "python"
     assert health["episodic_runtime"] == "python"
+    assert health["automatic_semantic_consolidation"] is True
 
 
 def test_native_default_fails_closed_when_library_is_missing(tmp_path: Path):
