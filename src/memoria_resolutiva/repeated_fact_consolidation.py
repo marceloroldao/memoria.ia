@@ -37,11 +37,14 @@ def _consolidated_memory_id(namespace: str | None, claim: tuple[str, str, str]) 
 class RepeatedFactConsolidator:
     """Consolidate exact repeated factual claims without erasing their supports.
 
-    This first semantic-consolidation slice is intentionally precision-first.
-    A claim becomes eligible only when the same normalized subject/predicate/object
-    is supported by at least ``min_independent_roots`` distinct active factual
-    roots. Multiple derived relations from the same root count once. Generative
-    roots never count because ``factual_ultimate_source`` rejects them.
+    This semantic-consolidation path is intentionally precision-first. A claim is
+    eligible only when the same normalized subject/predicate/object is supported
+    by at least ``min_independent_roots`` distinct active factual roots and every
+    selected support meets the semantic-promotion confidence floor. Lower-
+    confidence relations remain in evidence/context but do not self-promote into
+    factual semantic memory. Multiple derived relations from the same root count
+    once. Generative roots never count because ``factual_ultimate_source`` rejects
+    them.
 
     Candidate discovery scans preserved evidence history rather than the collapsed
     current-state projection returned by ``active_edges``. Each historical row is
@@ -51,6 +54,8 @@ class RepeatedFactConsolidator:
     so its support memories remain explicit conjunctive parents and correction
     invalidation continues to flow through provenance.
     """
+
+    MIN_SUPPORT_CONFIDENCE = 0.90
 
     _IGNORED_PREDICATES = {
         "conversation_text",
@@ -134,6 +139,8 @@ class RepeatedFactConsolidator:
     ) -> list[tuple[EvidenceEdge, str]]:
         selected: dict[str, EvidenceEdge] = {}
         for edge in sorted(edges, key=lambda row: (row.epoch, row.evidence_id), reverse=True):
+            if edge.confidence < self.MIN_SUPPORT_CONFIDENCE:
+                continue
             root = self.provenance.factual_ultimate_source(edge.evidence_id, namespace=namespace)
             if root is None:
                 continue
