@@ -106,7 +106,8 @@ def test_existing_hit_wins_before_path_fallback(tmp_path):
     _observe(evidence, conversation, "charger", "has_property", "diferença de potencial", "e1", "charger has diferença de potencial")
     _observe(evidence, conversation, "voltage", "has_value", "34V", "e2", "voltage has value 34V")
 
-    result, trace = resolver.resolve_with_trace(query="charger azul 34V", session_id="s1")
+    result, trace = resolver.resolve_with_trace(query="charger azul", session_id="s1")
 
     assert result.status == "HIT"
     assert trace.path_attempted is False
+    assert trace.reason in {"original_hit", "concept_retry"}
