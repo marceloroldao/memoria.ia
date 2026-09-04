@@ -1,6 +1,6 @@
 #include "semantic_consolidation_state.h"
 
-#include "lineage_state.h"
+#include "lineage_adapter.h"
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -41,18 +41,17 @@ static int candidate_matches_relation(
 static int active_derived_claim_exists(
     const memoria_persist_turn *turns,
     size_t turn_count,
+    const memoria_lineage_graph *graph,
     const memoria_semantic_candidate *candidate
 ) {
     size_t i, j;
     for (i = 0; i < turn_count; ++i) {
-        memoria_lineage_result lineage = {0};
+        memoria_lineage_result lineage;
         const memoria_persist_turn *turn = &turns[i];
         if (!turn->memory_id || !turn->source_type || strcmp(turn->source_type, "derived_relation") != 0)
             continue;
-        if (!memoria_lineage_rows_resolve(
-                turns, turn_count, turn->memory_id,
-                turn->namespace_id ? turn->namespace_id : "", &lineage))
-            continue;
+        lineage = memoria_lineage_graph_resolve(
+            graph, turn->memory_id, turn->namespace_id ? turn->namespace_id : "");
         if (!lineage.factual_active) continue;
         for (j = 0; j < turn->relation_count; ++j)
             if (candidate_matches_relation(candidate, &turn->relations[j], turn->namespace_id))
@@ -70,17 +69,19 @@ size_t memoria_semantic_consolidation_from_turns(
 ) {
     memoria_semantic_support *supports = NULL;
     memoria_semantic_candidate *raw = NULL;
+    memoria_lineage_graph graph = {0};
     size_t max_supports = 0, support_count = 0, raw_count, result_count = 0;
     size_t i, j;
 
     if (!turns || !turn_count || !out || !out_capacity || min_independent_roots < 2)
         return 0;
+    if (!memoria_lineage_graph_build(turns, turn_count, &graph)) return 0;
 
     for (i = 0; i < turn_count; ++i) {
         if (direct_evidence_source(turns[i].source_type))
             max_supports += turns[i].relation_count;
     }
-    if (!max_supports) return 0;
+    if (!max_supports) goto cleanup;
 
     supports = (memoria_semantic_support *)calloc(max_supports, sizeof(*supports));
     raw = (memoria_semantic_candidate *)calloc(out_capacity, sizeof(*raw));
@@ -90,13 +91,11 @@ size_t memoria_semantic_consolidation_from_turns(
         const memoria_persist_turn *turn = &turns[i];
         if (!direct_evidence_source(turn->source_type)) continue;
         for (j = 0; j < turn->relation_count; ++j) {
-            memoria_lineage_result lineage = {0};
+            memoria_lineage_result lineage;
             const char *support_id = turn->relation_memory_ids[j];
             if (!support_id || !*support_id) continue;
-            if (!memoria_lineage_rows_resolve(
-                    turns, turn_count, support_id,
-                    turn->namespace_id ? turn->namespace_id : "", &lineage))
-                continue;
+            lineage = memoria_lineage_graph_resolve(
+                &graph, support_id, turn->namespace_id ? turn->namespace_id : "");
             supports[support_count].namespace_id = turn->namespace_id ? turn->namespace_id : "";
             supports[support_count].subject = turn->relations[j].subject;
             supports[support_count].predicate = turn->relations[j].predicate;
@@ -113,11 +112,12 @@ size_t memoria_semantic_consolidation_from_turns(
         supports, support_count, min_independent_roots, raw, out_capacity);
 
     for (i = 0; i < raw_count && result_count < out_capacity; ++i) {
-        if (active_derived_claim_exists(turns, turn_count, &raw[i])) continue;
+        if (active_derived_claim_exists(turns, turn_count, &graph, &raw[i])) continue;
         out[result_count++] = raw[i];
     }
 
 cleanup:
+    memoria_lineage_graph_free(&graph);
     free(raw);
     free(supports);
     return result_count;
