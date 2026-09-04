@@ -26,7 +26,7 @@ int main(void) {
     {
         memoria_semantic_support rows[] = {
             support("s1", "Bateria", "is", "carregada", "r1", "u1", 0.95, 1),
-            support("s1", "bateria", "IS", "carregada", "r2", "u2", 0.85, 1),
+            support("s1", "bateria", "IS", "carregada", "r2", "u2", 0.95, 1),
         };
         memset(out, 0, sizeof(out));
         n = memoria_semantic_consolidation_candidates(rows, 2, 2, out, 4);
@@ -34,7 +34,28 @@ int main(void) {
         assert(out[0].support_count == 2);
         assert(strcmp(out[0].factual_root_ids[0], "u1") == 0);
         assert(strcmp(out[0].factual_root_ids[1], "u2") == 0);
-        assert(out[0].confidence > 0.849 && out[0].confidence < 0.851);
+        assert(out[0].confidence > 0.949 && out[0].confidence < 0.951);
+    }
+
+    /* Lower-confidence relations remain usable as relations/context but cannot
+       independently promote a repeated claim into semantic factual memory. */
+    {
+        memoria_semantic_support rows[] = {
+            support("s1", "motor", "is", "v8", "r1", "u1", 0.85, 1),
+            support("s1", "motor", "is", "v8", "r2", "u2", 0.85, 1),
+        };
+        memset(out, 0, sizeof(out));
+        assert(memoria_semantic_consolidation_candidates(rows, 2, 2, out, 4) == 0);
+    }
+
+    /* A weak second source cannot confirm an otherwise strong claim. */
+    {
+        memoria_semantic_support rows[] = {
+            support("s1", "sensor", "is", "active", "r1", "u1", 0.95, 1),
+            support("s1", "sensor", "is", "active", "r2", "u2", 0.85, 1),
+        };
+        memset(out, 0, sizeof(out));
+        assert(memoria_semantic_consolidation_candidates(rows, 2, 2, out, 4) == 0);
     }
 
     {
