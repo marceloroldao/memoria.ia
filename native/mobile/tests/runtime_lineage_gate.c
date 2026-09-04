@@ -42,6 +42,7 @@ int main(void) {
         &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
+    /* A factual derived relation is recallable while every explicit support remains active. */
     CHECK(resolve(h, "{\"query\":\"zephyrax quartzmarker\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "zephyrax"));
     CHECK(contains(out, "quartzmarker"));
