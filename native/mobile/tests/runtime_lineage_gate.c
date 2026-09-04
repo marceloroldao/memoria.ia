@@ -42,8 +42,8 @@ int main(void) {
         &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    /* The derived fact must be visible while every factual support is active. */
-    CHECK(resolve(h, "{\"query\":\"device\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_OK);
+    /* Use a term unique to the derived fact so this gate measures lineage, not ranking. */
+    CHECK(resolve(h, "{\"query\":\"trusted\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "trusted"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
@@ -53,7 +53,7 @@ int main(void) {
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
     /* Runtime contract: a conjunctive derived fact must disappear when any support is superseded. */
-    CHECK(resolve(h, "{\"query\":\"device\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(resolve(h, "{\"query\":\"trusted\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out, "UNRESOLVED"));
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
@@ -61,7 +61,7 @@ int main(void) {
     memoria_mobile_close(h); h = NULL;
 
     CHECK(memoria_mobile_open("./tmp-mobile-runtime-lineage-gate", "org-runtime-lineage", &h) == MEMORIA_MOBILE_OK);
-    CHECK(resolve(h, "{\"query\":\"device\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(resolve(h, "{\"query\":\"trusted\",\"namespace\":\"s\"}", &out) == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out, "UNRESOLVED"));
     memoria_mobile_free_buffer(out);
 
