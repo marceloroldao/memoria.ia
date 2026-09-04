@@ -123,7 +123,7 @@ if(NOT ANDROID)
   set_target_properties(memoria_semantic_consolidation_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_semantic_consolidation_kernel_test COMMAND memoria_semantic_consolidation_kernel_test)
 
-  add_executable(memoria_semantic_consolidation_state_test tests/semantic_consolidation_state.c semantic_consolidation_state.c semantic_consolidation_kernel.c lineage_state.c lineage_adapter.c lineage_kernel.c)
+  add_executable(memoria_semantic_consolidation_state_test tests/semantic_consolidation_state.c semantic_consolidation_state.c semantic_consolidation_kernel.c lineage_adapter.c lineage_kernel.c)
   target_include_directories(memoria_semantic_consolidation_state_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_consolidation_state_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_semantic_consolidation_state_test COMMAND memoria_semantic_consolidation_state_test)
