@@ -7,6 +7,7 @@
 #define MEMORIA_SEMANTIC_CONSOLIDATION_TEXT_CAP 96u
 #define MEMORIA_SEMANTIC_CONSOLIDATION_PREDICATE_CAP 32u
 #define MEMORIA_SEMANTIC_CONSOLIDATION_ID_CAP 384u
+#define MEMORIA_SEMANTIC_CONSOLIDATION_MIN_CONFIDENCE 0.90
 
 typedef struct memoria_semantic_support {
     const char *namespace_id;
@@ -33,9 +34,9 @@ typedef struct memoria_semantic_candidate {
 /*
  * Build conservative repeated-fact candidates from already lineage-resolved
  * supports. The caller remains responsible for determining factual lineage and
- * persistence. This kernel only enforces exact normalized claim equality,
- * namespace isolation, distinct factual-root counting and deterministic support
- * selection.
+ * persistence. This kernel enforces exact normalized claim equality, namespace
+ * isolation, distinct factual-root counting, deterministic support selection,
+ * and a precision-first minimum confidence for semantic promotion.
  */
 size_t memoria_semantic_consolidation_candidates(
     const memoria_semantic_support *supports,
