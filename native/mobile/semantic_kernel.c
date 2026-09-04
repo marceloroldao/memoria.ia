@@ -61,9 +61,6 @@ static int looks_like_question(const char *text) {
 static int source_is_retrievable(const memoria_semantic_source *source) {
     if (!source || !source->text) return 0;
     if (source->source_type && strcmp(source->source_type, "user_query") == 0) return 0;
-    /* Backward compatibility: older mobile stores classified every user turn as
-       user_assertion. Detect question-shaped text at retrieval time so existing
-       databases do not need an eager migration. */
     if (source->source_type && strcmp(source->source_type, "user_assertion") == 0 && looks_like_question(source->text)) return 0;
     return 1;
 }
@@ -109,6 +106,14 @@ static size_t canonical_source_for_root(const memoria_semantic_source *sources, 
     const char *root = root_id(&sources[selected]);
     size_t i, best = selected;
     if (!root) return selected;
+
+    /* Factual derivations are first-class memories: keep the selected derived
+       relation while its factual lineage is active. Generated/replay descendants
+       still canonicalize to their factual root so model output cannot become the
+       recalled fact merely by lexical similarity. */
+    if (sources[selected].source_type && strcmp(sources[selected].source_type, "derived_relation") == 0)
+        return selected;
+
     for (i = 0; i < source_count; ++i) {
         if (!same_root(&sources[i], &sources[selected]) || !source_is_factual_candidate(sources, source_count, i)) continue;
         if (sources[i].memory_id && strcmp(sources[i].memory_id, root) == 0) return i;
@@ -134,10 +139,6 @@ memoria_semantic_result memoria_semantic_resolve_sources(const char *query, cons
         authority = sources[i].authority;
         if (authority < 0.0) authority = 0.0;
         if (authority > 1.0) authority = 1.0;
-
-        /* Authority is intentionally slightly stronger than lexical overlap.
-           Generated descendants can participate only when their explicit root is
-           a retrievable factual source present in this resolution set. */
         rank = 0.45 * overlap + 0.55 * authority;
 
         if (!found || rank > best_rank + 1e-12 ||

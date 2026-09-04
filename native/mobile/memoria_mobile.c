@@ -8,6 +8,7 @@
 #include "mobile_persistence.h"
 #include "diagnostic_export.h"
 #include "memory_space.h"
+#include "lineage_state.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -529,56 +530,18 @@ static int better_root(const lineage_root *candidate, const lineage_root *best, 
 }
 
 static int active_lineage_root(memoria_mobile_handle *h, const char *memory_id, const char *namespace_id, lineage_root *out) {
-    const char *queue[128];
-    const char *seen[128];
-    size_t head = 0, tail = 0, seen_count = 0, i;
-    lineage_root best = {0};
-    int found = 0;
+    memoria_lineage_result result = {0};
+    turn_row *root;
     if (!h || !memory_id || !*memory_id || !out) return 0;
-    queue[tail++] = memory_id;
-    while (head < tail) {
-        const char *current = queue[head++];
-        memory_ref ref = {0};
-        int duplicate = 0;
-        for (i = 0; i < seen_count; ++i) if (strcmp(seen[i],current) == 0) { duplicate = 1; break; }
-        if (duplicate) continue;
-        if (seen_count >= 128) return 0;
-        seen[seen_count++] = current;
-        if (!find_memory_ref(h,current,namespace_id,&ref)) continue;
-        if (ref.relation_index >= 0) {
-            if (tail >= 128) return 0;
-            queue[tail++] = ref.turn->memory_id;
-            continue;
-        }
-        if (ref.turn->superseded || ref.turn->superseded_by[0]) continue;
-        if (traceable_source_type(ref.turn->source_type) && ref.turn->parent_count) {
-            for (i = 0; i < ref.turn->parent_count; ++i) {
-                if (tail >= 128) return 0;
-                queue[tail++] = ref.turn->parent_memory_ids[i];
-            }
-            continue;
-        }
-        if (traceable_source_type(ref.turn->source_type) && !ref.turn->parent_count &&
-            ref.turn->ultimate_source_memory_id && *ref.turn->ultimate_source_memory_id &&
-            strcmp(ref.turn->ultimate_source_memory_id,ref.turn->memory_id) != 0) {
-            if (tail >= 128) return 0;
-            queue[tail++] = ref.turn->ultimate_source_memory_id;
-            continue;
-        }
-        if (!memoria_may_be_factual_root(ref.turn->source_type)) continue;
-        {
-            lineage_root candidate = {
-                ref.turn->memory_id,
-                ref.turn->source_type,
-                ref.turn->authority,
-                ref.turn->order,
-                ref.turn->created_time
-            };
-            if (better_root(&candidate,&best,found)) { best = candidate; found = 1; }
-        }
-    }
-    if (!found) return 0;
-    *out = best;
+    if (!memoria_lineage_rows_resolve(h->turns, h->turn_count, memory_id, namespace_id, &result)) return 0;
+    if (!result.factual_active || !result.representative_root_id) return 0;
+    root = find_turn_in_namespace(h, result.representative_root_id, namespace_id);
+    if (!root || root->superseded || root->superseded_by[0]) return 0;
+    out->memory_id = root->memory_id;
+    out->source_type = root->source_type;
+    out->authority = root->authority;
+    out->order = root->order;
+    out->created_time = root->created_time;
     return 1;
 }
 
@@ -1080,7 +1043,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         sources[source_count].text = h->turns[i].text;
         sources[source_count].authority = lineage.authority;
         sources[source_count].order = h->turns[i].order;
-        sources[source_count].source_type = lineage.source_type;
+        sources[source_count].source_type = h->turns[i].source_type;
         sources[source_count].ultimate_source_memory_id = lineage.memory_id;
         ++source_count;
     }
