@@ -22,6 +22,7 @@ add_library(memoria_mobile SHARED
   semantic_consolidation_kernel.c
   lineage_kernel.c
   lineage_adapter.c
+  lineage_state.c
   trajectory_kernel.c
   trajectory_json_adapter.c
   episodic_kernel.c
@@ -95,6 +96,11 @@ if(NOT ANDROID)
   target_link_libraries(memoria_mobile_provenance_lineage PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
+
+  add_executable(memoria_mobile_lineage_state tests/lineage_state.c)
+  target_link_libraries(memoria_mobile_lineage_state PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_lineage_state PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
+  add_test(NAME memoria_mobile_lineage_state COMMAND memoria_mobile_lineage_state)
 
   add_executable(memoria_mobile_memory_space tests/memory_space.c)
   target_include_directories(memoria_mobile_memory_space PRIVATE ${CMAKE_CURRENT_LIST_DIR})
