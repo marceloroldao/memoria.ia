@@ -212,11 +212,11 @@ def build_app():
         AutoEpisodicConversationService(conversation_backend, episodic_service)
         if automatic_episode_formation else conversation_backend
     )
-    automatic_semantic_consolidation = not conversation_is_native
-    if automatic_semantic_consolidation:
-        # Keep Python factual/provenance semantics out of native production startup.
-        # Native consolidation is intentionally disabled until equivalent native
-        # lineage and persistence behavior is implemented and parity-tested.
+    # Both runtimes now consolidate repeated factual claims automatically.
+    # Python uses the bridge below; native performs the same operation internally
+    # in the mobile/BDR runtime and therefore must not import Python provenance.
+    automatic_semantic_consolidation = True
+    if not conversation_is_native:
         from .conversation_semantic_bridge import AutoSemanticConsolidationConversationService
 
         conversation_service = AutoSemanticConsolidationConversationService(
