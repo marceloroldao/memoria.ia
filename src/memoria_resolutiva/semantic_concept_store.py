@@ -22,12 +22,7 @@ def _alias_key(normalized_alias: str) -> str:
 
 
 class PersistentSemanticConceptStore:
-    """Persist explicit concept identities through EnterpriseMemoryService.
-
-    Concept metadata and alias indexes live on dedicated product-memory routes,
-    so they survive the existing save/load boundary without becoming factual
-    EvidenceCore edges. Alias collisions are preserved as multiple concept IDs.
-    """
+    """Persist explicit concept identities through EnterpriseMemoryService."""
 
     def __init__(self, memory: EnterpriseMemoryService) -> None:
         self.memory = memory
@@ -65,6 +60,7 @@ class PersistentSemanticConceptStore:
             namespace=namespace,
             sense_key=(str(payload["sense_key"]) if payload.get("sense_key") else None),
             aliases=tuple(str(value) for value in payload.get("aliases", ())),
+            context_cues=tuple(str(value) for value in payload.get("context_cues", ())),
         )
 
     def register_concept(
@@ -76,6 +72,7 @@ class PersistentSemanticConceptStore:
         namespace: str | None = None,
         sense_key: str | None = None,
         concept_id: str | None = None,
+        context_cues: tuple[str, ...] | list[str] = (),
     ) -> SemanticConcept:
         probe = SemanticConceptIndex().register_concept(
             canonical_name,
@@ -83,6 +80,7 @@ class PersistentSemanticConceptStore:
             namespace=namespace,
             sense_key=sense_key,
             concept_id=concept_id,
+            context_cues=context_cues,
         )
         existing = self._existing_concept(
             scope,
@@ -98,6 +96,7 @@ class PersistentSemanticConceptStore:
                 namespace=namespace,
                 sense_key=existing.sense_key,
                 concept_id=existing.concept_id,
+                context_cues=existing.context_cues,
             )
         concept = index.register_concept(
             canonical_name,
@@ -105,6 +104,7 @@ class PersistentSemanticConceptStore:
             namespace=namespace,
             sense_key=sense_key,
             concept_id=probe.concept_id,
+            context_cues=context_cues,
         )
 
         concept_payload = {
@@ -114,6 +114,7 @@ class PersistentSemanticConceptStore:
             "normalized_canonical": concept.normalized_canonical,
             "sense_key": concept.sense_key,
             "aliases": list(concept.aliases),
+            "context_cues": list(concept.context_cues),
         }
         concept_route = self._concept_route(namespace, concept.concept_id)
         if existing is None:
@@ -125,7 +126,7 @@ class PersistentSemanticConceptStore:
                 modality="semantic",
                 provenance="semantic-concept",
             )
-        elif concept.aliases != existing.aliases:
+        elif concept.aliases != existing.aliases or concept.context_cues != existing.context_cues:
             self.memory.update(
                 scope,
                 concept_route,
@@ -198,6 +199,38 @@ class PersistentSemanticConceptStore:
         if concept is None:
             return ConceptResolution("UNRESOLVED", None, candidates, normalized, "missing_concept")
         return ConceptResolution("HIT", concept.concept_id, candidates, normalized, None)
+
+    def resolve_with_context(
+        self,
+        scope: MemoryScope,
+        surface: str,
+        context: str,
+        *,
+        namespace: str | None = None,
+    ) -> ConceptResolution:
+        base = self.resolve(scope, surface, namespace=namespace)
+        if base.status == "HIT" or base.reason != "ambiguous":
+            return base
+        normalized_context = normalize_concept_surface(context)
+        if not normalized_context:
+            return base
+        haystack = f" {normalized_context} "
+        supported: list[str] = []
+        for concept_id in base.candidate_ids:
+            concept = self._existing_concept(scope, namespace=namespace, concept_id=concept_id)
+            if concept is None:
+                continue
+            if any(f" {cue} " in haystack for cue in concept.context_cues):
+                supported.append(concept_id)
+        if len(supported) == 1:
+            return ConceptResolution(
+                "HIT", supported[0], base.candidate_ids, base.normalized_query, "context_cue"
+            )
+        if len(supported) > 1:
+            return ConceptResolution(
+                "UNRESOLVED", None, base.candidate_ids, base.normalized_query, "ambiguous_context"
+            )
+        return base
 
     def get(
         self,

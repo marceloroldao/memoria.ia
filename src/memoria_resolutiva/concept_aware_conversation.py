@@ -52,16 +52,12 @@ def rewrite_query_with_explicit_concepts(
     namespace: str | None,
     max_alias_words: int = 6,
 ) -> ConceptRewrite:
-    """Rewrite only explicitly registered, unambiguous aliases.
+    """Rewrite explicit aliases, using only explicit context cues for polysemy.
 
-    The input is normalized to the same deterministic lexical surface used by the
-    concept registry. Longest registered aliases win. Unknown spans are left as
-    ordinary query terms. If any matched alias is ambiguous, rewriting fails
-    closed and callers should keep the original unresolved result.
-
-    Every concept match is recorded so callers can audit which explicit alias and
-    semantic sense participated in a retry without changing the ordinary resolver
-    response contract.
+    Longest aliases win. Unambiguous aliases are rewritten directly. If a surface
+    maps to multiple senses, the full query may disambiguate it only when exactly
+    one candidate has an explicitly registered context cue present. No fuzzy or
+    model-generated sense selection occurs; ties and missing cues fail closed.
     """
     if max_alias_words < 1:
         raise ValueError("max_alias_words must be >= 1")
@@ -82,28 +78,38 @@ def rewrite_query_with_explicit_concepts(
         for width in range(longest, 0, -1):
             surface = " ".join(words[i : i + width])
             resolution = store.resolve(scope, surface, namespace=namespace)
+            contextual = None
             if resolution.reason == "ambiguous":
-                ambiguous_matches: list[ConceptMatch] = []
-                for candidate_id in resolution.candidate_ids:
-                    concept = store.get(scope, candidate_id, namespace=namespace)
-                    ambiguous_matches.append(
-                        ConceptMatch(
-                            surface=surface,
-                            canonical=None if concept is None else concept.normalized_canonical,
-                            concept_id=candidate_id,
-                            sense_key=None if concept is None else concept.sense_key,
-                            status="AMBIGUOUS",
-                            candidate_ids=resolution.candidate_ids,
-                        )
-                    )
-                return ConceptRewrite(
-                    "UNRESOLVED",
+                contextual = store.resolve_with_context(
+                    scope,
+                    surface,
                     original,
-                    original,
-                    resolution.candidate_ids,
-                    "ambiguous_concept",
-                    tuple(ambiguous_matches),
+                    namespace=namespace,
                 )
+                if contextual.status == "HIT" and contextual.concept_id is not None:
+                    resolution = contextual
+                else:
+                    ambiguous_matches: list[ConceptMatch] = []
+                    for candidate_id in resolution.candidate_ids:
+                        concept = store.get(scope, candidate_id, namespace=namespace)
+                        ambiguous_matches.append(
+                            ConceptMatch(
+                                surface=surface,
+                                canonical=None if concept is None else concept.normalized_canonical,
+                                concept_id=candidate_id,
+                                sense_key=None if concept is None else concept.sense_key,
+                                status="AMBIGUOUS",
+                                candidate_ids=resolution.candidate_ids,
+                            )
+                        )
+                    return ConceptRewrite(
+                        "UNRESOLVED",
+                        original,
+                        original,
+                        resolution.candidate_ids,
+                        "ambiguous_context" if contextual is not None and contextual.reason == "ambiguous_context" else "ambiguous_concept",
+                        tuple(ambiguous_matches),
+                    )
             if resolution.status != "HIT" or resolution.concept_id is None:
                 continue
             concept = store.get(scope, resolution.concept_id, namespace=namespace)
@@ -125,8 +131,8 @@ def rewrite_query_with_explicit_concepts(
                     canonical=canonical,
                     concept_id=concept.concept_id,
                     sense_key=concept.sense_key,
-                    status="HIT",
-                    candidate_ids=(concept.concept_id,),
+                    status="CONTEXT_HIT" if resolution.reason == "context_cue" else "HIT",
+                    candidate_ids=resolution.candidate_ids or (concept.concept_id,),
                 )
             )
             changed = changed or canonical != surface
@@ -145,13 +151,7 @@ def rewrite_query_with_explicit_concepts(
 
 
 class ConceptAwareConversationResolver:
-    """Second-chance resolver using explicit concept aliases only after a miss.
-
-    Existing conversation behavior always gets the first attempt. A concept-aware
-    retry occurs only when the first result is not HIT and query rewriting is both
-    unambiguous and actually changes the query. This keeps the semantic concept
-    layer additive and fail-closed while Phase B matures.
-    """
+    """Second-chance resolver using explicit semantic concepts only after a miss."""
 
     def __init__(
         self,
