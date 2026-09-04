@@ -18,7 +18,7 @@ from .product_chat import ProductChatService
 from .product_config import ProductConfigurationStore
 from .product_evidence import ProductEvidenceService, attach_evidence_routes
 from .product_http import create_app
-from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus
+from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus, MemoryScope
 from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
 from .product_service import EnterpriseMemoryService
 
@@ -50,12 +50,7 @@ def _env_bool(name: str, default: bool = True) -> bool:
     raise RuntimeError(f"environment variable {name} must be a boolean value")
 
 
-def _build_chat_service(
-    memory: EnterpriseMemoryService,
-    configuration: ProductConfigurationStore,
-    *,
-    conversation_resolver=None,
-) -> ProductChatService | None:
+def _build_chat_service(memory: EnterpriseMemoryService, configuration: ProductConfigurationStore, *, conversation_resolver=None) -> ProductChatService | None:
     persisted = configuration.llm()
     provider = os.getenv("MEMORIA_LLM_PROVIDER", persisted.provider or "").strip().lower()
     if not provider:
@@ -105,17 +100,10 @@ def _native_library_path(runtime_name: str) -> str:
     return library_path
 
 
-def _build_conversation_service(
-    *,
-    evidence_service: ProductEvidenceService,
-    data_dir: Path,
-    organization_id: str,
-    native_data_dir: Path | None = None,
-):
+def _build_conversation_service(*, evidence_service: ProductEvidenceService, data_dir: Path, organization_id: str, native_data_dir: Path | None = None):
     runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "native").strip().lower()
     if runtime == "python":
         from .reference_conversation import ConversationSemanticService
-
         return ConversationSemanticService(evidence_service)
     if runtime != "native":
         raise RuntimeError("MEMORIA_CONVERSATION_RUNTIME must be 'python' or 'native'")
@@ -126,17 +114,10 @@ def _build_conversation_service(
     )
 
 
-def _build_episodic_service(
-    *,
-    evidence_service: ProductEvidenceService,
-    data_dir: Path,
-    organization_id: str,
-    native_data_dir: Path | None = None,
-):
+def _build_episodic_service(*, evidence_service: ProductEvidenceService, data_dir: Path, organization_id: str, native_data_dir: Path | None = None):
     runtime = os.getenv("MEMORIA_EPISODIC_RUNTIME", "native").strip().lower()
     if runtime == "python":
         from .reference_episodic import ProductEpisodicService
-
         return ProductEpisodicService(evidence_service)
     if runtime != "native":
         raise RuntimeError("MEMORIA_EPISODIC_RUNTIME must be 'python' or 'native'")
@@ -156,9 +137,7 @@ def _native_shared_data_dir(data_dir: Path) -> Path | None:
     legacy_with_state = [path for path in legacy_paths if path.exists() and any(path.iterdir())]
     if legacy_with_state:
         names = ", ".join(str(path) for path in legacy_with_state)
-        raise RuntimeError(
-            "legacy split native stores contain data and require explicit migration before enabling both native runtimes: " + names
-        )
+        raise RuntimeError("legacy split native stores contain data and require explicit migration before enabling both native runtimes: " + names)
     return data_dir / "native-runtime"
 
 
@@ -170,11 +149,7 @@ def build_app():
     configuration = ProductConfigurationStore(data_dir)
     storage_backend = os.getenv("MEMORIA_STORAGE_BACKEND")
     storage_allow_fallback = _env_bool("MEMORIA_STORAGE_ALLOW_FALLBACK", True)
-    persistence = ProductSnapshotPersistence(
-        data_dir / "persistence",
-        backend=storage_backend,
-        allow_fallback=storage_allow_fallback,
-    )
+    persistence = ProductSnapshotPersistence(data_dir / "persistence", backend=storage_backend, allow_fallback=storage_allow_fallback)
 
     manifest = data_dir / "enterprise.manifest.json"
     if manifest.exists():
@@ -182,16 +157,9 @@ def build_app():
         if service.organization.organization_id != organization_id:
             raise RuntimeError("persisted organization does not match MEMORIA_ORGANIZATION_ID")
     else:
-        service = PersistentEnterpriseMemoryService(
-            OrganizationIdentity(organization_id, organization_name),
-            persistence=persistence,
-        )
+        service = PersistentEnterpriseMemoryService(OrganizationIdentity(organization_id, organization_name), persistence=persistence)
 
-    evidence_service = ProductEvidenceService.open(
-        data_dir / "evidence",
-        backend=storage_backend,
-        allow_fallback=storage_allow_fallback,
-    )
+    evidence_service = ProductEvidenceService.open(data_dir / "evidence", backend=storage_backend, allow_fallback=storage_allow_fallback)
     native_shared_data_dir = _native_shared_data_dir(data_dir)
     conversation_backend = _build_conversation_service(
         evidence_service=evidence_service,
@@ -208,21 +176,42 @@ def build_app():
     conversation_is_native = isinstance(conversation_backend, NativeConversationService)
     episodic_is_native = isinstance(episodic_service, NativeEpisodicService)
     automatic_episode_formation = conversation_is_native == episodic_is_native
-    conversation_service = (
-        AutoEpisodicConversationService(conversation_backend, episodic_service)
-        if automatic_episode_formation else conversation_backend
-    )
-    # Both runtimes now consolidate repeated factual claims automatically.
-    # Python uses the bridge below; native performs the same operation internally
-    # in the mobile/BDR runtime and therefore must not import Python provenance.
+    conversation_service = AutoEpisodicConversationService(conversation_backend, episodic_service) if automatic_episode_formation else conversation_backend
+
     automatic_semantic_consolidation = True
+    automatic_concept_resolution = False
+    concept_relation_service = None
     if not conversation_is_native:
         from .conversation_semantic_bridge import AutoSemanticConsolidationConversationService
+        from .concept_aware_conversation import ConceptAwareConversationResolver
+        from .concept_path_conversation import ConceptPathConversationResolver
+        from .concept_relations import ConceptRelationView
+        from .product_concept_relations import ProductConceptRelationService
+        from .semantic_concept_store import PersistentSemanticConceptStore
 
-        conversation_service = AutoSemanticConsolidationConversationService(
-            conversation_service,
-            evidence_service,
+        conversation_service = AutoSemanticConsolidationConversationService(conversation_service, evidence_service)
+        concept_namespace = os.getenv("MEMORIA_CONCEPT_NAMESPACE", "semantic").strip() or None
+        concept_scope = MemoryScope(organization_id)
+        concept_store = PersistentSemanticConceptStore(service)
+        concept_view = ConceptRelationView(
+            evidence_service.core,
+            concept_store,
+            scope=concept_scope,
+            concept_namespace=concept_namespace,
         )
+        concept_aware = ConceptAwareConversationResolver(
+            conversation_service,
+            concept_store,
+            scope=concept_scope,
+            concept_namespace=concept_namespace,
+        )
+        conversation_service = ConceptPathConversationResolver(
+            concept_aware,
+            conversation_backend,
+            concept_view,
+        )
+        concept_relation_service = ProductConceptRelationService(concept_view)
+        automatic_concept_resolution = True
 
     node_id = _env("MEMORIA_NODE_ID", f"memoria:{organization_id}:primary")
     node_identity = NodeIdentity(
@@ -235,10 +224,7 @@ def build_app():
         capabilities=frozenset(filter(None, os.getenv("MEMORIA_CAPABILITIES", "memory.read,memory.write").split(","))),
     )
 
-    application_registry = ApplicationRegistry(
-        organization_id,
-        data_dir / "applications.json",
-    )
+    application_registry = ApplicationRegistry(organization_id, data_dir / "applications.json")
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -250,11 +236,7 @@ def build_app():
             if isinstance(episodic_service, NativeEpisodicService):
                 episodic_service.close()
 
-    chat_service = _build_chat_service(
-        service,
-        configuration,
-        conversation_resolver=conversation_service,
-    )
+    chat_service = _build_chat_service(service, configuration, conversation_resolver=conversation_service)
     app = create_app(
         service,
         api_key=api_key,
@@ -278,11 +260,16 @@ def build_app():
             "episodic_runtime": "native" if episodic_is_native else "python",
             "automatic_episode_formation": automatic_episode_formation,
             "automatic_semantic_consolidation": automatic_semantic_consolidation,
+            "automatic_concept_resolution": automatic_concept_resolution,
+            "concept_relation_traversal": concept_relation_service is not None,
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_episodic_routes(app, api_key=api_key, service=episodic_service)
+    if concept_relation_service is not None:
+        from .product_concept_relations import attach_concept_relation_routes
+        attach_concept_relation_routes(app, api_key=api_key, service=concept_relation_service)
     attach_configuration_routes(app, api_key=api_key, store=configuration)
     return app
 
