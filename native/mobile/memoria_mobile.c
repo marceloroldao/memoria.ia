@@ -1043,7 +1043,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         sources[source_count].text = h->turns[i].text;
         sources[source_count].authority = lineage.authority;
         sources[source_count].order = h->turns[i].order;
-        sources[source_count].source_type = lineage.source_type;
+        sources[source_count].source_type = h->turns[i].source_type;
         sources[source_count].ultimate_source_memory_id = lineage.memory_id;
         ++source_count;
     }
