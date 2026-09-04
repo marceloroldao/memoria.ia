@@ -95,3 +95,15 @@ def test_existing_hit_wins_before_path_fallback(tmp_path):
     assert result.status == "HIT"
     assert trace.path_attempted is False
     assert trace.reason in {"original_hit", "concept_retry"}
+
+
+def test_ingest_delegates_through_both_concept_wrappers(tmp_path):
+    _evidence, conversation, resolver = _build(tmp_path)
+
+    stored = resolver.ingest(role="user", text="meu sensor é ativo", session_id="s1", order=7)
+
+    assert stored.memory_ids
+    assert stored.relations
+    base = conversation.resolve(query="sensor", session_id="s1")
+    assert base.status == "HIT"
+    assert base.relations[0]["subject"].casefold() == "sensor"

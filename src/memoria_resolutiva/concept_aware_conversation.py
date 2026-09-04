@@ -52,13 +52,7 @@ def rewrite_query_with_explicit_concepts(
     namespace: str | None,
     max_alias_words: int = 6,
 ) -> ConceptRewrite:
-    """Rewrite explicit aliases, using only explicit context cues for polysemy.
-
-    Longest aliases win. Unambiguous aliases are rewritten directly. If a surface
-    maps to multiple senses, the full query may disambiguate it only when exactly
-    one candidate has an explicitly registered context cue present. No fuzzy or
-    model-generated sense selection occurs; ties and missing cues fail closed.
-    """
+    """Rewrite explicit aliases, using only explicit context cues for polysemy."""
     if max_alias_words < 1:
         raise ValueError("max_alias_words must be >= 1")
     original = " ".join(str(query).split()).strip()
@@ -80,12 +74,7 @@ def rewrite_query_with_explicit_concepts(
             resolution = store.resolve(scope, surface, namespace=namespace)
             contextual = None
             if resolution.reason == "ambiguous":
-                contextual = store.resolve_with_context(
-                    scope,
-                    surface,
-                    original,
-                    namespace=namespace,
-                )
+                contextual = store.resolve_with_context(scope, surface, original, namespace=namespace)
                 if contextual.status == "HIT" and contextual.concept_id is not None:
                     resolution = contextual
                 else:
@@ -114,14 +103,7 @@ def rewrite_query_with_explicit_concepts(
                 continue
             concept = store.get(scope, resolution.concept_id, namespace=namespace)
             if concept is None:
-                return ConceptRewrite(
-                    "UNRESOLVED",
-                    original,
-                    original,
-                    resolution.candidate_ids,
-                    "missing_concept",
-                    tuple(matches),
-                )
+                return ConceptRewrite("UNRESOLVED", original, original, resolution.candidate_ids, "missing_concept", tuple(matches))
             canonical = concept.normalized_canonical
             rewritten.extend(canonical.split())
             concept_ids.append(concept.concept_id)
@@ -151,17 +133,13 @@ def rewrite_query_with_explicit_concepts(
 
 
 class ConceptAwareConversationResolver:
-    """Second-chance resolver using explicit semantic concepts only after a miss."""
+    """Second-chance resolver using explicit semantic concepts only after a miss.
 
-    def __init__(
-        self,
-        base: ConversationResolver,
-        concepts: PersistentSemanticConceptStore,
-        *,
-        scope: MemoryScope,
-        concept_namespace: str | None = None,
-        max_alias_words: int = 6,
-    ) -> None:
+    Ingest is deliberately transparent so this wrapper can sit on the production
+    conversation boundary without becoming a second write path.
+    """
+
+    def __init__(self, base: ConversationResolver, concepts: PersistentSemanticConceptStore, *, scope: MemoryScope, concept_namespace: str | None = None, max_alias_words: int = 6) -> None:
         self.base = base
         self.concepts = concepts
         self.scope = scope
@@ -169,57 +147,30 @@ class ConceptAwareConversationResolver:
         self.max_alias_words = max_alias_words
         self.last_trace: ConceptResolutionTrace | None = None
 
+    def ingest(self, **kwargs):
+        ingest = getattr(self.base, "ingest", None)
+        if ingest is None:
+            raise AttributeError("wrapped conversation service does not support ingest")
+        return ingest(**kwargs)
+
     def resolve_with_trace(self, *, query: str, session_id: str | None = None):
         first = self.base.resolve(query=query, session_id=session_id)
         first_status = str(getattr(first, "status", ""))
         normalized_original = " ".join(str(query).split()).strip()
         if first_status == "HIT":
-            trace = ConceptResolutionTrace(
-                original_query=normalized_original,
-                original_status=first_status,
-                rewrite_status="SKIPPED",
-                rewritten_query=normalized_original,
-                retry_attempted=False,
-                final_status=first_status,
-                reason="original_hit",
-                matches=(),
-            )
+            trace = ConceptResolutionTrace(normalized_original, first_status, "SKIPPED", normalized_original, False, first_status, "original_hit", ())
             self.last_trace = trace
             return first, trace
 
-        rewrite = rewrite_query_with_explicit_concepts(
-            self.concepts,
-            self.scope,
-            query,
-            namespace=self.concept_namespace,
-            max_alias_words=self.max_alias_words,
-        )
+        rewrite = rewrite_query_with_explicit_concepts(self.concepts, self.scope, query, namespace=self.concept_namespace, max_alias_words=self.max_alias_words)
         if rewrite.status != "REWRITTEN" or rewrite.rewritten_query == rewrite.original_query:
-            trace = ConceptResolutionTrace(
-                original_query=rewrite.original_query,
-                original_status=first_status,
-                rewrite_status=rewrite.status,
-                rewritten_query=rewrite.rewritten_query,
-                retry_attempted=False,
-                final_status=first_status,
-                reason=rewrite.reason,
-                matches=rewrite.matches,
-            )
+            trace = ConceptResolutionTrace(rewrite.original_query, first_status, rewrite.status, rewrite.rewritten_query, False, first_status, rewrite.reason, rewrite.matches)
             self.last_trace = trace
             return first, trace
 
         second = self.base.resolve(query=rewrite.rewritten_query, session_id=session_id)
         final_status = str(getattr(second, "status", ""))
-        trace = ConceptResolutionTrace(
-            original_query=rewrite.original_query,
-            original_status=first_status,
-            rewrite_status=rewrite.status,
-            rewritten_query=rewrite.rewritten_query,
-            retry_attempted=True,
-            final_status=final_status,
-            reason="concept_retry",
-            matches=rewrite.matches,
-        )
+        trace = ConceptResolutionTrace(rewrite.original_query, first_status, rewrite.status, rewrite.rewritten_query, True, final_status, "concept_retry", rewrite.matches)
         self.last_trace = trace
         return second, trace
 
