@@ -163,9 +163,10 @@ def test_concept_aware_resolver_refuses_competing_contextual_senses():
     base = FakeResolver()
     resolver = ConceptAwareConversationResolver(base, store, scope=_scope(), concept_namespace="en")
 
-    result, trace = resolver.resolve_with_trace(query="loan near river bank", session_id="s1")
+    query = "loan and river context for bank status"
+    result, trace = resolver.resolve_with_trace(query=query, session_id="s1")
 
     assert result.status == "UNRESOLVED"
     assert trace.retry_attempted is False
     assert trace.reason == "ambiguous_context"
-    assert base.calls == [("loan near river bank", "s1")]
+    assert base.calls == [(query, "s1")]
