@@ -10,6 +10,7 @@ from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
 
 ChatMode = Literal["baseline", "memoria"]
+MIN_COMPACT_RELATION_CONFIDENCE = 0.90
 
 
 class ConversationResolver(Protocol):
@@ -55,6 +56,45 @@ def _append_unique(items: list[str], value: str) -> None:
         items.append(normalized)
 
 
+def _minimal_factual_context(resolved: object, selected: str) -> str:
+    """Compact only a single strong, unambiguous factual relation.
+
+    Temporal responses, multiple memories/provenance rows, weak relations and
+    malformed structured rows keep the resolver's original selected context.
+    This deliberately optimizes the LLM boundary without changing memory recall.
+    """
+    normalized = " ".join(selected.split()).strip()
+    if not normalized:
+        return normalized
+    if normalized.upper().startswith(("CURRENT:", "PREVIOUS:", "TRANSITION:")):
+        return normalized
+
+    relations = tuple(getattr(resolved, "relations", ()) or ())
+    provenance = tuple(getattr(resolved, "provenance", ()) or ())
+    memory_ids = tuple(getattr(resolved, "memory_ids", ()) or ())
+    if len(relations) != 1 or len(provenance) != 1 or len(memory_ids) != 1:
+        return normalized
+
+    relation = relations[0]
+    if not isinstance(relation, dict):
+        return normalized
+    try:
+        confidence = float(relation.get("confidence", 0.0))
+    except (TypeError, ValueError):
+        return normalized
+    if confidence < MIN_COMPACT_RELATION_CONFIDENCE:
+        return normalized
+
+    subject = " ".join(str(relation.get("subject") or "").split()).strip()
+    predicate = " ".join(str(relation.get("predicate") or "").split()).strip()
+    object_ = " ".join(str(relation.get("object") or "").split()).strip()
+    if not subject or not predicate or not object_:
+        return normalized
+
+    compact = f"{subject} | {predicate} | {object_}"
+    return compact if len(compact) < len(normalized) else normalized
+
+
 def profile_namespace(scope: MemoryScope) -> str | None:
     """Stable semantic namespace shared by conversations of the same profile.
 
@@ -96,6 +136,7 @@ class ProductChatService:
         hits = misses = 0
         memory_ms = 0.0
         retrieved: list[str] = []
+        retrieved_chars = 0
 
         if mode == "baseline":
             context = tuple(str(item) for item in baseline_context)
@@ -124,9 +165,11 @@ class ProductChatService:
                     if str(getattr(resolved, "status", "")) != "HIT":
                         continue
                     selected = str(getattr(resolved, "selected_context", "") or "")
-                    if selected.strip():
+                    normalized_selected = " ".join(selected.split()).strip()
+                    if normalized_selected:
                         resolver_hit = True
-                        _append_unique(retrieved, selected)
+                        retrieved_chars += len(normalized_selected)
+                        _append_unique(retrieved, _minimal_factual_context(resolved, normalized_selected))
                         # Session evidence has priority. A profile lookup is only
                         # needed when the current session misses.
                         break
@@ -143,7 +186,9 @@ class ProductChatService:
                     misses += 1
                     continue
                 hits += 1
-                _append_unique(retrieved, _materialize(record.payload))
+                materialized = _materialize(record.payload)
+                retrieved_chars += len(" ".join(materialized.split()).strip())
+                _append_unique(retrieved, materialized)
 
             memory_ms = (perf_counter() - start) * 1000.0
             context = tuple(retrieved)
@@ -159,7 +204,7 @@ class ProductChatService:
             mode=mode,
             memory_hits=hits,
             memory_misses=misses,
-            retrieved_context_chars=sum(len(item) for item in retrieved),
+            retrieved_context_chars=retrieved_chars,
             context_sent_chars=len(sent_text),
             input_tokens=provider_input if provider_input is not None else estimate_tokens(sent_text + message),
             output_tokens=provider_output if provider_output is not None else estimate_tokens(response.text),
