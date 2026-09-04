@@ -17,13 +17,15 @@ jobs:
         with:
           ref: experiment/post-v1-native-created-time
       - name: Apply portable UTC timestamp fallback and tests
-        shell: python
+        shell: bash
         run: |
+          cat > /tmp/apply_created_time.py <<'PY'
           from pathlib import Path
 
           source = Path('native/mobile/memoria_mobile.c')
           text = source.read_text()
-          text = text.replace('#include <string.h>\n', '#include <string.h>\n#include <time.h>\n', 1)
+          if '#include <time.h>\n' not in text:
+              text = text.replace('#include <string.h>\n', '#include <string.h>\n#include <time.h>\n', 1)
 
           marker = '''static char *buffer_to_string(memoria_mobile_buffer input) {
               char *s;
@@ -35,7 +37,7 @@ jobs:
               return s;
           }
           '''
-          insert = marker + '''
+          helper = '''
           static char *utc_now_iso8601(void) {
               time_t now;
               struct tm utc;
@@ -51,9 +53,10 @@ jobs:
               return dup_string(buf);
           }
           '''
-          if marker not in text:
-              raise SystemExit('buffer_to_string marker not found')
-          text = text.replace(marker, insert, 1)
+          if 'static char *utc_now_iso8601(void)' not in text:
+              if marker not in text:
+                  raise SystemExit('buffer_to_string marker not found')
+              text = text.replace(marker, marker + helper, 1)
 
           old_turn = '''    created_time = json_string(json, "timestamp");
               if (!created_time) created_time = dup_string("");
@@ -64,9 +67,10 @@ jobs:
                   created_time = utc_now_iso8601();
               }
           '''
-          if old_turn not in text:
+          if old_turn in text:
+              text = text.replace(old_turn, new_turn, 1)
+          elif 'created_time = utc_now_iso8601();' not in text:
               raise SystemExit('turn timestamp fallback marker not found')
-          text = text.replace(old_turn, new_turn, 1)
 
           old_episode = '''    if (!timestamp) timestamp = dup_string("");
           '''
@@ -75,13 +79,13 @@ jobs:
                   timestamp = utc_now_iso8601();
               }
           '''
-          if old_episode not in text:
+          if old_episode in text:
+              text = text.replace(old_episode, new_episode, 1)
+          elif 'timestamp = utc_now_iso8601();' not in text:
               raise SystemExit('episode timestamp fallback marker not found')
-          text = text.replace(old_episode, new_episode, 1)
           source.write_text(text)
 
-          test = Path('native/mobile/tests/created_time_mobile.c')
-          test.write_text(r'''#include "memoria_mobile.h"
+          Path('native/mobile/tests/created_time_mobile.c').write_text(r'''#include "memoria_mobile.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,7 +107,7 @@ static memoria_mobile_status episode(memoria_mobile_handle *h, const char *json,
     return memoria_mobile_store_episode_json(h, in, out);
 }
 
-static int generated_timestamp_present(memoria_mobile_handle *h) {
+static int snapshot_contract(memoria_mobile_handle *h, char generated[32]) {
     memoria_mobile_buffer req = {(const uint8_t *)"{}", 2};
     memoria_mobile_buffer out = {0};
     const char *p;
@@ -113,10 +117,11 @@ static int generated_timestamp_present(memoria_mobile_handle *h) {
     p = strstr(p, "\"created_time\":\"");
     CHECK(p != NULL);
     p += strlen("\"created_time\":\"");
-    CHECK(strncmp(p, "2026-01-02T03:04:05Z", 20) != 0);
     CHECK(strlen(p) >= 20);
     CHECK(p[4] == '-' && p[7] == '-' && p[10] == 'T' && p[13] == ':' && p[16] == ':' && p[19] == 'Z');
-    CHECK(strstr((const char *)out.data, "\"timestamp\":\"2026-01-02T03:04:05Z\"") != NULL);
+    memcpy(generated, p, 20);
+    generated[20] = 0;
+    CHECK(contains(out, "\"timestamp\":\"2026-01-02T03:04:05Z\""));
     memoria_mobile_free_buffer(out);
     return 0;
 }
@@ -124,6 +129,8 @@ static int generated_timestamp_present(memoria_mobile_handle *h) {
 int main(void) {
     memoria_mobile_handle *h = NULL;
     memoria_mobile_buffer out = {0};
+    char before[32] = {0};
+    char after[32] = {0};
     (void)system("rm -rf ./tmp-mobile-created-time");
 
     CHECK(memoria_mobile_open("./tmp-mobile-created-time", "org-created-time", &h) == MEMORIA_MOBILE_OK);
@@ -133,12 +140,13 @@ int main(void) {
     CHECK(episode(h, "{\"role\":\"user\",\"text\":\"explicit episode\",\"episode_id\":\"explicit-episode\",\"session_id\":\"s\",\"timestamp\":\"2026-01-02T03:04:05Z\"}", &out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out = (memoria_mobile_buffer){0};
 
-    CHECK(generated_timestamp_present(h) == 0);
+    CHECK(snapshot_contract(h, before) == 0);
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
     memoria_mobile_close(h); h = NULL;
 
     CHECK(memoria_mobile_open("./tmp-mobile-created-time", "org-created-time", &h) == MEMORIA_MOBILE_OK);
-    CHECK(generated_timestamp_present(h) == 0);
+    CHECK(snapshot_contract(h, after) == 0);
+    CHECK(strcmp(before, after) == 0);
     memoria_mobile_close(h);
     (void)system("rm -rf ./tmp-mobile-created-time");
     return 0;
@@ -147,20 +155,23 @@ int main(void) {
 
           cmake = Path('native/mobile/CMakeLists.txt')
           ctext = cmake.read_text()
-          anchor = '''  add_executable(memoria_mobile_provenance_lineage tests/provenance_lineage_mobile.c)
-            target_link_libraries(memoria_mobile_provenance_lineage PRIVATE memoria_mobile)
-            target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
-            add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
+          if 'memoria_mobile_created_time' not in ctext:
+              anchor = '''  add_executable(memoria_mobile_provenance_lineage tests/provenance_lineage_mobile.c)
+              target_link_libraries(memoria_mobile_provenance_lineage PRIVATE memoria_mobile)
+              target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+              add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
           '''
-          addition = anchor + '''
-            add_executable(memoria_mobile_created_time tests/created_time_mobile.c)
-            target_link_libraries(memoria_mobile_created_time PRIVATE memoria_mobile)
-            target_include_directories(memoria_mobile_created_time PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
-            add_test(NAME memoria_mobile_created_time COMMAND memoria_mobile_created_time)
+              addition = anchor + '''
+              add_executable(memoria_mobile_created_time tests/created_time_mobile.c)
+              target_link_libraries(memoria_mobile_created_time PRIVATE memoria_mobile)
+              target_include_directories(memoria_mobile_created_time PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+              add_test(NAME memoria_mobile_created_time COMMAND memoria_mobile_created_time)
           '''
-          if anchor not in ctext:
-              raise SystemExit('CMake provenance anchor not found')
-          cmake.write_text(ctext.replace(anchor, addition, 1))
+              if anchor not in ctext:
+                  raise SystemExit('CMake provenance anchor not found')
+              cmake.write_text(ctext.replace(anchor, addition, 1))
+          PY
+          python /tmp/apply_created_time.py
       - name: Commit patch
         run: |
           git config user.name "github-actions[bot]"
