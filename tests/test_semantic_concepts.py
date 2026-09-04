@@ -79,6 +79,14 @@ def test_unknown_surface_is_not_fuzzy_guessed():
     assert resolved.candidate_ids == ()
 
 
+def test_empty_surface_fails_closed_without_candidates():
+    index = SemanticConceptIndex()
+    resolved = index.resolve(" --- ", namespace="electronics")
+    assert resolved.status == "UNRESOLVED"
+    assert resolved.reason == "empty"
+    assert resolved.candidate_ids == ()
+
+
 def test_re_registering_same_identity_adds_alias_without_changing_id():
     index = SemanticConceptIndex()
     first = index.register_concept("voltage", aliases=("DDP",), namespace="electronics")
