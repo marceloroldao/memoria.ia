@@ -1,0 +1,27 @@
+name: one-shot native automatic consolidation
+on:
+  push:
+    branches:
+      - experiment/post-v1-native-auto-consolidation-persist
+    paths:
+      - tools/apply_native_auto_consolidation_build.py
+      - .github/workflows/one-shot-native-auto-consolidation.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-native-auto-consolidation-persist
+      - run: python tools/apply_native_auto_consolidation_build.py
+      - run: |
+          rm tools/apply_native_auto_consolidation_build.py
+          rm -f tools/apply_native_auto_consolidation_runtime.py
+          rm .github/workflows/one-shot-native-auto-consolidation.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add native/mobile/memoria_mobile.c native/mobile/CMakeLists.txt tools/apply_native_auto_consolidation_build.py tools/apply_native_auto_consolidation_runtime.py .github/workflows/one-shot-native-auto-consolidation.yml
+          git commit -m "post-v1: persist native semantic consolidation automatically"
+          git push origin HEAD:experiment/post-v1-native-auto-consolidation-persist
