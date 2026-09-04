@@ -41,7 +41,12 @@ from memoria_resolutiva.product_server import app
 with TestClient(app) as client:
     response = client.get('/api/v1/storage/health')
     response.raise_for_status()
-    print(json.dumps(response.json(), sort_keys=True))
+    semantic = client.get('/api/v1/semantic/relations/health', headers={'X-Memoria-Key': 'native-default-secret'})
+    print(json.dumps({
+        'storage': response.json(),
+        'semantic_status': semantic.status_code,
+        'semantic_body': semantic.json() if semantic.status_code == 200 else None,
+    }, sort_keys=True))
 """
     return subprocess.run(
         [sys.executable, "-c", code],
@@ -58,11 +63,14 @@ def test_server_defaults_to_native_when_runtime_overrides_are_absent(tmp_path: P
     env["MEMORIA_NATIVE_LIB"] = str(library)
     result = _health_probe(env)
     assert result.returncode == 0, result.stderr
-    health = json.loads(result.stdout.strip().splitlines()[-1])
+    probe = json.loads(result.stdout.strip().splitlines()[-1])
+    health = probe["storage"]
     assert health["conversation_runtime"] == "native"
     assert health["episodic_runtime"] == "native"
-    # Native consolidates inside the durable runtime rather than through the Python bridge.
     assert health["automatic_semantic_consolidation"] is True
+    assert health["automatic_concept_resolution"] is False
+    assert health["concept_relation_traversal"] is False
+    assert probe["semantic_status"] == 404
 
 
 def test_explicit_python_reference_mode_does_not_require_native_library(tmp_path: Path):
@@ -72,10 +80,15 @@ def test_explicit_python_reference_mode_does_not_require_native_library(tmp_path
     env.pop("MEMORIA_NATIVE_LIB", None)
     result = _health_probe(env)
     assert result.returncode == 0, result.stderr
-    health = json.loads(result.stdout.strip().splitlines()[-1])
+    probe = json.loads(result.stdout.strip().splitlines()[-1])
+    health = probe["storage"]
     assert health["conversation_runtime"] == "python"
     assert health["episodic_runtime"] == "python"
     assert health["automatic_semantic_consolidation"] is True
+    assert health["automatic_concept_resolution"] is True
+    assert health["concept_relation_traversal"] is True
+    assert probe["semantic_status"] == 200
+    assert probe["semantic_body"]["capability"] == "concept-relation-traversal-v1"
 
 
 def test_native_default_fails_closed_when_library_is_missing(tmp_path: Path):
