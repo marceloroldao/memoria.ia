@@ -164,3 +164,81 @@ def test_multiword_alias_survives_store_restart_and_still_rewrites(tmp_path):
         ("qual a diferença de potencial", "s1"),
         ("qual a voltage", "s1"),
     ]
+
+
+def test_trace_records_alias_concept_and_sense_used_for_retry():
+    store = _store()
+    concept = store.register_concept(
+        _scope(),
+        "voltage",
+        aliases=("DDP",),
+        namespace="electronics",
+        sense_key="electric potential",
+    )
+    base = FakeResolver({"qual a voltage": "HIT"})
+    resolver = ConceptAwareConversationResolver(
+        base, store, scope=_scope(), concept_namespace="electronics"
+    )
+
+    result, trace = resolver.resolve_with_trace(query="qual a DDP", session_id="s1")
+
+    assert result.status == "HIT"
+    assert trace.original_status == "UNRESOLVED"
+    assert trace.rewrite_status == "REWRITTEN"
+    assert trace.retry_attempted is True
+    assert trace.final_status == "HIT"
+    assert trace.reason == "concept_retry"
+    assert trace.rewritten_query == "qual a voltage"
+    assert len(trace.matches) == 1
+    match = trace.matches[0]
+    assert match.surface == "ddp"
+    assert match.canonical == "voltage"
+    assert match.concept_id == concept.concept_id
+    assert match.sense_key == "electric potential"
+    assert resolver.last_trace == trace
+
+
+def test_trace_preserves_ambiguous_candidate_senses_without_retry():
+    store = _store()
+    finance = store.register_concept(
+        _scope(), "financial bank", aliases=("bank",), namespace="english", sense_key="finance"
+    )
+    geography = store.register_concept(
+        _scope(), "river bank", aliases=("bank",), namespace="english", sense_key="geography"
+    )
+    base = FakeResolver()
+    resolver = ConceptAwareConversationResolver(
+        base, store, scope=_scope(), concept_namespace="english"
+    )
+
+    result, trace = resolver.resolve_with_trace(query="bank status", session_id="s1")
+
+    assert result.status == "UNRESOLVED"
+    assert trace.rewrite_status == "UNRESOLVED"
+    assert trace.retry_attempted is False
+    assert trace.reason == "ambiguous_concept"
+    assert {match.concept_id for match in trace.matches} == {finance.concept_id, geography.concept_id}
+    assert {match.sense_key for match in trace.matches} == {"finance", "geography"}
+    assert all(match.status == "AMBIGUOUS" for match in trace.matches)
+    assert base.calls == [("bank status", "s1")]
+
+
+def test_original_hit_trace_does_not_claim_concept_participation():
+    store = _store()
+    store.register_concept(
+        _scope(), "voltage", aliases=("DDP",), namespace="electronics", sense_key="electric potential"
+    )
+    base = FakeResolver({"qual a DDP": "HIT"})
+    resolver = ConceptAwareConversationResolver(
+        base, store, scope=_scope(), concept_namespace="electronics"
+    )
+
+    result, trace = resolver.resolve_with_trace(query="qual a DDP", session_id="s1")
+
+    assert result.status == "HIT"
+    assert trace.original_status == "HIT"
+    assert trace.rewrite_status == "SKIPPED"
+    assert trace.retry_attempted is False
+    assert trace.reason == "original_hit"
+    assert trace.matches == ()
+    assert base.calls == [("qual a DDP", "s1")]
