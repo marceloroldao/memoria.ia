@@ -1,0 +1,28 @@
+name: one-shot native lineage patch
+on:
+  push:
+    branches:
+      - experiment/post-v1-native-runtime-lineage-gate
+    paths:
+      - tools/apply_native_lineage_runtime_patch.py
+      - .github/workflows/one-shot-lineage-patch.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-native-runtime-lineage-gate
+      - name: Apply exact runtime patch
+        run: python tools/apply_native_lineage_runtime_patch.py
+      - name: Remove one-shot machinery and commit
+        run: |
+          rm tools/apply_native_lineage_runtime_patch.py
+          rm .github/workflows/one-shot-lineage-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add native/mobile/memoria_mobile.c tools/apply_native_lineage_runtime_patch.py .github/workflows/one-shot-lineage-patch.yml
+          git commit -m "fix: delegate native factual lineage to conjunctive resolver"
+          git push origin HEAD:experiment/post-v1-native-runtime-lineage-gate
