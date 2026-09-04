@@ -97,6 +97,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_provenance_lineage PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_provenance_lineage COMMAND memoria_mobile_provenance_lineage)
 
+  add_executable(memoria_mobile_runtime_lineage_gate tests/runtime_lineage_gate.c)
+  target_link_libraries(memoria_mobile_runtime_lineage_gate PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_runtime_lineage_gate PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_runtime_lineage_gate COMMAND memoria_mobile_runtime_lineage_gate)
+
   add_executable(memoria_mobile_lineage_state tests/lineage_state.c)
   target_link_libraries(memoria_mobile_lineage_state PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_lineage_state PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
