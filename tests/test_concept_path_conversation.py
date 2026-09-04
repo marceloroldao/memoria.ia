@@ -63,12 +63,13 @@ def test_path_fallback_does_not_run_with_only_one_anchor(tmp_path):
     evidence, conversation, resolver = _build(tmp_path)
     _observe(evidence, conversation, "charger", "has_property", "diferença de potencial", "e1", "charger has diferença de potencial")
 
-    result, trace = resolver.resolve_with_trace(query="charger desconhecido", session_id="s1")
+    result, trace = resolver.resolve_with_trace(query="DDP desconhecido", session_id="s1")
 
     assert result.status == "UNRESOLVED"
     assert trace.path_attempted is False
     assert trace.reason == "anchor_count"
     assert len(trace.anchors) == 1
+    assert trace.anchors[0].status == "CONCEPT"
 
 
 def test_path_fallback_refuses_two_valid_directions(tmp_path):
