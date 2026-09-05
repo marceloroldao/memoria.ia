@@ -1,0 +1,30 @@
+name: Apply native concept resolve activation
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-native-concept-resolve-activation
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[native-concept-resolve-activated]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-native-concept-resolve-activation
+          fetch-depth: 0
+      - name: Apply resolver activation slice
+        run: |
+          python tools/apply_native_concept_resolve_activation.py
+          rm -f tools/apply_native_concept_resolve_activation.py
+          rm -f .github/workflows/apply-native-concept-resolve-activation.yml
+          git diff --check
+          git config user.name "Marcelo Roldão Matos"
+          git config user.email "marceloroldao@gmail.com"
+          git add -A
+          git commit -m "post-v1: activate miss-only native concept resolve [native-concept-resolve-activated]"
+          git push origin HEAD:experiment/post-v1-native-concept-resolve-activation
