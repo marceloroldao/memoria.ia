@@ -11,6 +11,7 @@
 #include "lineage_state.h"
 #include "semantic_consolidation_state.h"
 #include "semantic_consolidation_request.h"
+#include "concept_runtime_state.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -39,6 +40,7 @@ struct memoria_mobile_handle {
     char *data_dir;
     char *organization_id;
     memoria_persistence *persistence;
+    memoria_concept_runtime *concept_runtime;
     turn_row *turns;
     size_t turn_count;
     size_t turn_capacity;
@@ -824,6 +826,7 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     if (!h->data_dir || !h->organization_id ||
         !memoria_persistence_open(data_dir, organization_id, &h->persistence) ||
         !memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence) ||
+        !memoria_concept_runtime_open(data_dir, organization_id, &h->concept_runtime) ||
         episodes > MAX_EPISODES) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
@@ -1374,7 +1377,8 @@ memoria_mobile_status memoria_mobile_export_snapshot_json(
 
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *h) {
     if (!h) return MEMORIA_MOBILE_INVALID_ARGUMENT;
-    return memoria_persistence_sync(h->persistence) ? MEMORIA_MOBILE_OK : MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    return memoria_persistence_sync(h->persistence) && memoria_concept_runtime_sync(h->concept_runtime)
+        ? MEMORIA_MOBILE_OK : MEMORIA_MOBILE_PERSISTENCE_ERROR;
 }
 
 void memoria_mobile_free_buffer(memoria_mobile_buffer b) { free((void *)b.data); }
@@ -1384,6 +1388,7 @@ void memoria_mobile_close(memoria_mobile_handle *h) {
     if (!h) return;
     for (i = 0; i < h->turn_count; ++i) free_turn(&h->turns[i]);
     for (i = 0; i < h->episode_count; ++i) free_episode(&h->episodes[i]);
+    memoria_concept_runtime_close(h->concept_runtime);
     memoria_persistence_close(h->persistence);
     free(h->turns);
     free(h->semantic_sources);

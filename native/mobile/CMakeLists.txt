@@ -19,10 +19,13 @@ add_library(memoria_concept_internal STATIC
   concept_identity_kernel.c
   concept_identity_state.c
   concept_identity_bdr.c
+  concept_runtime_state.c
 )
 target_include_directories(memoria_concept_internal PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(memoria_concept_internal PRIVATE bdr_atomic_c_api)
-set_target_properties(memoria_concept_internal PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+set_target_properties(memoria_concept_internal PROPERTIES
+  C_STANDARD 11 C_STANDARD_REQUIRED YES C_VISIBILITY_PRESET hidden
+)
 
 add_library(memoria_mobile SHARED
   memoria_mobile.c
@@ -44,7 +47,7 @@ add_library(memoria_mobile SHARED
   diagnostic_export.c
 )
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api)
+target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api memoria_concept_internal)
 set_target_properties(memoria_mobile PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES LINKER_LANGUAGE CXX)
 
 if(NOT ANDROID)
@@ -153,6 +156,12 @@ if(NOT ANDROID)
   target_include_directories(memoria_concept_identity_bdr_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_concept_identity_bdr_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_concept_identity_bdr_test COMMAND memoria_concept_identity_bdr_test)
+
+  add_executable(memoria_concept_runtime_state_test tests/concept_runtime_state.c)
+  target_link_libraries(memoria_concept_runtime_state_test PRIVATE memoria_mobile memoria_concept_internal)
+  target_include_directories(memoria_concept_runtime_state_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_concept_runtime_state_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_concept_runtime_state_test COMMAND memoria_concept_runtime_state_test)
 
   add_executable(memoria_lineage_kernel_test tests/lineage_kernel.c lineage_kernel.c)
   target_include_directories(memoria_lineage_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
