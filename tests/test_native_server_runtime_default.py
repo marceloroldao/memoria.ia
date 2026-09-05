@@ -8,6 +8,10 @@ import sys
 
 import pytest
 
+from memoria_resolutiva.product_identity import MemoryScope, OrganizationIdentity
+from memoria_resolutiva.product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
+from memoria_resolutiva.semantic_concept_store import PersistentSemanticConceptStore
+
 
 def _native_library() -> Path:
     value = os.environ.get("MEMORIA_NATIVE_LIB")
@@ -73,6 +77,72 @@ def test_server_defaults_to_native_when_runtime_overrides_are_absent(tmp_path: P
     assert health["concept_namespace"] == "semantic"
     assert health["concept_relation_traversal"] is False
     assert probe["semantic_status"] == 404
+
+
+def test_native_server_materializes_persisted_concept_and_resolves_alias(tmp_path: Path):
+    library = _native_library()
+    data_dir = tmp_path / "concept-e2e"
+    persistence = ProductSnapshotPersistence(
+        data_dir / "persistence",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    service = PersistentEnterpriseMemoryService(
+        OrganizationIdentity("native-default-org"),
+        persistence=persistence,
+    )
+    concepts = PersistentSemanticConceptStore(service)
+    concepts.register_concept(
+        MemoryScope("native-default-org"),
+        "voltage",
+        aliases=("ddp",),
+        namespace="semantic",
+        sense_key="electric",
+        concept_id="concept:voltage",
+        context_cues=("circuit",),
+    )
+    service.save(data_dir)
+
+    env = _base_env(data_dir)
+    env["MEMORIA_NATIVE_LIB"] = str(library)
+    env["MEMORIA_CONCEPT_NAMESPACE"] = "semantic"
+    code = """
+import json
+from fastapi.testclient import TestClient
+from memoria_resolutiva.product_server import app
+headers = {'X-Memoria-Key': 'native-default-secret'}
+with TestClient(app) as client:
+    health = client.get('/api/v1/storage/health').json()
+    ingest = client.post('/api/v1/conversation/ingest', headers=headers, json={
+        'role': 'user', 'text': 'voltage', 'session_id': 'session-e2e'
+    })
+    resolve = client.post('/api/v1/conversation/resolve', headers=headers, json={
+        'query': 'ddp', 'session_id': 'session-e2e'
+    })
+    print(json.dumps({
+        'health': health,
+        'ingest_status': ingest.status_code,
+        'ingest': ingest.json(),
+        'resolve_status': resolve.status_code,
+        'resolve': resolve.json(),
+    }, sort_keys=True))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    probe = json.loads(result.stdout.strip().splitlines()[-1])
+    assert probe["health"]["native_concept_catalog_materialized"] is True
+    assert probe["health"]["native_concept_catalog_count"] == 1
+    assert probe["health"]["automatic_concept_resolution"] is True
+    assert probe["ingest_status"] == 200
+    assert probe["resolve_status"] == 200
+    assert probe["resolve"]["status"] == "HIT"
+    assert "voltage" in probe["resolve"]["selected_context"]
 
 
 def test_explicit_python_reference_mode_does_not_require_native_library(tmp_path: Path):
