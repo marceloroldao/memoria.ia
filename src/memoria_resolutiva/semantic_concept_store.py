@@ -173,6 +173,35 @@ class PersistentSemanticConceptStore:
                 )
         return concept
 
+    def list_concepts(
+        self,
+        scope: MemoryScope,
+        *,
+        namespace: str | None = None,
+    ) -> tuple[SemanticConcept, ...]:
+        records = self.memory.records_under(
+            scope,
+            ("semantic-concepts", _namespace_key(namespace), "concept"),
+        )
+        concepts: list[SemanticConcept] = []
+        for record in records:
+            payload = record.payload
+            if not isinstance(payload, dict) or payload.get("kind") != "semantic_concept":
+                continue
+            concepts.append(
+                SemanticConcept(
+                    concept_id=str(payload["concept_id"]),
+                    canonical_name=str(payload["canonical_name"]),
+                    normalized_canonical=str(payload["normalized_canonical"]),
+                    namespace=namespace,
+                    sense_key=(str(payload["sense_key"]) if payload.get("sense_key") else None),
+                    aliases=tuple(str(value) for value in payload.get("aliases", ())),
+                    context_cues=tuple(str(value) for value in payload.get("context_cues", ())),
+                )
+            )
+        concepts.sort(key=lambda concept: concept.concept_id)
+        return tuple(concepts)
+
     def resolve(
         self,
         scope: MemoryScope,
