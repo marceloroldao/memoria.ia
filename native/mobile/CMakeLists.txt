@@ -20,6 +20,7 @@ add_library(memoria_concept_internal STATIC
   concept_identity_state.c
   concept_identity_bdr.c
   concept_runtime_state.c
+  concept_query_rewrite.c
 )
 target_include_directories(memoria_concept_internal PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(memoria_concept_internal PRIVATE bdr_atomic_c_api)
@@ -162,6 +163,12 @@ if(NOT ANDROID)
   target_include_directories(memoria_concept_runtime_state_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_concept_runtime_state_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_concept_runtime_state_test COMMAND memoria_concept_runtime_state_test)
+
+  add_executable(memoria_concept_query_rewrite_test tests/concept_query_rewrite.c)
+  target_link_libraries(memoria_concept_query_rewrite_test PRIVATE memoria_concept_internal)
+  target_include_directories(memoria_concept_query_rewrite_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_concept_query_rewrite_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_concept_query_rewrite_test COMMAND memoria_concept_query_rewrite_test)
 
   add_executable(memoria_lineage_kernel_test tests/lineage_kernel.c lineage_kernel.c)
   target_include_directories(memoria_lineage_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
