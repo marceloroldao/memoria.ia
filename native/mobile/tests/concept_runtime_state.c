@@ -67,5 +67,34 @@ int main(void) {
     assert(r.status == MEMORIA_CONCEPT_HIT);
     assert(strcmp(r.concept_id, "concept:voltage") == 0);
     memoria_concept_runtime_close(runtime);
+    runtime = NULL;
+
+    /* Materialize a new authoritative catalog through the additive ABI. */
+    {
+        static const char *fp = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        static const char *request =
+            "{\"schema\":1,\"namespace\":\"semantic\","
+            "\"fingerprint\":\"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\","
+            "\"concept_count\":1,\"rows\":[\"12:concept:temp8:semantic11:temperature7:thermal2:11:temperature4:temp1:4:heat\"]}";
+        memoria_mobile_buffer in = {(const uint8_t *)request, strlen(request)};
+        memoria_mobile_buffer out = {0};
+        assert(memoria_mobile_open(path, "org-runtime", &mobile) == MEMORIA_MOBILE_OK);
+        assert(memoria_mobile_apply_concept_catalog_json(mobile, in, &out) == MEMORIA_MOBILE_OK);
+        assert(out.data != NULL && strstr((const char *)out.data, "\"changed\":true") != NULL);
+        memoria_mobile_free_buffer(out); out.data = NULL; out.size = 0;
+        assert(memoria_mobile_apply_concept_catalog_json(mobile, in, &out) == MEMORIA_MOBILE_OK);
+        assert(out.data != NULL && strstr((const char *)out.data, "\"changed\":false") != NULL);
+        memoria_mobile_free_buffer(out);
+        assert(memoria_mobile_flush(mobile) == MEMORIA_MOBILE_OK);
+        memoria_mobile_close(mobile); mobile = NULL;
+
+        assert(memoria_concept_runtime_open(path, "org-runtime", &runtime));
+        assert(strcmp(memoria_concept_runtime_fingerprint(runtime), fp) == 0);
+        index = memoria_concept_runtime_index(runtime);
+        r = memoria_concept_resolve(index, "semantic", "temp");
+        assert(r.status == MEMORIA_CONCEPT_HIT);
+        assert(strcmp(r.concept_id, "concept:temp") == 0);
+        memoria_concept_runtime_close(runtime);
+    }
     return 0;
 }

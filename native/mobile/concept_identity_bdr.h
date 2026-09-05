@@ -19,11 +19,24 @@ int memoria_concept_bdr_save(
     size_t row_count
 );
 
+int memoria_concept_bdr_save_catalog(
+    memoria_concept_bdr *store,
+    const memoria_concept_state_row *rows,
+    size_t row_count,
+    const char *fingerprint
+);
+
 int memoria_concept_bdr_load(
     memoria_concept_bdr *store,
     memoria_concept_state_row *rows,
     size_t row_capacity,
     size_t *row_count
+);
+
+int memoria_concept_bdr_load_fingerprint(
+    memoria_concept_bdr *store,
+    char *fingerprint,
+    size_t fingerprint_cap
 );
 
 int memoria_concept_bdr_sync(memoria_concept_bdr *store);

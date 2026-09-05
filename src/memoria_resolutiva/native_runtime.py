@@ -54,6 +54,10 @@ class NativeRuntime:
             function = getattr(self._lib, name)
             function.argtypes = [ctypes.c_void_p, NativeBuffer, ctypes.POINTER(NativeBuffer)]
             function.restype = ctypes.c_int
+        optional_catalog_apply = getattr(self._lib, "memoria_mobile_apply_concept_catalog_json", None)
+        if optional_catalog_apply is not None:
+            optional_catalog_apply.argtypes = [ctypes.c_void_p, NativeBuffer, ctypes.POINTER(NativeBuffer)]
+            optional_catalog_apply.restype = ctypes.c_int
         self._lib.memoria_mobile_flush.argtypes = [ctypes.c_void_p]
         self._lib.memoria_mobile_flush.restype = ctypes.c_int
         self._lib.memoria_mobile_free_buffer.argtypes = [NativeBuffer]
@@ -62,6 +66,9 @@ class NativeRuntime:
     @property
     def closed(self) -> bool:
         return self._closed
+
+    def supports(self, function_name: str) -> bool:
+        return hasattr(self._lib, function_name)
 
     def call(self, function_name: str, payload: dict[str, object]) -> tuple[int, dict[str, object]]:
         if self._closed or not self._handle.value:
@@ -120,6 +127,11 @@ class NativeRuntimeLease:
     def flush(self) -> None:
         if not self._released:
             self.runtime.flush()
+
+    def supports(self, function_name: str) -> bool:
+        if self._released:
+            return False
+        return self.runtime.supports(function_name)
 
     def release(self) -> None:
         if self._released:

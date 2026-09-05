@@ -158,41 +158,61 @@ int memoria_concept_bdr_open(const char *data_dir, const char *organization_id, 
     return 1;
 }
 
-int memoria_concept_bdr_save(memoria_concept_bdr *store, const memoria_concept_state_row *rows, size_t row_count) {
-    size_t op_count = row_count + 2u, i;
+int memoria_concept_bdr_save_catalog(memoria_concept_bdr *store, const memoria_concept_state_row *rows, size_t row_count, const char *fingerprint) {
+    size_t op_count = row_count + 3u, i;
     bdr_atomic_c_operation *ops;
     char (*keys)[KEY_CAP];
     char (*values)[ROW_CAP];
     char schema[32], count[32], suffix[64];
     bdr_atomic_c_batch_result result = {0};
     int ok = 0;
-    if (!store || (row_count && !rows) || row_count > MEMORIA_CONCEPT_MAX_CONCEPTS) return 0;
+    if (!store || (row_count && !rows) || row_count > MEMORIA_CONCEPT_MAX_CONCEPTS || !fingerprint) return 0;
     ops = (bdr_atomic_c_operation *)calloc(op_count, sizeof(*ops));
     keys = (char (*)[KEY_CAP])calloc(op_count, sizeof(*keys));
     values = (char (*)[ROW_CAP])calloc(op_count, sizeof(*values));
     if (!ops || !keys || !values) goto done;
     snprintf(schema, sizeof(schema), "%u", CONCEPT_STATE_SCHEMA);
     snprintf(count, sizeof(count), "%zu", row_count);
-    if (!make_key(store, keys[0], KEY_CAP, "meta/schema") || !make_key(store, keys[1], KEY_CAP, "meta/count")) goto done;
+    if (!make_key(store, keys[0], KEY_CAP, "meta/schema") ||
+        !make_key(store, keys[1], KEY_CAP, "meta/count") ||
+        !make_key(store, keys[2], KEY_CAP, "meta/fingerprint")) goto done;
     snprintf(values[0], ROW_CAP, "%s", schema);
     snprintf(values[1], ROW_CAP, "%s", count);
-    for (i = 0; i < 2u; ++i) {
+    snprintf(values[2], ROW_CAP, "%s", fingerprint);
+    for (i = 0; i < 3u; ++i) {
         ops[i].type = BDR_ATOMIC_C_PUT;
         ops[i].key = keys[i]; ops[i].key_size = strlen(keys[i]);
         ops[i].value = values[i]; ops[i].value_size = strlen(values[i]);
     }
     for (i = 0; i < row_count; ++i) {
         snprintf(suffix, sizeof(suffix), "row/%06zu", i + 1u);
-        if (!make_key(store, keys[i + 2u], KEY_CAP, suffix) || !serialize_row(&rows[i], values[i + 2u], ROW_CAP)) goto done;
-        ops[i + 2u].type = BDR_ATOMIC_C_PUT;
-        ops[i + 2u].key = keys[i + 2u]; ops[i + 2u].key_size = strlen(keys[i + 2u]);
-        ops[i + 2u].value = values[i + 2u]; ops[i + 2u].value_size = strlen(values[i + 2u]);
+        if (!make_key(store, keys[i + 3u], KEY_CAP, suffix) || !serialize_row(&rows[i], values[i + 3u], ROW_CAP)) goto done;
+        ops[i + 3u].type = BDR_ATOMIC_C_PUT;
+        ops[i + 3u].key = keys[i + 3u]; ops[i + 3u].key_size = strlen(keys[i + 3u]);
+        ops[i + 3u].value = values[i + 3u]; ops[i + 3u].value_size = strlen(values[i + 3u]);
     }
     ok = bdr_atomic_c_write_batch(store->db, ops, op_count, &result) == BDR_ATOMIC_C_OK &&
          result.durable == 1 && result.operations == op_count;
 done:
     free(ops); free(keys); free(values);
     return ok;
+}
+
+int memoria_concept_bdr_save(memoria_concept_bdr *store, const memoria_concept_state_row *rows, size_t row_count) {
+    return memoria_concept_bdr_save_catalog(store, rows, row_count, "");
+}
+
+int memoria_concept_bdr_load_fingerprint(memoria_concept_bdr *store, char *fingerprint, size_t fingerprint_cap) {
+    char *text = NULL;
+    size_t n = 0;
+    if (!store || !fingerprint || fingerprint_cap == 0) return 0;
+    fingerprint[0] = 0;
+    if (!fetch_text(store, "meta/fingerprint", &text, &n)) return 0;
+    if (!text) return 1;
+    if (n >= fingerprint_cap) { free(text); return 0; }
+    memcpy(fingerprint, text, n + 1u);
+    free(text);
+    return 1;
 }
 
 int memoria_concept_bdr_load(memoria_concept_bdr *store, memoria_concept_state_row *rows, size_t row_capacity, size_t *row_count) {
