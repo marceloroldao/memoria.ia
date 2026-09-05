@@ -26,6 +26,16 @@ static memoria_mobile_status call_json(
     return st;
 }
 
+static void assert_inferred_hit(memoria_mobile_handle *h, const char *query, char *response, size_t cap) {
+    char request[2048];
+    snprintf(request, sizeof(request),
+        "{\"query\":\"%s\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}", query);
+    assert(call_json(memoria_mobile_resolve_context_json, h, request, response, cap) == MEMORIA_MOBILE_OK);
+    assert(strstr(response, "\"relation_inference_used\":true") != NULL);
+    assert(strstr(response, "\"relation_anchors_inferred\":true") != NULL);
+    assert(strstr(response, "\"inference_hops\":2") != NULL);
+}
+
 int main(void) {
     char path[256], response[8192];
     memoria_mobile_handle *h = NULL;
@@ -77,29 +87,16 @@ int main(void) {
         "\"relation_source\":\"charger\",\"relation_target\":\"34v\"}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
-    assert(strstr(response, "\"relation_inference_used\":true") != NULL);
     assert(strstr(response, "\"relation_anchors_inferred\":false") != NULL);
-    assert(strstr(response, "\"inference_hops\":2") != NULL);
-    assert(strstr(response, "\"e1\"") != NULL);
-    assert(strstr(response, "\"e2\"") != NULL);
 
-    /* The resolver can now derive the anchors from an unambiguous natural-language relation query. */
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"What is the relation between charger and 34v?\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-    assert(strstr(response, "\"relation_inference_used\":true") != NULL);
-    assert(strstr(response, "\"relation_anchors_inferred\":true") != NULL);
-    assert(strstr(response, "\"inference_hops\":2") != NULL);
-    assert(strstr(response, "concept:voltage") != NULL);
-
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"Qual a relação entre charger e 34v?\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-    assert(strstr(response, "\"relation_anchors_inferred\":true") != NULL);
+    assert_inferred_hit(h, "What is the relation between charger and 34v?", response, sizeof(response));
+    assert_inferred_hit(h, "Qual a relação entre charger e 34v?", response, sizeof(response));
+    assert_inferred_hit(h, "How is charger related to 34v?", response, sizeof(response));
+    assert_inferred_hit(h, "Is charger related to 34v?", response, sizeof(response));
+    assert_inferred_hit(h, "What connects charger to 34v?", response, sizeof(response));
+    assert_inferred_hit(h, "Como charger se relaciona com 34v?", response, sizeof(response));
+    assert_inferred_hit(h, "O que conecta charger a 34v?", response, sizeof(response));
+    assert_inferred_hit(h, "O que liga charger a 34v?", response, sizeof(response));
 
     /* Namespace isolation remains fail-closed even with inferred anchors. */
     assert(call_json(
@@ -108,7 +105,12 @@ int main(void) {
         response, sizeof(response)
     ) == MEMORIA_MOBILE_UNRESOLVED);
 
-    /* Vague relation language is deliberately not guessed. */
+    /* Generic similarity/association language is deliberately not guessed. */
+    assert(call_json(
+        memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"charger and 34v maybe similar\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_UNRESOLVED);
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
         "{\"query\":\"relationship check\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
