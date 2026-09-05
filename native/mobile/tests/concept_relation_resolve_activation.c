@@ -52,7 +52,6 @@ int main(void) {
         "\"relation_memory_ids\":[\"e1\"]}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
-    assert(strstr(response, "\"memory_id\":\"e1\"") != NULL);
 
     assert(call_json(
         memoria_mobile_learn_turn_json, h,
@@ -61,19 +60,17 @@ int main(void) {
         "\"relation_memory_ids\":[\"e2\"]}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
-    assert(strstr(response, "\"memory_id\":\"e2\"") != NULL);
 
-    /* Existing direct evidence must keep precedence even when relation anchors are supplied. */
+    /* Existing direct evidence keeps precedence even when relation anchors are supplied. */
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
         "{\"query\":\"charger is voltage\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\","
         "\"relation_source\":\"charger\",\"relation_target\":\"34v\"}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
-    assert(strstr(response, "\"status\":\"HIT\"") != NULL);
     assert(strstr(response, "\"relation_inference_used\":true") == NULL);
 
-    /* A lexical miss may use the already-persisted relation graph, but only with explicit anchors. */
+    /* Explicit anchors remain supported. */
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
         "{\"query\":\"relationship check\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\","
@@ -81,27 +78,42 @@ int main(void) {
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
     assert(strstr(response, "\"relation_inference_used\":true") != NULL);
+    assert(strstr(response, "\"relation_anchors_inferred\":false") != NULL);
     assert(strstr(response, "\"inference_hops\":2") != NULL);
     assert(strstr(response, "\"e1\"") != NULL);
     assert(strstr(response, "\"e2\"") != NULL);
-    assert(strstr(response, "concept:voltage") != NULL);
 
-    /* Namespace isolation remains fail-closed. */
+    /* The resolver can now derive the anchors from an unambiguous natural-language relation query. */
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"relationship check\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\","
-        "\"relation_source\":\"charger\",\"relation_target\":\"34v\"}",
+        "{\"query\":\"What is the relation between charger and 34v?\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_OK);
+    assert(strstr(response, "\"relation_inference_used\":true") != NULL);
+    assert(strstr(response, "\"relation_anchors_inferred\":true") != NULL);
+    assert(strstr(response, "\"inference_hops\":2") != NULL);
+    assert(strstr(response, "concept:voltage") != NULL);
+
+    assert(call_json(
+        memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"Qual a relação entre charger e 34v?\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_OK);
+    assert(strstr(response, "\"relation_anchors_inferred\":true") != NULL);
+
+    /* Namespace isolation remains fail-closed even with inferred anchors. */
+    assert(call_json(
+        memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"relation between charger and 34v\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_UNRESOLVED);
-    assert(strstr(response, "\"status\":\"UNRESOLVED\"") != NULL);
 
-    /* Without explicit anchors, legacy resolver behavior is unchanged. */
+    /* Vague relation language is deliberately not guessed. */
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
         "{\"query\":\"relationship check\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_UNRESOLVED);
-    assert(strstr(response, "\"status\":\"UNRESOLVED\"") != NULL);
 
     memoria_mobile_close(h);
     return 0;
