@@ -18,6 +18,9 @@ add_subdirectory(
 add_library(memoria_mobile SHARED
   memoria_mobile.c
   mobile_persistence_bdr.c
+  concept_identity_kernel.c
+  concept_identity_state.c
+  concept_identity_bdr.c
   semantic_kernel.c
   semantic_consolidation_kernel.c
   semantic_consolidation_state.c
@@ -138,6 +141,12 @@ if(NOT ANDROID)
   target_include_directories(memoria_semantic_consolidation_state_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_semantic_consolidation_state_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_semantic_consolidation_state_test COMMAND memoria_semantic_consolidation_state_test)
+
+  add_executable(memoria_concept_identity_bdr_test tests/concept_identity_bdr.c)
+  target_link_libraries(memoria_concept_identity_bdr_test PRIVATE memoria_mobile)
+  target_include_directories(memoria_concept_identity_bdr_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_concept_identity_bdr_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_concept_identity_bdr_test COMMAND memoria_concept_identity_bdr_test)
 
   add_executable(memoria_lineage_kernel_test tests/lineage_kernel.c lineage_kernel.c)
   target_include_directories(memoria_lineage_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
