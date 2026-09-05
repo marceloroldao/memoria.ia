@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
+import shutil
 import subprocess
 
 import pytest
@@ -10,6 +10,9 @@ from memoria_resolutiva.concept_aware_conversation import rewrite_query_with_exp
 from memoria_resolutiva.product_identity import MemoryScope, OrganizationIdentity
 from memoria_resolutiva.product_service import EnterpriseMemoryService
 from memoria_resolutiva.semantic_concept_store import PersistentSemanticConceptStore
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _scope() -> MemoryScope:
@@ -49,12 +52,36 @@ def _store() -> PersistentSemanticConceptStore:
     return store
 
 
-def _native(query: str) -> tuple[str, str | None, str, tuple[str, ...]]:
-    raw = os.environ.get("MEMORIA_NATIVE_CONCEPT_REWRITE_CLI")
-    if not raw:
-        pytest.skip("MEMORIA_NATIVE_CONCEPT_REWRITE_CLI is required for native concept rewrite parity")
-    cli = Path(raw)
-    assert cli.is_file(), f"native concept rewrite CLI not found: {cli}"
+@pytest.fixture(scope="session")
+def native_concept_rewrite_cli(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    compiler = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
+    if compiler is None:
+        pytest.skip("a C compiler is required for direct native concept rewrite parity")
+    output = tmp_path_factory.mktemp("native-concept-rewrite") / "concept_query_rewrite_cli"
+    mobile = ROOT / "native" / "mobile"
+    subprocess.run(
+        [
+            compiler,
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            str(mobile),
+            str(mobile / "tests" / "concept_query_rewrite_cli.c"),
+            str(mobile / "concept_query_rewrite.c"),
+            str(mobile / "concept_identity_kernel.c"),
+            "-o",
+            str(output),
+        ],
+        check=True,
+        cwd=ROOT,
+    )
+    assert output.is_file()
+    return output
+
+
+def _native(cli: Path, query: str) -> tuple[str, str | None, str, tuple[str, ...]]:
     completed = subprocess.run([str(cli), query], check=True, text=True, capture_output=True)
     status, reason, rewritten, ids_csv = completed.stdout.rstrip("\n").split("\t")
     ids = tuple(value for value in ids_csv.split(",") if value)
@@ -75,7 +102,10 @@ def _native(query: str) -> tuple[str, str | None, str, tuple[str, ...]]:
         "temperatura externa",
     ],
 )
-def test_native_concept_rewrite_matches_python_reference(query: str):
+def test_native_concept_rewrite_matches_python_reference(
+    native_concept_rewrite_cli: Path,
+    query: str,
+):
     store = _store()
     reference = rewrite_query_with_explicit_concepts(
         store,
@@ -84,7 +114,7 @@ def test_native_concept_rewrite_matches_python_reference(query: str):
         namespace="semantic",
         max_alias_words=6,
     )
-    native_status, native_reason, native_query, native_ids = _native(query)
+    native_status, native_reason, native_query, native_ids = _native(native_concept_rewrite_cli, query)
 
     assert native_status == reference.status
     assert native_reason == reference.reason
