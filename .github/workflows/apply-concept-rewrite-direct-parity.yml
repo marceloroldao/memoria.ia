@@ -37,11 +37,16 @@ jobs:
           if s.count(old) != 1:
               raise SystemExit(f'workflow path anchor count={s.count(old)}')
           s = s.replace(old, new, 1)
-          old = '        env:\n          MEMORIA_NATIVE_LIB: ${{ github.workspace }}/build/mobile-host/libmemoria_mobile.so\n'
-          new = '        env:\n          MEMORIA_NATIVE_LIB: ${{ github.workspace }}/build/mobile-host/libmemoria_mobile.so\n          MEMORIA_NATIVE_CONCEPT_REWRITE_CLI: ${{ github.workspace }}/build/mobile-host/memoria_concept_query_rewrite_cli\n'
-          if s.count(old) != 1:
-              raise SystemExit(f'workflow env anchor count={s.count(old)}')
-          s = s.replace(old, new, 1)
+
+          marker = '          MEMORIA_NATIVE_LIB:'
+          lines = s.splitlines()
+          hits = [i for i, line in enumerate(lines) if line.startswith(marker)]
+          if len(hits) != 1:
+              raise SystemExit(f'workflow env anchor count={len(hits)}')
+          dollar = '$'
+          lines.insert(hits[0] + 1, f'          MEMORIA_NATIVE_CONCEPT_REWRITE_CLI: {dollar}{{{{ github.workspace }}}}/build/mobile-host/memoria_concept_query_rewrite_cli')
+          s = '\n'.join(lines) + '\n'
+
           old = '          tests/test_native_python_relation_parity.py\n'
           new = old + '          tests/test_native_python_concept_rewrite_parity.py\n'
           if s.count(old) != 1:
