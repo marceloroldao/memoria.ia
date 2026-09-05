@@ -1,5 +1,6 @@
 #include "concept_relation_neighborhood.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
