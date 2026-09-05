@@ -10,6 +10,7 @@ from .episodic_contract import attach_episodic_routes
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .native_conversation import NativeConversationService
+from .native_concept_catalog import build_native_concept_catalog
 from .native_episodic import NativeEpisodicService
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
 from .product_admin_config import attach_configuration_routes
@@ -21,6 +22,7 @@ from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus, MemoryScope
 from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
 from .product_service import EnterpriseMemoryService
+from .semantic_concept_store import PersistentSemanticConceptStore
 
 
 def _env(name: str, default: str | None = None, *, required: bool = False) -> str:
@@ -178,6 +180,20 @@ def build_app():
     automatic_episode_formation = conversation_is_native == episodic_is_native
     conversation_service = AutoEpisodicConversationService(conversation_backend, episodic_service) if automatic_episode_formation else conversation_backend
 
+    concept_namespace = os.getenv("MEMORIA_CONCEPT_NAMESPACE", "semantic").strip() or None
+    concept_scope = MemoryScope(organization_id)
+    concept_store = PersistentSemanticConceptStore(service)
+    native_concept_catalog_materialized = False
+    native_concept_catalog_changed = False
+    native_concept_catalog_fingerprint = None
+    native_concept_catalog_count = 0
+    if conversation_is_native:
+        native_catalog = build_native_concept_catalog(concept_store, concept_scope, namespace=concept_namespace)
+        native_concept_catalog_changed = conversation_backend.materialize_concept_catalog(native_catalog)
+        native_concept_catalog_materialized = True
+        native_concept_catalog_fingerprint = native_catalog.fingerprint
+        native_concept_catalog_count = len(native_catalog.concepts)
+
     automatic_semantic_consolidation = True
     automatic_concept_resolution = False
     concept_relation_service = None
@@ -187,12 +203,8 @@ def build_app():
         from .concept_path_conversation import ConceptPathConversationResolver
         from .concept_relations import ConceptRelationView
         from .product_concept_relations import ProductConceptRelationService
-        from .semantic_concept_store import PersistentSemanticConceptStore
 
         conversation_service = AutoSemanticConsolidationConversationService(conversation_service, evidence_service)
-        concept_namespace = os.getenv("MEMORIA_CONCEPT_NAMESPACE", "semantic").strip() or None
-        concept_scope = MemoryScope(organization_id)
-        concept_store = PersistentSemanticConceptStore(service)
         concept_view = ConceptRelationView(
             evidence_service.core,
             concept_store,
@@ -261,6 +273,11 @@ def build_app():
             "automatic_episode_formation": automatic_episode_formation,
             "automatic_semantic_consolidation": automatic_semantic_consolidation,
             "automatic_concept_resolution": automatic_concept_resolution,
+            "native_concept_catalog_materialized": native_concept_catalog_materialized,
+            "native_concept_catalog_changed": native_concept_catalog_changed,
+            "native_concept_catalog_fingerprint": native_concept_catalog_fingerprint,
+            "native_concept_catalog_count": native_concept_catalog_count,
+            "concept_namespace": concept_namespace,
             "concept_relation_traversal": concept_relation_service is not None,
         }
 

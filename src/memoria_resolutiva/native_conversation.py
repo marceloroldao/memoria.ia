@@ -4,6 +4,7 @@ import hashlib
 from pathlib import Path
 
 from .conversation_contract import ConversationIngestResult, ConversationResolveResult
+from .native_concept_catalog import NativeConceptCatalog, apply_native_concept_catalog
 from .native_runtime import NativeRuntimeManager, default_native_runtime_manager
 
 
@@ -190,6 +191,11 @@ class NativeConversationService:
             relations,
             tuple(provenance_rows),
         )
+
+    def materialize_concept_catalog(self, catalog: NativeConceptCatalog) -> bool:
+        if self._closed:
+            raise RuntimeError("native conversation runtime is closed")
+        return apply_native_concept_catalog(self._runtime_lease, catalog)
 
     def flush(self) -> None:
         if not self._closed:
