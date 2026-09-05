@@ -51,7 +51,7 @@ def test_wire_payload_uses_utf8_byte_lengths():
     row = payload["rows"][0]
     assert isinstance(row, str)
     assert "7:tensão" in row
-    assert "22:diferença de potencial" in row
+    assert "23:diferença de potencial" in row
     assert payload["concept_count"] == 1
 
 
