@@ -102,7 +102,7 @@ def _native_library_path(runtime_name: str) -> str:
     return library_path
 
 
-def _build_conversation_service(*, evidence_service: ProductEvidenceService, data_dir: Path, organization_id: str, native_data_dir: Path | None = None):
+def _build_conversation_service(*, evidence_service: ProductEvidenceService, data_dir: Path, organization_id: str, concept_namespace: str | None, native_data_dir: Path | None = None):
     runtime = os.getenv("MEMORIA_CONVERSATION_RUNTIME", "native").strip().lower()
     if runtime == "python":
         from .reference_conversation import ConversationSemanticService
@@ -113,6 +113,7 @@ def _build_conversation_service(*, evidence_service: ProductEvidenceService, dat
         library_path=_native_library_path("MEMORIA_CONVERSATION_RUNTIME"),
         data_dir=native_data_dir or (data_dir / "native-conversation"),
         organization_id=organization_id,
+        concept_namespace=concept_namespace,
     )
 
 
@@ -161,12 +162,14 @@ def build_app():
     else:
         service = PersistentEnterpriseMemoryService(OrganizationIdentity(organization_id, organization_name), persistence=persistence)
 
+    concept_namespace = os.getenv("MEMORIA_CONCEPT_NAMESPACE", "semantic").strip() or None
     evidence_service = ProductEvidenceService.open(data_dir / "evidence", backend=storage_backend, allow_fallback=storage_allow_fallback)
     native_shared_data_dir = _native_shared_data_dir(data_dir)
     conversation_backend = _build_conversation_service(
         evidence_service=evidence_service,
         data_dir=data_dir,
         organization_id=organization_id,
+        concept_namespace=concept_namespace,
         native_data_dir=native_shared_data_dir,
     )
     episodic_service = _build_episodic_service(
@@ -180,7 +183,6 @@ def build_app():
     automatic_episode_formation = conversation_is_native == episodic_is_native
     conversation_service = AutoEpisodicConversationService(conversation_backend, episodic_service) if automatic_episode_formation else conversation_backend
 
-    concept_namespace = os.getenv("MEMORIA_CONCEPT_NAMESPACE", "semantic").strip() or None
     concept_scope = MemoryScope(organization_id)
     concept_store = PersistentSemanticConceptStore(service)
     native_concept_catalog_materialized = False
@@ -195,7 +197,7 @@ def build_app():
         native_concept_catalog_count = len(native_catalog.concepts)
 
     automatic_semantic_consolidation = True
-    automatic_concept_resolution = False
+    automatic_concept_resolution = conversation_is_native and native_concept_catalog_materialized
     concept_relation_service = None
     if not conversation_is_native:
         from .conversation_semantic_bridge import AutoSemanticConsolidationConversationService

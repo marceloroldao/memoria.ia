@@ -12,6 +12,7 @@
 #include "semantic_consolidation_state.h"
 #include "semantic_consolidation_request.h"
 #include "concept_runtime_state.h"
+#include "concept_query_rewrite.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -1065,27 +1066,32 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
 }
 
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
-    char *json, *query, *namespace_id, *ctx, *st, *root, *created_time;
+    char *json, *query, *namespace_id, *concept_namespace, *ctx, *st, *root, *created_time;
     char relations_json[4096];
     memoria_semantic_source *sources = NULL;
     memoria_semantic_result r;
     memoria_trajectory_result tr;
     size_t i, window_count = 0;
-    int trajectory_mode;
+    int trajectory_mode, concept_retry_used = 0;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     query = json_string(json, "query");
     namespace_id = json_string(json, "namespace");
+    concept_namespace = json_string(json, "concept_namespace");
     if (!namespace_id) namespace_id = dup_string("");
-    if (!query || !namespace_id) { free(query); free(namespace_id); free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    if (!concept_namespace) concept_namespace = dup_string("");
+    if (!query || !namespace_id || !concept_namespace) {
+        free(query); free(namespace_id); free(concept_namespace); free(json);
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    }
     if (h->turn_count == 0) {
-        free(namespace_id); free(query); free(json);
+        free(namespace_id); free(concept_namespace); free(query); free(json);
         return unresolved(out, "native memory store is empty");
     }
     if (!ensure_semantic_capacity(h, h->turn_count)) {
-        free(query); free(namespace_id); free(json);
+        free(query); free(namespace_id); free(concept_namespace); free(json);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
     sources = h->semantic_sources;
@@ -1102,13 +1108,14 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         sources[source_count].ultimate_source_memory_id = lineage.memory_id;
         ++source_count;
     }
+resolve_attempt:
     if (try_temporal_response(h, query, namespace_id, NULL, out, &response_status)) {
-        free(namespace_id); free(query); free(json);
+        free(namespace_id); free(concept_namespace); free(query); free(json);
         return response_status;
     }
     trajectory_mode = memoria_trajectory_resolve_json(json, query, sources, source_count, &tr, &window_count);
     if (trajectory_mode < 0) {
-        free(namespace_id); free(query); free(json);
+        free(namespace_id); free(concept_namespace); free(query); free(json);
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
     }
     if (trajectory_mode == 1 && tr.hit && tr.memory_count == 2) {
@@ -1121,14 +1128,14 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         char *first_root = NULL, *second_root = NULL;
 
         if (!first_turn || !second_turn) {
-            free(namespace_id); free(query); free(json);
+            free(namespace_id); free(concept_namespace); free(query); free(json);
             return unresolved(out, "selected multi-source trajectory memory missing from native state");
         }
         if (!memoria_relations_to_json(first_turn->relations, first_turn->relation_count,
                                        first_turn->memory_id, first_relations, sizeof(first_relations)) ||
             !memoria_relations_to_json(second_turn->relations, second_turn->relation_count,
                                        second_turn->memory_id, second_relations, sizeof(second_relations))) {
-            free(namespace_id); free(query); free(json);
+            free(namespace_id); free(concept_namespace); free(query); free(json);
             return MEMORIA_MOBILE_INTERNAL_ERROR;
         }
 
@@ -1143,7 +1150,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         if (!first_ctx || !second_ctx || !first_id || !second_id || !first_type || !second_type || !first_root || !second_root) {
             free(first_ctx); free(second_ctx); free(first_id); free(second_id);
             free(first_type); free(second_type); free(first_root); free(second_root);
-            free(namespace_id); free(query); free(json);
+            free(namespace_id); free(concept_namespace); free(query); free(json);
             return MEMORIA_MOBILE_INTERNAL_ERROR;
         }
 
@@ -1157,18 +1164,36 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
 
         free(first_ctx); free(second_ctx); free(first_id); free(second_id);
         free(first_type); free(second_type); free(first_root); free(second_root);
-        free(namespace_id); free(query); free(json);
+        free(namespace_id); free(concept_namespace); free(query); free(json);
         return response_status;
     }
 
     if (trajectory_mode == 1) {
         if (!tr.hit) {
-            free(namespace_id); free(query); free(json);
+            memoria_concept_rewrite_result rewrite;
+            if (!concept_retry_used && concept_namespace[0]) {
+                rewrite = memoria_concept_rewrite_query(
+                    memoria_concept_runtime_index(h->concept_runtime), concept_namespace, query, 6u
+                );
+                if (rewrite.status == MEMORIA_CONCEPT_REWRITE_REWRITTEN &&
+                    rewrite.rewritten_query[0] && strcmp(rewrite.rewritten_query, query) != 0) {
+                    char *retry_query = dup_string(rewrite.rewritten_query);
+                    if (!retry_query) {
+                        free(namespace_id); free(concept_namespace); free(query); free(json);
+                        return MEMORIA_MOBILE_INTERNAL_ERROR;
+                    }
+                    free(query);
+                    query = retry_query;
+                    concept_retry_used = 1;
+                    goto resolve_attempt;
+                }
+            }
+            free(namespace_id); free(concept_namespace); free(query); free(json);
             return unresolved(out, "no justified active trajectory source");
         }
         for (i = 0; i < h->turn_count && (strcmp(h->turns[i].memory_id, tr.memory_id) != 0 || !turn_namespace_matches(&h->turns[i], namespace_id)); ++i) {}
         if (i == h->turn_count) {
-            free(namespace_id); free(query); free(json);
+            free(namespace_id); free(concept_namespace); free(query); free(json);
             return unresolved(out, "selected trajectory source missing from native state");
         }
         r.hit = 1;
@@ -1181,19 +1206,37 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         r = memoria_semantic_resolve_sources(query, sources, source_count);
     }
     if (!r.hit) {
-        free(namespace_id); free(query); free(json);
+        memoria_concept_rewrite_result rewrite;
+        if (!concept_retry_used && concept_namespace[0]) {
+            rewrite = memoria_concept_rewrite_query(
+                memoria_concept_runtime_index(h->concept_runtime), concept_namespace, query, 6u
+            );
+            if (rewrite.status == MEMORIA_CONCEPT_REWRITE_REWRITTEN &&
+                rewrite.rewritten_query[0] && strcmp(rewrite.rewritten_query, query) != 0) {
+                char *retry_query = dup_string(rewrite.rewritten_query);
+                if (!retry_query) {
+                    free(namespace_id); free(concept_namespace); free(query); free(json);
+                    return MEMORIA_MOBILE_INTERNAL_ERROR;
+                }
+                free(query);
+                query = retry_query;
+                concept_retry_used = 1;
+                goto resolve_attempt;
+            }
+        }
+        free(namespace_id); free(concept_namespace); free(query); free(json);
         return unresolved(out, "no justified native semantic source");
     }
     for (i = 0; i < h->turn_count && (strcmp(h->turns[i].memory_id, r.memory_id) != 0 || !turn_namespace_matches(&h->turns[i], namespace_id)); ++i) {}
     if (i == h->turn_count) {
-        free(namespace_id); free(query); free(json);
+        free(namespace_id); free(concept_namespace); free(query); free(json);
         return unresolved(out, "selected source missing from native state");
     }
     if (try_temporal_response(h, query, namespace_id, &h->turns[i], out, &response_status)) {
-        free(namespace_id); free(query); free(json);
+        free(namespace_id); free(concept_namespace); free(query); free(json);
         return response_status;
     }
-    free(namespace_id); free(query); free(json);
+    free(namespace_id); free(concept_namespace); free(query); free(json);
     if (!turn_relations_to_json(&h->turns[i], relations_json, sizeof(relations_json)))
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     ctx = json_escape(h->turns[i].text);

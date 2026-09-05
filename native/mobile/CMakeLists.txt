@@ -170,6 +170,12 @@ if(NOT ANDROID)
   set_target_properties(memoria_concept_query_rewrite_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_concept_query_rewrite_test COMMAND memoria_concept_query_rewrite_test)
 
+  add_executable(memoria_concept_resolve_activation_test tests/concept_resolve_activation.c)
+  target_link_libraries(memoria_concept_resolve_activation_test PRIVATE memoria_mobile)
+  target_include_directories(memoria_concept_resolve_activation_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_concept_resolve_activation_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_concept_resolve_activation_test COMMAND memoria_concept_resolve_activation_test)
+
   add_executable(memoria_lineage_kernel_test tests/lineage_kernel.c lineage_kernel.c)
   target_include_directories(memoria_lineage_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_lineage_kernel_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)

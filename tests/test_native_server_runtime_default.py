@@ -68,7 +68,9 @@ def test_server_defaults_to_native_when_runtime_overrides_are_absent(tmp_path: P
     assert health["conversation_runtime"] == "native"
     assert health["episodic_runtime"] == "native"
     assert health["automatic_semantic_consolidation"] is True
-    assert health["automatic_concept_resolution"] is False
+    assert health["automatic_concept_resolution"] is True
+    assert health["native_concept_catalog_materialized"] is True
+    assert health["concept_namespace"] == "semantic"
     assert health["concept_relation_traversal"] is False
     assert probe["semantic_status"] == 404
 
