@@ -1375,6 +1375,103 @@ memoria_mobile_status memoria_mobile_export_snapshot_json(
     return status;
 }
 
+static int concept_catalog_parse_number(const char **cursor, size_t *remaining, size_t *value) {
+    size_t v = 0, digits = 0;
+    const char *p;
+    if (!cursor || !*cursor || !remaining || !value) return 0;
+    p = *cursor;
+    while (*remaining && *p >= '0' && *p <= '9') {
+        if (v > ((size_t)-1 - (size_t)(*p - '0')) / 10u) return 0;
+        v = v * 10u + (size_t)(*p - '0');
+        ++p; --(*remaining); ++digits;
+    }
+    if (!digits || !*remaining || *p != ':') return 0;
+    ++p; --(*remaining);
+    *cursor = p;
+    *value = v;
+    return 1;
+}
+
+static int concept_catalog_parse_field(const char **cursor, size_t *remaining, char *dst, size_t cap) {
+    size_t n;
+    if (!concept_catalog_parse_number(cursor, remaining, &n) || n >= cap || n > *remaining) return 0;
+    memcpy(dst, *cursor, n);
+    dst[n] = 0;
+    *cursor += n;
+    *remaining -= n;
+    return 1;
+}
+
+static int concept_catalog_decode_row(const char *wire, memoria_concept_state_row *row) {
+    const char *cursor = wire;
+    size_t remaining, count, i;
+    if (!wire || !row) return 0;
+    remaining = strlen(wire);
+    memset(row, 0, sizeof(*row));
+    if (!concept_catalog_parse_field(&cursor, &remaining, row->concept_id, sizeof(row->concept_id)) ||
+        !concept_catalog_parse_field(&cursor, &remaining, row->namespace_name, sizeof(row->namespace_name)) ||
+        !concept_catalog_parse_field(&cursor, &remaining, row->canonical, sizeof(row->canonical)) ||
+        !concept_catalog_parse_field(&cursor, &remaining, row->sense_key, sizeof(row->sense_key)) ||
+        !concept_catalog_parse_number(&cursor, &remaining, &count) || count > MEMORIA_CONCEPT_STATE_MAX_ALIASES_PER_CONCEPT) return 0;
+    row->alias_count = count;
+    for (i = 0; i < count; ++i)
+        if (!concept_catalog_parse_field(&cursor, &remaining, row->aliases[i], sizeof(row->aliases[i]))) return 0;
+    if (!concept_catalog_parse_number(&cursor, &remaining, &count) || count > MEMORIA_CONCEPT_MAX_CUES) return 0;
+    row->context_cue_count = count;
+    for (i = 0; i < count; ++i)
+        if (!concept_catalog_parse_field(&cursor, &remaining, row->context_cues[i], sizeof(row->context_cues[i]))) return 0;
+    return remaining == 0;
+}
+
+memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+) {
+    char *json = NULL;
+    char *fingerprint = NULL;
+    char *wire_rows[MEMORIA_CONCEPT_MAX_CONCEPTS] = {0};
+    memoria_concept_state_row *rows = NULL;
+    size_t row_count = 0, i;
+    long schema, expected_count;
+    int changed = 0;
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !h->concept_runtime || !response_json) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    response_json->data = NULL; response_json->size = 0;
+    json = buffer_to_string(request_json);
+    if (!json) goto done;
+    schema = json_long(json, "schema", -1);
+    expected_count = json_long(json, "concept_count", -1);
+    fingerprint = json_string(json, "fingerprint");
+    if (schema != 1 || expected_count < 0 || expected_count > (long)MEMORIA_CONCEPT_MAX_CONCEPTS ||
+        !fingerprint || strlen(fingerprint) != 71u || strncmp(fingerprint, "sha256:", 7u) != 0 ||
+        !strstr(json, "\"rows\"")) goto done;
+    row_count = json_string_array(json, "rows", wire_rows, MEMORIA_CONCEPT_MAX_CONCEPTS);
+    if ((long)row_count != expected_count) goto done;
+    if (row_count) {
+        rows = (memoria_concept_state_row *)calloc(row_count, sizeof(*rows));
+        if (!rows) { status = MEMORIA_MOBILE_INTERNAL_ERROR; goto done; }
+        for (i = 0; i < row_count; ++i)
+            if (!concept_catalog_decode_row(wire_rows[i], &rows[i])) goto done;
+    }
+    if (!memoria_concept_runtime_apply_catalog(h->concept_runtime, rows, row_count, fingerprint, &changed)) {
+        status = MEMORIA_MOBILE_PERSISTENCE_ERROR;
+        goto done;
+    }
+    status = set_responsef(
+        response_json,
+        MEMORIA_MOBILE_OK,
+        "{\"status\":\"OK\",\"changed\":%s,\"concept_count\":%zu,\"fingerprint\":\"%s\"}",
+        changed ? "true" : "false", row_count, fingerprint
+    );
+done:
+    free(rows);
+    free_string_array(wire_rows, row_count);
+    free(fingerprint);
+    free(json);
+    return status;
+}
+
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *h) {
     if (!h) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     return memoria_persistence_sync(h->persistence) && memoria_concept_runtime_sync(h->concept_runtime)
