@@ -41,6 +41,37 @@ static int remember_id(memoria_concept_rewrite_result *out, const char *concept_
     return 1;
 }
 
+static void sort_ids(memoria_concept_rewrite_result *out) {
+    size_t i, j;
+    if (!out) return;
+    for (i = 1; i < out->concept_count; ++i) {
+        for (j = i; j > 0 && strcmp(out->concept_ids[j - 1], out->concept_ids[j]) > 0; --j) {
+            char tmp[MEMORIA_CONCEPT_ID_CAP];
+            memcpy(tmp, out->concept_ids[j - 1], sizeof(tmp));
+            memcpy(out->concept_ids[j - 1], out->concept_ids[j], sizeof(tmp));
+            memcpy(out->concept_ids[j], tmp, sizeof(tmp));
+        }
+    }
+}
+
+static int remember_surface_candidates(
+    memoria_concept_rewrite_result *out,
+    const memoria_concept_index *index,
+    const char *namespace_name,
+    const char *surface
+) {
+    size_t i;
+    const char *ns = namespace_name ? namespace_name : "";
+    if (!out || !index || !surface) return 0;
+    for (i = 0; i < index->alias_count; ++i) {
+        const memoria_concept_alias_record *alias = &index->aliases[i];
+        if (strcmp(alias->namespace_name, ns) != 0 || strcmp(alias->surface, surface) != 0) continue;
+        if (!remember_id(out, alias->concept_id)) return 0;
+    }
+    sort_ids(out);
+    return 1;
+}
+
 memoria_concept_rewrite_result memoria_concept_rewrite_query(
     const memoria_concept_index *index,
     const char *namespace_name,
@@ -56,7 +87,7 @@ memoria_concept_rewrite_result memoria_concept_rewrite_query(
 
     memset(&out, 0, sizeof(out));
     if (!index || !query || max_alias_words < 1u ||
-        !memoria_concept_normalize(query, normalized, sizeof(normalized))) {
+        memoria_concept_normalize(query, normalized, sizeof(normalized)) != MEMORIA_CONCEPT_OK) {
         out.status = MEMORIA_CONCEPT_REWRITE_UNRESOLVED;
         out.reason = MEMORIA_CONCEPT_REWRITE_REASON_CAPACITY;
         return out;
@@ -106,8 +137,14 @@ memoria_concept_rewrite_result memoria_concept_rewrite_query(
                 memoria_concept_resolution contextual = memoria_concept_resolve_with_context(
                     index, namespace_name, surface, query
                 );
-                if (contextual.status == MEMORIA_CONCEPT_HIT) r = contextual;
-                else {
+                if (contextual.status == MEMORIA_CONCEPT_HIT) {
+                    r = contextual;
+                } else {
+                    if (!remember_surface_candidates(&out, index, namespace_name, surface)) {
+                        out.status = MEMORIA_CONCEPT_REWRITE_UNRESOLVED;
+                        out.reason = MEMORIA_CONCEPT_REWRITE_REASON_CAPACITY;
+                        return out;
+                    }
                     out.status = MEMORIA_CONCEPT_REWRITE_UNRESOLVED;
                     out.reason = contextual.reason == MEMORIA_CONCEPT_REASON_AMBIGUOUS_CONTEXT
                         ? MEMORIA_CONCEPT_REWRITE_REASON_AMBIGUOUS_CONTEXT
@@ -119,6 +156,7 @@ memoria_concept_rewrite_result memoria_concept_rewrite_query(
             if (r.status != MEMORIA_CONCEPT_HIT || !r.concept_id[0]) continue;
             concept = find_concept(index, r.concept_id, namespace_name);
             if (!concept) {
+                if (r.concept_id[0]) remember_id(&out, r.concept_id);
                 out.status = MEMORIA_CONCEPT_REWRITE_UNRESOLVED;
                 out.reason = MEMORIA_CONCEPT_REWRITE_REASON_MISSING_CONCEPT;
                 snprintf(out.rewritten_query, sizeof(out.rewritten_query), "%s", query);
@@ -146,5 +184,6 @@ memoria_concept_rewrite_result memoria_concept_rewrite_query(
     }
     out.status = changed ? MEMORIA_CONCEPT_REWRITE_REWRITTEN : MEMORIA_CONCEPT_REWRITE_UNCHANGED;
     out.reason = MEMORIA_CONCEPT_REWRITE_REASON_NONE;
+    if (!changed) snprintf(out.rewritten_query, sizeof(out.rewritten_query), "%s", query);
     return out;
 }
