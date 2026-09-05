@@ -30,6 +30,10 @@ set_target_properties(memoria_concept_internal PROPERTIES
 
 add_library(memoria_mobile SHARED
   memoria_mobile.c
+  concept_relation_resolve_bridge.c
+  concept_relation_adapter.c
+  concept_relation_traversal.c
+  concept_relation_runtime.c
   mobile_persistence_bdr.c
   semantic_kernel.c
   semantic_consolidation_kernel.c
@@ -46,6 +50,9 @@ add_library(memoria_mobile SHARED
   relation_extractor.c
   relation_adapter.c
   diagnostic_export.c
+)
+set_source_files_properties(memoria_mobile.c PROPERTIES
+  COMPILE_DEFINITIONS "memoria_mobile_resolve_context_json=memoria_mobile_resolve_context_json_base"
 )
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api memoria_concept_internal)
@@ -175,6 +182,12 @@ if(NOT ANDROID)
   target_include_directories(memoria_concept_resolve_activation_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_concept_resolve_activation_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_concept_resolve_activation_test COMMAND memoria_concept_resolve_activation_test)
+
+  add_executable(memoria_concept_relation_resolve_activation_test tests/concept_relation_resolve_activation.c)
+  target_link_libraries(memoria_concept_relation_resolve_activation_test PRIVATE memoria_mobile)
+  target_include_directories(memoria_concept_relation_resolve_activation_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_concept_relation_resolve_activation_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_concept_relation_resolve_activation_test COMMAND memoria_concept_relation_resolve_activation_test)
 
   add_executable(memoria_lineage_kernel_test tests/lineage_kernel.c lineage_kernel.c)
   target_include_directories(memoria_lineage_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
