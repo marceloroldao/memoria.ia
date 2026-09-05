@@ -1,0 +1,43 @@
+name: Apply native concept query rewrite build patch
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-native-concept-query-rewrite
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[concept-query-build-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-native-concept-query-rewrite
+          fetch-depth: 0
+      - name: Patch CMake and clean workflow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('native/mobile/CMakeLists.txt')
+          s = p.read_text()
+          old = '  concept_runtime_state.c\n)'
+          new = '  concept_runtime_state.c\n  concept_query_rewrite.c\n)'
+          if s.count(old) != 1:
+              raise SystemExit(f'concept target anchor count={s.count(old)}')
+          s = s.replace(old, new, 1)
+          old = '  add_test(NAME memoria_concept_runtime_state_test COMMAND memoria_concept_runtime_state_test)\n'
+          new = old + '\n  add_executable(memoria_concept_query_rewrite_test tests/concept_query_rewrite.c)\n  target_link_libraries(memoria_concept_query_rewrite_test PRIVATE memoria_concept_internal)\n  target_include_directories(memoria_concept_query_rewrite_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})\n  set_target_properties(memoria_concept_query_rewrite_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)\n  add_test(NAME memoria_concept_query_rewrite_test COMMAND memoria_concept_query_rewrite_test)\n'
+          if s.count(old) != 1:
+              raise SystemExit(f'test anchor count={s.count(old)}')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          rm -f .github/workflows/apply-native-concept-query-rewrite.yml
+          git diff --check
+          git config user.name "Marcelo Roldão Matos"
+          git config user.email "marceloroldao@gmail.com"
+          git add -A
+          git commit -m "post-v1: compile native concept query rewrite [concept-query-build-applied]"
+          git push origin HEAD:experiment/post-v1-native-concept-query-rewrite
