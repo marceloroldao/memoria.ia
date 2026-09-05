@@ -1,0 +1,57 @@
+name: Apply direct concept rewrite parity gate
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-native-concept-rewrite-direct-parity
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[direct-concept-parity-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-native-concept-rewrite-direct-parity
+          fetch-depth: 0
+      - name: Patch CMake and Android parity workflow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('native/mobile/CMakeLists.txt')
+          s = p.read_text()
+          old = '  add_test(NAME memoria_concept_query_rewrite_test COMMAND memoria_concept_query_rewrite_test)\n'
+          new = old + '\n  add_executable(memoria_concept_query_rewrite_cli tests/concept_query_rewrite_cli.c)\n  target_link_libraries(memoria_concept_query_rewrite_cli PRIVATE memoria_concept_internal)\n  target_include_directories(memoria_concept_query_rewrite_cli PRIVATE ${CMAKE_CURRENT_LIST_DIR})\n  set_target_properties(memoria_concept_query_rewrite_cli PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)\n'
+          if s.count(old) != 1:
+              raise SystemExit(f'CMake concept rewrite anchor count={s.count(old)}')
+          p.write_text(s.replace(old, new, 1))
+
+          p = Path('.github/workflows/android-mobile-abi.yml')
+          s = p.read_text()
+          old = '      - "tests/test_native_python_relation_parity.py"\n'
+          new = old + '      - "tests/test_native_python_concept_rewrite_parity.py"\n'
+          if s.count(old) != 1:
+              raise SystemExit(f'workflow path anchor count={s.count(old)}')
+          s = s.replace(old, new, 1)
+          old = '        env:\n          MEMORIA_NATIVE_LIB: ${{ github.workspace }}/build/mobile-host/libmemoria_mobile.so\n'
+          new = '        env:\n          MEMORIA_NATIVE_LIB: ${{ github.workspace }}/build/mobile-host/libmemoria_mobile.so\n          MEMORIA_NATIVE_CONCEPT_REWRITE_CLI: ${{ github.workspace }}/build/mobile-host/memoria_concept_query_rewrite_cli\n'
+          if s.count(old) != 1:
+              raise SystemExit(f'workflow env anchor count={s.count(old)}')
+          s = s.replace(old, new, 1)
+          old = '          tests/test_native_python_relation_parity.py\n'
+          new = old + '          tests/test_native_python_concept_rewrite_parity.py\n'
+          if s.count(old) != 1:
+              raise SystemExit(f'workflow pytest anchor count={s.count(old)}')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          rm -f .github/workflows/apply-concept-rewrite-direct-parity.yml
+          git diff --check
+          git config user.name "Marcelo Roldão Matos"
+          git config user.email "marceloroldao@gmail.com"
+          git add -A
+          git commit -m "post-v1: gate direct Python/native concept rewrite parity [direct-concept-parity-applied]"
+          git push origin HEAD:experiment/post-v1-native-concept-rewrite-direct-parity
