@@ -49,11 +49,13 @@ class NativeConversationService:
         library_path: str | Path,
         data_dir: str | Path,
         organization_id: str,
+        concept_namespace: str | None = None,
         runtime_manager: NativeRuntimeManager | None = None,
     ) -> None:
         self.library_path = Path(library_path)
         self.data_dir = Path(data_dir)
         self.organization_id = organization_id
+        self.concept_namespace = concept_namespace
         manager = runtime_manager or default_native_runtime_manager()
         self._runtime_lease = manager.acquire(
             library_path=self.library_path,
@@ -129,7 +131,11 @@ class NativeConversationService:
             raise ValueError("query must be non-empty")
         status, response = self._call(
             "memoria_mobile_resolve_context_json",
-            {"query": query, "namespace": session_id or ""},
+            {
+                "query": query,
+                "namespace": session_id or "",
+                "concept_namespace": self.concept_namespace or "",
+            },
         )
         if status == MEMORIA_MOBILE_UNRESOLVED or response.get("status") == "UNRESOLVED":
             return ConversationResolveResult("UNRESOLVED", 0.0, (), "", (), ())
