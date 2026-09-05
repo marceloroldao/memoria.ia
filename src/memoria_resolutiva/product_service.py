@@ -266,6 +266,41 @@ class EnterpriseMemoryService:
             revoked=entry.revoked,
         )
 
+    def records_under(
+        self,
+        scope: MemoryScope,
+        trajectory_prefix: Iterable[Node],
+    ) -> tuple[MemoryRecord, ...]:
+        """Enumerate active logical records beneath one scoped trajectory prefix.
+
+        This is a read-only product boundary for structured indexes such as the
+        semantic concept catalog. It never exposes the internal entry table.
+        """
+        prefix_tail = tuple(trajectory_prefix)
+        if not prefix_tail:
+            raise ValueError("trajectory_prefix must not be empty")
+        self._assert_scope(scope)
+        scope_prefix = scope.storage_namespace() + ("memory",)
+        logical_prefix = scope_prefix + prefix_tail
+        records: list[MemoryRecord] = []
+        for key, entry in self._entries.items():
+            if entry.revoked:
+                continue
+            try:
+                logical_route = tuple(json.loads(key))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+            if logical_route[: len(logical_prefix)] != logical_prefix:
+                continue
+            if logical_route[: len(scope_prefix)] != scope_prefix:
+                continue
+            tail = logical_route[len(scope_prefix) :]
+            record = self.recall(scope, tail)
+            if record is not None:
+                records.append(record)
+        records.sort(key=lambda row: _route_key(row.trajectory))
+        return tuple(records)
+
     def route_status(self, scope: MemoryScope, trajectory: Iterable[Node]):
         logical_route = self._route(scope, trajectory)
         entry = self._entries.get(_route_key(logical_route))
