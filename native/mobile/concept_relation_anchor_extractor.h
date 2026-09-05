@@ -83,7 +83,11 @@ static inline memoria_relation_anchor_status memoria_relation_anchor_extract(
         memoria_anchor_extract_pair(query, "relação entre ", " e ", source, source_cap, target, target_cap) ||
         memoria_anchor_extract_pair(query, "relacao entre ", " e ", source, source_cap, target, target_cap) ||
         memoria_anchor_extract_pair(query, "how is ", " related to ", source, source_cap, target, target_cap) ||
-        memoria_anchor_extract_pair(query, "como ", " se relaciona com ", source, source_cap, target, target_cap))
+        memoria_anchor_extract_pair(query, "is ", " related to ", source, source_cap, target, target_cap) ||
+        memoria_anchor_extract_pair(query, "what connects ", " to ", source, source_cap, target, target_cap) ||
+        memoria_anchor_extract_pair(query, "como ", " se relaciona com ", source, source_cap, target, target_cap) ||
+        memoria_anchor_extract_pair(query, "o que conecta ", " a ", source, source_cap, target, target_cap) ||
+        memoria_anchor_extract_pair(query, "o que liga ", " a ", source, source_cap, target, target_cap))
         return MEMORIA_RELATION_ANCHOR_HIT;
 
     source[0] = 0;
