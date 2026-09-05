@@ -1,0 +1,30 @@
+name: Apply native concept product materialization
+
+on:
+  push:
+    branches:
+      - experiment/post-v1-native-concept-product-materialization
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[native-concept-product-materialized]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/post-v1-native-concept-product-materialization
+          fetch-depth: 0
+      - name: Apply product materialization slice
+        run: |
+          python tools/apply_native_concept_product_materialization.py
+          rm -f tools/apply_native_concept_product_materialization.py
+          rm -f .github/workflows/apply-native-concept-product-materialization.yml
+          git diff --check
+          git config user.name "Marcelo Roldão Matos"
+          git config user.email "marceloroldao@gmail.com"
+          git add -A
+          git commit -m "post-v1: materialize native concept catalog at product startup [native-concept-product-materialized]"
+          git push origin HEAD:experiment/post-v1-native-concept-product-materialization
