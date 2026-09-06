@@ -5,8 +5,8 @@
       "orcid": "0009-0003-6075-4680"
     }
   ],
-  "title": "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 4",
-  "version": "1.0.0-rc4",
+  "title": "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 5",
+  "version": "1.0.0-rc5",
   "upload_type": "software",
   "access_right": "open",
   "language": "eng",
@@ -16,7 +16,7 @@
       "relation": "isNewVersionOf"
     },
     {
-      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v1.0.0-rc3",
+      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v1.0.0-rc4",
       "relation": "isNewVersionOf"
     },
     {
@@ -28,8 +28,9 @@
     "resolutive memory",
     "continual memory",
     "deterministic memory",
-    "layered memory",
-    "adaptive recomputation",
+    "relational memory",
+    "concept identity",
+    "graph traversal",
     "resolutive inference",
     "AI memory",
     "PC server",
