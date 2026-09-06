@@ -182,6 +182,7 @@ def test_two_hop_activation_reaches_pppoe_then_olt():
 
     assert resolver.calls == [
         ("A internet caiu", "offia:test"),
+        ("A internet caiu", "profile:offia:user-1"),
         ("O que está relacionado a internet?", "offia:test"),
         ("O que está relacionado a PPPoE?", "offia:test"),
     ]
@@ -196,6 +197,7 @@ def test_two_hop_activation_stops_when_decayed_confidence_is_too_low():
 
     assert resolver.calls == [
         ("A internet caiu", "offia:test"),
+        ("A internet caiu", "profile:offia:user-1"),
         ("O que está relacionado a internet?", "offia:test"),
     ]
     assert result.context == ("internet PPPoE",)
@@ -228,9 +230,9 @@ def test_real_memory_expands_possessive_cat_question_before_llm(tmp_path):
     assert result.metrics.memory_hits == 1
     assert result.context
     research = result.context[0]
-    assert "Alt é um gato" in research
-    assert "Vivi é um gato" in research
-    assert "Lay é um gato" in research
+    assert "Alt | is | gato" in research
+    assert "Vivi | is | gato" in research
+    assert "Lay | is | gato" in research
 
 
 def test_enriched_provider_prompt_labels_memory_research_and_current_input():
