@@ -64,11 +64,15 @@ class OpenAIResponsesAdapter:
     def _input_text(message: str, context: Sequence[str]) -> str:
         if not context:
             return message
-        rendered = "\n\n".join(f"[Memory {i}]\n{item}" for i, item in enumerate(context, start=1))
+        rendered = "\n".join(f"- {item}" for item in context)
         return (
-            "Use the following selected memory only when relevant. "
-            "Do not assume it is complete or always correct.\n\n"
-            f"{rendered}\n\n[User]\n{message}"
+            "PESQUISA DA MEMORIA.IA\n"
+            "Use apenas as memórias abaixo quando forem relevantes. "
+            "Não assuma que a pesquisa é completa ou infalível.\n\n"
+            f"Memórias relacionadas:\n{rendered}\n\n"
+            "ENTRADA ATUAL\n"
+            "Origem: user_text\n"
+            f"Conteúdo: {message}"
         )
 
     @staticmethod
