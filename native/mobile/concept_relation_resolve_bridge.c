@@ -1,6 +1,8 @@
 #include "memoria_mobile.h"
 #include "concept_relation_runtime.h"
 #include "concept_relation_anchor_extractor.h"
+#include "concept_relation_neighborhood.h"
+#include "concept_relation_neighborhood_query.h"
 #include "concept_runtime_state.h"
 #include "semantic_kernel.h"
 #include "mobile_persistence.h"
@@ -13,6 +15,7 @@
 #define BRIDGE_MAX_EPISODES 256
 #define BRIDGE_MAX_PATHS 2u
 #define BRIDGE_MAX_HOPS 4u
+#define BRIDGE_MAX_NEIGHBORS 8u
 #define BRIDGE_MIN_CONFIDENCE 0.80
 #define BRIDGE_ANCHOR_CAP 192u
 
@@ -184,16 +187,75 @@ static memoria_mobile_status bridge_set_hit(memoria_mobile_buffer *out, const me
     return MEMORIA_MOBILE_OK;
 }
 
+static memoria_mobile_status bridge_set_neighborhood_hit(
+    memoria_mobile_buffer *out,
+    const char *source,
+    const memoria_concept_relation_neighbor *neighbors,
+    size_t count
+) {
+    char context[8192], evidence[4096], neighbors_json[8192];
+    char *escaped = NULL, *json = NULL;
+    size_t i, used = 0, ev_used = 0, nj_used = 0;
+    int needed;
+    if (!out || !source || !neighbors || count == 0) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    context[0] = evidence[0] = neighbors_json[0] = 0;
+    if (!bridge_append(context, sizeof(context), &used, "RELATION_NEIGHBORHOOD: ")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    if (!bridge_append(context, sizeof(context), &used, source)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    if (!bridge_append(evidence, sizeof(evidence), &ev_used, "[")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    if (!bridge_append(neighbors_json, sizeof(neighbors_json), &nj_used, "[")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    for (i = 0; i < count; ++i) {
+        char conf[64];
+        if (!bridge_append(context, sizeof(context), &used, i ? "; " : " -> ")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append(context, sizeof(context), &used, neighbors[i].predicate)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append(context, sizeof(context), &used, " -> ")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append(context, sizeof(context), &used, neighbors[i].node_key)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (i && (!bridge_append(evidence, sizeof(evidence), &ev_used, ",") || !bridge_append(neighbors_json, sizeof(neighbors_json), &nj_used, ",")))
+            return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append_json_string(evidence, sizeof(evidence), &ev_used, neighbors[i].evidence_id)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append(neighbors_json, sizeof(neighbors_json), &nj_used, "{\"node_key\":")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append_json_string(neighbors_json, sizeof(neighbors_json), &nj_used, neighbors[i].node_key)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append(neighbors_json, sizeof(neighbors_json), &nj_used, ",\"predicate\":")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append_json_string(neighbors_json, sizeof(neighbors_json), &nj_used, neighbors[i].predicate)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append(neighbors_json, sizeof(neighbors_json), &nj_used, ",\"evidence_id\":")) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        if (!bridge_append_json_string(neighbors_json, sizeof(neighbors_json), &nj_used, neighbors[i].evidence_id)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+        snprintf(conf, sizeof(conf), ",\"confidence\":%.6f}", neighbors[i].confidence);
+        if (!bridge_append(neighbors_json, sizeof(neighbors_json), &nj_used, conf)) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    if (!bridge_append(evidence, sizeof(evidence), &ev_used, "]") || !bridge_append(neighbors_json, sizeof(neighbors_json), &nj_used, "]"))
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    escaped = bridge_escape(context);
+    if (!escaped) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    needed = snprintf(NULL, 0,
+        "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":%s,\"selected_context\":\"%s\","
+        "\"relations\":[],\"provenance\":[],\"relation_neighborhood_used\":true,\"neighborhood_hops\":1,"
+        "\"neighborhood_count\":%zu,\"neighborhood_source\":\"%s\",\"neighbors\":%s}",
+        neighbors[0].confidence, evidence, escaped, count, source, neighbors_json);
+    if (needed < 0) { free(escaped); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    json = (char *)malloc((size_t)needed + 1u);
+    if (!json) { free(escaped); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    snprintf(json, (size_t)needed + 1u,
+        "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":%s,\"selected_context\":\"%s\","
+        "\"relations\":[],\"provenance\":[],\"relation_neighborhood_used\":true,\"neighborhood_hops\":1,"
+        "\"neighborhood_count\":%zu,\"neighborhood_source\":\"%s\",\"neighbors\":%s}",
+        neighbors[0].confidence, evidence, escaped, count, source, neighbors_json);
+    free(escaped);
+    out->data = (const uint8_t *)json;
+    out->size = (size_t)needed;
+    return MEMORIA_MOBILE_OK;
+}
+
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *handle, memoria_mobile_buffer request_json, memoria_mobile_buffer *response_json) {
     memoria_mobile_status base_status;
     char *json = NULL, *source = NULL, *target = NULL, *namespace_id = NULL;
     char *concept_namespace = NULL, *query = NULL;
-    char inferred_source[BRIDGE_ANCHOR_CAP], inferred_target[BRIDGE_ANCHOR_CAP];
+    char inferred_source[BRIDGE_ANCHOR_CAP], inferred_target[BRIDGE_ANCHOR_CAP], neighborhood_source[BRIDGE_ANCHOR_CAP];
     const char *effective_source = NULL, *effective_target = NULL;
     int anchors_inferred = 0;
     memoria_concept_relation_path paths[BRIDGE_MAX_PATHS];
-    size_t path_count = 0;
+    memoria_concept_relation_neighbor neighbors[BRIDGE_MAX_NEIGHBORS];
+    size_t path_count = 0, neighbor_count = 0;
     memoria_concept_relation_runtime_status relation_status;
+    memoria_concept_neighborhood_status neighborhood_status;
 
     base_status = memoria_mobile_resolve_context_json_base(handle, request_json, response_json);
     if (base_status != MEMORIA_MOBILE_UNRESOLVED) return base_status;
@@ -218,20 +280,38 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         effective_source = inferred_source;
         effective_target = inferred_target;
         anchors_inferred = 1;
-    } else goto done;
+    }
 
-    relation_status = memoria_concept_relation_runtime_infer(
-        handle->turns, handle->turn_count, namespace_id ? namespace_id : "",
-        memoria_concept_runtime_index(handle->concept_runtime), concept_namespace,
-        effective_source, effective_target, query,
-        BRIDGE_MAX_HOPS, BRIDGE_MAX_PATHS, BRIDGE_MIN_CONFIDENCE,
-        paths, BRIDGE_MAX_PATHS, &path_count
-    );
-    if (relation_status == MEMORIA_CONCEPT_RELATION_RUNTIME_HIT && path_count == 1u) {
-        if (response_json->data) memoria_mobile_free_buffer(*response_json);
-        response_json->data = NULL;
-        response_json->size = 0;
-        base_status = bridge_set_hit(response_json, &paths[0], anchors_inferred);
+    if (effective_source && effective_target) {
+        relation_status = memoria_concept_relation_runtime_infer(
+            handle->turns, handle->turn_count, namespace_id ? namespace_id : "",
+            memoria_concept_runtime_index(handle->concept_runtime), concept_namespace,
+            effective_source, effective_target, query,
+            BRIDGE_MAX_HOPS, BRIDGE_MAX_PATHS, BRIDGE_MIN_CONFIDENCE,
+            paths, BRIDGE_MAX_PATHS, &path_count
+        );
+        if (relation_status == MEMORIA_CONCEPT_RELATION_RUNTIME_HIT && path_count == 1u) {
+            if (response_json->data) memoria_mobile_free_buffer(*response_json);
+            response_json->data = NULL;
+            response_json->size = 0;
+            base_status = bridge_set_hit(response_json, &paths[0], anchors_inferred);
+            goto done;
+        }
+    }
+
+    if (memoria_relation_neighborhood_query_extract(query, neighborhood_source, sizeof(neighborhood_source)) == MEMORIA_NEIGHBORHOOD_QUERY_HIT) {
+        neighborhood_status = memoria_concept_relation_neighborhood(
+            handle->turns, handle->turn_count, namespace_id ? namespace_id : "",
+            memoria_concept_runtime_index(handle->concept_runtime), concept_namespace,
+            neighborhood_source, query, BRIDGE_MIN_CONFIDENCE,
+            neighbors, BRIDGE_MAX_NEIGHBORS, &neighbor_count
+        );
+        if (neighborhood_status == MEMORIA_CONCEPT_NEIGHBORHOOD_HIT && neighbor_count > 0) {
+            if (response_json->data) memoria_mobile_free_buffer(*response_json);
+            response_json->data = NULL;
+            response_json->size = 0;
+            base_status = bridge_set_neighborhood_hit(response_json, neighborhood_source, neighbors, neighbor_count);
+        }
     }
 
 done:
