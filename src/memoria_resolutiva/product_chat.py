@@ -9,6 +9,7 @@ from typing import Iterable, Literal, Protocol, Sequence
 from .llm_adapter import LLMAdapter, estimate_tokens
 from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
+from .relational_activation import activate as activate_relations
 
 ChatMode = Literal["baseline", "memoria"]
 MIN_COMPACT_RELATION_CONFIDENCE = 0.90
@@ -119,7 +120,15 @@ def _generic_relation_concepts(message: str) -> tuple[str, ...]:
     return tuple(concepts)
 
 
+def _activation_concepts(message: str) -> tuple[str, ...]:
+    match = _POSSESSIVE_TYPE_QUERY.search(message)
+    if match is not None:
+        return (match.group("kind"),)
+    return _generic_relation_concepts(message)
+
+
 def _relation_probe_queries(message: str) -> tuple[str, ...]:
+    """Temporary compatibility fallback for resolvers without structural graph access."""
     match = _POSSESSIVE_TYPE_QUERY.search(message)
     if match is not None:
         kind = match.group("kind")
@@ -235,38 +244,73 @@ class ProductChatService:
                     namespaces.append(None)
 
                 resolver_hit = False
-                probes = _relation_probe_queries(message)
-                query_candidates = (message, *probes)
-                for namespace in namespaces:
-                    for candidate_index, candidate_query in enumerate(query_candidates):
-                        resolved = self.conversation_resolver.resolve(
-                            query=candidate_query,
-                            session_id=namespace,
-                        )
-                        if str(getattr(resolved, "status", "")) != "HIT":
-                            continue
-                        selected = str(getattr(resolved, "selected_context", "") or "")
-                        normalized_selected = " ".join(selected.split()).strip()
-                        if not normalized_selected:
-                            continue
+                activation_concepts = _activation_concepts(message)
+                fallback_probes = _relation_probe_queries(message)
 
+                for namespace in namespaces:
+                    # 1) Direct conversational resolution always has priority.
+                    direct = self.conversation_resolver.resolve(query=message, session_id=namespace)
+                    if str(getattr(direct, "status", "")) == "HIT":
+                        selected = str(getattr(direct, "selected_context", "") or "")
+                        normalized = " ".join(selected.split()).strip()
+                        if normalized:
+                            resolver_hit = True
+                            retrieved_chars += len(normalized)
+                            _append_with_budget(
+                                retrieved,
+                                _minimal_factual_context(direct, normalized),
+                                budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                            )
+                            break
+
+                    # 2) Prefer structural graph activation. No natural-language
+                    # probe is generated on this path.
+                    structural_supported = False
+                    for concept in activation_concepts:
+                        activated = activate_relations(
+                            self.conversation_resolver,
+                            concept=concept,
+                            session_id=namespace,
+                            depth=_MAX_RELATIONAL_HOPS,
+                            budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                            hop_decay=_RELATIONAL_HOP_DECAY,
+                            min_confidence=_MIN_SECOND_HOP_CONFIDENCE,
+                        )
+                        if activated.status != "UNSUPPORTED":
+                            structural_supported = True
+                        if activated.status != "HIT" or not activated.selected_context:
+                            continue
                         resolver_hit = True
-                        retrieved_chars += len(normalized_selected)
+                        retrieved_chars += len(activated.selected_context)
                         _append_with_budget(
                             retrieved,
-                            _minimal_factual_context(resolved, normalized_selected),
+                            activated.selected_context,
                             budget=_MAX_RELATIONAL_CONTEXT_CHARS,
                         )
+                    if resolver_hit:
+                        break
 
-                        # Direct answers remain terminal. Only a fallback probe
-                        # may activate one additional bounded relational hop.
-                        if candidate_index > 0 and _MAX_RELATIONAL_HOPS >= 2:
+                    # 3) Compatibility only: old resolvers without structural
+                    # graph access may still use the language probe path.
+                    if not structural_supported:
+                        for probe in fallback_probes:
+                            resolved = self.conversation_resolver.resolve(query=probe, session_id=namespace)
+                            if str(getattr(resolved, "status", "")) != "HIT":
+                                continue
+                            selected = str(getattr(resolved, "selected_context", "") or "")
+                            normalized = " ".join(selected.split()).strip()
+                            if not normalized:
+                                continue
+                            resolver_hit = True
+                            retrieved_chars += len(normalized)
+                            _append_with_budget(
+                                retrieved,
+                                _minimal_factual_context(resolved, normalized),
+                                budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                            )
                             second_probe = _second_hop_probe(resolved, original_message=message)
                             if second_probe is not None:
-                                second = self.conversation_resolver.resolve(
-                                    query=second_probe,
-                                    session_id=namespace,
-                                )
+                                second = self.conversation_resolver.resolve(query=second_probe, session_id=namespace)
                                 if str(getattr(second, "status", "")) == "HIT":
                                     second_selected = str(getattr(second, "selected_context", "") or "")
                                     second_normalized = " ".join(second_selected.split()).strip()
@@ -277,9 +321,10 @@ class ProductChatService:
                                             _minimal_factual_context(second, second_normalized),
                                             budget=_MAX_RELATIONAL_CONTEXT_CHARS,
                                         )
-                        break
+                            break
                     if resolver_hit:
                         break
+
                 if resolver_hit:
                     hits += 1
                 else:
