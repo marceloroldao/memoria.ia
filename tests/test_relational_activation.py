@@ -118,6 +118,7 @@ def test_structural_activation_respects_context_budget(tmp_path):
     )
 
     assert result.selected_context == "internet | depends_on | PPPoE"
+    assert result.memory_ids == ("e1",)
 
 
 def test_chat_prefers_structural_activation_and_does_not_emit_textual_probe(tmp_path):
@@ -139,9 +140,12 @@ def test_chat_prefers_structural_activation_and_does_not_emit_textual_probe(tmp_
 
     result = chat.run(scope=scope, message="A internet caiu", mode="memoria")
 
-    # Only the original user input goes through the conversational resolver.
-    # Structural activation then walks evidence edges directly.
-    assert resolver.resolve_calls == [("A internet caiu", namespace)]
+    # Direct recall is attempted in session and profile first. Structural
+    # activation then walks evidence edges directly and emits no language probe.
+    assert resolver.resolve_calls == [
+        ("A internet caiu", namespace),
+        ("A internet caiu", "profile:offia:user-1"),
+    ]
     assert result.metrics.memory_hits == 1
     assert "internet | depends_on | PPPoE" in result.context[0]
     assert "PPPoE | upstream | OLT" in result.context[0]
