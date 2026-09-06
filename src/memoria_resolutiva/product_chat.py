@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import re
 from time import perf_counter
 from typing import Iterable, Literal, Protocol, Sequence
 
@@ -11,6 +12,10 @@ from .product_service import EnterpriseMemoryService
 
 ChatMode = Literal["baseline", "memoria"]
 MIN_COMPACT_RELATION_CONFIDENCE = 0.90
+_POSSESSIVE_TYPE_QUERY = re.compile(
+    r"\b(?:meu|minha|meus|minhas)\s+(?P<kind>[\wÀ-ÿ.-]+)\b",
+    re.IGNORECASE,
+)
 
 
 class ConversationResolver(Protocol):
@@ -54,6 +59,45 @@ def _append_unique(items: list[str], value: str) -> None:
     normalized = " ".join(str(value).split()).strip()
     if normalized and normalized not in items:
         items.append(normalized)
+
+
+def _pluralize_pt(value: str) -> str:
+    """Small deterministic pluralizer for relation-probe queries.
+
+    It is intentionally conservative: the probe is only a fallback after the
+    original query misses, and the native collection extractor remains the
+    authority on whether the generated query is accepted.
+    """
+    word = value.strip().strip(".,;:!?\"")
+    if not word:
+        return word
+    lower = word.casefold()
+    if lower.endswith("s"):
+        return word
+    if lower.endswith("m"):
+        return word[:-1] + "ns"
+    if lower.endswith("l"):
+        return word[:-1] + "is"
+    if lower.endswith("r") or lower.endswith("z"):
+        return word + "es"
+    return word + "s"
+
+
+def _relation_probe_queries(message: str) -> tuple[str, ...]:
+    """Generate bounded deterministic research probes from the user input.
+
+    For the first post-RC5 experiment, possessive type references such as
+    "meu gato" are expanded into the existing native directional collection
+    language. No LLM is used to generate the probe.
+    """
+    match = _POSSESSIVE_TYPE_QUERY.search(message)
+    if match is None:
+        return ()
+    kind = match.group("kind")
+    plural = _pluralize_pt(kind)
+    if not plural:
+        return ()
+    return (f"Quais {plural} você conhece?",)
 
 
 def _minimal_factual_context(resolved: object, selected: str) -> str:
@@ -144,9 +188,9 @@ class ProductChatService:
             start = perf_counter()
 
             if self.conversation_resolver is not None:
-                # Resolve from the narrowest namespace first. If the current
-                # session does not contain enough evidence, widen to the stable
-                # profile namespace shared by this application/user.
+                # Resolve from the narrowest namespace first. If the original
+                # question misses, run a bounded deterministic relation probe
+                # before widening to the stable profile namespace.
                 namespaces: list[str | None] = []
                 if scope.agent_id:
                     namespaces.append(scope.agent_id)
@@ -157,21 +201,25 @@ class ProductChatService:
                     namespaces.append(None)
 
                 resolver_hit = False
+                query_candidates = (message, *_relation_probe_queries(message))
                 for namespace in namespaces:
-                    resolved = self.conversation_resolver.resolve(
-                        query=message,
-                        session_id=namespace,
-                    )
-                    if str(getattr(resolved, "status", "")) != "HIT":
-                        continue
-                    selected = str(getattr(resolved, "selected_context", "") or "")
-                    normalized_selected = " ".join(selected.split()).strip()
-                    if normalized_selected:
-                        resolver_hit = True
-                        retrieved_chars += len(normalized_selected)
-                        _append_unique(retrieved, _minimal_factual_context(resolved, normalized_selected))
+                    for candidate_query in query_candidates:
+                        resolved = self.conversation_resolver.resolve(
+                            query=candidate_query,
+                            session_id=namespace,
+                        )
+                        if str(getattr(resolved, "status", "")) != "HIT":
+                            continue
+                        selected = str(getattr(resolved, "selected_context", "") or "")
+                        normalized_selected = " ".join(selected.split()).strip()
+                        if normalized_selected:
+                            resolver_hit = True
+                            retrieved_chars += len(normalized_selected)
+                            _append_unique(retrieved, _minimal_factual_context(resolved, normalized_selected))
+                            break
+                    if resolver_hit:
                         # Session evidence has priority. A profile lookup is only
-                        # needed when the current session misses.
+                        # needed when the current session and its probes miss.
                         break
                 if resolver_hit:
                     hits += 1
