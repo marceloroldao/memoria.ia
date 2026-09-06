@@ -54,10 +54,14 @@ class NativeRuntime:
             function = getattr(self._lib, name)
             function.argtypes = [ctypes.c_void_p, NativeBuffer, ctypes.POINTER(NativeBuffer)]
             function.restype = ctypes.c_int
-        optional_catalog_apply = getattr(self._lib, "memoria_mobile_apply_concept_catalog_json", None)
-        if optional_catalog_apply is not None:
-            optional_catalog_apply.argtypes = [ctypes.c_void_p, NativeBuffer, ctypes.POINTER(NativeBuffer)]
-            optional_catalog_apply.restype = ctypes.c_int
+        for optional_name in (
+            "memoria_mobile_apply_concept_catalog_json",
+            "memoria_mobile_activate_relations_json",
+        ):
+            optional_function = getattr(self._lib, optional_name, None)
+            if optional_function is not None:
+                optional_function.argtypes = [ctypes.c_void_p, NativeBuffer, ctypes.POINTER(NativeBuffer)]
+                optional_function.restype = ctypes.c_int
         self._lib.memoria_mobile_flush.argtypes = [ctypes.c_void_p]
         self._lib.memoria_mobile_flush.restype = ctypes.c_int
         self._lib.memoria_mobile_free_buffer.argtypes = [NativeBuffer]
