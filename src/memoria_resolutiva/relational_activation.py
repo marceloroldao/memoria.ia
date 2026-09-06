@@ -147,8 +147,12 @@ def activate(
     if not selected:
         return RelationalActivationResult("UNRESOLVED", 0.0, "", tuple(concepts))
 
+    # Prefer closer and stronger relations, but a relation that does not fit the
+    # remaining budget must not prevent a later, smaller relevant relation from
+    # being selected.
     selected.sort(key=lambda row: (row[0], -row[1], _render_edge(row[2])))
     rendered: list[str] = []
+    rendered_ids: list[str] = []
     used = 0
     confidences: list[float] = []
     for hop, confidence, edge in selected:
@@ -157,10 +161,13 @@ def activate(
             continue
         cost = len(line) + (1 if rendered else 0)
         if used + cost > budget:
-            break
+            continue
         rendered.append(line)
         used += cost
         confidences.append(confidence)
+        evidence_id = str(getattr(edge, "evidence_id", "") or "")
+        if evidence_id and evidence_id not in rendered_ids:
+            rendered_ids.append(evidence_id)
 
     if not rendered:
         return RelationalActivationResult("UNRESOLVED", 0.0, "", tuple(concepts))
@@ -170,5 +177,5 @@ def activate(
         min(confidences),
         "\n".join(rendered),
         tuple(concepts),
-        tuple(selected_ids),
+        tuple(rendered_ids),
     )
