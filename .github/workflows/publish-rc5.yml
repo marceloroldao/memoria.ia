@@ -1,0 +1,64 @@
+name: publish Memoria.ia v1.0.0-rc5
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'RELEASE_NOTES_v1.0.0-rc5.md'
+      - 'pyproject.toml'
+      - '.github/workflows/publish-rc5.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-rc5:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify RC5 package version
+        run: |
+          python - <<'PY'
+          import tomllib
+          from pathlib import Path
+          version = tomllib.loads(Path('pyproject.toml').read_text('utf-8'))['project']['version']
+          if version != '1.0.0rc5':
+              raise SystemExit(f'expected 1.0.0rc5, found {version}')
+          print('RC5 package version verified')
+          PY
+
+      - name: Verify release metadata
+        run: python scripts/validate_release_metadata.py
+
+      - name: Verify release notes
+        run: test -s RELEASE_NOTES_v1.0.0-rc5.md
+
+      - name: Create tag and GitHub pre-release at exact merge commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.0.0-rc5 >/dev/null 2>&1; then
+            echo 'v1.0.0-rc5 release already exists; refusing to republish.'
+            exit 0
+          fi
+          gh release create v1.0.0-rc5 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title 'Memoria.ia v1.0.0-rc5 — Native Relational Memory Candidate' \
+            --notes-file RELEASE_NOTES_v1.0.0-rc5.md \
+            --prerelease
+
+      - name: Verify tag target
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          TAG_SHA="$(git rev-list -n 1 v1.0.0-rc5)"
+          test "$TAG_SHA" = "$GITHUB_SHA"
+          echo "v1.0.0-rc5 -> $TAG_SHA"
