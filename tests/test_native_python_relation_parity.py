@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -70,6 +71,33 @@ def _contract(result) -> tuple[tuple[str, str, str, float], ...]:
     )
 
 
+@dataclass(frozen=True)
+class _SyntheticEdge:
+    subject: str
+    predicate: str
+    object: str
+    confidence: float
+    evidence_id: str
+
+
+class _SyntheticCore:
+    def __init__(self, edges: tuple[_SyntheticEdge, ...]) -> None:
+        self._edges = edges
+
+    def active_edges(self, *, namespace: str | None = None):
+        return self._edges
+
+
+class _SyntheticEvidence:
+    def __init__(self, edges: tuple[_SyntheticEdge, ...]) -> None:
+        self.core = _SyntheticCore(edges)
+
+
+class _SyntheticResolver:
+    def __init__(self, edges: tuple[_SyntheticEdge, ...]) -> None:
+        self.evidence = _SyntheticEvidence(edges)
+
+
 def test_python_and_native_share_product_relation_vectors(tmp_path: Path):
     python_service = _python_service(tmp_path)
     native_service = _native_service(tmp_path, _native_library())
@@ -92,20 +120,23 @@ def test_python_and_native_share_product_relation_vectors(tmp_path: Path):
 
 
 def test_native_activation_can_traverse_an_edge_that_does_not_fit_prompt_budget(tmp_path: Path):
-    """Traversal budget is independent from the final LLM context budget.
-
-    The first edge is deliberately too large to render, but the root concept
-    still remains within the supported relation-token size. It must activate
-    ``bridge`` so the short second-hop relation can be selected for the prompt.
-    """
+    """Traversal budget is independent from the final LLM context budget."""
     root = "longrootconcept"
     session_id = "budget-bridge"
     native_service = _native_service(tmp_path, _native_library())
-    python_service = _python_service(tmp_path)
+    reference_resolver = _SyntheticResolver(
+        (
+            _SyntheticEdge(root, "is", "bridge", 0.95, "ref-e1"),
+            _SyntheticEdge("bridge", "is", "c", 0.95, "ref-e2"),
+        )
+    )
     try:
-        for service in (python_service, native_service):
-            service.ingest(role="user", text=f"{root} is bridge", session_id=session_id, order=1)
-            service.ingest(role="user", text="bridge is c", session_id=session_id, order=2)
+        native_service.ingest(
+            role="user", text=f"{root} is bridge", session_id=session_id, order=1
+        )
+        native_service.ingest(
+            role="user", text="bridge is c", session_id=session_id, order=2
+        )
 
         native = activate(
             native_service,
@@ -117,7 +148,7 @@ def test_native_activation_can_traverse_an_edge_that_does_not_fit_prompt_budget(
             min_confidence=0.45,
         )
         reference = activate(
-            python_service,
+            reference_resolver,
             concept=root,
             session_id=session_id,
             depth=2,
