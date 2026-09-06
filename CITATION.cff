@@ -1,22 +1,23 @@
 cff-version: 1.2.0
 message: "If you use memoria.ia in academic or scientific work, please cite this software."
-title: "memoria.ia: Resolutive Memory — v1.0 Release Candidate 4"
+title: "memoria.ia: Resolutive Memory — v1.0 Release Candidate 5"
 type: software
 authors:
   - family-names: "Matos"
     given-names: "Marcelo Roldão"
     orcid: "https://orcid.org/0009-0003-6075-4680"
-abstract: "Fourth v1.0 release candidate of memoria.ia, freezing layered factual abstraction, selective invalidation, incremental and adaptive recomputation, workload profiling, and audited strategy execution on top of the deterministic local-first Resolutive Memory architecture."
+abstract: "Fifth v1.0 release candidate of memoria.ia, freezing deterministic native concept identity, relation traversal, bounded relational inference, one-hop neighborhood exploration, and directional type collection on top of the local-first Resolutive Memory architecture."
 repository-code: "https://github.com/marceloroldao/memoria.ia"
-version: "1.0.0-rc.4"
-date-released: "2026-09-03"
+version: "1.0.0-rc.5"
+date-released: "2026-09-06"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
 keywords:
   - resolutive memory
   - continual memory
   - deterministic memory
-  - layered memory
-  - adaptive recomputation
+  - relational memory
+  - concept identity
+  - graph traversal
   - resolutive inference
   - AI memory
   - local-first AI
