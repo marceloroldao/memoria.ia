@@ -91,6 +91,27 @@ def _append_with_budget(items: list[str], value: str, *, budget: int) -> bool:
     return True
 
 
+def _append_structured_with_budget(items: list[str], value: str, *, budget: int) -> bool:
+    """Append relation context while preserving line boundaries for the LLM.
+
+    Structural ranking uses line order to expose a composed path. Legacy context
+    appenders intentionally remain whitespace-normalizing so existing direct and
+    fallback behavior is unchanged.
+    """
+    normalized = "\n".join(
+        " ".join(line.split()).strip()
+        for line in str(value).splitlines()
+        if " ".join(line.split()).strip()
+    )
+    if not normalized or normalized in items:
+        return True
+    used = sum(len(item) for item in items) + max(0, len(items) - 1)
+    if used + len(normalized) > budget:
+        return False
+    items.append(normalized)
+    return True
+
+
 def _pluralize_pt(value: str) -> str:
     word = value.strip().strip(".,;:!?\"")
     if not word:
@@ -401,7 +422,7 @@ class ProductChatService:
                             resolver_hit = True
                             ranked_context = _rank_relational_context(message, activated.selected_context)
                             retrieved_chars += len(ranked_context)
-                            _append_with_budget(
+                            _append_structured_with_budget(
                                 retrieved,
                                 ranked_context,
                                 budget=_MAX_RELATIONAL_CONTEXT_CHARS,
