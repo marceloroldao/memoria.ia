@@ -1,0 +1,36 @@
+name: RC5 relation benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'native/mobile/tests/rc5_relation_scale.c'
+      - 'native/mobile/concept_relation_traversal.c'
+      - '.github/workflows/rc5-relation-benchmark.yml'
+      - 'tests/test_rc5_relation_scale.py'
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run RC5 relation scale probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          CC="$(command -v cc || command -v gcc || command -v clang)"
+          if [ -z "$CC" ]; then
+            echo "No C compiler found" >&2
+            exit 1
+          fi
+          OUT="${RUNNER_TEMP}/rc5_relation_scale"
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then OUT="${OUT}.exe"; fi
+          "$CC" -std=c11 -O2 -I native/mobile \
+            native/mobile/tests/rc5_relation_scale.c \
+            native/mobile/concept_relation_traversal.c \
+            -o "$OUT"
+          echo "RC5 relation benchmark on ${RUNNER_OS}"
+          "$OUT"
