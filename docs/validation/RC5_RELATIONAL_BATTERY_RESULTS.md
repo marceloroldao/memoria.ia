@@ -19,10 +19,10 @@ Policy: positive and negative results are cumulative. Historical failures are re
 | C | Resolver precedence contract | PASS / CROSS-PLATFORM GREEN | RC5-B13..B16 |
 | D | Namespace + supersession adversarial matrix | PASS / CROSS-PLATFORM GREEN | run `34034750890`, RC5-B17..B22 |
 | E | Persistence / restart consistency | PASS / CROSS-PLATFORM GREEN | run `34038779945`, RC5-B23..B27 |
-| F | Scale / performance probe | PASS FUNCTIONALLY / CROSS-PLATFORM GREEN | run `34039160121`, RC5-B28..B31; absolute latency numbers still pending a benchmark-mode run with uncaptured output |
+| F | Scale / performance probe | PASS / CHARACTERIZED CROSS-PLATFORM | functional run `34039160121`; dedicated benchmark run `34040159476` |
 | G | Mixed conversational adversarial corpus | PASS / CROSS-PLATFORM GREEN | run `34039590580`, RC5-G01..G06 |
 
-Current release-validation conclusion: no known functional blocker remains in Phases B-G. The only open item in this battery is performance characterization: Phase F proved correctness/no-runaway through 50,000 relations, but the shared CI run did not expose the per-scale latency prints, so no absolute latency claim is recorded.
+Current release-validation conclusion: no known functional or characterization pendency remains in Phases B-G. Phase F now has dedicated, uncaptured runner-specific latency observations for Ubuntu and Windows.
 
 ## Historical failures and corrections
 
@@ -120,21 +120,36 @@ Conclusion: restart does not resurrect superseded state or discard the active co
 
 ## Phase F — Scale / performance probe
 
-Status: PASS FUNCTIONALLY / CROSS-PLATFORM GREEN — run `34039160121`
+Status: PASS / CHARACTERIZED CROSS-PLATFORM
 
-| ID | Area | Scenario | Expected | Result |
-|---|---|---|---|---|
-| RC5-B28 | 100 edges | bounded 4-hop traversal in 100-edge chain | correct path preserved | PASS |
-| RC5-B29 | 1,000 edges | bounded 4-hop traversal in 1,000-edge chain | correct path preserved | PASS |
-| RC5-B30 | 10,000 edges | bounded 4-hop traversal in 10,000-edge chain | correct path preserved | PASS |
-| RC5-B31 | 50,000 edges | bounded 4-hop traversal in 50,000-edge chain | correct path preserved; no runaway | PASS |
+Functional regression evidence: run `34039160121`.
+Dedicated uncaptured benchmark evidence: run `34040159476`.
+
+| ID | Relations | Ubuntu latency | Windows latency | Paths | Hops | Result |
+|---|---:|---:|---:|---:|---:|---|
+| RC5-B28 | 100 | 0.027 ms | 0.000 ms* | 1 | 4 | PASS |
+| RC5-B29 | 1,000 | 0.055 ms | 0.000 ms* | 1 | 4 | PASS |
+| RC5-B30 | 10,000 | 0.290 ms | 1.000 ms | 1 | 4 | PASS |
+| RC5-B31 | 50,000 | 2.104 ms | 2.000 ms | 1 | 4 | PASS |
+
+`*` Windows values of `0.000 ms` reflect the timer resolution of this particular probe/runner at very short durations; they must not be interpreted as zero-cost traversal.
 
 Native probe: `native/mobile/tests/rc5_relation_scale.c`.
 Cross-platform wrapper: `tests/test_rc5_relation_scale.py`.
+Dedicated workflow: `.github/workflows/rc5-relation-benchmark.yml`.
 
-Observed regression result: Ubuntu completed with `635 passed, 28 skipped, 5 warnings in 32.44s`; Windows also completed successfully. This is the whole-suite duration, not a relation-resolver latency measurement.
+Benchmark environment observations:
 
-Pending characterization: the scale probe emits per-size timing, but `pytest -q` captured those prints in this green CI run. Therefore the battery records functional PASS through 50,000 relations but intentionally makes no absolute latency/throughput claim. A dedicated benchmark-mode run with uncaptured timing output remains optional before/after RC5 freeze.
+- Ubuntu runner: Ubuntu 24.04.4 LTS, hosted GitHub Actions runner.
+- Windows runner: Windows Server 2025, hosted GitHub Actions runner.
+- Both benchmark jobs completed successfully.
+- Compiler optimization: `-O2`.
+- Query shape: bounded traversal returning exactly one 4-hop path.
+- These timings are runner-specific observations, not universal performance guarantees and not a substitute for hardware-specific product benchmarking.
+
+Functional regression context: Ubuntu full suite completed with `635 passed, 28 skipped, 5 warnings in 32.44s`; Windows full regression also passed. The dedicated benchmark removed the prior timing-capture limitation.
+
+Conclusion: at the tested 4-hop query shape, traversal remained correct and bounded through 50,000 relations, with measured latency on the order of a few milliseconds or less on both hosted runners. No runaway behavior was observed.
 
 ## Phase G — Mixed conversational adversarial corpus
 
@@ -168,7 +183,8 @@ Conclusion: the deterministic relational core remains fail-closed under a mixed,
 - Namespace isolation survives adversarial conflicting facts.
 - Superseded high-confidence evidence cannot defeat an active correction.
 - Persistence/restart preserves active/superseded lineage state in the tested path.
-- Functional traversal remains correct at 100, 1,000, 10,000 and 50,000 relation probes.
+- Traversal remains functionally correct at 100, 1,000, 10,000 and 50,000 relations.
+- Dedicated timing characterization is now archived for Ubuntu and Windows.
 - Mixed conversational data does not create the tested cross-domain false positives.
 - Portuguese UTF-8 parity is green on Windows after correcting the input boundary.
 
@@ -176,17 +192,20 @@ Conclusion: the deterministic relational core remains fail-closed under a mixed,
 
 1. Windows `.exe` test-harness portability defect — discovered in run `34006309839`, corrected.
 2. Windows narrow-`argv` UTF-8 defect affecting `diferença de potencial` — discovered in run `34033799428`, corrected and validated in run `34034430288`.
-3. Phase F CI output limitation — per-scale latency values were captured by pytest, so performance numbers cannot be claimed from run `34039160121`. This is a characterization/documentation limitation, not a functional failure.
+3. Initial Phase F CI output limitation — per-scale latency values were captured by pytest in run `34039160121`; resolved by dedicated benchmark run `34040159476`.
+4. Windows benchmark timer granularity — 100 and 1,000 relation probes report `0.000 ms`; this is a measurement-resolution limitation and is explicitly not interpreted as zero latency.
 
 ### Remaining pendency
 
-- No functional pendency remains in Phases B-G based on the current cross-platform CI evidence.
-- Optional before final RC5 freeze: execute the Phase F probe in dedicated benchmark mode (`-s`/uncaptured output or artifact export) and archive per-scale latency values. These values should be treated as runner-specific observations, not universal performance guarantees.
+- None within the defined RC5 relational validation battery.
+- Future product benchmarking on target hardware remains desirable, but is outside this RC5 release gate.
 
 ## Release-gate interpretation
 
-For the scope of this relational battery, RC5 is functionally green across Ubuntu and Windows through Phase G. The historical failures have known causes and validated corrections. The remaining Phase F timing capture is not a correctness blocker; it is a measurement-quality item.
+For the scope of this relational battery, RC5 is green across Ubuntu and Windows through Phase G, including dedicated Phase F characterization. Historical failures have known causes and validated corrections. There is no remaining blocker or pending measurement item in the defined battery.
+
+**RC5 relational validation gate: READY TO FREEZE.**
 
 ## Result integrity
 
-This document is cumulative by design. Historical failures must remain visible after fixes. Future RC5 findings should be appended with run ID, reproduction, diagnosis, correction and validation rather than rewriting earlier negatives as if they never occurred.
+This document is cumulative by design. Historical failures must remain visible after fixes. Future findings should be appended with run ID, reproduction, diagnosis, correction and validation rather than rewriting earlier negatives as if they never occurred.
