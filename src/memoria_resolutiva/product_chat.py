@@ -127,6 +127,63 @@ def _activation_concepts(message: str) -> tuple[str, ...]:
     return _generic_relation_concepts(message)
 
 
+def _rank_relational_context(message: str, selected_context: str) -> str:
+    """Rank retrieved relations against the current input without dropping evidence.
+
+    The ranking remains deterministic and local. Relations mentioning the
+    possessive target concept are preferred, and an entity that is supported by
+    multiple edges receives a convergence boost. This lets a relation such as
+    ``gato | is | Alt`` reinforce ``Alt | is | gato`` while keeping Vivi/Lay in
+    the context for the LLM to inspect.
+    """
+    lines = [line.strip() for line in str(selected_context or "").splitlines() if line.strip()]
+    if len(lines) < 2:
+        return "\n".join(lines)
+
+    match = _POSSESSIVE_TYPE_QUERY.search(message)
+    target = match.group("kind").casefold().strip() if match is not None else ""
+    query_terms = {
+        token.casefold().strip(".,;:!?")
+        for token in _WORD_RE.findall(message)
+        if token.casefold().strip(".,;:!?") not in _GENERIC_RELATION_STOPWORDS
+    }
+
+    parsed: list[tuple[str, str, str, str]] = []
+    entity_frequency: dict[str, int] = {}
+    for line in lines:
+        parts = [part.strip() for part in line.split("|", 2)]
+        if len(parts) == 3:
+            subject, predicate, object_ = parts
+        else:
+            subject, predicate, object_ = line, "", ""
+        parsed.append((line, subject, predicate, object_))
+        for entity in (subject, object_):
+            key = entity.casefold().strip()
+            if key and key not in query_terms and key != target:
+                entity_frequency[key] = entity_frequency.get(key, 0) + 1
+
+    ownership_markers = {"usuario", "usuário", "owner", "belongs_to", "pertence"}
+
+    def score(row: tuple[str, str, str, str]) -> tuple[float, str]:
+        line, subject, _predicate, object_ = row
+        subject_key = subject.casefold().strip()
+        object_key = object_.casefold().strip()
+        line_terms = {token.casefold() for token in _WORD_RE.findall(line)}
+        value = 0.0
+        if target and target in line_terms:
+            value += 4.0
+        value += 1.5 * len(query_terms & line_terms)
+        counterpart = object_key if subject_key == target else subject_key if object_key == target else ""
+        if counterpart:
+            value += 2.0 * max(0, entity_frequency.get(counterpart, 0) - 1)
+        if ownership_markers & line_terms:
+            value += 3.0
+        return (-value, line.casefold())
+
+    parsed.sort(key=score)
+    return "\n".join(row[0] for row in parsed)
+
+
 def _relation_probe_queries(message: str) -> tuple[str, ...]:
     """Temporary compatibility fallback for resolvers without structural graph access."""
     match = _POSSESSIVE_TYPE_QUERY.search(message)
@@ -286,10 +343,11 @@ class ProductChatService:
                             if activated.status != "HIT" or not activated.selected_context:
                                 continue
                             resolver_hit = True
-                            retrieved_chars += len(activated.selected_context)
+                            ranked_context = _rank_relational_context(message, activated.selected_context)
+                            retrieved_chars += len(ranked_context)
                             _append_with_budget(
                                 retrieved,
-                                activated.selected_context,
+                                ranked_context,
                                 budget=_MAX_RELATIONAL_CONTEXT_CHARS,
                             )
                         if resolver_hit:
