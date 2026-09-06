@@ -77,19 +77,33 @@ The contract test `tests/test_rc5_resolver_precedence_contract.py` asserts the f
 
 ## Phase D — Namespace and supersession adversarial matrix
 
+Status: PASS / CROSS-PLATFORM GREEN — run 34034750890
+
+| ID | Area | Scenario | Expected | Result |
+|---|---|---|---|---|
+| RC5-B17 | Namespace contradiction | `charger→34v` in session-a and `charger→99v` in session-b | session-a never resolves 99v | PASS |
+| RC5-B18 | Superseded dominance | superseded `charger→danger` has confidence 1.00; active `charger→safe` has 0.90 | danger excluded; safe resolves | PASS |
+| RC5-B19 | Duplicate active evidence | same `charger→34v` edge appears with 0.95 and 0.82 evidence | both active paths retained and ranked by confidence | PASS |
+| RC5-B20 | Cross-namespace false path | session-b has `charger→99v→danger` | path exists only in session-b, never session-a | PASS |
+| RC5-B21 | Superseded foreign value | session-b superseded `charger→120v` at confidence 1.00 | 120v remains UNRESOLVED | PASS |
+| RC5-B22 | Empty namespace isolation | empty namespace has `charger→12v` | only empty namespace resolves 12v | PASS |
+
+Dedicated native matrix: `native/mobile/tests/rc5_namespace_supersession_matrix.c`.
+Pytest cross-platform wrapper: `tests/test_rc5_namespace_supersession_matrix.py`.
+
+## Phase E — Persistence / restart consistency
+
 Status: PENDING CI
 
 | ID | Area | Scenario | Expected | Result |
 |---|---|---|---|---|
-| RC5-B17 | Namespace contradiction | `charger→34v` in session-a and `charger→99v` in session-b | session-a never resolves 99v | PENDING CI |
-| RC5-B18 | Superseded dominance | superseded `charger→danger` has confidence 1.00; active `charger→safe` has 0.90 | danger excluded; safe resolves | PENDING CI |
-| RC5-B19 | Duplicate active evidence | same `charger→34v` edge appears with 0.95 and 0.82 evidence | both active paths retained and ranked by confidence | PENDING CI |
-| RC5-B20 | Cross-namespace false path | session-b has `charger→99v→danger` | path exists only in session-b, never session-a | PENDING CI |
-| RC5-B21 | Superseded foreign value | session-b superseded `charger→120v` at confidence 1.00 | 120v remains UNRESOLVED | PENDING CI |
-| RC5-B22 | Empty namespace isolation | empty namespace has `charger→12v` | only empty namespace resolves 12v | PENDING CI |
+| RC5-B23 | Durable sync | Active and superseded lineage state is written and synced | sync succeeds before shutdown | PENDING CI |
+| RC5-B24 | Close/reopen | Persistence is closed and reopened against the same data path and organization | reopen succeeds using persisted state | PENDING CI |
+| RC5-B25 | Supersession after restart | derived memory invalidated by corrected parent before shutdown | derived remains inactive after reopen | PENDING CI |
+| RC5-B26 | Active correction after restart | replacement `b-new` is active before shutdown | `b-new` remains active after reopen | PENDING CI |
+| RC5-B27 | Build integration | native lineage restart executable remains wired into mobile test build | restart regression cannot silently disappear from CMake | PENDING CI |
 
-Dedicated native matrix: `native/mobile/tests/rc5_namespace_supersession_matrix.c`.
-Pytest cross-platform wrapper: `tests/test_rc5_namespace_supersession_matrix.py`.
+Runtime evidence already present in `native/mobile/tests/lineage_state.c` performs a real save → sync → close → reopen → resolve sequence. `tests/test_rc5_persistence_restart_contract.py` freezes those restart invariants so accidental removal becomes visible in the standard cross-platform pytest regression.
 
 ## Existing RC5 deterministic coverage observed before this run
 
@@ -112,7 +126,6 @@ These existing tests are treated as regression prerequisites, not as substitutes
 
 ## Next phases
 
-- Phase E: persistence/restart consistency.
 - Phase F: scale/performance at increasing relation counts.
 - Phase G: conversational corpus with mixed people, animals, vehicles, colors, corrections and indirect questions.
 
