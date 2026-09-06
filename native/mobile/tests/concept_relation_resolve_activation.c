@@ -36,6 +36,18 @@ static void assert_inferred_hit(memoria_mobile_handle *h, const char *query, cha
     assert(strstr(response, "\"inference_hops\":2") != NULL);
 }
 
+static void assert_neighborhood_hit(memoria_mobile_handle *h, const char *query, char *response, size_t cap) {
+    char request[2048];
+    snprintf(request, sizeof(request),
+        "{\"query\":\"%s\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}", query);
+    assert(call_json(memoria_mobile_resolve_context_json, h, request, response, cap) == MEMORIA_MOBILE_OK);
+    assert(strstr(response, "\"relation_neighborhood_used\":true") != NULL);
+    assert(strstr(response, "\"neighborhood_hops\":1") != NULL);
+    assert(strstr(response, "\"neighborhood_count\":1") != NULL);
+    assert(strstr(response, "concept:voltage") != NULL);
+    assert(strstr(response, "\"e1\"") != NULL);
+}
+
 int main(void) {
     char path[256], response[8192];
     memoria_mobile_handle *h = NULL;
@@ -79,6 +91,7 @@ int main(void) {
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
     assert(strstr(response, "\"relation_inference_used\":true") == NULL);
+    assert(strstr(response, "\"relation_neighborhood_used\":true") == NULL);
 
     /* Explicit anchors remain supported. */
     assert(call_json(
@@ -98,10 +111,20 @@ int main(void) {
     assert_inferred_hit(h, "O que conecta charger a 34v?", response, sizeof(response));
     assert_inferred_hit(h, "O que liga charger a 34v?", response, sizeof(response));
 
-    /* Namespace isolation remains fail-closed even with inferred anchors. */
+    /* One-anchor neighborhood queries are bounded to direct neighbors. */
+    assert_neighborhood_hit(h, "What is related to charger?", response, sizeof(response));
+    assert_neighborhood_hit(h, "O que está relacionado a charger?", response, sizeof(response));
+    assert_neighborhood_hit(h, "O que esta ligado a charger?", response, sizeof(response));
+
+    /* Namespace isolation remains fail-closed for both relation modes. */
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
         "{\"query\":\"relation between charger and 34v\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_UNRESOLVED);
+    assert(call_json(
+        memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"what is related to charger?\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_UNRESOLVED);
 
@@ -113,7 +136,7 @@ int main(void) {
     ) == MEMORIA_MOBILE_UNRESOLVED);
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"relationship check\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
+        "{\"query\":\"charger relations\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
         response, sizeof(response)
     ) == MEMORIA_MOBILE_UNRESOLVED);
 
