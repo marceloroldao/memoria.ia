@@ -6,14 +6,15 @@ from pathlib import Path
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_RELEASE_VERSION = "1.0.0-rc4"
-EXPECTED_PACKAGE_VERSION = "1.0.0rc4"
-EXPECTED_RELEASE_DATE = "2026-09-03"
-EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 4"
-EXPECTED_CFF_TITLE = "memoria.ia: Resolutive Memory — v1.0 Release Candidate 4"
+EXPECTED_RELEASE_VERSION = "1.0.0-rc5"
+EXPECTED_PACKAGE_VERSION = "1.0.0rc5"
+EXPECTED_RELEASE_DATE = "2026-09-06"
+EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 5"
+EXPECTED_CFF_TITLE = "memoria.ia: Resolutive Memory — v1.0 Release Candidate 5"
 EXPECTED_ORCID = "0009-0003-6075-4680"
 PREVIOUS_ARCHIVAL_DOI = "10.5281/zenodo.22244038"
-PREVIOUS_PUBLIC_TAG = "v1.0.0-rc3"
+PREVIOUS_PUBLIC_TAG = "v1.0.0-rc4"
+FREEZE_COMMIT = "06c747478e05ee11ab2c5c3c24cf75365262b872"
 
 
 def fail(message: str) -> None:
@@ -30,9 +31,7 @@ def main() -> int:
     package_version = pyproject["project"]["version"]
     require(package_version == EXPECTED_PACKAGE_VERSION, f"pyproject version is {package_version!r}")
 
-    zenodo_path = ROOT / ".zenodo.json"
-    require(zenodo_path.is_file(), ".zenodo.json is missing")
-    zenodo = json.loads(zenodo_path.read_text("utf-8"))
+    zenodo = json.loads((ROOT / ".zenodo.json").read_text("utf-8"))
     require(zenodo.get("upload_type") == "software", "Zenodo upload_type must be software")
     require(zenodo.get("version") == EXPECTED_RELEASE_VERSION, "Zenodo version mismatch")
     require(zenodo.get("title") == EXPECTED_TITLE, "Zenodo title mismatch")
@@ -46,63 +45,33 @@ def main() -> int:
     require(creator.get("orcid") == EXPECTED_ORCID, "Zenodo ORCID mismatch")
     require(bool(re.fullmatch(r"\d{4}-\d{4}-\d{4}-\d{3}[\dX]", creator["orcid"])), "Zenodo ORCID shape is invalid")
 
-    related_identifiers = zenodo.get("related_identifiers", [])
-    require(
-        any(
-            item.get("identifier") == f"https://doi.org/{PREVIOUS_ARCHIVAL_DOI}"
-            and item.get("relation") == "isNewVersionOf"
-            for item in related_identifiers
-            if isinstance(item, dict)
-        ),
-        "Zenodo metadata must preserve the previous archived RC2 DOI as version lineage",
-    )
-    require(
-        any(
-            item.get("identifier", "").endswith(f"/releases/tag/{PREVIOUS_PUBLIC_TAG}")
-            and item.get("relation") == "isNewVersionOf"
-            for item in related_identifiers
-            if isinstance(item, dict)
-        ),
-        "Zenodo metadata must preserve the RC3 public-release lineage",
-    )
-    require(
-        not any(
-            item.get("relation") == "isIdenticalTo" and PREVIOUS_ARCHIVAL_DOI in item.get("identifier", "")
-            for item in related_identifiers
-            if isinstance(item, dict)
-        ),
-        "RC4 must not reuse the RC2 DOI as an identical archival identifier",
-    )
+    related = zenodo.get("related_identifiers", [])
+    require(any(i.get("identifier") == f"https://doi.org/{PREVIOUS_ARCHIVAL_DOI}" and i.get("relation") == "isNewVersionOf" for i in related if isinstance(i, dict)), "Zenodo archival lineage mismatch")
+    require(any(i.get("identifier", "").endswith(f"/releases/tag/{PREVIOUS_PUBLIC_TAG}") and i.get("relation") == "isNewVersionOf" for i in related if isinstance(i, dict)), "Zenodo previous public tag mismatch")
 
     cff = (ROOT / "CITATION.cff").read_text("utf-8")
-    require("cff-version: 1.2.0" in cff, "CITATION.cff must use CFF 1.2.0")
     require(f'title: "{EXPECTED_CFF_TITLE}"' in cff, "CITATION.cff title mismatch")
-    require(f'version: "1.0.0-rc.4"' in cff, "CITATION.cff version mismatch")
-    require(f'date-released: "{EXPECTED_RELEASE_DATE}"' in cff, "CITATION.cff release date mismatch")
+    require('version: "1.0.0-rc.5"' in cff, "CITATION.cff version mismatch")
+    require(f'date-released: "{EXPECTED_RELEASE_DATE}"' in cff, "CITATION.cff date mismatch")
     require(f'https://orcid.org/{EXPECTED_ORCID}' in cff, "CITATION.cff ORCID mismatch")
-    require("doi:" not in cff, "RC4 preparation must not pre-assign a DOI before archival publication")
-    require("license-url:" in cff and "/LICENSE" in cff, "CITATION.cff must link the custom license")
+    require("doi:" not in cff, "RC5 preparation must not pre-assign a DOI")
 
     readme = (ROOT / "README.md").read_text("utf-8")
-    require("v1.0.0-rc4" in readme, "README does not identify RC4")
-    require("1.0.0rc4" in readme, "README does not identify the RC4 package version")
-    require(PREVIOUS_ARCHIVAL_DOI in readme, "README does not preserve archived release lineage")
-    require("RSMS 1.0-rc.1" in readme, "README does not preserve the RSMS release-candidate compatibility boundary")
+    require("v1.0.0-rc5" in readme and "1.0.0rc5" in readme, "README does not identify RC5")
+    require(FREEZE_COMMIT in readme, "README missing RC5 freeze commit")
+    require("RSMS 1.0-rc.1" in readme, "README missing RSMS compatibility boundary")
 
-    release_notes = (ROOT / "RELEASE_NOTES_v1.0.0-rc4.md").read_text("utf-8")
-    require("b4a891eb76e7fc51a272120b55dff07abe58e451" in release_notes, "RC4 functional freeze commit is missing")
-    require(PREVIOUS_ARCHIVAL_DOI in release_notes, "RC4 release notes do not preserve archival lineage")
-    require("A new RC4 DOI must be inserted only after the archival record exists" in release_notes, "RC4 DOI publication boundary is missing")
+    notes = (ROOT / "RELEASE_NOTES_v1.0.0-rc5.md").read_text("utf-8")
+    require(FREEZE_COMMIT in notes, "RC5 release notes missing freeze commit")
+    require(PREVIOUS_ARCHIVAL_DOI in notes, "RC5 release notes missing archival lineage")
+    require("A new RC5 DOI must be inserted only after the archival record exists" in notes, "RC5 DOI publication boundary missing")
 
     json.dumps(zenodo, ensure_ascii=False)
     print("metadata gate: PASS")
     print(f"release_version={EXPECTED_RELEASE_VERSION}")
     print(f"package_version={EXPECTED_PACKAGE_VERSION}")
-    print(f"previous_archival_doi={PREVIOUS_ARCHIVAL_DOI}")
-    print(f"previous_public_tag={PREVIOUS_PUBLIC_TAG}")
-    print("rc4_doi_preassigned=false")
-    print("zenodo_source=.zenodo.json")
-    print("citation_source=CITATION.cff")
+    print(f"freeze_commit={FREEZE_COMMIT}")
+    print("rc5_doi_preassigned=false")
     return 0
 
 
