@@ -2,15 +2,33 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import re
 from time import perf_counter
 from typing import Iterable, Literal, Protocol, Sequence
 
 from .llm_adapter import LLMAdapter, estimate_tokens
 from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
+from .relational_activation import activate as activate_relations
 
 ChatMode = Literal["baseline", "memoria"]
 MIN_COMPACT_RELATION_CONFIDENCE = 0.90
+_POSSESSIVE_TYPE_QUERY = re.compile(
+    r"\b(?:meu|minha|meus|minhas)\s+(?P<kind>[\wÀ-ÿ.-]+)\b",
+    re.IGNORECASE,
+)
+_WORD_RE = re.compile(r"[\wÀ-ÿ.-]+", re.UNICODE)
+_GENERIC_RELATION_STOPWORDS = {
+    "a", "as", "ao", "aos", "como", "da", "das", "de", "do", "dos", "e", "em",
+    "esta", "está", "estao", "estão", "eu", "funciona", "funcionar", "me", "meu", "meus",
+    "minha", "minhas", "nome", "o", "os", "para", "por", "qual", "quais", "que", "um", "uma",
+    "voce", "você", "caiu", "cair", "falhou", "falha", "problema", "status",
+}
+_MAX_GENERIC_RELATION_CONCEPTS = 2
+_MAX_RELATIONAL_HOPS = 2
+_RELATIONAL_HOP_DECAY = 0.72
+_MIN_SECOND_HOP_CONFIDENCE = 0.45
+_MAX_RELATIONAL_CONTEXT_CHARS = 1200
 
 
 class ConversationResolver(Protocol):
@@ -56,13 +74,91 @@ def _append_unique(items: list[str], value: str) -> None:
         items.append(normalized)
 
 
-def _minimal_factual_context(resolved: object, selected: str) -> str:
-    """Compact only a single strong, unambiguous factual relation.
+def _append_with_budget(items: list[str], value: str, *, budget: int) -> bool:
+    normalized = " ".join(str(value).split()).strip()
+    if not normalized or normalized in items:
+        return True
+    used = sum(len(item) for item in items) + max(0, len(items) - 1)
+    if used + len(normalized) > budget:
+        return False
+    items.append(normalized)
+    return True
 
-    Temporal responses, multiple memories/provenance rows, weak relations and
-    malformed structured rows keep the resolver's original selected context.
-    This deliberately optimizes the LLM boundary without changing memory recall.
-    """
+
+def _pluralize_pt(value: str) -> str:
+    word = value.strip().strip(".,;:!?\"")
+    if not word:
+        return word
+    lower = word.casefold()
+    if lower.endswith("s"):
+        return word
+    if lower.endswith("m"):
+        return word[:-1] + "ns"
+    if lower.endswith("l"):
+        return word[:-1] + "is"
+    if lower.endswith("r") or lower.endswith("z"):
+        return word + "es"
+    return word + "s"
+
+
+def _generic_relation_concepts(message: str) -> tuple[str, ...]:
+    words = _WORD_RE.findall(message)
+    if "?" not in message and len(words) > 4:
+        return ()
+    concepts: list[str] = []
+    seen: set[str] = set()
+    for word in words:
+        key = word.casefold().strip(".,;:!?")
+        if len(key) < 2 or key in _GENERIC_RELATION_STOPWORDS:
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        concepts.append(word.strip(".,;:!?"))
+        if len(concepts) >= _MAX_GENERIC_RELATION_CONCEPTS:
+            break
+    return tuple(concepts)
+
+
+def _activation_concepts(message: str) -> tuple[str, ...]:
+    match = _POSSESSIVE_TYPE_QUERY.search(message)
+    if match is not None:
+        return (match.group("kind"),)
+    return _generic_relation_concepts(message)
+
+
+def _relation_probe_queries(message: str) -> tuple[str, ...]:
+    """Temporary compatibility fallback for resolvers without structural graph access."""
+    match = _POSSESSIVE_TYPE_QUERY.search(message)
+    if match is not None:
+        kind = match.group("kind")
+        plural = _pluralize_pt(kind)
+        return (f"Quais {plural} você conhece?",) if plural else ()
+    concepts = _generic_relation_concepts(message)
+    return tuple(f"O que está relacionado a {concept}?" for concept in concepts)
+
+
+def _result_confidence(resolved: object) -> float:
+    try:
+        return max(0.0, min(1.0, float(getattr(resolved, "confidence", 0.0) or 0.0)))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _second_hop_probe(resolved: object, *, original_message: str) -> str | None:
+    if _result_confidence(resolved) * _RELATIONAL_HOP_DECAY < _MIN_SECOND_HOP_CONFIDENCE:
+        return None
+    selected = str(getattr(resolved, "selected_context", "") or "")
+    original = {token.casefold() for token in _WORD_RE.findall(original_message)}
+    candidates = _generic_relation_concepts(selected)
+    for concept in candidates:
+        if concept.casefold() in original:
+            continue
+        return f"O que está relacionado a {concept}?"
+    return None
+
+
+def _minimal_factual_context(resolved: object, selected: str) -> str:
     normalized = " ".join(selected.split()).strip()
     if not normalized:
         return normalized
@@ -96,12 +192,6 @@ def _minimal_factual_context(resolved: object, selected: str) -> str:
 
 
 def profile_namespace(scope: MemoryScope) -> str | None:
-    """Stable semantic namespace shared by conversations of the same profile.
-
-    Session memory remains isolated in scope.agent_id. The profile namespace is
-    intentionally derived without agent_id so a new chat can recover facts that
-    the same application/user promoted from an earlier conversation.
-    """
     application = (scope.application_id or "default").strip()
     user = (scope.user_id or "").strip()
     if not application and not user:
@@ -144,9 +234,6 @@ class ProductChatService:
             start = perf_counter()
 
             if self.conversation_resolver is not None:
-                # Resolve from the narrowest namespace first. If the current
-                # session does not contain enough evidence, widen to the stable
-                # profile namespace shared by this application/user.
                 namespaces: list[str | None] = []
                 if scope.agent_id:
                     namespaces.append(scope.agent_id)
@@ -157,29 +244,95 @@ class ProductChatService:
                     namespaces.append(None)
 
                 resolver_hit = False
+                activation_concepts = _activation_concepts(message)
+                fallback_probes = _relation_probe_queries(message)
+
+                # Preserve the established lookup hierarchy: try the original
+                # question in every eligible namespace before any expansion.
                 for namespace in namespaces:
-                    resolved = self.conversation_resolver.resolve(
-                        query=message,
-                        session_id=namespace,
-                    )
-                    if str(getattr(resolved, "status", "")) != "HIT":
+                    direct = self.conversation_resolver.resolve(query=message, session_id=namespace)
+                    if str(getattr(direct, "status", "")) != "HIT":
                         continue
-                    selected = str(getattr(resolved, "selected_context", "") or "")
-                    normalized_selected = " ".join(selected.split()).strip()
-                    if normalized_selected:
-                        resolver_hit = True
-                        retrieved_chars += len(normalized_selected)
-                        _append_unique(retrieved, _minimal_factual_context(resolved, normalized_selected))
-                        # Session evidence has priority. A profile lookup is only
-                        # needed when the current session misses.
-                        break
+                    selected = str(getattr(direct, "selected_context", "") or "")
+                    normalized = " ".join(selected.split()).strip()
+                    if not normalized:
+                        continue
+                    resolver_hit = True
+                    retrieved_chars += len(normalized)
+                    _append_with_budget(
+                        retrieved,
+                        _minimal_factual_context(direct, normalized),
+                        budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                    )
+                    break
+
+                # Only after all direct namespaces miss do we activate graph
+                # neighborhoods. This keeps session/profile precedence stable.
+                if not resolver_hit:
+                    for namespace in namespaces:
+                        structural_supported = False
+                        for concept in activation_concepts:
+                            activated = activate_relations(
+                                self.conversation_resolver,
+                                concept=concept,
+                                session_id=namespace,
+                                depth=_MAX_RELATIONAL_HOPS,
+                                budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                                hop_decay=_RELATIONAL_HOP_DECAY,
+                                min_confidence=_MIN_SECOND_HOP_CONFIDENCE,
+                            )
+                            if activated.status != "UNSUPPORTED":
+                                structural_supported = True
+                            if activated.status != "HIT" or not activated.selected_context:
+                                continue
+                            resolver_hit = True
+                            retrieved_chars += len(activated.selected_context)
+                            _append_with_budget(
+                                retrieved,
+                                activated.selected_context,
+                                budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                            )
+                        if resolver_hit:
+                            break
+
+                        if not structural_supported:
+                            for probe in fallback_probes:
+                                resolved = self.conversation_resolver.resolve(query=probe, session_id=namespace)
+                                if str(getattr(resolved, "status", "")) != "HIT":
+                                    continue
+                                selected = str(getattr(resolved, "selected_context", "") or "")
+                                normalized = " ".join(selected.split()).strip()
+                                if not normalized:
+                                    continue
+                                resolver_hit = True
+                                retrieved_chars += len(normalized)
+                                _append_with_budget(
+                                    retrieved,
+                                    _minimal_factual_context(resolved, normalized),
+                                    budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                                )
+                                second_probe = _second_hop_probe(resolved, original_message=message)
+                                if second_probe is not None:
+                                    second = self.conversation_resolver.resolve(query=second_probe, session_id=namespace)
+                                    if str(getattr(second, "status", "")) == "HIT":
+                                        second_selected = str(getattr(second, "selected_context", "") or "")
+                                        second_normalized = " ".join(second_selected.split()).strip()
+                                        if second_normalized:
+                                            retrieved_chars += len(second_normalized)
+                                            _append_with_budget(
+                                                retrieved,
+                                                _minimal_factual_context(second, second_normalized),
+                                                budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                                            )
+                                break
+                        if resolver_hit:
+                            break
+
                 if resolver_hit:
                     hits += 1
                 else:
                     misses += 1
 
-            # Explicit keys remain supported for applications that already know
-            # which structured memories they want to request.
             for key in memory_keys:
                 record = self.memory.recall(scope, ("key", key))
                 if record is None:

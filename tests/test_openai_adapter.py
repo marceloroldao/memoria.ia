@@ -37,12 +37,37 @@ def test_openai_adapter_materializes_context_and_reads_provider_usage():
 
     assert captured["authorization"] == "Bearer test-key"
     assert captured["body"]["model"] == "test-model"
-    assert "selected memory" in captured["body"]["input"]
-    assert "question" in captured["body"]["input"]
+    prompt = captured["body"]["input"]
+    assert "PESQUISA DA MEMORIA.IA" in prompt
+    assert "Memórias relacionadas:" in prompt
+    assert "selected memory" in prompt
+    assert "ENTRADA ATUAL" in prompt
+    assert "Origem: user_text" in prompt
+    assert "Conteúdo: question" in prompt
     assert result.text == "answer"
     assert result.usage.input_tokens == 100
     assert result.usage.output_tokens == 20
     assert result.usage.estimated_cost_usd == pytest.approx(0.0004)
+
+
+def test_openai_adapter_keeps_raw_message_when_memory_is_empty():
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.content.decode())
+        return httpx.Response(
+            200,
+            json={
+                "output": [{"type": "message", "content": [{"type": "output_text", "text": "ok"}]}],
+                "usage": {"input_tokens": 5, "output_tokens": 2},
+            },
+        )
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    adapter = OpenAIResponsesAdapter(api_key="test", model="model", client=client)
+    adapter.generate(message="q", context=[])
+
+    assert captured["body"]["input"] == "q"
 
 
 def test_openai_adapter_does_not_claim_cost_without_configured_pricing():

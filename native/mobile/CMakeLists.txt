@@ -35,6 +35,7 @@ add_library(memoria_mobile SHARED
   concept_relation_traversal.c
   concept_relation_runtime.c
   concept_relation_neighborhood.c
+  relational_activation_native.c
   mobile_persistence_bdr.c
   semantic_kernel.c
   semantic_consolidation_kernel.c

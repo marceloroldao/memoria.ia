@@ -120,6 +120,45 @@ int main(void) {
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
 
+    /* Native bounded structural activation: internet -> PPPoE -> OLT; POP is depth 3. */
+    assert(call_json(
+        memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"internet is PPPoE\",\"memory_id\":\"net-m1\","
+        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
+        "\"relation_memory_ids\":[\"net-e1\"]}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(
+        memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"PPPoE is OLT\",\"memory_id\":\"net-m2\","
+        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
+        "\"relation_memory_ids\":[\"net-e2\"]}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(
+        memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"OLT is POP\",\"memory_id\":\"net-m3\","
+        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
+        "\"relation_memory_ids\":[\"net-e3\"]}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(
+        memoria_mobile_activate_relations_json, h,
+        "{\"concept\":\"internet\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\","
+        "\"depth\":2,\"budget\":1200,\"hop_decay\":0.72,\"min_confidence\":0.45}",
+        response, sizeof(response)
+    ) == MEMORIA_MOBILE_OK);
+    assert(strstr(response, "\"native_structural_activation\":true") != NULL);
+    assert(strstr(response, "\"relation_count\":2") != NULL);
+    assert(strstr(response, "internet | is | pppoe") != NULL);
+    assert(strstr(response, "pppoe | is | olt") != NULL);
+    assert(strstr(response, "olt | is | pop") == NULL);
+    assert(strstr(response, "\"evidence_id\":\"net-e1\"") != NULL);
+    assert(strstr(response, "\"evidence_id\":\"net-e2\"") != NULL);
+    assert(strstr(response, "\"evidence_id\":\"net-e3\"") == NULL);
+    assert(strstr(response, "\"hop\":1") != NULL);
+    assert(strstr(response, "\"hop\":2") != NULL);
+
     /* Existing direct evidence keeps precedence even when relation anchors are supplied. */
     assert(call_json(
         memoria_mobile_resolve_context_json, h,
