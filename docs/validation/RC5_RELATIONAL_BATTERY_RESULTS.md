@@ -12,16 +12,16 @@ Policy: record positive and negative results. Failures are not hidden or rewritt
 
 ## Phase A — Native deterministic relational core
 
-Status: PARTIAL PASS / CROSS-PLATFORM REGRESSION UNDER CORRECTION
+Status: PASS / CROSS-PLATFORM GREEN
 
 | ID | Area | Scenario | Expected | Result |
 |---|---|---|---|---|
-| RC5-B01 | Multi-hop | Alt → gato → animal → ser-vivo plus weaker direct edge | 3-hop path ranked above weak direct path; evidence IDs preserved | PASS on Ubuntu full regression |
-| RC5-B02 | Directionality | Query reverse ser-vivo → Alt without reverse edges | UNRESOLVED | PASS on Ubuntu full regression |
-| RC5-B03 | Bounded traversal | Valid target requires 3 hops while max_hops=2 | UNRESOLVED | PASS on Ubuntu full regression |
-| RC5-B04 | Ambiguity | Direct edge marked ambiguous | UNRESOLVED | PASS on Ubuntu full regression |
-| RC5-B05 | Confidence | Weak edge confidence 0.30 with threshold 0.80 | UNRESOLVED | PASS on Ubuntu full regression |
-| RC5-B06 | Cycle protection | Graph contains animal → Alt cycle | terminate and still return intended 2-hop path | PASS on Ubuntu full regression |
+| RC5-B01 | Multi-hop | Alt → gato → animal → ser-vivo plus weaker direct edge | 3-hop path ranked above weak direct path; evidence IDs preserved | PASS |
+| RC5-B02 | Directionality | Query reverse ser-vivo → Alt without reverse edges | UNRESOLVED | PASS |
+| RC5-B03 | Bounded traversal | Valid target requires 3 hops while max_hops=2 | UNRESOLVED | PASS |
+| RC5-B04 | Ambiguity | Direct edge marked ambiguous | UNRESOLVED | PASS |
+| RC5-B05 | Confidence | Weak edge confidence 0.30 with threshold 0.80 | UNRESOLVED | PASS |
+| RC5-B06 | Cycle protection | Graph contains animal → Alt cycle | terminate and still return intended 2-hop path | PASS |
 
 ### Cross-platform regression result — run 34006309839
 
@@ -29,7 +29,7 @@ Status: PARTIAL PASS / CROSS-PLATFORM REGRESSION UNDER CORRECTION
 - Windows: FAIL — 622 passed, 28 skipped, 9 errors, 2 warnings.
 - The 9 Windows errors are all setup errors in `tests/test_native_python_concept_rewrite_parity.py`.
 - Root cause observed: the C compilation command succeeds, but the fixture expects an output path without the Windows `.exe` suffix and therefore `output.is_file()` returns false. This is a test-harness portability defect; the log does not show a semantic mismatch in the nine rewrite cases.
-- Negative result is retained because RC5 is not cross-platform green until the harness is corrected and rerun.
+- Negative result retained for audit history.
 
 ### Cross-platform regression result — run 34033799428
 
@@ -38,34 +38,58 @@ Status: PARTIAL PASS / CROSS-PLATFORM REGRESSION UNDER CORRECTION
 - The `.exe` harness defect was corrected successfully: eight of the nine native/Python rewrite parity cases passed.
 - Remaining failure: `qual a diferença de potencial do charger`.
 - Python reference: `REWRITTEN`; native Windows CLI: `UNCHANGED`.
-- Diagnosis: Windows narrow `argv` transformed the UTF-8 query before it reached the native kernel. The failure is at the CLI test boundary, not yet evidence of a kernel-level UTF-8 mismatch.
-- Corrective test change: native parity CLI now reads the query from UTF-8 stdin rather than narrow `argv`; the Python harness explicitly writes UTF-8. This preserves the original Portuguese phrase and will be validated by the next CI run.
+- Diagnosis: Windows narrow `argv` transformed the UTF-8 query before it reached the native kernel.
+- Negative result retained for audit history.
+
+### Cross-platform regression result — run 34034430288
+
+- Ubuntu: PASS.
+- Windows: PASS.
+- UTF-8 parity fix validated: the native test CLI now receives the query via UTF-8 stdin, avoiding Windows narrow-argv code-page conversion.
+- Result: the Portuguese phrase `qual a diferença de potencial do charger` now preserves native/Python parity.
+- This closes the test-boundary defect without weakening the Portuguese test case.
 
 ## Phase B — Directional type collection / taxonomy matrix
 
-Status: PENDING CROSS-PLATFORM CI
+Status: PASS IN GREEN CROSS-PLATFORM REGRESSION
 
 | ID | Area | Scenario | Expected | Result |
 |---|---|---|---|---|
-| RC5-B07 | Type collection | Alt and Luna are gatos; Rex is cachorro | gato collection returns only Alt and Luna | PENDING CI |
-| RC5-B08 | Taxonomy direction | gato is animal | animal collection returns direct member gato, not transitive Alt/Luna | PENDING CI |
-| RC5-B09 | Parallel type isolation | Rex is cachorro while cats and taxonomy coexist | cachorro collection returns only Rex | PENDING CI |
-| RC5-B10 | Namespace isolation | Nina is gato only in session-b | session-b gato collection returns Nina only | PENDING CI |
-| RC5-B11 | Supersession | Milo→gato evidence is superseded | Milo excluded from active gato collection | PENDING CI |
-| RC5-B12 | Attribute contamination | gato has pelos | pelos relation never appears as gato membership | PENDING CI |
+| RC5-B07 | Type collection | Alt and Luna are gatos; Rex is cachorro | gato collection returns only Alt and Luna | PASS |
+| RC5-B08 | Taxonomy direction | gato is animal | animal collection returns direct member gato, not transitive Alt/Luna | PASS |
+| RC5-B09 | Parallel type isolation | Rex is cachorro while cats and taxonomy coexist | cachorro collection returns only Rex | PASS |
+| RC5-B10 | Namespace isolation | Nina is gato only in session-b | session-b gato collection returns Nina only | PASS |
+| RC5-B11 | Supersession | Milo→gato evidence is superseded | Milo excluded from active gato collection | PASS |
+| RC5-B12 | Attribute contamination | gato has pelos | pelos relation never appears as gato membership | PASS |
 
 ## Phase C — Resolver precedence contract
+
+Status: PASS IN GREEN CROSS-PLATFORM REGRESSION
+
+| ID | Area | Scenario | Expected | Result |
+|---|---|---|---|---|
+| RC5-B13 | Direct precedence | Base resolver returns anything except UNRESOLVED | Return immediately; no relational mode may override direct/base result | PASS |
+| RC5-B14 | Relation vs collection | Base misses and query can enter relational inference | Relation inference is evaluated before type collection | PASS |
+| RC5-B15 | Collection vs neighborhood | Relation inference does not resolve | Type collection is evaluated before one-hop neighborhood | PASS |
+| RC5-B16 | Final fallback | No direct, relation, collection or neighborhood resolution | Remain UNRESOLVED | PASS |
+
+The contract test `tests/test_rc5_resolver_precedence_contract.py` asserts the frozen bridge ordering directly from `concept_relation_resolve_bridge.c` so accidental reordering becomes a release-blocking regression.
+
+## Phase D — Namespace and supersession adversarial matrix
 
 Status: PENDING CI
 
 | ID | Area | Scenario | Expected | Result |
 |---|---|---|---|---|
-| RC5-B13 | Direct precedence | Base resolver returns anything except UNRESOLVED | Return immediately; no relational mode may override direct/base result | PENDING CI |
-| RC5-B14 | Relation vs collection | Base misses and query can enter relational inference | Relation inference is evaluated before type collection | PENDING CI |
-| RC5-B15 | Collection vs neighborhood | Relation inference does not resolve | Type collection is evaluated before one-hop neighborhood | PENDING CI |
-| RC5-B16 | Final fallback | No direct, relation, collection or neighborhood resolution | Remain UNRESOLVED | PENDING CI |
+| RC5-B17 | Namespace contradiction | `charger→34v` in session-a and `charger→99v` in session-b | session-a never resolves 99v | PENDING CI |
+| RC5-B18 | Superseded dominance | superseded `charger→danger` has confidence 1.00; active `charger→safe` has 0.90 | danger excluded; safe resolves | PENDING CI |
+| RC5-B19 | Duplicate active evidence | same `charger→34v` edge appears with 0.95 and 0.82 evidence | both active paths retained and ranked by confidence | PENDING CI |
+| RC5-B20 | Cross-namespace false path | session-b has `charger→99v→danger` | path exists only in session-b, never session-a | PENDING CI |
+| RC5-B21 | Superseded foreign value | session-b superseded `charger→120v` at confidence 1.00 | 120v remains UNRESOLVED | PENDING CI |
+| RC5-B22 | Empty namespace isolation | empty namespace has `charger→12v` | only empty namespace resolves 12v | PENDING CI |
 
-The contract test `tests/test_rc5_resolver_precedence_contract.py` asserts the frozen bridge ordering directly from `concept_relation_resolve_bridge.c` so accidental reordering becomes a release-blocking regression.
+Dedicated native matrix: `native/mobile/tests/rc5_namespace_supersession_matrix.c`.
+Pytest cross-platform wrapper: `tests/test_rc5_namespace_supersession_matrix.py`.
 
 ## Existing RC5 deterministic coverage observed before this run
 
@@ -88,7 +112,6 @@ These existing tests are treated as regression prerequisites, not as substitutes
 
 ## Next phases
 
-- Phase D: namespace and supersession adversarial matrix.
 - Phase E: persistence/restart consistency.
 - Phase F: scale/performance at increasing relation counts.
 - Phase G: conversational corpus with mixed people, animals, vehicles, colors, corrections and indirect questions.
