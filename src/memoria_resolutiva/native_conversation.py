@@ -14,7 +14,6 @@ MEMORIA_MOBILE_UNRESOLVED = 2
 MAX_NATIVE_RELATIONS = 4
 
 
-
 def _memory_id(*, role: str, text: str, session_id: str | None, order: int | None, index: int) -> str:
     raw = f"{session_id or ''}\0{order if order is not None else ''}\0{role}\0{text}\0{index}".encode("utf-8")
     return "conv:" + hashlib.sha256(raw).hexdigest()[:24]
@@ -35,13 +34,7 @@ def _relation_payload(row: object, *, namespace: str | None, order: int | None) 
 
 
 class NativeConversationService:
-    """Thin Python boundary over the authoritative native conversation runtime.
-
-    HTTP, authentication and Pydantic stay in Python. Persistent memory,
-    relation extraction, ranking, ambiguity, correction, temporal resolution and
-    provenance authority are delegated to libmemoria_mobile. There is no Python
-    semantic fallback.
-    """
+    """Thin Python boundary over the authoritative native conversation runtime."""
 
     def __init__(
         self,
@@ -174,10 +167,6 @@ class NativeConversationService:
             relation_order = provenance_rows[0]["created_order"]
             relations = tuple({**row, "epoch": relation_order} for row in relations)
 
-        # The native resolver ranks authoritative turns. The historic product API,
-        # however, exposes the derived relation ID for a single-relation factual HIT.
-        # This is identity normalization only: native extraction/ranking already chose
-        # the source. We deliberately do not guess when multiple relations/sources exist.
         public_memory_ids = native_memory_ids
         if len(native_memory_ids) == 1 and len(relations) == 1:
             relation_id = str(relations[0].get("memory_id") or "")
@@ -197,6 +186,42 @@ class NativeConversationService:
             relations,
             tuple(provenance_rows),
         )
+
+    def activate_relations(
+        self,
+        *,
+        concept: str,
+        session_id: str | None = None,
+        depth: int = 2,
+        budget: int = 1200,
+        hop_decay: float = 0.72,
+        min_confidence: float = 0.45,
+    ) -> dict[str, object]:
+        """Use native structural graph activation when the loaded ABI exposes it."""
+        concept = concept.strip()
+        if not concept:
+            raise ValueError("concept must be non-empty")
+        if not self._runtime_lease.supports("memoria_mobile_activate_relations_json"):
+            return {"status": "UNSUPPORTED", "confidence": 0.0, "selected_context": "", "relations": []}
+        status, response = self._call(
+            "memoria_mobile_activate_relations_json",
+            {
+                "concept": concept,
+                "namespace": session_id or "",
+                "concept_namespace": self.concept_namespace or "",
+                "depth": depth,
+                "budget": budget,
+                "hop_decay": hop_decay,
+                "min_confidence": min_confidence,
+            },
+        )
+        if status == MEMORIA_MOBILE_INVALID_ARGUMENT:
+            raise ValueError("native relational activation rejected request")
+        if status == MEMORIA_MOBILE_UNRESOLVED or response.get("status") == "UNRESOLVED":
+            return {**response, "status": "UNRESOLVED"}
+        if status != MEMORIA_MOBILE_OK or response.get("status") != "HIT":
+            raise RuntimeError(f"native relational activation failed: status={status}")
+        return response
 
     def materialize_concept_catalog(self, catalog: NativeConceptCatalog) -> bool:
         if self._closed:
