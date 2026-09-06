@@ -26,6 +26,37 @@ def _render_edge(edge: object) -> str:
     return f"{subject} | {predicate} | {object_}" if subject and predicate and object_ else ""
 
 
+def _from_native_payload(payload: object, *, concept: str) -> RelationalActivationResult | None:
+    if not isinstance(payload, dict):
+        return None
+    status = str(payload.get("status") or "")
+    if status == "UNSUPPORTED":
+        return None
+    if status not in {"HIT", "UNRESOLVED"}:
+        raise RuntimeError("native relational activation returned invalid status")
+    rows = payload.get("relations") or []
+    memory_ids: list[str] = []
+    concepts: list[str] = [concept]
+    if isinstance(rows, list):
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            evidence_id = str(row.get("evidence_id") or "")
+            if evidence_id and evidence_id not in memory_ids:
+                memory_ids.append(evidence_id)
+            for key in ("subject_key", "object_key"):
+                value = str(row.get(key) or "")
+                if value and value not in concepts:
+                    concepts.append(value)
+    return RelationalActivationResult(
+        status,
+        float(payload.get("confidence", 0.0) or 0.0),
+        str(payload.get("selected_context") or ""),
+        tuple(concepts),
+        tuple(memory_ids),
+    )
+
+
 def activate(
     resolver: object,
     *,
@@ -36,18 +67,33 @@ def activate(
     hop_decay: float = 0.72,
     min_confidence: float = 0.45,
 ) -> RelationalActivationResult:
-    """Traverse the resolver's evidence graph structurally when available.
+    """Traverse relation memory structurally, preferring the native runtime.
 
-    This path does not synthesize natural-language queries. It walks active
-    relation edges directly, breadth-first, starting from ``concept``. Traversal
-    is bounded by ``depth``, confidence decay and rendered-context ``budget``.
-    Unsupported resolvers return ``UNSUPPORTED`` so callers can retain a
-    temporary compatibility fallback.
+    NativeConversationService can expose ``activate_relations`` through the
+    optional additive ABI-v1 symbol. When it is unavailable, the reference
+    EvidenceCore traversal remains as compatibility fallback. Neither path
+    synthesizes natural-language memory queries.
     """
     if depth < 1:
         raise ValueError("depth must be >= 1")
     if budget < 1:
         raise ValueError("budget must be >= 1")
+
+    native_activate = getattr(resolver, "activate_relations", None)
+    if callable(native_activate):
+        native_result = _from_native_payload(
+            native_activate(
+                concept=concept,
+                session_id=session_id,
+                depth=depth,
+                budget=budget,
+                hop_decay=hop_decay,
+                min_confidence=min_confidence,
+            ),
+            concept=concept,
+        )
+        if native_result is not None:
+            return native_result
 
     evidence = getattr(resolver, "evidence", None)
     core = getattr(evidence, "core", None)
