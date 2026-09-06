@@ -24,6 +24,12 @@ _GENERIC_RELATION_STOPWORDS = {
     "minha", "minhas", "nome", "o", "os", "para", "por", "qual", "quais", "que", "um", "uma",
     "voce", "você", "caiu", "cair", "falhou", "falha", "problema", "status",
 }
+_QUERY_ATTRIBUTE_ALIASES = {
+    "cor": {"cor", "color", "colour"},
+    "ip": {"ip", "endereco", "endereço", "address"},
+    "modelo": {"modelo", "model"},
+    "estado": {"estado", "state", "status"},
+}
 _MAX_GENERIC_RELATION_CONCEPTS = 2
 _MAX_RELATIONAL_HOPS = 2
 _RELATIONAL_HOP_DECAY = 0.72
@@ -127,14 +133,23 @@ def _activation_concepts(message: str) -> tuple[str, ...]:
     return _generic_relation_concepts(message)
 
 
+def _query_attributes(message: str) -> set[str]:
+    terms = {token.casefold().strip(".,;:!?") for token in _WORD_RE.findall(message)}
+    attributes: set[str] = set()
+    for canonical, aliases in _QUERY_ATTRIBUTE_ALIASES.items():
+        if aliases & terms:
+            attributes.add(canonical)
+    return attributes
+
+
 def _rank_relational_context(message: str, selected_context: str) -> str:
     """Rank retrieved relations against the current input without dropping evidence.
 
-    The ranking remains deterministic and local. Relations mentioning the
-    possessive target concept are preferred, and an entity that is supported by
-    multiple edges receives a convergence boost. This lets a relation such as
-    ``gato | is | Alt`` reinforce ``Alt | is | gato`` while keeping Vivi/Lay in
-    the context for the LLM to inspect.
+    In addition to query overlap and evidence convergence, possessive attribute
+    questions receive a bounded composed-chain preference. If ``gato`` identifies
+    ``Alt`` and another recovered edge describes ``Alt``, the two edges are kept
+    adjacent and ahead of unrelated cats. No new fact is synthesized: only
+    persisted edges are reordered before the LLM prompt is assembled.
     """
     lines = [line.strip() for line in str(selected_context or "").splitlines() if line.strip()]
     if len(lines) < 2:
@@ -147,9 +162,11 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
         for token in _WORD_RE.findall(message)
         if token.casefold().strip(".,;:!?") not in _GENERIC_RELATION_STOPWORDS
     }
+    attributes = _query_attributes(message)
 
     parsed: list[tuple[str, str, str, str]] = []
     entity_frequency: dict[str, int] = {}
+    target_neighbors: dict[str, int] = {}
     for line in lines:
         parts = [part.strip() for part in line.split("|", 2)]
         if len(parts) == 3:
@@ -157,19 +174,34 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
         else:
             subject, predicate, object_ = line, "", ""
         parsed.append((line, subject, predicate, object_))
+        subject_key = subject.casefold().strip()
+        object_key = object_.casefold().strip()
         for entity in (subject, object_):
             key = entity.casefold().strip()
             if key and key not in query_terms and key != target:
                 entity_frequency[key] = entity_frequency.get(key, 0) + 1
+        if target:
+            if subject_key == target and object_key:
+                target_neighbors[object_key] = target_neighbors.get(object_key, 0) + 1
+            elif object_key == target and subject_key:
+                target_neighbors[subject_key] = target_neighbors.get(subject_key, 0) + 1
 
     ownership_markers = {"usuario", "usuário", "owner", "belongs_to", "pertence"}
+    anchor = ""
+    if target_neighbors:
+        anchor = min(
+            target_neighbors,
+            key=lambda key: (-target_neighbors[key], -entity_frequency.get(key, 0), key),
+        )
 
-    def score(row: tuple[str, str, str, str]) -> tuple[float, str]:
-        line, subject, _predicate, object_ = row
+    def score(row: tuple[str, str, str, str]) -> tuple[float, int, str]:
+        line, subject, predicate, object_ = row
         subject_key = subject.casefold().strip()
         object_key = object_.casefold().strip()
+        predicate_key = predicate.casefold().strip()
         line_terms = {token.casefold() for token in _WORD_RE.findall(line)}
         value = 0.0
+        chain_order = 2
         if target and target in line_terms:
             value += 4.0
         value += 1.5 * len(query_terms & line_terms)
@@ -178,7 +210,31 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
             value += 2.0 * max(0, entity_frequency.get(counterpart, 0) - 1)
         if ownership_markers & line_terms:
             value += 3.0
-        return (-value, line.casefold())
+
+        if anchor:
+            is_bridge = (
+                (subject_key == target and object_key == anchor)
+                or (object_key == target and subject_key == anchor)
+            )
+            touches_anchor = subject_key == anchor or object_key == anchor
+            if is_bridge:
+                value += 10.0
+                chain_order = 0
+            elif touches_anchor and target not in {subject_key, object_key}:
+                # This is the second edge of a possible composed answer chain.
+                # Explicit attribute predicates receive the strongest boost, but
+                # a sole descriptive edge (e.g. ``Alt | is | preto``) is still
+                # preferred because it is structurally attached to the anchor.
+                value += 7.0
+                chain_order = 1
+                predicate_terms = {token.casefold() for token in _WORD_RE.findall(predicate_key)}
+                if attributes and any(
+                    _QUERY_ATTRIBUTE_ALIASES[attr] & (predicate_terms | line_terms)
+                    for attr in attributes
+                ):
+                    value += 5.0
+
+        return (-value, chain_order, line.casefold())
 
     parsed.sort(key=score)
     return "\n".join(row[0] for row in parsed)
