@@ -64,9 +64,9 @@ def _append_unique(items: list[str], value: str) -> None:
 def _pluralize_pt(value: str) -> str:
     """Small deterministic pluralizer for relation-probe queries.
 
-    It is intentionally conservative: the probe is only a fallback after the
-    original query misses, and the native collection extractor remains the
-    authority on whether the generated query is accepted.
+    It is intentionally conservative: probes are only attempted after the
+    original query misses, and the conversation resolver remains authoritative
+    on whether the generated collection query is accepted.
     """
     word = value.strip().strip(".,;:!?\"")
     if not word:
@@ -84,11 +84,12 @@ def _pluralize_pt(value: str) -> str:
 
 
 def _relation_probe_queries(message: str) -> tuple[str, ...]:
-    """Generate bounded deterministic research probes from the user input.
+    """Generate bounded deterministic memory-research probes from user input.
 
-    For the first post-RC5 experiment, possessive type references such as
-    "meu gato" are expanded into the existing native directional collection
-    language. No LLM is used to generate the probe.
+    A possessive concept reference (for example ``meu gato``, ``meu carro`` or
+    ``minha bateria``) is expanded into the existing directional collection
+    query language. This is domain-agnostic and does not call an LLM. The
+    original user question is always preserved for the final inference call.
     """
     match = _POSSESSIVE_TYPE_QUERY.search(message)
     if match is None:
@@ -189,7 +190,7 @@ class ProductChatService:
 
             if self.conversation_resolver is not None:
                 # Resolve from the narrowest namespace first. If the original
-                # question misses, run a bounded deterministic relation probe
+                # question misses, run bounded deterministic relation probes
                 # before widening to the stable profile namespace.
                 namespaces: list[str | None] = []
                 if scope.agent_id:
