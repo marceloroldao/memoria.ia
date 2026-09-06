@@ -44,6 +44,19 @@ static int same_neighbor(
            strcmp(a->evidence_id, evidence_id) == 0;
 }
 
+static int compare_neighbors(const void *left, const void *right) {
+    const memoria_concept_relation_neighbor *a = (const memoria_concept_relation_neighbor *)left;
+    const memoria_concept_relation_neighbor *b = (const memoria_concept_relation_neighbor *)right;
+    int cmp;
+    if (a->confidence > b->confidence) return -1;
+    if (a->confidence < b->confidence) return 1;
+    cmp = strcmp(a->node_key, b->node_key);
+    if (cmp != 0) return cmp;
+    cmp = strcmp(a->predicate, b->predicate);
+    if (cmp != 0) return cmp;
+    return strcmp(a->evidence_id, b->evidence_id);
+}
+
 memoria_concept_neighborhood_status memoria_concept_relation_neighborhood(
     const memoria_persist_turn *turns,
     size_t turn_count,
@@ -101,6 +114,7 @@ memoria_concept_neighborhood_status memoria_concept_relation_neighborhood(
         ++count;
     }
 
+    if (count > 1u) qsort(out, count, sizeof(*out), compare_neighbors);
     free(storage);
     *out_count = count;
     return count ? MEMORIA_CONCEPT_NEIGHBORHOOD_HIT : MEMORIA_CONCEPT_NEIGHBORHOOD_UNRESOLVED;
