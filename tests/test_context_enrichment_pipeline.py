@@ -127,9 +127,30 @@ def test_possessive_relation_probe_is_domain_agnostic(message, expected_probe):
     assert _relation_probe_queries(message) == (expected_probe,)
 
 
-def test_non_possessive_question_does_not_expand_research_probe():
-    assert _relation_probe_queries("Quais gatos você conhece?") == ()
-    assert _relation_probe_queries("Explique como funciona uma bateria") == ()
+def test_long_explanatory_input_does_not_expand_research_probe():
+    assert _relation_probe_queries(
+        "Explique em detalhes como funciona uma bateria de lítio em sistemas embarcados"
+    ) == ()
+
+
+def test_non_possessive_router_question_activates_bounded_neighborhood():
+    assert _relation_probe_queries("Qual o IP do roteador?") == (
+        "O que está relacionado a IP?",
+        "O que está relacionado a roteador?",
+    )
+
+
+def test_short_incident_activates_single_relevant_concept():
+    assert _relation_probe_queries("A internet caiu") == (
+        "O que está relacionado a internet?",
+    )
+
+
+def test_generic_activation_is_bounded_to_two_concepts():
+    assert _relation_probe_queries("Roteador PPPoE OLT caiu?") == (
+        "O que está relacionado a Roteador?",
+        "O que está relacionado a PPPoE?",
+    )
 
 
 @pytest.mark.parametrize(
@@ -150,9 +171,19 @@ def test_non_possessive_question_does_not_expand_research_probe():
             "Quais baterias você conhece?",
             "Bateria principal está carregada.\nBateria reserva está em manutenção.",
         ),
+        (
+            "Qual o IP do roteador?",
+            "O que está relacionado a roteador?",
+            "roteador | ip | 192.168.88.1",
+        ),
+        (
+            "A internet caiu",
+            "O que está relacionado a internet?",
+            "internet | depends_on | PPPoE\nPPPoE | upstream | OLT",
+        ),
     ],
 )
-def test_generic_possessive_question_probes_memory_before_llm(message, probe, selected_context):
+def test_generic_question_probes_memory_before_llm(message, probe, selected_context):
     memory = EnterpriseMemoryService(OrganizationIdentity("org-a", "Org A"))
     resolver = MissThenProbeHitResolver(probe, selected_context)
     adapter = CaptureAdapter()
@@ -166,10 +197,8 @@ def test_generic_possessive_question_probes_memory_before_llm(message, probe, se
 
     result = chat.run(scope=scope, message=message, mode="memoria")
 
-    assert resolver.calls == [
-        (message, "offia:generic-probe"),
-        (probe, "offia:generic-probe"),
-    ]
+    assert resolver.calls[0] == (message, "offia:generic-probe")
+    assert (probe, "offia:generic-probe") in resolver.calls
     assert result.context == (selected_context,)
     assert adapter.calls == [(message, result.context)]
     assert result.metrics.memory_hits == 1
@@ -187,8 +216,6 @@ def test_real_memory_expands_possessive_cat_question_before_llm(tmp_path):
     resolver.ingest(role="user", text="Lay é um gato", session_id=namespace, order=3)
     resolver.ingest(role="user", text="Meu gato é Alt", session_id=namespace, order=4)
 
-    # The direct singular question is deliberately ambiguous for the resolver;
-    # the ProductChatService must then probe the existing type collection path.
     direct = resolver.resolve(query="Qual é o nome do meu gato?", session_id=namespace)
     assert direct.status != "HIT"
 
