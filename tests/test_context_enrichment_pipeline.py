@@ -105,6 +105,48 @@ class TwoHopResolver:
         return SimpleNamespace(status="UNRESOLVED", confidence=0.0, selected_context="", relations=(), provenance=(), memory_ids=())
 
 
+class StructuralColorChainResolver:
+    """Expose a native-shaped structural result to verify pre-LLM composition."""
+
+    def __init__(self):
+        self.resolve_calls = []
+        self.activation_calls = []
+
+    def resolve(self, *, query: str, session_id: str | None = None):
+        self.resolve_calls.append((query, session_id))
+        return SimpleNamespace(
+            status="UNRESOLVED",
+            confidence=0.0,
+            selected_context="",
+            relations=(),
+            provenance=(),
+            memory_ids=(),
+        )
+
+    def activate_relations(self, *, concept: str, session_id: str | None, depth: int, budget: int, hop_decay: float, min_confidence: float):
+        self.activation_calls.append((concept, session_id, depth, budget, hop_decay, min_confidence))
+        if concept.casefold() != "gato":
+            return {"status": "UNRESOLVED", "confidence": 0.0, "selected_context": "", "relations": []}
+        return {
+            "status": "HIT",
+            "confidence": 0.88,
+            "selected_context": (
+                "Vivi | is | gato\n"
+                "Lay | is | gato\n"
+                "Alt | is | gato\n"
+                "gato | is | Alt\n"
+                "Alt | cor | preto"
+            ),
+            "relations": [
+                {"evidence_id": "vivi-type", "subject_key": "Vivi", "object_key": "gato"},
+                {"evidence_id": "lay-type", "subject_key": "Lay", "object_key": "gato"},
+                {"evidence_id": "alt-type", "subject_key": "Alt", "object_key": "gato"},
+                {"evidence_id": "alt-owner", "subject_key": "gato", "object_key": "Alt"},
+                {"evidence_id": "alt-color", "subject_key": "Alt", "object_key": "preto"},
+            ],
+        }
+
+
 def _chat(resolver):
     memory = EnterpriseMemoryService(OrganizationIdentity("org-a", "Org A"))
     adapter = CaptureAdapter()
@@ -133,6 +175,40 @@ def test_relational_ranking_prefers_convergent_cat_evidence_without_dropping_alt
         "Vivi | is | gato",
         "Lay | is | gato",
     }
+
+
+def test_composed_attribute_chain_is_grouped_before_unrelated_entities():
+    ranked = _rank_relational_context(
+        "Qual é a cor do meu gato?",
+        (
+            "Vivi | is | gato\n"
+            "Lay | is | gato\n"
+            "Alt | is | gato\n"
+            "gato | is | Alt\n"
+            "Alt | cor | preto"
+        ),
+    )
+    lines = ranked.splitlines()
+    assert set(lines[:3]) == {"Alt | is | gato", "gato | is | Alt", "Alt | cor | preto"}
+    assert lines.index("Alt | cor | preto") < lines.index("Vivi | is | gato")
+    assert lines.index("Alt | cor | preto") < lines.index("Lay | is | gato")
+    assert len(lines) == 5
+
+
+def test_composed_cat_color_chain_reaches_llm_in_ranked_order():
+    resolver = StructuralColorChainResolver()
+    chat, adapter, scope = _chat(resolver)
+    message = "Qual é a cor do meu gato?"
+    result = chat.run(scope=scope, message=message, mode="memoria")
+
+    assert result.metrics.memory_hits == 1
+    assert resolver.activation_calls
+    assert resolver.activation_calls[0][0] == "gato"
+    assert resolver.activation_calls[0][2] == 2
+    research = result.context[0].splitlines()
+    assert set(research[:3]) == {"Alt | is | gato", "gato | is | Alt", "Alt | cor | preto"}
+    assert research.index("Alt | cor | preto") < research.index("Vivi | is | gato")
+    assert adapter.calls == [(message, result.context)]
 
 
 @pytest.mark.parametrize(
