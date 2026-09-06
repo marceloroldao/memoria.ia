@@ -212,6 +212,7 @@ memoria_mobile_status memoria_mobile_activate_relations_json(memoria_mobile_hand
     size_t budget, max_edges = 0, edge_count = 0, i;
     double hop_decay, min_confidence;
     memoria_concept_relation_edge_storage *storage = NULL;
+    unsigned char *selected_edges = NULL;
     activation_item frontier[ACTIVATION_MAX_FRONTIER], visited[ACTIVATION_MAX_FRONTIER];
     size_t frontier_count = 0, frontier_index = 0, visited_count = 0;
     char start_key[MEMORIA_CONCEPT_PATH_KEY_CAP];
@@ -242,7 +243,8 @@ memoria_mobile_status memoria_mobile_activate_relations_json(memoria_mobile_hand
     for (i = 0; i < h->turn_count; ++i) max_edges += h->turns[i].relation_count;
     if (!max_edges) { status = set_activation_response(response_json, "UNRESOLVED", concept, "", "[]", 0u, max_depth, 0.0); goto done; }
     storage = (memoria_concept_relation_edge_storage *)calloc(max_edges, sizeof(*storage));
-    if (!storage) { status = MEMORIA_MOBILE_INTERNAL_ERROR; goto done; }
+    selected_edges = (unsigned char *)calloc(max_edges, sizeof(*selected_edges));
+    if (!storage || !selected_edges) { status = MEMORIA_MOBILE_INTERNAL_ERROR; goto done; }
     if (memoria_concept_relation_build_edges(h->turns, h->turn_count, namespace_id, memoria_concept_runtime_index(h->concept_runtime), concept_namespace, storage, max_edges, &edge_count) != MEMORIA_CONCEPT_RELATION_ADAPTER_OK) {
         status = set_activation_response(response_json, "UNRESOLVED", concept, "", "[]", 0u, max_depth, 0.0); goto done;
     }
@@ -262,7 +264,7 @@ memoria_mobile_status memoria_mobile_activate_relations_json(memoria_mobile_hand
             double effective;
             char line[1024], relation_json[2048];
             size_t line_len, extra;
-            if (edge->ambiguous) continue;
+            if (edge->ambiguous || selected_edges[i]) continue;
             if (strcmp(edge->subject_key, current.node_key) == 0) next_key = edge->object_key;
             else if (strcmp(edge->object_key, current.node_key) == 0) next_key = edge->subject_key;
             else continue;
@@ -276,6 +278,7 @@ memoria_mobile_status memoria_mobile_activate_relations_json(memoria_mobile_hand
             if (!append_text(context, budget + 1u, &context_used, line)) continue;
             snprintf(relation_json, sizeof(relation_json), "%s{\"subject_key\":\"%s\",\"predicate\":\"%s\",\"object_key\":\"%s\",\"evidence_id\":\"%s\",\"hop\":%u,\"confidence\":%.6f}", result_count ? "," : "", edge->subject_key, edge->predicate ? edge->predicate : "", edge->object_key, edge->evidence_id ? edge->evidence_id : "", hop, effective);
             if (!append_text(relations, sizeof(relations), &relations_used, relation_json)) { status = MEMORIA_MOBILE_INTERNAL_ERROR; goto done; }
+            selected_edges[i] = 1u;
             ++result_count;
             if (effective < result_confidence) result_confidence = effective;
             if (hop < max_depth && frontier_count < ACTIVATION_MAX_FRONTIER && !seen_node(visited, visited_count, next_key)) {
@@ -293,6 +296,6 @@ traversal_done:
     status = set_activation_response(response_json, result_count ? "HIT" : "UNRESOLVED", concept, context, relations, result_count, max_depth, result_count ? result_confidence : 0.0);
 
 done:
-    free(storage); free(concept); free(namespace_id); free(concept_namespace); free(json);
+    free(selected_edges); free(storage); free(concept); free(namespace_id); free(concept_namespace); free(json);
     return status;
 }
