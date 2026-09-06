@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
@@ -57,7 +58,8 @@ def native_concept_rewrite_cli(tmp_path_factory: pytest.TempPathFactory) -> Path
     compiler = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
     if compiler is None:
         pytest.skip("a C compiler is required for direct native concept rewrite parity")
-    output = tmp_path_factory.mktemp("native-concept-rewrite") / "concept_query_rewrite_cli"
+    executable_name = "concept_query_rewrite_cli.exe" if os.name == "nt" else "concept_query_rewrite_cli"
+    output = tmp_path_factory.mktemp("native-concept-rewrite") / executable_name
     mobile = ROOT / "native" / "mobile"
     subprocess.run(
         [
@@ -82,7 +84,14 @@ def native_concept_rewrite_cli(tmp_path_factory: pytest.TempPathFactory) -> Path
 
 
 def _native(cli: Path, query: str) -> tuple[str, str | None, str, tuple[str, ...]]:
-    completed = subprocess.run([str(cli), query], check=True, text=True, capture_output=True)
+    completed = subprocess.run(
+        [str(cli)],
+        input=query + "\n",
+        check=True,
+        text=True,
+        encoding="utf-8",
+        capture_output=True,
+    )
     status, reason, rewritten, ids_csv = completed.stdout.rstrip("\n").split("\t")
     ids = tuple(value for value in ids_csv.split(",") if value)
     return status, reason or None, rewritten, ids
