@@ -42,8 +42,15 @@ def test_gemini_materializes_context_and_reads_usage():
     assert response.usage.output_tokens == 7
     assert response.usage.estimated_cost_usd == pytest.approx((21 + 14) / 1_000_000)
     assert captured["headers"]["x-goog-api-key"] == "test-key"
+    assert "PESQUISA DA MEMORIA.IA" in captured["body"]
     assert "Customer plan is Pro." in captured["body"]
+    assert "ENTRADA ATUAL" in captured["body"]
+    assert "Origem: user_text" in captured["body"]
     assert "What is the plan?" in captured["body"]
+
+
+def test_gemini_keeps_raw_message_when_memory_is_empty():
+    assert GeminiGenerateContentAdapter._input_text("hello", []) == "hello"
 
 
 def test_gemini_accepts_models_prefix():
