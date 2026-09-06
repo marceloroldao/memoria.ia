@@ -12,11 +12,11 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 ## v1.0 release candidate
 
-Current publication candidate: **v1.0.0-rc4** (`1.0.0rc4` package version).
+Current publication candidate: **v1.0.0-rc5** (`1.0.0rc5` package version).
 
-RC4 functional freeze: **`b4a891eb76e7fc51a272120b55dff07abe58e451`**.
+RC5 functional freeze: **`06c747478e05ee11ab2c5c3c24cf75365262b872`**.
 
-The most recent archived DOI in this release lineage remains the RC2 record: **[10.5281/zenodo.22244038](https://doi.org/10.5281/zenodo.22244038)**. A dedicated RC4 DOI is added only after the archival record exists.
+The most recent archived DOI in this release lineage remains the RC2 record: **[10.5281/zenodo.22244038](https://doi.org/10.5281/zenodo.22244038)**. A dedicated RC5 DOI is added only after the archival record exists.
 
 This release candidate consolidates the validated research core and deployable PC/server/mobile runtime boundary while preserving the architecture:
 
@@ -30,47 +30,31 @@ application / OFF.IA / agent
 
 Memoria.ia owns memory semantics, state, relations, provenance, trajectories, abstraction, recomputation policy and context selection. BDR owns durable persistence. LLMs remain optional consumers and do not become the authoritative memory store.
 
-The v1.0.0-rc4 line includes:
+The v1.0.0-rc5 line includes the RC4 layered-memory baseline plus:
 
-- organization-scoped memory isolation;
-- FastAPI `/api/v1` PC/server product interface;
-- administrator and scoped application credentials;
-- persistent restart/recovery;
-- Docker/Compose deployment;
-- provider-neutral LLM adapter with mock, Gemini and OpenAI implementations;
-- memory/context/token/latency metrics;
-- backup/restore with SHA-256 integrity validation;
-- native production runtime path;
-- Android arm64-v8a mobile ABI;
-- BDR-backed durable native memory state;
-- semantic, episodic, temporal and relation kernels;
-- namespace isolation and provenance lineage;
-- conservative `HIT` / `MISS` / `UNRESOLVED` behavior;
-- indexed native resolve path for large-memory workloads;
-- explicit layered factual abstraction with provenance;
-- vertical dependency edges between abstraction levels;
-- selective invalidation of dependent facts and abstractions;
-- incremental recomputation of affected branches;
-- multi-root batch recomputation with shared-ancestor deduplication;
-- adaptive incremental/full recomputation by affected graph density;
-- optional hysteresis for oscillating workloads;
-- deterministic workload profiling and audited strategy execution;
-- reproducible layered scale and performance baselines;
-- official Memoria.ia visual identity assets.
+- native deterministic concept identity and query rewrite;
+- persisted relation-to-concept edge adaptation;
+- bounded native multi-hop concept relation traversal;
+- relation inference activated only after direct resolution fails;
+- deterministic extraction of explicit relational question anchors;
+- one-hop relation neighborhood exploration;
+- deterministic confidence ordering and evidence preservation;
+- directional type collection for queries such as `Quais gatos você conhece?`;
+- explicit separation between members (`Alt --is--> gato`) and taxonomy (`gato --is--> animal`);
+- namespace isolation and fail-closed behavior across all relational modes;
+- no LLM, embedding model, neural network or fuzzy matching required for these native relation paths.
 
-The RC4 candidate is intentionally frozen from further feature expansion. After the functional freeze, changes on this release line are restricted to stabilization, regression fixes, documentation, packaging and publication validation.
+The RC5 candidate is intentionally frozen from further feature expansion. After the functional freeze, changes on this release line are restricted to stabilization, regression fixes, documentation, packaging and publication validation.
 
 ## Validation status
 
-The RC4 functional lineage passed the semantic, product, credentials and layered-performance gates before the release branch was prepared.
+The RC5 functional lineage passed the five recurring release-blocking gates before the release branch was prepared:
 
-Representative deterministic layered baseline:
-
-- 127 nodes: 7 incremental nodes touched versus 127 full;
-- 1,023 nodes: 10 incremental nodes touched versus 1,023 full;
-- 16,383 nodes: 14 incremental nodes touched versus 16,383 full.
-
-The recorded 16,383-node CI baseline measured roughly **0.125 ms** for the local incremental update versus **75.716 ms** for full recomputation on that specific runner. These are environment-specific measurements; exact snapshot equivalence and touched-node locality are the deterministic correctness criteria.
+- v0.96 semantic validation;
+- product-alpha validation;
+- product application credentials;
+- Android mobile ABI;
+- layered performance baseline.
 
 Release-candidate metadata is checked by:
 
@@ -82,12 +66,13 @@ The final v1.0 release will only be promoted after the release-candidate gates r
 
 ## Security status
 
-**v1.0.0-rc4 is not represented as production-security certified.**
+**v1.0.0-rc5 is not represented as production-security certified.**
 
 The repository includes authentication boundaries, application isolation, integrity-checked backup/restore and negative security tests, but no independent production security audit is claimed.
 
 ## Previous releases
 
+- **v1.0.0-rc4** — layered adaptive memory candidate.
 - **v1.0.0-rc3** — corrective release candidate that fixed RC2 tag/provenance alignment.
 - **v1.0.0-rc2** — archived candidate; DOI `10.5281/zenodo.22244038`.
 - **v1.0.0-rc1** — first v1.0 release candidate; DOI `10.5281/zenodo.22170165`.
@@ -99,20 +84,7 @@ Archived v0.95 DOI: **10.5281/zenodo.21973472**.
 
 ## Research lineage
 
-The v0.95 research line established controlled experimental stages covering:
-
-- hierarchical and temporal memory layers;
-- online support/contradiction updates without neural retraining;
-- consolidation, deconsolidation and reactivation;
-- saturation-based stability/plasticity control;
-- polysemy and sense-consolidation experiments;
-- multinodal and multimodal trajectories;
-- individual and collective memory routes;
-- shared payloads with independent route confidence;
-- conservative distributed consensus (`same`, `related`, `conflict`, `distinct`);
-- atomic persistent snapshots with integrity validation;
-- compact snapshot transport format;
-- scaling, memory-cost, stress and continual-learning benchmarks.
+The v0.95 research line established controlled experimental stages covering hierarchical and temporal memory layers, continual online support/contradiction updates, consolidation/deconsolidation/reactivation, polysemy, multinodal and multimodal trajectories, distributed consensus, atomic persistent snapshots and scaling experiments.
 
 The validated temporal research rule remains:
 
@@ -127,7 +99,7 @@ with the v0.95 research default configuration:
 
 The repository retains historical experimental MA2A material, but the network protocol is now treated as a separate architectural boundary/project.
 
-The local v1.0.0-rc4 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
+The local v1.0.0-rc5 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
 
 See:
 
@@ -153,39 +125,15 @@ python scripts/release_gate_v95.py
 
 Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.example`.
 
-Representative research experiments remain under `experiments/`.
-
 ## Public interfaces
 
-The original stable research facade exposes:
-
-- `remember(...)`
-- `reinforce(...)`
-- `challenge(...)`
-- `recall(...)`
-- `route_status(...)`
-- `compare(...)`
-- `save(...)`
-- `load(...)`
-
-The product layer wraps stable memory behavior behind a versioned HTTP/service boundary. The native/mobile path adds a C ABI with conservative resolution, learning, restart persistence and provenance-aware state behavior.
-
-See the documentation under `docs/` for API, Android runtime, BDR integration, reproducibility and production-path boundaries.
+The original stable research facade exposes `remember`, `reinforce`, `challenge`, `recall`, `route_status`, `compare`, `save` and `load`. The product layer wraps stable memory behavior behind a versioned HTTP/service boundary. The native/mobile path adds a C ABI with conservative resolution, learning, restart persistence and provenance-aware state behavior.
 
 ## Research and claims status
 
-Memoria.ia remains an experimental architecture. v1.0.0-rc4 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
+Memoria.ia remains an experimental architecture. v1.0.0-rc5 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
 
-Important limitations include:
-
-- semantic consolidation remains experimental and does not claim general language understanding;
-- no claim is made that Memoria.ia eliminates the need for a language model in general conversational tasks;
-- performance measurements are workload- and environment-specific;
-- distributed/federated operation remains outside the stable local runtime boundary;
-- security controls have not undergone an independent production certification;
-- post-v1 external/public learning and autonomous curiosity remain separate development tracks.
-
-Negative results, failed hypotheses and known limitations are intentionally retained where applicable.
+Important limitations include semantic consolidation remaining experimental, no claim of general language understanding, environment-specific performance measurements, federation outside the stable local runtime boundary, no independent production security certification, and external/public learning remaining a separate development track.
 
 ## License
 
@@ -197,8 +145,8 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 - Project governance baseline: **RSPS 1.0-draft**
 - RSMS compatibility for this candidate: **RSMS 1.0-rc.1**
 
-v1.0.0-rc4 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
+v1.0.0-rc5 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
 
 ## Release notes
 
-See `RELEASE_NOTES_v1.0.0-rc4.md` for the publication scope, validation evidence and known boundaries of this candidate.
+See `RELEASE_NOTES_v1.0.0-rc5.md` for the publication scope, validation evidence and known boundaries of this candidate.
