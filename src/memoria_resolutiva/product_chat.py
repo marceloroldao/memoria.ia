@@ -24,6 +24,10 @@ _GENERIC_RELATION_STOPWORDS = {
     "voce", "você", "caiu", "cair", "falhou", "falha", "problema", "status",
 }
 _MAX_GENERIC_RELATION_CONCEPTS = 2
+_MAX_RELATIONAL_HOPS = 2
+_RELATIONAL_HOP_DECAY = 0.72
+_MIN_SECOND_HOP_CONFIDENCE = 0.45
+_MAX_RELATIONAL_CONTEXT_CHARS = 1200
 
 
 class ConversationResolver(Protocol):
@@ -69,13 +73,18 @@ def _append_unique(items: list[str], value: str) -> None:
         items.append(normalized)
 
 
-def _pluralize_pt(value: str) -> str:
-    """Small deterministic pluralizer for relation-probe queries.
+def _append_with_budget(items: list[str], value: str, *, budget: int) -> bool:
+    normalized = " ".join(str(value).split()).strip()
+    if not normalized or normalized in items:
+        return True
+    used = sum(len(item) for item in items) + max(0, len(items) - 1)
+    if used + len(normalized) > budget:
+        return False
+    items.append(normalized)
+    return True
 
-    It is intentionally conservative: probes are only attempted after the
-    original query misses, and the conversation resolver remains authoritative
-    on whether the generated collection query is accepted.
-    """
+
+def _pluralize_pt(value: str) -> str:
     word = value.strip().strip(".,;:!?\"")
     if not word:
         return word
@@ -92,13 +101,6 @@ def _pluralize_pt(value: str) -> str:
 
 
 def _generic_relation_concepts(message: str) -> tuple[str, ...]:
-    """Extract a tiny set of relation anchors without semantic inference.
-
-    Generic activation is deliberately bounded. It only runs for explicit
-    questions or short incident-style inputs, and at most two surface concepts
-    are probed. This prevents a broad sentence from exploding into unrelated
-    memory traversal.
-    """
     words = _WORD_RE.findall(message)
     if "?" not in message and len(words) > 4:
         return ()
@@ -118,31 +120,36 @@ def _generic_relation_concepts(message: str) -> tuple[str, ...]:
 
 
 def _relation_probe_queries(message: str) -> tuple[str, ...]:
-    """Generate bounded deterministic memory-research probes from user input.
-
-    Possessive references first use the directional type-collection path. If no
-    possessive concept is present, explicit questions and short incident inputs
-    can activate one-hop relation-neighborhood probes for at most two concepts.
-    No LLM is used to generate these probes, and the original user input remains
-    the only question sent to the final inference provider.
-    """
     match = _POSSESSIVE_TYPE_QUERY.search(message)
     if match is not None:
         kind = match.group("kind")
         plural = _pluralize_pt(kind)
         return (f"Quais {plural} você conhece?",) if plural else ()
-
     concepts = _generic_relation_concepts(message)
     return tuple(f"O que está relacionado a {concept}?" for concept in concepts)
 
 
-def _minimal_factual_context(resolved: object, selected: str) -> str:
-    """Compact only a single strong, unambiguous factual relation.
+def _result_confidence(resolved: object) -> float:
+    try:
+        return max(0.0, min(1.0, float(getattr(resolved, "confidence", 0.0) or 0.0)))
+    except (TypeError, ValueError):
+        return 0.0
 
-    Temporal responses, multiple memories/provenance rows, weak relations and
-    malformed structured rows keep the resolver's original selected context.
-    This deliberately optimizes the LLM boundary without changing memory recall.
-    """
+
+def _second_hop_probe(resolved: object, *, original_message: str) -> str | None:
+    if _result_confidence(resolved) * _RELATIONAL_HOP_DECAY < _MIN_SECOND_HOP_CONFIDENCE:
+        return None
+    selected = str(getattr(resolved, "selected_context", "") or "")
+    original = {token.casefold() for token in _WORD_RE.findall(original_message)}
+    candidates = _generic_relation_concepts(selected)
+    for concept in candidates:
+        if concept.casefold() in original:
+            continue
+        return f"O que está relacionado a {concept}?"
+    return None
+
+
+def _minimal_factual_context(resolved: object, selected: str) -> str:
     normalized = " ".join(selected.split()).strip()
     if not normalized:
         return normalized
@@ -176,12 +183,6 @@ def _minimal_factual_context(resolved: object, selected: str) -> str:
 
 
 def profile_namespace(scope: MemoryScope) -> str | None:
-    """Stable semantic namespace shared by conversations of the same profile.
-
-    Session memory remains isolated in scope.agent_id. The profile namespace is
-    intentionally derived without agent_id so a new chat can recover facts that
-    the same application/user promoted from an earlier conversation.
-    """
     application = (scope.application_id or "default").strip()
     user = (scope.user_id or "").strip()
     if not application and not user:
@@ -224,9 +225,6 @@ class ProductChatService:
             start = perf_counter()
 
             if self.conversation_resolver is not None:
-                # Resolve from the narrowest namespace first. If the original
-                # question misses, run bounded deterministic relation probes
-                # before widening to the stable profile namespace.
                 namespaces: list[str | None] = []
                 if scope.agent_id:
                     namespaces.append(scope.agent_id)
@@ -237,9 +235,10 @@ class ProductChatService:
                     namespaces.append(None)
 
                 resolver_hit = False
-                query_candidates = (message, *_relation_probe_queries(message))
+                probes = _relation_probe_queries(message)
+                query_candidates = (message, *probes)
                 for namespace in namespaces:
-                    for candidate_query in query_candidates:
+                    for candidate_index, candidate_query in enumerate(query_candidates):
                         resolved = self.conversation_resolver.resolve(
                             query=candidate_query,
                             session_id=namespace,
@@ -248,22 +247,44 @@ class ProductChatService:
                             continue
                         selected = str(getattr(resolved, "selected_context", "") or "")
                         normalized_selected = " ".join(selected.split()).strip()
-                        if normalized_selected:
-                            resolver_hit = True
-                            retrieved_chars += len(normalized_selected)
-                            _append_unique(retrieved, _minimal_factual_context(resolved, normalized_selected))
-                            break
+                        if not normalized_selected:
+                            continue
+
+                        resolver_hit = True
+                        retrieved_chars += len(normalized_selected)
+                        _append_with_budget(
+                            retrieved,
+                            _minimal_factual_context(resolved, normalized_selected),
+                            budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                        )
+
+                        # Direct answers remain terminal. Only a fallback probe
+                        # may activate one additional bounded relational hop.
+                        if candidate_index > 0 and _MAX_RELATIONAL_HOPS >= 2:
+                            second_probe = _second_hop_probe(resolved, original_message=message)
+                            if second_probe is not None:
+                                second = self.conversation_resolver.resolve(
+                                    query=second_probe,
+                                    session_id=namespace,
+                                )
+                                if str(getattr(second, "status", "")) == "HIT":
+                                    second_selected = str(getattr(second, "selected_context", "") or "")
+                                    second_normalized = " ".join(second_selected.split()).strip()
+                                    if second_normalized:
+                                        retrieved_chars += len(second_normalized)
+                                        _append_with_budget(
+                                            retrieved,
+                                            _minimal_factual_context(second, second_normalized),
+                                            budget=_MAX_RELATIONAL_CONTEXT_CHARS,
+                                        )
+                        break
                     if resolver_hit:
-                        # Session evidence has priority. A profile lookup is only
-                        # needed when the current session and its probes miss.
                         break
                 if resolver_hit:
                     hits += 1
                 else:
                     misses += 1
 
-            # Explicit keys remain supported for applications that already know
-            # which structured memories they want to request.
             for key in memory_keys:
                 record = self.memory.recall(scope, ("key", key))
                 if record is None:
