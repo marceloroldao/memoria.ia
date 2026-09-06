@@ -16,7 +16,7 @@ static void set_relation(memoria_persist_turn *turn, size_t idx, const char *s, 
 
 int main(void) {
     memoria_concept_index index;
-    memoria_persist_turn turns[6];
+    memoria_persist_turn turns[7];
     memoria_concept_collection_member members[8];
     char type_surface[96];
     size_t count = 0;
@@ -32,7 +32,7 @@ int main(void) {
     turns[1].source_type = "user_assertion";
     set_relation(&turns[1], 0u, "Luna", "is", "gato", 0.93, "e-luna");
 
-    /* Direction matters: this must not make animal a member of gato. */
+    /* Direction matters: this makes gato a member of animal, not animal a member of gato. */
     turns[2].namespace_id = "session-a";
     turns[2].source_type = "direct_observation";
     set_relation(&turns[2], 0u, "gato", "is", "animal", 0.99, "e-animal");
@@ -53,11 +53,16 @@ int main(void) {
     turns[5].superseded = 1;
     set_relation(&turns[5], 0u, "Milo", "is", "gato", 1.00, "e-milo");
 
+    /* Parallel type must remain independent from gato collection. */
+    turns[6].namespace_id = "session-a";
+    turns[6].source_type = "user_assertion";
+    set_relation(&turns[6], 0u, "Rex", "is", "cachorro", 0.97, "e-rex");
+
     assert(memoria_collection_query_extract("Quais gatos você conhece?", type_surface, sizeof(type_surface)) == MEMORIA_COLLECTION_QUERY_HIT);
     assert(strcmp(type_surface, "gato") == 0);
 
     assert(memoria_concept_relation_collect_type(
-        turns, 6u, "session-a", &index, "semantic", type_surface,
+        turns, 7u, "session-a", &index, "semantic", type_surface,
         "Quais gatos você conhece?", 0.80, members, 8u, &count
     ) == MEMORIA_CONCEPT_COLLECTION_HIT);
     assert(count == 2u);
@@ -66,9 +71,29 @@ int main(void) {
     assert(strcmp(members[1].member_key, "surface:luna") == 0);
     assert(strcmp(members[1].evidence_id, "e-luna") == 0);
 
+    /* Taxonomy is directional: querying animal returns gato itself, not Alt/Luna transitively. */
     count = 0;
     assert(memoria_concept_relation_collect_type(
-        turns, 6u, "session-b", &index, "semantic", "gato", "", 0.80,
+        turns, 7u, "session-a", &index, "semantic", "animal", "", 0.80,
+        members, 8u, &count
+    ) == MEMORIA_CONCEPT_COLLECTION_HIT);
+    assert(count == 1u);
+    assert(strcmp(members[0].member_key, "surface:gato") == 0);
+    assert(strcmp(members[0].evidence_id, "e-animal") == 0);
+
+    /* Independent type collection cannot leak cat members or taxonomy/attributes. */
+    count = 0;
+    assert(memoria_concept_relation_collect_type(
+        turns, 7u, "session-a", &index, "semantic", "cachorro", "", 0.80,
+        members, 8u, &count
+    ) == MEMORIA_CONCEPT_COLLECTION_HIT);
+    assert(count == 1u);
+    assert(strcmp(members[0].member_key, "surface:rex") == 0);
+    assert(strcmp(members[0].evidence_id, "e-rex") == 0);
+
+    count = 0;
+    assert(memoria_concept_relation_collect_type(
+        turns, 7u, "session-b", &index, "semantic", "gato", "", 0.80,
         members, 8u, &count
     ) == MEMORIA_CONCEPT_COLLECTION_HIT);
     assert(count == 1u);
