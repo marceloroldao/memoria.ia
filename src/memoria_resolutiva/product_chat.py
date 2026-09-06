@@ -16,6 +16,14 @@ _POSSESSIVE_TYPE_QUERY = re.compile(
     r"\b(?:meu|minha|meus|minhas)\s+(?P<kind>[\wÀ-ÿ.-]+)\b",
     re.IGNORECASE,
 )
+_WORD_RE = re.compile(r"[\wÀ-ÿ.-]+", re.UNICODE)
+_GENERIC_RELATION_STOPWORDS = {
+    "a", "as", "ao", "aos", "como", "da", "das", "de", "do", "dos", "e", "em",
+    "esta", "está", "estao", "estão", "eu", "funciona", "funcionar", "me", "meu", "meus",
+    "minha", "minhas", "nome", "o", "os", "para", "por", "qual", "quais", "que", "um", "uma",
+    "voce", "você", "caiu", "cair", "falhou", "falha", "problema", "status",
+}
+_MAX_GENERIC_RELATION_CONCEPTS = 2
 
 
 class ConversationResolver(Protocol):
@@ -83,22 +91,49 @@ def _pluralize_pt(value: str) -> str:
     return word + "s"
 
 
+def _generic_relation_concepts(message: str) -> tuple[str, ...]:
+    """Extract a tiny set of relation anchors without semantic inference.
+
+    Generic activation is deliberately bounded. It only runs for explicit
+    questions or short incident-style inputs, and at most two surface concepts
+    are probed. This prevents a broad sentence from exploding into unrelated
+    memory traversal.
+    """
+    words = _WORD_RE.findall(message)
+    if "?" not in message and len(words) > 4:
+        return ()
+    concepts: list[str] = []
+    seen: set[str] = set()
+    for word in words:
+        key = word.casefold().strip(".,;:!?")
+        if len(key) < 2 or key in _GENERIC_RELATION_STOPWORDS:
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        concepts.append(word.strip(".,;:!?"))
+        if len(concepts) >= _MAX_GENERIC_RELATION_CONCEPTS:
+            break
+    return tuple(concepts)
+
+
 def _relation_probe_queries(message: str) -> tuple[str, ...]:
     """Generate bounded deterministic memory-research probes from user input.
 
-    A possessive concept reference (for example ``meu gato``, ``meu carro`` or
-    ``minha bateria``) is expanded into the existing directional collection
-    query language. This is domain-agnostic and does not call an LLM. The
-    original user question is always preserved for the final inference call.
+    Possessive references first use the directional type-collection path. If no
+    possessive concept is present, explicit questions and short incident inputs
+    can activate one-hop relation-neighborhood probes for at most two concepts.
+    No LLM is used to generate these probes, and the original user input remains
+    the only question sent to the final inference provider.
     """
     match = _POSSESSIVE_TYPE_QUERY.search(message)
-    if match is None:
-        return ()
-    kind = match.group("kind")
-    plural = _pluralize_pt(kind)
-    if not plural:
-        return ()
-    return (f"Quais {plural} você conhece?",)
+    if match is not None:
+        kind = match.group("kind")
+        plural = _pluralize_pt(kind)
+        return (f"Quais {plural} você conhece?",) if plural else ()
+
+    concepts = _generic_relation_concepts(message)
+    return tuple(f"O que está relacionado a {concept}?" for concept in concepts)
 
 
 def _minimal_factual_context(resolved: object, selected: str) -> str:
