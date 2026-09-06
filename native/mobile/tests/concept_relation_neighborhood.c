@@ -58,7 +58,8 @@ int main(void) {
     assert(count == 2u);
     assert(strcmp(neighbors[0].node_key, "concept:voltage") == 0);
     assert(strcmp(neighbors[0].evidence_id, "e1") == 0);
-    assert(strcmp(neighbors[1].node_key, "surface:usb-c") == 0);
+    /* Surface keys follow concept identity normalization: punctuation becomes spacing. */
+    assert(strcmp(neighbors[1].node_key, "surface:usb c") == 0);
     assert(strcmp(neighbors[1].evidence_id, "e2") == 0);
 
     count = 0;
