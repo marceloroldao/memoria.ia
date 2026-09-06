@@ -93,17 +93,33 @@ Pytest cross-platform wrapper: `tests/test_rc5_namespace_supersession_matrix.py`
 
 ## Phase E — Persistence / restart consistency
 
+Status: PASS / CROSS-PLATFORM GREEN — run 34038779945
+
+| ID | Area | Scenario | Expected | Result |
+|---|---|---|---|---|
+| RC5-B23 | Durable sync | Active and superseded lineage state is written and synced | sync succeeds before shutdown | PASS |
+| RC5-B24 | Close/reopen | Persistence is closed and reopened against the same data path and organization | reopen succeeds using persisted state | PASS |
+| RC5-B25 | Supersession after restart | derived memory invalidated by corrected parent before shutdown | derived remains inactive after reopen | PASS |
+| RC5-B26 | Active correction after restart | replacement `b-new` is active before shutdown | `b-new` remains active after reopen | PASS |
+| RC5-B27 | Build integration | native lineage restart executable remains wired into mobile test build | restart regression cannot silently disappear from CMake | PASS |
+
+Runtime evidence in `native/mobile/tests/lineage_state.c` performs a real save → sync → close → reopen → resolve sequence. `tests/test_rc5_persistence_restart_contract.py` freezes those restart invariants in the standard cross-platform pytest regression.
+
+## Phase F — Scale / performance probe
+
 Status: PENDING CI
 
 | ID | Area | Scenario | Expected | Result |
 |---|---|---|---|---|
-| RC5-B23 | Durable sync | Active and superseded lineage state is written and synced | sync succeeds before shutdown | PENDING CI |
-| RC5-B24 | Close/reopen | Persistence is closed and reopened against the same data path and organization | reopen succeeds using persisted state | PENDING CI |
-| RC5-B25 | Supersession after restart | derived memory invalidated by corrected parent before shutdown | derived remains inactive after reopen | PENDING CI |
-| RC5-B26 | Active correction after restart | replacement `b-new` is active before shutdown | `b-new` remains active after reopen | PENDING CI |
-| RC5-B27 | Build integration | native lineage restart executable remains wired into mobile test build | restart regression cannot silently disappear from CMake | PENDING CI |
+| RC5-B28 | 100 edges | bounded 4-hop traversal in a 100-edge chain | correct path preserved; timing recorded | PENDING CI |
+| RC5-B29 | 1,000 edges | bounded 4-hop traversal in a 1,000-edge chain | correct path preserved; timing recorded | PENDING CI |
+| RC5-B30 | 10,000 edges | bounded 4-hop traversal in a 10,000-edge chain | correct path preserved; timing recorded | PENDING CI |
+| RC5-B31 | 50,000 edges | bounded 4-hop traversal in a 50,000-edge chain | correct path preserved; timing recorded; no runaway | PENDING CI |
 
-Runtime evidence already present in `native/mobile/tests/lineage_state.c` performs a real save → sync → close → reopen → resolve sequence. `tests/test_rc5_persistence_restart_contract.py` freezes those restart invariants so accidental removal becomes visible in the standard cross-platform pytest regression.
+Native probe: `native/mobile/tests/rc5_relation_scale.c`.
+Cross-platform wrapper: `tests/test_rc5_relation_scale.py`.
+
+Timing policy: shared GitHub Actions runner timings are observational, not absolute performance claims. The test records latency at each relation count and uses only a deliberately generous 30-second runaway guard at 50,000 edges. Functional correctness is still mandatory at every scale point.
 
 ## Existing RC5 deterministic coverage observed before this run
 
@@ -124,9 +140,8 @@ The frozen repository already contains native regression coverage for:
 
 These existing tests are treated as regression prerequisites, not as substitutes for the new battery.
 
-## Next phases
+## Next phase
 
-- Phase F: scale/performance at increasing relation counts.
 - Phase G: conversational corpus with mixed people, animals, vehicles, colors, corrections and indirect questions.
 
 ## Result integrity
