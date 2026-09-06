@@ -1,7 +1,9 @@
 from types import SimpleNamespace
 
+import pytest
+
 from memoria_resolutiva.llm_adapter import LLMResponse, LLMUsage
-from memoria_resolutiva.product_chat import ProductChatService
+from memoria_resolutiva.product_chat import ProductChatService, _relation_probe_queries
 from memoria_resolutiva.product_conversation import ConversationSemanticService
 from memoria_resolutiva.product_evidence import ProductEvidenceService
 from memoria_resolutiva.product_identity import MemoryScope, OrganizationIdentity
@@ -54,6 +56,31 @@ class CaptureAdapter:
         )
 
 
+class MissThenProbeHitResolver:
+    def __init__(self, probe: str, selected_context: str):
+        self.probe = probe
+        self.selected_context = selected_context
+        self.calls = []
+
+    def resolve(self, *, query: str, session_id: str | None = None):
+        self.calls.append((query, session_id))
+        if query != self.probe:
+            return SimpleNamespace(
+                status="UNRESOLVED",
+                selected_context="",
+                relations=(),
+                provenance=(),
+                memory_ids=(),
+            )
+        return SimpleNamespace(
+            status="HIT",
+            selected_context=self.selected_context,
+            relations=(),
+            provenance=(),
+            memory_ids=("probe-hit",),
+        )
+
+
 def test_cat_question_is_enriched_by_memoria_before_llm_call():
     memory = EnterpriseMemoryService(OrganizationIdentity("org-a", "Org A"))
     resolver = RelationalCatResolver()
@@ -82,6 +109,69 @@ def test_cat_question_is_enriched_by_memoria_before_llm_call():
         ("Qual é o nome do meu gato?", expected_context),
     ]
     assert result.context == expected_context
+    assert result.metrics.memory_hits == 1
+    assert result.metrics.memory_misses == 0
+
+
+@pytest.mark.parametrize(
+    ("message", "expected_probe"),
+    [
+        ("Qual é o nome do meu gato?", "Quais gatos você conhece?"),
+        ("Qual é o modelo do meu carro?", "Quais carros você conhece?"),
+        ("Qual é o IP do meu roteador?", "Quais roteadores você conhece?"),
+        ("Como está minha bateria?", "Quais baterias você conhece?"),
+        ("Qual é o estado do meu servidor?", "Quais servidores você conhece?"),
+    ],
+)
+def test_possessive_relation_probe_is_domain_agnostic(message, expected_probe):
+    assert _relation_probe_queries(message) == (expected_probe,)
+
+
+def test_non_possessive_question_does_not_expand_research_probe():
+    assert _relation_probe_queries("Quais gatos você conhece?") == ()
+    assert _relation_probe_queries("Explique como funciona uma bateria") == ()
+
+
+@pytest.mark.parametrize(
+    ("message", "probe", "selected_context"),
+    [
+        (
+            "Qual é o modelo do meu carro?",
+            "Quais carros você conhece?",
+            "Saveiro é um carro do usuário.\nCorsa é outro carro conhecido.",
+        ),
+        (
+            "Qual é o IP do meu roteador?",
+            "Quais roteadores você conhece?",
+            "RB5009 é um roteador do usuário.\nCCR2004 é outro roteador conhecido.",
+        ),
+        (
+            "Como está minha bateria?",
+            "Quais baterias você conhece?",
+            "Bateria principal está carregada.\nBateria reserva está em manutenção.",
+        ),
+    ],
+)
+def test_generic_possessive_question_probes_memory_before_llm(message, probe, selected_context):
+    memory = EnterpriseMemoryService(OrganizationIdentity("org-a", "Org A"))
+    resolver = MissThenProbeHitResolver(probe, selected_context)
+    adapter = CaptureAdapter()
+    chat = ProductChatService(memory, adapter, conversation_resolver=resolver)
+    scope = MemoryScope(
+        "org-a",
+        application_id="offia",
+        user_id="user-1",
+        agent_id="offia:generic-probe",
+    )
+
+    result = chat.run(scope=scope, message=message, mode="memoria")
+
+    assert resolver.calls == [
+        (message, "offia:generic-probe"),
+        (probe, "offia:generic-probe"),
+    ]
+    assert result.context == (selected_context,)
+    assert adapter.calls == [(message, result.context)]
     assert result.metrics.memory_hits == 1
     assert result.metrics.memory_misses == 0
 
