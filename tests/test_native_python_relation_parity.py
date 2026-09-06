@@ -94,11 +94,11 @@ def test_python_and_native_share_product_relation_vectors(tmp_path: Path):
 def test_native_activation_can_traverse_an_edge_that_does_not_fit_prompt_budget(tmp_path: Path):
     """Traversal budget is independent from the final LLM context budget.
 
-    The first edge is deliberately too large to render because its root concept
-    is long. It must still activate ``bridge`` so the short second-hop relation
-    can be selected for the prompt.
+    The first edge is deliberately too large to render, but the root concept
+    still remains within the supported relation-token size. It must activate
+    ``bridge`` so the short second-hop relation can be selected for the prompt.
     """
-    root = "root_concept_with_a_name_that_is_deliberately_long"
+    root = "longrootconcept"
     session_id = "budget-bridge"
     native_service = _native_service(tmp_path, _native_library())
     python_service = _python_service(tmp_path)
