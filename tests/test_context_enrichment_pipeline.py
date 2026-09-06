@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from memoria_resolutiva.llm_adapter import LLMResponse, LLMUsage
-from memoria_resolutiva.product_chat import ProductChatService, _relation_probe_queries
+from memoria_resolutiva.product_chat import ProductChatService, _rank_relational_context, _relation_probe_queries
 from memoria_resolutiva.product_conversation import ConversationSemanticService
 from memoria_resolutiva.product_evidence import ProductEvidenceService
 from memoria_resolutiva.product_identity import MemoryScope, OrganizationIdentity
@@ -120,6 +120,21 @@ def test_cat_question_is_enriched_by_memoria_before_llm_call():
     assert adapter.calls == [("Qual é o nome do meu gato?", result.context)]
 
 
+def test_relational_ranking_prefers_convergent_cat_evidence_without_dropping_alternatives():
+    ranked = _rank_relational_context(
+        "Qual é o nome do meu gato?",
+        "Vivi | is | gato\nLay | is | gato\nAlt | is | gato\ngato | is | Alt",
+    )
+    lines = ranked.splitlines()
+    assert lines[:2] == ["Alt | is | gato", "gato | is | Alt"]
+    assert set(lines) == {
+        "Alt | is | gato",
+        "gato | is | Alt",
+        "Vivi | is | gato",
+        "Lay | is | gato",
+    }
+
+
 @pytest.mark.parametrize(
     ("message", "expected_probe"),
     [
@@ -233,6 +248,7 @@ def test_real_memory_expands_possessive_cat_question_before_llm(tmp_path):
     assert "Alt | is | gato" in research
     assert "Vivi | is | gato" in research
     assert "Lay | is | gato" in research
+    assert "Alt" in research.splitlines()[0]
 
 
 def test_enriched_provider_prompt_labels_memory_research_and_current_input():
