@@ -12,16 +12,24 @@ Policy: record positive and negative results. Failures are not hidden or rewritt
 
 ## Phase A — Native deterministic relational core
 
-Status: RUNNING
+Status: PARTIAL PASS / CROSS-PLATFORM REGRESSION FAILURE
 
 | ID | Area | Scenario | Expected | Result |
 |---|---|---|---|---|
-| RC5-B01 | Multi-hop | Alt → gato → animal → ser-vivo plus weaker direct edge | 3-hop path ranked above weak direct path; evidence IDs preserved | PENDING CI |
-| RC5-B02 | Directionality | Query reverse ser-vivo → Alt without reverse edges | UNRESOLVED | PENDING CI |
-| RC5-B03 | Bounded traversal | Valid target requires 3 hops while max_hops=2 | UNRESOLVED | PENDING CI |
-| RC5-B04 | Ambiguity | Direct edge marked ambiguous | UNRESOLVED | PENDING CI |
-| RC5-B05 | Confidence | Weak edge confidence 0.30 with threshold 0.80 | UNRESOLVED | PENDING CI |
-| RC5-B06 | Cycle protection | Graph contains animal → Alt cycle | terminate and still return intended 2-hop path | PENDING CI |
+| RC5-B01 | Multi-hop | Alt → gato → animal → ser-vivo plus weaker direct edge | 3-hop path ranked above weak direct path; evidence IDs preserved | PASS on Ubuntu full regression |
+| RC5-B02 | Directionality | Query reverse ser-vivo → Alt without reverse edges | UNRESOLVED | PASS on Ubuntu full regression |
+| RC5-B03 | Bounded traversal | Valid target requires 3 hops while max_hops=2 | UNRESOLVED | PASS on Ubuntu full regression |
+| RC5-B04 | Ambiguity | Direct edge marked ambiguous | UNRESOLVED | PASS on Ubuntu full regression |
+| RC5-B05 | Confidence | Weak edge confidence 0.30 with threshold 0.80 | UNRESOLVED | PASS on Ubuntu full regression |
+| RC5-B06 | Cycle protection | Graph contains animal → Alt cycle | terminate and still return intended 2-hop path | PASS on Ubuntu full regression |
+
+### Cross-platform regression result — run 34006309839
+
+- Ubuntu: PASS — full regression completed successfully.
+- Windows: FAIL — 622 passed, 28 skipped, 9 errors, 2 warnings.
+- The 9 Windows errors are all setup errors in `tests/test_native_python_concept_rewrite_parity.py`.
+- Root cause observed: the C compilation command succeeds, but the fixture expects an output path without the Windows `.exe` suffix and therefore `output.is_file()` returns false. This is a test-harness portability defect; the log does not show a semantic mismatch in the nine rewrite cases.
+- Negative result is retained because RC5 is not cross-platform green until the harness is corrected and rerun.
 
 ## Existing RC5 deterministic coverage observed before this run
 
