@@ -43,7 +43,7 @@ Status: PARTIAL PASS / CROSS-PLATFORM REGRESSION UNDER CORRECTION
 
 ## Phase B — Directional type collection / taxonomy matrix
 
-Status: PENDING CI
+Status: PENDING CROSS-PLATFORM CI
 
 | ID | Area | Scenario | Expected | Result |
 |---|---|---|---|---|
@@ -53,6 +53,19 @@ Status: PENDING CI
 | RC5-B10 | Namespace isolation | Nina is gato only in session-b | session-b gato collection returns Nina only | PENDING CI |
 | RC5-B11 | Supersession | Milo→gato evidence is superseded | Milo excluded from active gato collection | PENDING CI |
 | RC5-B12 | Attribute contamination | gato has pelos | pelos relation never appears as gato membership | PENDING CI |
+
+## Phase C — Resolver precedence contract
+
+Status: PENDING CI
+
+| ID | Area | Scenario | Expected | Result |
+|---|---|---|---|---|
+| RC5-B13 | Direct precedence | Base resolver returns anything except UNRESOLVED | Return immediately; no relational mode may override direct/base result | PENDING CI |
+| RC5-B14 | Relation vs collection | Base misses and query can enter relational inference | Relation inference is evaluated before type collection | PENDING CI |
+| RC5-B15 | Collection vs neighborhood | Relation inference does not resolve | Type collection is evaluated before one-hop neighborhood | PENDING CI |
+| RC5-B16 | Final fallback | No direct, relation, collection or neighborhood resolution | Remain UNRESOLVED | PENDING CI |
+
+The contract test `tests/test_rc5_resolver_precedence_contract.py` asserts the frozen bridge ordering directly from `concept_relation_resolve_bridge.c` so accidental reordering becomes a release-blocking regression.
 
 ## Existing RC5 deterministic coverage observed before this run
 
@@ -75,7 +88,6 @@ These existing tests are treated as regression prerequisites, not as substitutes
 
 ## Next phases
 
-- Phase C: resolver precedence (direct HIT > relation inference > collection > neighborhood > UNRESOLVED).
 - Phase D: namespace and supersession adversarial matrix.
 - Phase E: persistence/restart consistency.
 - Phase F: scale/performance at increasing relation counts.
