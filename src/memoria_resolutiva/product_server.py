@@ -22,6 +22,7 @@ from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus, MemoryScope
 from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
 from .product_service import EnterpriseMemoryService
+from .semantic_activation_resolver import SemanticActivationConversationResolver
 from .semantic_concept_store import PersistentSemanticConceptStore
 
 
@@ -250,7 +251,8 @@ def build_app():
             if isinstance(episodic_service, NativeEpisodicService):
                 episodic_service.close()
 
-    chat_service = _build_chat_service(service, configuration, conversation_resolver=conversation_service)
+    chat_conversation_resolver = SemanticActivationConversationResolver(conversation_service)
+    chat_service = _build_chat_service(service, configuration, conversation_resolver=chat_conversation_resolver)
     app = create_app(
         service,
         api_key=api_key,
@@ -275,6 +277,8 @@ def build_app():
             "automatic_episode_formation": automatic_episode_formation,
             "automatic_semantic_consolidation": automatic_semantic_consolidation,
             "automatic_concept_resolution": automatic_concept_resolution,
+            "semantic_chat_activation": True,
+            "semantic_chat_max_concepts": chat_conversation_resolver.max_concepts,
             "native_concept_catalog_materialized": native_concept_catalog_materialized,
             "native_concept_catalog_changed": native_concept_catalog_changed,
             "native_concept_catalog_fingerprint": native_concept_catalog_fingerprint,
