@@ -13,23 +13,31 @@ from .relational_activation import activate as activate_relations
 
 ChatMode = Literal["baseline", "memoria"]
 MIN_COMPACT_RELATION_CONFIDENCE = 0.90
+
 _POSSESSIVE_TYPE_QUERY = re.compile(
     r"\b(?:meu|minha|meus|minhas)\s+(?P<kind>[\wÀ-ÿ.-]+)\b",
     re.IGNORECASE,
 )
 _WORD_RE = re.compile(r"[\wÀ-ÿ.-]+", re.UNICODE)
+
 _GENERIC_RELATION_STOPWORDS = {
     "a", "as", "ao", "aos", "como", "da", "das", "de", "do", "dos", "e", "em",
     "esta", "está", "estao", "estão", "eu", "funciona", "funcionar", "me", "meu", "meus",
     "minha", "minhas", "nome", "o", "os", "para", "por", "qual", "quais", "que", "um", "uma",
     "voce", "você", "caiu", "cair", "falhou", "falha", "problema", "status",
+    "é", "eh", "ser", "sao", "são",
 }
-_QUERY_ATTRIBUTE_ALIASES = {
-    "cor": {"cor", "color", "colour"},
-    "ip": {"ip", "endereco", "endereço", "address"},
-    "modelo": {"modelo", "model"},
-    "estado": {"estado", "state", "status"},
-}
+
+# Compatibility-only synonym groups. These do not define the universe of valid
+# attributes. Open-vocabulary predicates are discovered directly from query
+# terms and graph predicates.
+_QUERY_PREDICATE_SYNONYMS = (
+    frozenset({"cor", "color", "colour"}),
+    frozenset({"ip", "endereco", "endereço", "address"}),
+    frozenset({"modelo", "model"}),
+    frozenset({"estado", "state", "status"}),
+)
+
 _MAX_GENERIC_RELATION_CONCEPTS = 2
 _MAX_RELATIONAL_HOPS = 2
 _RELATIONAL_HOP_DECAY = 0.72
@@ -92,12 +100,7 @@ def _append_with_budget(items: list[str], value: str, *, budget: int) -> bool:
 
 
 def _append_structured_with_budget(items: list[str], value: str, *, budget: int) -> bool:
-    """Append relation context while preserving line boundaries for the LLM.
-
-    Structural ranking uses line order to expose a composed path. Legacy context
-    appenders intentionally remain whitespace-normalizing so existing direct and
-    fallback behavior is unchanged.
-    """
+    """Append relation context while preserving line boundaries for the LLM."""
     normalized = "\n".join(
         " ".join(line.split()).strip()
         for line in str(value).splitlines()
@@ -113,7 +116,7 @@ def _append_structured_with_budget(items: list[str], value: str, *, budget: int)
 
 
 def _pluralize_pt(value: str) -> str:
-    word = value.strip().strip(".,;:!?\"")
+    word = value.strip().strip('.,;:!?"')
     if not word:
         return word
     lower = word.casefold()
@@ -126,6 +129,10 @@ def _pluralize_pt(value: str) -> str:
     if lower.endswith("r") or lower.endswith("z"):
         return word + "es"
     return word + "s"
+
+
+def _normalized_terms(text: str) -> set[str]:
+    return {token.casefold().strip(".,;:!?") for token in _WORD_RE.findall(text)}
 
 
 def _generic_relation_concepts(message: str) -> tuple[str, ...]:
@@ -154,24 +161,26 @@ def _activation_concepts(message: str) -> tuple[str, ...]:
     return _generic_relation_concepts(message)
 
 
-def _query_attributes(message: str) -> set[str]:
-    terms = {token.casefold().strip(".,;:!?") for token in _WORD_RE.findall(message)}
-    attributes: set[str] = set()
-    for canonical, aliases in _QUERY_ATTRIBUTE_ALIASES.items():
-        if aliases & terms:
-            attributes.add(canonical)
-    return attributes
+def _query_predicate_terms(message: str, *, target: str = "") -> set[str]:
+    """Discover requested predicate vocabulary directly from the query.
+
+    The query itself is authoritative. Small synonym groups only broaden lexical
+    equivalence and never constrain which predicates can be requested.
+    """
+    terms = {
+        term
+        for term in _normalized_terms(message)
+        if len(term) >= 2 and term not in _GENERIC_RELATION_STOPWORDS and term != target
+    }
+    expanded = set(terms)
+    for group in _QUERY_PREDICATE_SYNONYMS:
+        if group & terms:
+            expanded.update(group)
+    return expanded
 
 
 def _rank_relational_context(message: str, selected_context: str) -> str:
-    """Rank retrieved relations against the current input without dropping evidence.
-
-    In addition to query overlap and evidence convergence, possessive attribute
-    questions receive a bounded composed-chain preference. If ``gato`` identifies
-    ``Alt`` and another recovered edge describes ``Alt``, the two edges are kept
-    adjacent and ahead of unrelated cats. No new fact is synthesized: only
-    persisted edges are reordered before the LLM prompt is assembled.
-    """
+    """Rank persisted relations against the current query without inventing facts."""
     lines = [line.strip() for line in str(selected_context or "").splitlines() if line.strip()]
     if len(lines) < 2:
         return "\n".join(lines)
@@ -179,15 +188,16 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
     match = _POSSESSIVE_TYPE_QUERY.search(message)
     target = match.group("kind").casefold().strip() if match is not None else ""
     query_terms = {
-        token.casefold().strip(".,;:!?")
-        for token in _WORD_RE.findall(message)
-        if token.casefold().strip(".,;:!?") not in _GENERIC_RELATION_STOPWORDS
+        term
+        for term in _normalized_terms(message)
+        if term not in _GENERIC_RELATION_STOPWORDS
     }
-    attributes = _query_attributes(message)
+    requested_predicates = _query_predicate_terms(message, target=target)
 
     parsed: list[tuple[str, str, str, str]] = []
     entity_frequency: dict[str, int] = {}
     target_neighbors: dict[str, int] = {}
+
     for line in lines:
         parts = [part.strip() for part in line.split("|", 2)]
         if len(parts) == 3:
@@ -197,10 +207,12 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
         parsed.append((line, subject, predicate, object_))
         subject_key = subject.casefold().strip()
         object_key = object_.casefold().strip()
+
         for entity in (subject, object_):
             key = entity.casefold().strip()
             if key and key not in query_terms and key != target:
                 entity_frequency[key] = entity_frequency.get(key, 0) + 1
+
         if target:
             if subject_key == target and object_key:
                 target_neighbors[object_key] = target_neighbors.get(object_key, 0) + 1
@@ -219,16 +231,20 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
         line, subject, predicate, object_ = row
         subject_key = subject.casefold().strip()
         object_key = object_.casefold().strip()
-        predicate_key = predicate.casefold().strip()
-        line_terms = {token.casefold() for token in _WORD_RE.findall(line)}
+        predicate_terms = _normalized_terms(predicate)
+        line_terms = _normalized_terms(line)
+
         value = 0.0
         chain_order = 2
+
         if target and target in line_terms:
             value += 4.0
         value += 1.5 * len(query_terms & line_terms)
+
         counterpart = object_key if subject_key == target else subject_key if object_key == target else ""
         if counterpart:
             value += 2.0 * max(0, entity_frequency.get(counterpart, 0) - 1)
+
         if ownership_markers & line_terms:
             value += 3.0
 
@@ -238,22 +254,21 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
                 or (object_key == target and subject_key == anchor)
             )
             touches_anchor = subject_key == anchor or object_key == anchor
+
             if is_bridge:
                 value += 10.0
                 chain_order = 0
             elif touches_anchor and target not in {subject_key, object_key}:
-                # This is the second edge of a possible composed answer chain.
-                # Explicit attribute predicates receive the strongest boost, but
-                # a sole descriptive edge (e.g. ``Alt | is | preto``) is still
-                # preferred because it is structurally attached to the anchor.
                 value += 7.0
                 chain_order = 1
-                predicate_terms = {token.casefold() for token in _WORD_RE.findall(predicate_key)}
-                if attributes and any(
-                    _QUERY_ATTRIBUTE_ALIASES[attr] & (predicate_terms | line_terms)
-                    for attr in attributes
-                ):
+
+                # Open-vocabulary predicate discovery: if the graph predicate
+                # itself is present in the user's query (or a compatibility
+                # synonym is), the edge receives the strongest second-hop boost.
+                if requested_predicates & predicate_terms:
                     value += 5.0
+                elif requested_predicates & line_terms:
+                    value += 2.5
 
         return (-value, chain_order, line.casefold())
 
@@ -308,6 +323,7 @@ def _minimal_factual_context(resolved: object, selected: str) -> str:
     relation = relations[0]
     if not isinstance(relation, dict):
         return normalized
+
     try:
         confidence = float(relation.get("confidence", 0.0))
     except (TypeError, ValueError):
@@ -381,8 +397,6 @@ class ProductChatService:
                 activation_concepts = _activation_concepts(message)
                 fallback_probes = _relation_probe_queries(message)
 
-                # Preserve the established lookup hierarchy: try the original
-                # question in every eligible namespace before any expansion.
                 for namespace in namespaces:
                     direct = self.conversation_resolver.resolve(query=message, session_id=namespace)
                     if str(getattr(direct, "status", "")) != "HIT":
@@ -400,11 +414,10 @@ class ProductChatService:
                     )
                     break
 
-                # Only after all direct namespaces miss do we activate graph
-                # neighborhoods. This keeps session/profile precedence stable.
                 if not resolver_hit:
                     for namespace in namespaces:
                         structural_supported = False
+
                         for concept in activation_concepts:
                             activated = activate_relations(
                                 self.conversation_resolver,
@@ -419,6 +432,7 @@ class ProductChatService:
                                 structural_supported = True
                             if activated.status != "HIT" or not activated.selected_context:
                                 continue
+
                             resolver_hit = True
                             ranked_context = _rank_relational_context(message, activated.selected_context)
                             retrieved_chars += len(ranked_context)
@@ -427,6 +441,7 @@ class ProductChatService:
                                 ranked_context,
                                 budget=_MAX_RELATIONAL_CONTEXT_CHARS,
                             )
+
                         if resolver_hit:
                             break
 
@@ -435,10 +450,12 @@ class ProductChatService:
                                 resolved = self.conversation_resolver.resolve(query=probe, session_id=namespace)
                                 if str(getattr(resolved, "status", "")) != "HIT":
                                     continue
+
                                 selected = str(getattr(resolved, "selected_context", "") or "")
                                 normalized = " ".join(selected.split()).strip()
                                 if not normalized:
                                     continue
+
                                 resolver_hit = True
                                 retrieved_chars += len(normalized)
                                 _append_with_budget(
@@ -446,9 +463,13 @@ class ProductChatService:
                                     _minimal_factual_context(resolved, normalized),
                                     budget=_MAX_RELATIONAL_CONTEXT_CHARS,
                                 )
+
                                 second_probe = _second_hop_probe(resolved, original_message=message)
                                 if second_probe is not None:
-                                    second = self.conversation_resolver.resolve(query=second_probe, session_id=namespace)
+                                    second = self.conversation_resolver.resolve(
+                                        query=second_probe,
+                                        session_id=namespace,
+                                    )
                                     if str(getattr(second, "status", "")) == "HIT":
                                         second_selected = str(getattr(second, "selected_context", "") or "")
                                         second_normalized = " ".join(second_selected.split()).strip()
@@ -460,6 +481,7 @@ class ProductChatService:
                                                 budget=_MAX_RELATIONAL_CONTEXT_CHARS,
                                             )
                                 break
+
                         if resolver_hit:
                             break
 
@@ -488,6 +510,7 @@ class ProductChatService:
         sent_text = "\n".join(context)
         provider_input = response.usage.input_tokens
         provider_output = response.usage.output_tokens
+
         metrics = ChatMetrics(
             mode=mode,
             memory_hits=hits,
