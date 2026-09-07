@@ -8,6 +8,7 @@ authors:
     orcid: "https://orcid.org/0009-0003-6075-4680"
 abstract: "Sixth v1.0 release candidate of memoria.ia, freezing bounded two-hop relational activation, query-aware relational ranking, composed entity-attribute chains, open-vocabulary predicates, graph-backed semantic cues, bounded semantic concept expansion, server chat wiring, and factual/generative contamination barriers on top of the local-first Resolutive Memory architecture."
 repository-code: "https://github.com/marceloroldao/memoria.ia"
+doi: "10.5281/zenodo.22648409"
 version: "1.0.0-rc.6"
 date-released: "2026-09-07"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"

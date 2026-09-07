@@ -10,14 +10,19 @@
   "upload_type": "software",
   "access_right": "open",
   "language": "eng",
+  "doi": "10.5281/zenodo.22648409",
   "related_identifiers": [
+    {
+      "identifier": "https://doi.org/10.5281/zenodo.22648409",
+      "relation": "isIdenticalTo"
+    },
     {
       "identifier": "https://doi.org/10.5281/zenodo.22439650",
       "relation": "isNewVersionOf"
     },
     {
-      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v1.0.0-rc5",
-      "relation": "isNewVersionOf"
+      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v1.0.0-rc6",
+      "relation": "isSupplementTo"
     },
     {
       "identifier": "https://github.com/marceloroldao/memoria.ia",

@@ -16,7 +16,9 @@ Current publication candidate: **v1.0.0-rc6** (`1.0.0rc6` package version).
 
 RC6 functional freeze: **`bcef1111f17be06d8f4c26e78bce4a55cf8e1fbd`**.
 
-The previous archived release in this lineage is RC5: **[10.5281/zenodo.22439650](https://doi.org/10.5281/zenodo.22439650)**. A dedicated RC6 DOI is added only after the archival record exists.
+RC6 archived release DOI: **[10.5281/zenodo.22648409](https://doi.org/10.5281/zenodo.22648409)**.
+
+Previous archived release RC5: **[10.5281/zenodo.22439650](https://doi.org/10.5281/zenodo.22439650)**.
 
 This release candidate consolidates the validated research core and deployable PC/server/mobile runtime boundary while preserving the architecture:
 
