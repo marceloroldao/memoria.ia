@@ -6,15 +6,15 @@ from pathlib import Path
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_RELEASE_VERSION = "1.0.0-rc5"
-EXPECTED_PACKAGE_VERSION = "1.0.0rc5"
-EXPECTED_RELEASE_DATE = "2026-09-06"
-EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 5"
-EXPECTED_CFF_TITLE = "memoria.ia: Resolutive Memory — v1.0 Release Candidate 5"
+EXPECTED_RELEASE_VERSION = "1.0.0-rc6"
+EXPECTED_PACKAGE_VERSION = "1.0.0rc6"
+EXPECTED_RELEASE_DATE = "2026-09-07"
+EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 6"
+EXPECTED_CFF_TITLE = "memoria.ia: Resolutive Memory — v1.0 Release Candidate 6"
 EXPECTED_ORCID = "0009-0003-6075-4680"
-PREVIOUS_ARCHIVAL_DOI = "10.5281/zenodo.22244038"
-PREVIOUS_PUBLIC_TAG = "v1.0.0-rc4"
-FREEZE_COMMIT = "06c747478e05ee11ab2c5c3c24cf75365262b872"
+PREVIOUS_ARCHIVAL_DOI = "10.5281/zenodo.22439650"
+PREVIOUS_PUBLIC_TAG = "v1.0.0-rc5"
+FREEZE_COMMIT = "bcef1111f17be06d8f4c26e78bce4a55cf8e1fbd"
 
 
 def fail(message: str) -> None:
@@ -51,27 +51,27 @@ def main() -> int:
 
     cff = (ROOT / "CITATION.cff").read_text("utf-8")
     require(f'title: "{EXPECTED_CFF_TITLE}"' in cff, "CITATION.cff title mismatch")
-    require('version: "1.0.0-rc.5"' in cff, "CITATION.cff version mismatch")
+    require('version: "1.0.0-rc.6"' in cff, "CITATION.cff version mismatch")
     require(f'date-released: "{EXPECTED_RELEASE_DATE}"' in cff, "CITATION.cff date mismatch")
     require(f'https://orcid.org/{EXPECTED_ORCID}' in cff, "CITATION.cff ORCID mismatch")
-    require("doi:" not in cff, "RC5 preparation must not pre-assign a DOI")
+    require("doi:" not in cff, "RC6 preparation must not pre-assign a DOI")
 
     readme = (ROOT / "README.md").read_text("utf-8")
-    require("v1.0.0-rc5" in readme and "1.0.0rc5" in readme, "README does not identify RC5")
-    require(FREEZE_COMMIT in readme, "README missing RC5 freeze commit")
+    require("v1.0.0-rc6" in readme and "1.0.0rc6" in readme, "README does not identify RC6")
+    require(FREEZE_COMMIT in readme, "README missing RC6 functional freeze commit")
     require("RSMS 1.0-rc.1" in readme, "README missing RSMS compatibility boundary")
 
-    notes = (ROOT / "RELEASE_NOTES_v1.0.0-rc5.md").read_text("utf-8")
-    require(FREEZE_COMMIT in notes, "RC5 release notes missing freeze commit")
-    require(PREVIOUS_ARCHIVAL_DOI in notes, "RC5 release notes missing archival lineage")
-    require("A new RC5 DOI must be inserted only after the archival record exists" in notes, "RC5 DOI publication boundary missing")
+    notes = (ROOT / "RELEASE_NOTES_v1.0.0-rc6.md").read_text("utf-8")
+    require(FREEZE_COMMIT in notes, "RC6 release notes missing freeze commit")
+    require(PREVIOUS_ARCHIVAL_DOI in notes, "RC6 release notes missing archival lineage")
+    require("A new RC6 DOI must be inserted only after the archival record exists" in notes, "RC6 DOI publication boundary missing")
 
     json.dumps(zenodo, ensure_ascii=False)
     print("metadata gate: PASS")
     print(f"release_version={EXPECTED_RELEASE_VERSION}")
     print(f"package_version={EXPECTED_PACKAGE_VERSION}")
     print(f"freeze_commit={FREEZE_COMMIT}")
-    print("rc5_doi_preassigned=false")
+    print("rc6_doi_preassigned=false")
     return 0
 
 
