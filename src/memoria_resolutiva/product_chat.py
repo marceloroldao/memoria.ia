@@ -6,6 +6,7 @@ import re
 from time import perf_counter
 from typing import Iterable, Literal, Protocol, Sequence
 
+from .graph_predicate_cues import resolve_graph_predicate_cues
 from .llm_adapter import LLMAdapter, estimate_tokens
 from .product_identity import MemoryScope
 from .product_service import EnterpriseMemoryService
@@ -38,16 +39,9 @@ _QUERY_PREDICATE_SYNONYMS = (
     frozenset({"estado", "state", "status"}),
 )
 
-# Unit/measurement cues are directional semantic hints rather than an attribute
-# whitelist. They let a query name a measurement unit while the graph stores the
-# corresponding physical predicate. Conservative cues avoid single-letter units
-# such as "V" or "A", which are too ambiguous in natural language.
-_QUERY_PREDICATE_CUES = (
-    (frozenset({"volt", "volts"}), frozenset({"tensao", "tensão", "voltagem", "voltage"})),
-    (frozenset({"ampere", "amperes"}), frozenset({"corrente", "current", "amperagem"})),
-    (frozenset({"watt", "watts"}), frozenset({"potencia", "potência", "power"})),
-    (frozenset({"hertz", "hz"}), frozenset({"frequencia", "frequência", "frequency"})),
-    (frozenset({"celsius", "fahrenheit"}), frozenset({"temperatura", "temperature"})),
+_GRAPH_CUE_IGNORED_TERMS = frozenset(
+    set(_GENERIC_RELATION_STOPWORDS)
+    | {"com", "quanto", "quantos", "quanta", "quantas", "tem", "ter"}
 )
 
 _MAX_GENERIC_RELATION_CONCEPTS = 2
@@ -173,13 +167,17 @@ def _activation_concepts(message: str) -> tuple[str, ...]:
     return _generic_relation_concepts(message)
 
 
-def _query_predicate_terms(message: str, *, target: str = "") -> set[str]:
-    """Discover explicit and conservative implicit predicate vocabulary.
+def _query_predicate_terms(
+    message: str,
+    *,
+    target: str = "",
+    graph_terms: Iterable[str] = (),
+) -> set[str]:
+    """Discover requested predicate vocabulary without a closed attribute list.
 
-    The query itself remains authoritative. Synonym groups broaden lexical
-    equivalence, while unit cues add a small deterministic bridge from a named
-    measurement unit to the physical predicate typically stored in the graph.
-    Neither mechanism restricts which open-vocabulary predicates may be used.
+    The query is authoritative. Small synonym groups broaden lexical equivalence,
+    while additional graph-backed terms can be supplied by persisted semantic
+    relations such as ``volt | unidade_de | tensão``.
     """
     terms = {
         term
@@ -190,13 +188,17 @@ def _query_predicate_terms(message: str, *, target: str = "") -> set[str]:
     for group in _QUERY_PREDICATE_SYNONYMS:
         if group & terms:
             expanded.update(group)
-    for cues, predicates in _QUERY_PREDICATE_CUES:
-        if cues & terms:
-            expanded.update(predicates)
+    for graph_term in graph_terms:
+        expanded.update(_normalized_terms(str(graph_term)))
     return expanded
 
 
-def _rank_relational_context(message: str, selected_context: str) -> str:
+def _rank_relational_context(
+    message: str,
+    selected_context: str,
+    *,
+    graph_predicates: Iterable[str] = (),
+) -> str:
     """Rank persisted relations against the current query without inventing facts."""
     lines = [line.strip() for line in str(selected_context or "").splitlines() if line.strip()]
     if len(lines) < 2:
@@ -209,7 +211,11 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
         for term in _normalized_terms(message)
         if term not in _GENERIC_RELATION_STOPWORDS
     }
-    requested_predicates = _query_predicate_terms(message, target=target)
+    requested_predicates = _query_predicate_terms(
+        message,
+        target=target,
+        graph_terms=graph_predicates,
+    )
 
     parsed: list[tuple[str, str, str, str]] = []
     entity_frequency: dict[str, int] = {}
@@ -279,10 +285,6 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
                 value += 7.0
                 chain_order = 1
 
-                # Open-vocabulary predicate discovery: if the graph predicate
-                # itself is present in the user's query, is a compatibility
-                # synonym, or is implied by a conservative unit cue, the edge
-                # receives the strongest second-hop boost.
                 if requested_predicates & predicate_terms:
                     value += 5.0
                 elif requested_predicates & line_terms:
@@ -451,8 +453,19 @@ class ProductChatService:
                             if activated.status != "HIT" or not activated.selected_context:
                                 continue
 
+                            cue_result = resolve_graph_predicate_cues(
+                                self.conversation_resolver,
+                                message=message,
+                                session_id=namespace,
+                                target=concept,
+                                ignored_terms=_GRAPH_CUE_IGNORED_TERMS,
+                            )
                             resolver_hit = True
-                            ranked_context = _rank_relational_context(message, activated.selected_context)
+                            ranked_context = _rank_relational_context(
+                                message,
+                                activated.selected_context,
+                                graph_predicates=cue_result.terms,
+                            )
                             retrieved_chars += len(ranked_context)
                             _append_structured_with_budget(
                                 retrieved,
