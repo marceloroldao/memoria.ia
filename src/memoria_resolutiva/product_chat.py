@@ -460,6 +460,15 @@ class ProductChatService:
                                 target=concept,
                                 ignored_terms=_GRAPH_CUE_IGNORED_TERMS,
                             )
+                            if not cue_result.terms and profile and profile != namespace:
+                                cue_result = resolve_graph_predicate_cues(
+                                    self.conversation_resolver,
+                                    message=message,
+                                    session_id=profile,
+                                    target=concept,
+                                    ignored_terms=_GRAPH_CUE_IGNORED_TERMS,
+                                )
+
                             resolver_hit = True
                             ranked_context = _rank_relational_context(
                                 message,
