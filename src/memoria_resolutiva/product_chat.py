@@ -38,6 +38,18 @@ _QUERY_PREDICATE_SYNONYMS = (
     frozenset({"estado", "state", "status"}),
 )
 
+# Unit/measurement cues are directional semantic hints rather than an attribute
+# whitelist. They let a query name a measurement unit while the graph stores the
+# corresponding physical predicate. Conservative cues avoid single-letter units
+# such as "V" or "A", which are too ambiguous in natural language.
+_QUERY_PREDICATE_CUES = (
+    (frozenset({"volt", "volts"}), frozenset({"tensao", "tensão", "voltagem", "voltage"})),
+    (frozenset({"ampere", "amperes"}), frozenset({"corrente", "current", "amperagem"})),
+    (frozenset({"watt", "watts"}), frozenset({"potencia", "potência", "power"})),
+    (frozenset({"hertz", "hz"}), frozenset({"frequencia", "frequência", "frequency"})),
+    (frozenset({"celsius", "fahrenheit"}), frozenset({"temperatura", "temperature"})),
+)
+
 _MAX_GENERIC_RELATION_CONCEPTS = 2
 _MAX_RELATIONAL_HOPS = 2
 _RELATIONAL_HOP_DECAY = 0.72
@@ -162,10 +174,12 @@ def _activation_concepts(message: str) -> tuple[str, ...]:
 
 
 def _query_predicate_terms(message: str, *, target: str = "") -> set[str]:
-    """Discover requested predicate vocabulary directly from the query.
+    """Discover explicit and conservative implicit predicate vocabulary.
 
-    The query itself is authoritative. Small synonym groups only broaden lexical
-    equivalence and never constrain which predicates can be requested.
+    The query itself remains authoritative. Synonym groups broaden lexical
+    equivalence, while unit cues add a small deterministic bridge from a named
+    measurement unit to the physical predicate typically stored in the graph.
+    Neither mechanism restricts which open-vocabulary predicates may be used.
     """
     terms = {
         term
@@ -176,6 +190,9 @@ def _query_predicate_terms(message: str, *, target: str = "") -> set[str]:
     for group in _QUERY_PREDICATE_SYNONYMS:
         if group & terms:
             expanded.update(group)
+    for cues, predicates in _QUERY_PREDICATE_CUES:
+        if cues & terms:
+            expanded.update(predicates)
     return expanded
 
 
@@ -263,8 +280,9 @@ def _rank_relational_context(message: str, selected_context: str) -> str:
                 chain_order = 1
 
                 # Open-vocabulary predicate discovery: if the graph predicate
-                # itself is present in the user's query (or a compatibility
-                # synonym is), the edge receives the strongest second-hop boost.
+                # itself is present in the user's query, is a compatibility
+                # synonym, or is implied by a conservative unit cue, the edge
+                # receives the strongest second-hop boost.
                 if requested_predicates & predicate_terms:
                     value += 5.0
                 elif requested_predicates & line_terms:
