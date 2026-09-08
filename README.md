@@ -18,6 +18,8 @@ RC7 cumulative functional freeze: **`ca4089cad0369da3a13c484c93cc4c97ee54cfaf`**
 
 RC7 last runtime-changing stabilization commit: **`3f72f7e46c976245818e8878e36f6d906d6ba0ba`**.
 
+RC7 archived release DOI: **[10.5281/zenodo.22654141](https://doi.org/10.5281/zenodo.22654141)**.
+
 Previous archived release RC6: **[10.5281/zenodo.22648409](https://doi.org/10.5281/zenodo.22648409)**.
 
 Previous archived release RC5: **[10.5281/zenodo.22439650](https://doi.org/10.5281/zenodo.22439650)**.
@@ -77,6 +79,7 @@ The repository includes authentication boundaries, application isolation, integr
 
 ## Previous releases
 
+- **v1.0.0-rc7** — stabilization and consistency candidate; DOI `10.5281/zenodo.22654141`.
 - **v1.0.0-rc6** — semantic relational context candidate; DOI `10.5281/zenodo.22648409`.
 - **v1.0.0-rc5** — native relational memory candidate; DOI `10.5281/zenodo.22439650`.
 - **v1.0.0-rc4** — layered adaptive memory candidate.
