@@ -82,12 +82,17 @@ The new semantic layer remains bounded. The default activation plan permits at m
 
 ## Publication lineage
 
+Current archived release:
+
+- `v1.0.0-rc6` — Semantic Relational Context Candidate.
+- DOI: `10.5281/zenodo.22648409`.
+
 Previous public release:
 
 - `v1.0.0-rc5` — Native Relational Memory Candidate.
 - DOI: `10.5281/zenodo.22439650`.
 
-A new RC6 DOI must be inserted only after the archival record exists; no DOI is pre-assigned in this preparation commit.
+The RC6 DOI was registered after publication and is now the canonical archival identifier for this candidate.
 
 ## Claims boundary
 
