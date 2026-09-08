@@ -88,12 +88,13 @@ def save_snapshot(
     addresses: AddressSpace,
     store: TemporalEventStore,
 ) -> PersistenceStats:
-    """Persist one complete experimental topology + temporal snapshot atomically.
+    """Persist one complete experimental topology + temporal snapshot atomically."""
+    nodes = addresses.iter_nodes()
+    raw_memories = addresses.iter_raw_memories()
+    events = store.iter_events()
+    transitions = store.iter_transitions()
+    counters = addresses.snapshot_counters()
 
-    This adapter is intentionally separate from RC7/EvidenceCore/BDR persistence.
-    It serializes the current experimental in-memory structures without changing
-    their runtime semantics.
-    """
     with _connect(path) as connection:
         _ensure_schema(connection)
         connection.executescript(
@@ -109,17 +110,17 @@ def save_snapshot(
         )
         meta = {
             "schema_version": str(_SCHEMA_VERSION),
-            "next_sequence": str(store._next_sequence),
-            "ingestions": str(addresses._ingestions),
-            "new_nodes": str(addresses._new_nodes),
-            "reused_nodes": str(addresses._reused_nodes),
+            "next_sequence": str(store.next_sequence),
+            "ingestions": str(counters["ingestions"]),
+            "new_nodes": str(counters["new_nodes"]),
+            "reused_nodes": str(counters["reused_nodes"]),
         }
         connection.executemany(
             "INSERT INTO topology_meta(key, value) VALUES (?, ?)",
             sorted(meta.items()),
         )
 
-        for node in sorted(addresses._nodes.values(), key=lambda item: item.address):
+        for node in nodes:
             connection.execute(
                 "INSERT INTO topology_nodes(address, kind, canonical_value, occurrences) VALUES (?, ?, ?, ?)",
                 (node.address, node.kind, node.canonical_value, node.occurrences),
@@ -135,7 +136,7 @@ def save_snapshot(
 
         connection.executemany(
             "INSERT INTO topology_raw(address, text) VALUES (?, ?)",
-            ((raw.address, raw.text) for raw in sorted(addresses._raw.values(), key=lambda item: item.address)),
+            ((raw.address, raw.text) for raw in raw_memories),
         )
 
         connection.executemany(
@@ -157,7 +158,7 @@ def save_snapshot(
                     event.event_time,
                     event.ingestion_time,
                 )
-                for event in sorted(store._events, key=lambda item: item.sequence)
+                for event in events
             ),
         )
         connection.executemany(
@@ -176,21 +177,19 @@ def save_snapshot(
                     transition.from_sequence,
                     transition.to_sequence,
                 )
-                for transition in store._transitions
+                for transition in transitions
             ),
         )
 
     return PersistenceStats(
-        nodes=len(addresses._nodes),
-        raw_memories=len(addresses._raw),
-        events=len(store._events),
-        transitions=len(store._transitions),
+        nodes=len(nodes),
+        raw_memories=len(raw_memories),
+        events=len(events),
+        transitions=len(transitions),
     )
 
 
 def load_snapshot(path: str | Path) -> tuple[AddressSpace, TemporalEventStore]:
-    addresses = AddressSpace()
-    store = TemporalEventStore(addresses)
     with _connect(path) as connection:
         _ensure_schema(connection)
         meta = dict(connection.execute("SELECT key, value FROM topology_meta"))
@@ -199,45 +198,44 @@ def load_snapshot(path: str | Path) -> tuple[AddressSpace, TemporalEventStore]:
         if int(meta.get("schema_version", "0")) != _SCHEMA_VERSION:
             raise ValueError("unsupported topological snapshot schema version")
 
-        for address, kind, canonical_value, occurrences in connection.execute(
-            "SELECT address, kind, canonical_value, occurrences FROM topology_nodes ORDER BY address"
-        ):
-            addresses._nodes[address] = TopologicalNode(
+        node_map = {
+            address: TopologicalNode(
                 address=address,
                 kind=kind,
                 canonical_value=canonical_value,
                 occurrences=int(occurrences),
             )
+            for address, kind, canonical_value, occurrences in connection.execute(
+                "SELECT address, kind, canonical_value, occurrences FROM topology_nodes ORDER BY address"
+            )
+        }
 
         components: dict[str, list[str]] = {}
         for parent, _position, child in connection.execute(
             "SELECT parent_address, position, child_address FROM topology_components ORDER BY parent_address, position"
         ):
+            if parent not in node_map:
+                raise ValueError(f"snapshot references unknown component parent: {parent}")
             components.setdefault(parent, []).append(child)
         for parent, children in components.items():
-            node = addresses._nodes.get(parent)
-            if node is None:
-                raise ValueError(f"snapshot references unknown component parent: {parent}")
-            node.components = tuple(children)
+            node_map[parent].components = tuple(children)
 
         for parent, child in connection.execute(
             "SELECT parent_address, child_address FROM topology_edges ORDER BY parent_address, child_address"
         ):
-            parent_node = addresses._nodes.get(parent)
-            child_node = addresses._nodes.get(child)
-            if parent_node is None or child_node is None:
+            parent_node = node_map.get(parent)
+            if parent_node is None or child not in node_map:
                 raise ValueError("snapshot edge references unknown node")
             parent_node.edges_out.add(child)
-            child_node.edges_in.add(parent)
 
-        for address, text in connection.execute("SELECT address, text FROM topology_raw ORDER BY address"):
-            addresses._raw[address] = RawMemory(address, text)
+        raw_memories = [
+            RawMemory(address, text)
+            for address, text in connection.execute(
+                "SELECT address, text FROM topology_raw ORDER BY address"
+            )
+        ]
 
-        addresses._ingestions = int(meta.get("ingestions", "0"))
-        addresses._new_nodes = int(meta.get("new_nodes", str(len(addresses._nodes))))
-        addresses._reused_nodes = int(meta.get("reused_nodes", "0"))
-
-        store._events = [
+        events = [
             TemporalEvent(
                 event_id=event_id,
                 sequence=int(sequence),
@@ -267,7 +265,7 @@ def load_snapshot(path: str | Path) -> tuple[AddressSpace, TemporalEventStore]:
                 """
             )
         ]
-        store._transitions = [
+        transitions = [
             Transition(
                 subject_address=subject,
                 attribute_address=attribute,
@@ -284,6 +282,19 @@ def load_snapshot(path: str | Path) -> tuple[AddressSpace, TemporalEventStore]:
                 """
             )
         ]
-        store._next_sequence = int(meta.get("next_sequence", "1"))
 
+    addresses = AddressSpace()
+    addresses.restore_snapshot(
+        nodes=node_map.values(),
+        raw_memories=raw_memories,
+        ingestions=int(meta.get("ingestions", "0")),
+        new_nodes=int(meta.get("new_nodes", str(len(node_map)))),
+        reused_nodes=int(meta.get("reused_nodes", "0")),
+    )
+    store = TemporalEventStore(addresses)
+    store.restore_history(
+        events=events,
+        transitions=transitions,
+        next_sequence=int(meta.get("next_sequence", "1")),
+    )
     return addresses, store
