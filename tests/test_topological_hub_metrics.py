@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from memoria_resolutiva.topological_memory import AddressSpace
-from memoria_resolutiva.topological_metrics import growth_profile, profile_word
+from memoria_resolutiva.topological_metrics import growth_profile, measure_activation, profile_word
 
 
 def _stress_corpus() -> list[str]:
@@ -89,3 +89,40 @@ def test_hub_measurements_are_domain_independent():
     assert e.phrase_parent_count == len(corpus)
     assert de.occurrences == 10
     assert e.occurrences == 5
+
+
+def test_retrieval_time_activation_exposes_dense_hub_candidate_pressure():
+    addresses = AddressSpace()
+    for text in _stress_corpus():
+        addresses.ingest_text(text)
+
+    de_node = addresses.resolve("word", "de")
+    alt_node = addresses.resolve("word", "alt")
+    assert de_node is not None and alt_node is not None
+
+    dense = measure_activation(addresses, de_node, max_depth=2, max_candidates=25, direction="in")
+    rare = measure_activation(addresses, alt_node, max_depth=2, max_candidates=25, direction="in")
+
+    # A common routing word saturates the bounded candidate budget; a rare name does not.
+    # This records the pressure but does not prescribe how production recall should score it.
+    assert dense.truncated is True
+    assert dense.candidate_count == 25
+    assert rare.truncated is False
+    assert rare.candidate_count == 2
+    assert dense.candidate_count > rare.candidate_count
+
+
+def test_activation_budget_bounds_hub_expansion_deterministically():
+    addresses = AddressSpace()
+    for text in _stress_corpus():
+        addresses.ingest_text(text)
+    hub = addresses.resolve("word", "o")
+    assert hub is not None
+
+    small = measure_activation(addresses, hub, max_depth=3, max_candidates=10, direction="in")
+    larger = measure_activation(addresses, hub, max_depth=3, max_candidates=40, direction="in")
+
+    assert small.truncated is True
+    assert larger.truncated is True
+    assert small.candidate_count == 10
+    assert larger.candidate_count == 40
