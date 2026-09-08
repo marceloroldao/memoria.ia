@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Iterable
 
 from .evidence_core import EvidenceCore, EvidenceEdge
 from .evidence_temporal_bridge import EpistemicSource, classify_epistemic_source
@@ -28,13 +29,14 @@ class EpistemicLearningGate:
 
     The gate never rewrites a candidate EvidenceEdge. Acceptance creates a new
     EvidenceCore edge with trusted provenance, preserving the original candidate id
-    in the new origin string. This prevents provenance laundering while giving the
-    temporal bridge a normal trusted evidence row to project.
+    in the new origin string. Decision audit can be restored after restart so a
+    decision id remains an idempotency boundary.
     """
 
     def __init__(self, evidence: EvidenceCore) -> None:
         self.evidence = evidence
         self._decision_ids: set[str] = set()
+        self._decisions: list[LearningDecision] = []
 
     @staticmethod
     def _clean(value: str, field: str) -> str:
@@ -42,6 +44,34 @@ class EpistemicLearningGate:
         if not value:
             raise ValueError(f"{field} must be non-empty")
         return value
+
+    def iter_decisions(self) -> tuple[LearningDecision, ...]:
+        return tuple(self._decisions)
+
+    def restore_decisions(self, decisions: Iterable[LearningDecision]) -> None:
+        restored = tuple(decisions)
+        ids = [item.decision_id for item in restored]
+        if len(ids) != len(set(ids)):
+            raise ValueError("learning audit contains duplicate decision_id")
+        evidence_ids = {edge.evidence_id for edge in self.evidence.evidence_history()}
+        for item in restored:
+            self._clean(item.decision_id, "decision_id")
+            self._clean(item.candidate_evidence_id, "candidate_evidence_id")
+            self._clean(item.validator_id, "validator_id")
+            self._clean(item.reason, "reason")
+            if item.validator_source not in _ALLOWED_VALIDATORS:
+                raise ValueError("learning audit contains invalid validator source")
+            if item.candidate_evidence_id not in evidence_ids:
+                raise ValueError("learning decision references unknown candidate evidence")
+            if item.accepted:
+                if not item.promoted_evidence_id:
+                    raise ValueError("accepted learning decision requires promoted evidence id")
+                if item.promoted_evidence_id not in evidence_ids:
+                    raise ValueError("learning decision references unknown promoted evidence")
+            elif item.promoted_evidence_id is not None:
+                raise ValueError("rejected learning decision cannot reference promoted evidence")
+        self._decisions = list(restored)
+        self._decision_ids = set(ids)
 
     def decide(
         self,
@@ -62,9 +92,8 @@ class EpistemicLearningGate:
         if validator_source not in _ALLOWED_VALIDATORS:
             raise ValueError("learning decisions require USER_CONFIRMED or SENSOR_OBSERVED validation")
 
-        self._decision_ids.add(decision_id)
         if not accepted:
-            return LearningDecision(
+            decision = LearningDecision(
                 decision_id,
                 candidate.evidence_id,
                 False,
@@ -73,6 +102,9 @@ class EpistemicLearningGate:
                 reason,
                 None,
             )
+            self._decision_ids.add(decision_id)
+            self._decisions.append(decision)
+            return decision
 
         if promoted_evidence_id is None:
             promoted_evidence_id = f"learning:{decision_id}"
@@ -94,7 +126,7 @@ class EpistemicLearningGate:
             confidence=1.0,
             namespace=candidate.namespace,
         )
-        return LearningDecision(
+        decision = LearningDecision(
             decision_id,
             candidate.evidence_id,
             True,
@@ -103,3 +135,6 @@ class EpistemicLearningGate:
             reason,
             promoted.evidence_id,
         )
+        self._decision_ids.add(decision_id)
+        self._decisions.append(decision)
+        return decision
