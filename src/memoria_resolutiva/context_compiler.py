@@ -53,6 +53,7 @@ class CognitivePacket:
     activated_addresses: tuple[str, ...]
     candidate_sequences: tuple[int, ...]
     omitted_history_count: int = 0
+    omitted_candidate_count: int = 0
 
     def to_payload(self) -> dict[str, object]:
         return asdict(self)
@@ -145,16 +146,16 @@ class ContextCompiler:
         result = resolution.result
         facts: tuple[CognitiveFact, ...]
         transitions: tuple[CognitiveTransition, ...] = ()
-        omitted = 0
+        omitted_history = 0
 
         if result.operator is TemporalOperator.HISTORY:
             all_sequences = tuple(sequence for sequence, _ in result.history)
-            omitted = max(0, len(all_sequences) - self.max_history)
+            omitted_history = max(0, len(all_sequences) - self.max_history)
             selected = all_sequences[-self.max_history :]
             facts = tuple(self._fact(sequence) for sequence in selected)
         elif result.operator is TemporalOperator.STATE_DIFF:
             all_transitions = result.transitions
-            omitted = max(0, len(all_transitions) - self.max_history)
+            omitted_history = max(0, len(all_transitions) - self.max_history)
             selected_transitions = all_transitions[-self.max_history :]
             transitions = tuple(self._transition(item) for item in selected_transitions)
             sequences: list[int] = []
@@ -167,6 +168,10 @@ class ContextCompiler:
         else:
             facts = tuple(self._fact(sequence) for sequence in self._selected_sequences(result))
 
+        all_candidates = plan.candidate_sequences
+        omitted_candidates = max(0, len(all_candidates) - self.max_history)
+        bounded_candidates = all_candidates[-self.max_history :]
+
         return CognitivePacket(
             schema_version=_SCHEMA_VERSION,
             question=question.strip(),
@@ -178,8 +183,9 @@ class ContextCompiler:
             facts=facts,
             transitions=transitions,
             activated_addresses=plan.activated_addresses,
-            candidate_sequences=plan.candidate_sequences,
-            omitted_history_count=omitted,
+            candidate_sequences=bounded_candidates,
+            omitted_history_count=omitted_history,
+            omitted_candidate_count=omitted_candidates,
         )
 
     def compile(self, question: str) -> CognitivePacket:
