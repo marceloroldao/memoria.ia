@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
@@ -57,7 +58,8 @@ def native_concept_rewrite_cli(tmp_path_factory: pytest.TempPathFactory) -> Path
     compiler = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
     if compiler is None:
         pytest.skip("a C compiler is required for direct native concept rewrite parity")
-    output = tmp_path_factory.mktemp("native-concept-rewrite") / "concept_query_rewrite_cli"
+    executable_name = "concept_query_rewrite_cli.exe" if os.name == "nt" else "concept_query_rewrite_cli"
+    output = tmp_path_factory.mktemp("native-concept-rewrite") / executable_name
     mobile = ROOT / "native" / "mobile"
     subprocess.run(
         [
