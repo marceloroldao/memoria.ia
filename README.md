@@ -12,11 +12,13 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 ## v1.0 release candidate
 
-Current publication candidate: **v1.0.0-rc6** (`1.0.0rc6` package version).
+Current publication candidate: **v1.0.0-rc7** (`1.0.0rc7` package version).
 
-RC6 functional freeze: **`bcef1111f17be06d8f4c26e78bce4a55cf8e1fbd`**.
+RC7 cumulative functional freeze: **`ca4089cad0369da3a13c484c93cc4c97ee54cfaf`**.
 
-RC6 archived release DOI: **[10.5281/zenodo.22648409](https://doi.org/10.5281/zenodo.22648409)**.
+RC7 last runtime-changing stabilization commit: **`3f72f7e46c976245818e8878e36f6d906d6ba0ba`**.
+
+Previous archived release RC6: **[10.5281/zenodo.22648409](https://doi.org/10.5281/zenodo.22648409)**.
 
 Previous archived release RC5: **[10.5281/zenodo.22439650](https://doi.org/10.5281/zenodo.22439650)**.
 
@@ -32,34 +34,32 @@ application / OFF.IA / agent
 
 Memoria.ia owns memory semantics, state, relations, provenance, trajectories, abstraction, recomputation policy and context selection. BDR owns durable persistence. LLMs remain optional consumers and do not become the authoritative memory store.
 
-The v1.0.0-rc6 line includes the RC5 native relational baseline plus:
+RC7 is intentionally a **stabilization-only** release over the RC6 semantic-relational baseline. It adds no new runtime capability. The RC7 line hardens:
 
-- bounded structural relational activation before the LLM, including validated two-hop traversal;
-- independent navigation and prompt-context budgets;
-- query-aware relational ranking that preserves alternative evidence;
-- bounded composed entity→attribute chains without synthesizing new facts;
-- open-vocabulary predicate ranking;
-- graph-backed implicit predicate cues such as `volt -> unidade_de -> tensão`;
-- profile fallback for semantic cues with strict same-user/application isolation;
-- generic graph-declared semantic roles such as `semantic_role -> predicate|concept`;
-- bounded semantic concept planning with a default maximum of two activated concepts;
-- semantic activation wired into server chat without changing the public conversation API;
-- factual projection reuse across different query orientations;
-- explicit contamination barriers that prevent unpromoted `assistant_generated` content from becoming authoritative factual evidence;
-- Android/native ABI, product, credentials, semantic and performance regression parity across the frozen line.
+- direct-resolution precedence and bounded semantic fallback;
+- provenance and factual/generative contamination barriers;
+- same-user/session/profile isolation and fail-closed cross-scope behavior;
+- Python/native/server runtime parity contracts;
+- deterministic context ranking and atomic context-budget rendering;
+- exact confidence and hop-decay threshold behavior, including floating-point boundary stability;
+- SQLite restart equivalence and portable snapshot recovery behavior;
+- semantic activation read-only/non-amplifying behavior across repeated calls;
+- recurring product, credentials, semantic and layered-performance gates;
+- release metadata consistency and DOI lineage validation.
 
-The RC6 candidate is intentionally frozen from further feature expansion. After the functional freeze, changes on this release line are restricted to stabilization, regression fixes, documentation, packaging and publication validation.
+The RC7 candidate is frozen from feature expansion. Changes on this release line are restricted to release metadata, packaging and regression fixes required to publish the candidate coherently.
 
 ## Validation status
 
-The RC6 functional lineage passed the recurring release-blocking gates before the publication branch was prepared:
+The RC7 stabilization lineage passed the recurring release-blocking gates during phases A–F:
 
 - v0.96 semantic validation;
 - product-alpha validation;
 - product application credentials;
-- Android mobile ABI;
+- Android/mobile ABI compatibility inherited from the validated RC6/native lineage and preserved by RC7 runtime scope;
 - layered performance baseline;
-- Automatic Context on runtime-changing PRs where applicable.
+- release metadata validation;
+- Automatic Context where runtime-changing paths require it.
 
 Release-candidate metadata is checked by:
 
@@ -71,12 +71,13 @@ The final v1.0 release will only be promoted after the release-candidate gates r
 
 ## Security status
 
-**v1.0.0-rc6 is not represented as production-security certified.**
+**v1.0.0-rc7 is not represented as production-security certified.**
 
 The repository includes authentication boundaries, application isolation, integrity-checked backup/restore and negative security tests, but no independent production security audit is claimed.
 
 ## Previous releases
 
+- **v1.0.0-rc6** — semantic relational context candidate; DOI `10.5281/zenodo.22648409`.
 - **v1.0.0-rc5** — native relational memory candidate; DOI `10.5281/zenodo.22439650`.
 - **v1.0.0-rc4** — layered adaptive memory candidate.
 - **v1.0.0-rc3** — corrective release candidate that fixed RC2 tag/provenance alignment.
@@ -105,7 +106,7 @@ with the v0.95 research default configuration:
 
 The repository retains historical experimental MA2A material, but the network protocol is now treated as a separate architectural boundary/project.
 
-The local v1.0.0-rc6 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
+The local v1.0.0-rc7 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
 
 See:
 
@@ -137,7 +138,7 @@ The original stable research facade exposes `remember`, `reinforce`, `challenge`
 
 ## Research and claims status
 
-Memoria.ia remains an experimental architecture. v1.0.0-rc6 is a reproducible software release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
+Memoria.ia remains an experimental architecture. v1.0.0-rc7 is a reproducible stabilization release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
 
 Important limitations include semantic consolidation remaining experimental, no claim of general language understanding, environment-specific performance measurements, federation outside the stable local runtime boundary, no independent production security certification, and external/public learning remaining a separate development track.
 
@@ -151,8 +152,8 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 - Project governance baseline: **RSPS 1.0-draft**
 - RSMS compatibility for this candidate: **RSMS 1.0-rc.1**
 
-v1.0.0-rc6 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
+v1.0.0-rc7 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
 
 ## Release notes
 
-See `RELEASE_NOTES_v1.0.0-rc6.md` for the publication scope, validation evidence and known boundaries of this candidate.
+See `RELEASE_NOTES_v1.0.0-rc7.md` for the publication scope, validation evidence and known boundaries of this candidate.
