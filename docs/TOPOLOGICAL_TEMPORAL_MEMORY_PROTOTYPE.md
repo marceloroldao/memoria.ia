@@ -133,6 +133,10 @@ These are intentional and must not be hidden:
 8. No BDR schema or mobile ABI changes have been made.
 9. No claim is made yet about memory-growth advantage versus the frozen engine; benchmarks must measure this.
 
+## CI validation note
+
+Issue #277 identified that the experimental PR workflow filtered the PR base branch as `experiment/**`, so experiment heads targeting `main` never ran the intended Ubuntu/Windows regression. PR #278 corrected the workflow trigger on `main` without runtime changes. This experiment must not be considered regression-validated until a new PR synchronization event produces successful checks on the experimental head.
+
 ## Next implementation sequence
 
 1. Run the new tests together with the complete existing suite and record regressions.
