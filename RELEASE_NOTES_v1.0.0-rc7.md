@@ -82,12 +82,17 @@ application / OFF.IA / agent
 
 ## Publication lineage
 
+Current archived release:
+
+- `v1.0.0-rc7` — Stabilization and Consistency Candidate.
+- DOI: `10.5281/zenodo.22654141`.
+
 Previous public release:
 
 - `v1.0.0-rc6` — Semantic Relational Context Candidate.
 - DOI: `10.5281/zenodo.22648409`.
 
-A new RC7 DOI must be inserted only after the archival record exists; no DOI is pre-assigned in this publication commit.
+The RC7 DOI was registered after publication and is now the canonical archival identifier for this release.
 
 ## Claims boundary
 
