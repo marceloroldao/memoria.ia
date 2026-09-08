@@ -3,7 +3,7 @@ name: experimental PR regression
 on:
   pull_request:
     branches:
-      - 'experiment/**'
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   regression:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/')
     strategy:
       fail-fast: true
       matrix:
