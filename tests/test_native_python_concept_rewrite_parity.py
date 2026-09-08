@@ -84,7 +84,14 @@ def native_concept_rewrite_cli(tmp_path_factory: pytest.TempPathFactory) -> Path
 
 
 def _native(cli: Path, query: str) -> tuple[str, str | None, str, tuple[str, ...]]:
-    completed = subprocess.run([str(cli), query], check=True, text=True, capture_output=True)
+    completed = subprocess.run(
+        [str(cli)],
+        check=True,
+        input=query + "\n",
+        text=True,
+        encoding="utf-8",
+        capture_output=True,
+    )
     status, reason, rewritten, ids_csv = completed.stdout.rstrip("\n").split("\t")
     ids = tuple(value for value in ids_csv.split(",") if value)
     return status, reason or None, rewritten, ids
