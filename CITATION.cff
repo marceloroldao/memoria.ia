@@ -1,16 +1,15 @@
 cff-version: 1.2.0
 message: "If you use memoria.ia in academic or scientific work, please cite this software."
-title: "memoria.ia: Resolutive Memory — v1.0 Release Candidate 6"
+title: "memoria.ia: Resolutive Memory — v1.0 Release Candidate 7"
 type: software
 authors:
   - family-names: "Matos"
     given-names: "Marcelo Roldão"
     orcid: "https://orcid.org/0009-0003-6075-4680"
-abstract: "Sixth v1.0 release candidate of memoria.ia, freezing bounded two-hop relational activation, query-aware relational ranking, composed entity-attribute chains, open-vocabulary predicates, graph-backed semantic cues, bounded semantic concept expansion, server chat wiring, and factual/generative contamination barriers on top of the local-first Resolutive Memory architecture."
+abstract: "Seventh v1.0 release candidate of memoria.ia, dedicated to stabilization of the RC6 semantic-relational runtime: regression hardening, provenance and contamination barriers, server/runtime parity, deterministic context budgeting and ranking, persistence/restart equivalence, semantic non-amplification, and release metadata consistency. No new runtime capability is introduced by RC7."
 repository-code: "https://github.com/marceloroldao/memoria.ia"
-doi: "10.5281/zenodo.22648409"
-version: "1.0.0-rc.6"
-date-released: "2026-09-07"
+version: "1.0.0-rc.7"
+date-released: "2026-09-08"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
 keywords:
   - resolutive memory
@@ -18,9 +17,10 @@ keywords:
   - deterministic memory
   - relational memory
   - semantic activation
-  - graph traversal
+  - provenance
   - context selection
-  - AI memory
+  - persistence
+  - regression testing
   - local-first AI
   - PC server
   - mobile AI memory
