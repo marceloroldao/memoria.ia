@@ -34,8 +34,8 @@ def test_rc7_exact_min_confidence_boundary_is_inclusive():
 def test_rc7_second_hop_decay_boundary_is_enforced_exactly():
     core = EvidenceCore()
     _observe(core, "root", "rel", "mid", "e1", confidence=1.0)
-    _observe(core, "mid", "rel", "kept", "e2", confidence=0.625)
-    _observe(core, "mid", "rel", "dropped", "e3", confidence=0.624)
+    _observe(core, "mid", "rel_kept", "kept", "e2", confidence=0.625)
+    _observe(core, "mid", "rel_dropped", "dropped", "e3", confidence=0.624)
 
     result = activate(
         Resolver(core),
@@ -46,19 +46,19 @@ def test_rc7_second_hop_decay_boundary_is_enforced_exactly():
         min_confidence=0.45,
     )
 
-    assert "mid | rel | kept" in result.selected_context
-    assert "mid | rel | dropped" not in result.selected_context
+    assert "mid | rel_kept | kept" in result.selected_context
+    assert "mid | rel_dropped | dropped" not in result.selected_context
 
 
 def test_rc7_oversized_relation_does_not_block_smaller_relation():
     core = EvidenceCore()
-    _observe(core, "root", "rel", "x" * 120, "large", confidence=1.0)
-    _observe(core, "root", "rel", "ok", "small", confidence=0.9)
+    _observe(core, "root", "rel_large", "x" * 120, "large", confidence=1.0)
+    _observe(core, "root", "rel_small", "ok", "small", confidence=0.9)
 
     result = activate(Resolver(core), concept="root", session_id="rc7:d", depth=1, budget=32)
 
     assert result.status == "HIT"
-    assert result.selected_context == "root | rel | ok"
+    assert result.selected_context == "root | rel_small | ok"
     assert result.memory_ids == ("small",)
 
 
