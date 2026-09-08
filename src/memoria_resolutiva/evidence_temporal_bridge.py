@@ -51,9 +51,8 @@ class EvidenceProjectionBatch:
 class EpistemicPromotionPolicy:
     """Policy deciding whether an EvidenceCore edge may affect factual temporal state.
 
-    By default only direct user-confirmed and sensor-observed evidence is promoted.
-    LLM, public, derived and inferred evidence remains available for audit/reasoning
-    until a separate explicit learning gate creates/promotes trusted evidence.
+    LLM-generated output is intentionally non-promotable by default. The policy
+    separates evidence availability/audit from mutation of CURRENT/HISTORY.
     """
 
     def __init__(
@@ -80,8 +79,8 @@ class EpistemicPromotionPolicy:
 def classify_epistemic_source(edge: EvidenceEdge) -> EpistemicSource:
     """Map existing provenance/origin vocabulary into the explicit epistemic model.
 
-    Unknown provenance is SYSTEM_INFERRED rather than USER_CONFIRMED, so an unfamiliar
-    source cannot silently mutate factual temporal state.
+    This is intentionally conservative. Unknown provenance is SYSTEM_INFERRED rather
+    than USER_CONFIRMED, so an unfamiliar source cannot silently become factual state.
     """
     tags = {
         edge.provenance.strip().casefold().replace("-", "_").replace(" ", "_"),
@@ -103,8 +102,9 @@ def classify_epistemic_source(edge: EvidenceEdge) -> EpistemicSource:
 class EvidenceTemporalBridge:
     """Project EvidenceCore history into temporal state without changing EvidenceCore.
 
-    The bridge never deletes or rewrites source evidence. Every edge yields an audit
-    projection. Only policy-approved edges create a temporal event.
+    The bridge never deletes or rewrites source evidence. Every first-seen edge yields
+    an audit projection. Only policy-approved edges create a temporal event. Projection
+    audit can be restored after restart so an evidence id remains an idempotency boundary.
     """
 
     def __init__(
@@ -120,6 +120,32 @@ class EvidenceTemporalBridge:
         self.store = store
         self.policy = policy or EpistemicPromotionPolicy()
         self._projected_evidence_ids: set[str] = set()
+        self._projection_audit: list[EvidenceProjection] = []
+
+    def iter_projections(self) -> tuple[EvidenceProjection, ...]:
+        return tuple(self._projection_audit)
+
+    def restore_projection_audit(self, projections: Iterable[EvidenceProjection]) -> None:
+        restored = tuple(projections)
+        ids = [item.evidence_id for item in restored]
+        if len(ids) != len(set(ids)):
+            raise ValueError("projection audit contains duplicate evidence_id")
+        events_by_sequence = {event.sequence: event for event in self.store.iter_events()}
+        for item in restored:
+            if not item.evidence_id.strip():
+                raise ValueError("projection evidence_id must be non-empty")
+            if not 0.0 <= item.confidence <= 1.0:
+                raise ValueError("projection confidence must be in [0, 1]")
+            if item.promoted:
+                if item.temporal_event is None:
+                    raise ValueError("promoted projection requires temporal_event")
+                persisted = events_by_sequence.get(item.temporal_event.sequence)
+                if persisted != item.temporal_event:
+                    raise ValueError("projection references unknown or mismatched temporal_event")
+            elif item.temporal_event is not None:
+                raise ValueError("quarantined projection cannot reference temporal_event")
+        self._projection_audit = list(restored)
+        self._projected_evidence_ids = set(ids)
 
     def project_edge(self, edge: EvidenceEdge) -> EvidenceProjection:
         if edge.evidence_id in self._projected_evidence_ids:
@@ -146,8 +172,7 @@ class EvidenceTemporalBridge:
                 source=source.value,
                 raw_memory_address=raw.raw_memory_address,
             )
-        self._projected_evidence_ids.add(edge.evidence_id)
-        return EvidenceProjection(
+        projection = EvidenceProjection(
             evidence_id=edge.evidence_id,
             epistemic_source=source,
             promoted=allowed,
@@ -157,6 +182,9 @@ class EvidenceTemporalBridge:
             origin=edge.origin,
             confidence=edge.confidence,
         )
+        self._projected_evidence_ids.add(edge.evidence_id)
+        self._projection_audit.append(projection)
+        return projection
 
     def project_history(
         self,
