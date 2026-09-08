@@ -66,3 +66,12 @@ jobs:
         env:
           BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
         run: python -m pytest -q tests/test_topological_bdr_persistence.py
+      - name: Record BDR versus SQLite latency and growth evidence
+        env:
+          BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
+        run: python benchmarks/topological_persistence_benchmark.py | tee topological-persistence-benchmark.json
+      - name: Upload benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: topological-persistence-benchmark
+          path: topological-persistence-benchmark.json
