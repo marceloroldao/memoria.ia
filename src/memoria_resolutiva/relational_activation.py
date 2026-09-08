@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
 import unicodedata
 
 
@@ -130,12 +129,7 @@ def activate(
                 continue
             base_confidence = float(getattr(edge, "confidence", 0.0) or 0.0)
             effective = max(0.0, min(1.0, base_confidence * hop_factor))
-            if effective < min_confidence and not math.isclose(
-                effective,
-                min_confidence,
-                rel_tol=0.0,
-                abs_tol=1e-12,
-            ):
+            if effective < min_confidence:
                 continue
             selected.append((hop, effective, edge))
             evidence_id = str(getattr(edge, "evidence_id", "") or "")
@@ -153,9 +147,6 @@ def activate(
     if not selected:
         return RelationalActivationResult("UNRESOLVED", 0.0, "", tuple(concepts))
 
-    # Prefer closer and stronger relations, but a relation that does not fit the
-    # remaining budget must not prevent a later, smaller relevant relation from
-    # being selected.
     selected.sort(key=lambda row: (row[0], -row[1], _render_edge(row[2])))
     rendered: list[str] = []
     rendered_ids: list[str] = []
