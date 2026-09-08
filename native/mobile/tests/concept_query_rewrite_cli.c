@@ -47,6 +47,8 @@ int main(int argc, char **argv) {
     memoria_concept_index index;
     memoria_concept_rewrite_result result;
     size_t i;
+    char stdin_query[4096];
+    const char *query;
     const char *voltage_aliases[] = {"ddp", "diferença de potencial", "potential difference"};
     const char *finance_aliases[] = {"bank"};
     const char *finance_cues[] = {"loan", "credit"};
@@ -65,13 +67,26 @@ int main(int argc, char **argv) {
         river_aliases, 1, river_cues, 2
     );
 
-    if (argc != 2) return 2;
+    if (argc == 2) {
+        query = argv[1];
+    } else if (argc == 1) {
+        size_t length;
+        if (fgets(stdin_query, sizeof(stdin_query), stdin) == NULL) return 2;
+        length = strlen(stdin_query);
+        while (length > 0 && (stdin_query[length - 1] == '\n' || stdin_query[length - 1] == '\r')) {
+            stdin_query[--length] = '\0';
+        }
+        query = stdin_query;
+    } else {
+        return 2;
+    }
+
     memoria_concept_index_init(&index);
     if (memoria_concept_register(&index, &voltage) != MEMORIA_CONCEPT_OK ||
         memoria_concept_register(&index, &finance) != MEMORIA_CONCEPT_OK ||
         memoria_concept_register(&index, &river) != MEMORIA_CONCEPT_OK) return 3;
 
-    result = memoria_concept_rewrite_query(&index, "semantic", argv[1], 6);
+    result = memoria_concept_rewrite_query(&index, "semantic", query, 6);
     printf("%s\t%s\t%s\t", status_name(result.status), reason_name(result.reason), result.rewritten_query);
     for (i = 0; i < result.concept_count; ++i) {
         if (i) putchar(',');
