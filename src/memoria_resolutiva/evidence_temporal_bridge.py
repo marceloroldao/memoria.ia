@@ -20,7 +20,6 @@ class EpistemicSource(str, Enum):
 _PROMOTABLE_DEFAULT = frozenset({
     EpistemicSource.USER_CONFIRMED,
     EpistemicSource.SENSOR_OBSERVED,
-    EpistemicSource.EXTERNAL_PUBLIC,
 })
 
 
@@ -52,8 +51,9 @@ class EvidenceProjectionBatch:
 class EpistemicPromotionPolicy:
     """Policy deciding whether an EvidenceCore edge may affect factual temporal state.
 
-    LLM-generated output is intentionally non-promotable by default. The policy
-    separates evidence availability/audit from mutation of CURRENT/HISTORY.
+    By default only direct user-confirmed and sensor-observed evidence is promoted.
+    LLM, public, derived and inferred evidence remains available for audit/reasoning
+    until a separate explicit learning gate creates/promotes trusted evidence.
     """
 
     def __init__(
@@ -80,8 +80,8 @@ class EpistemicPromotionPolicy:
 def classify_epistemic_source(edge: EvidenceEdge) -> EpistemicSource:
     """Map existing provenance/origin vocabulary into the explicit epistemic model.
 
-    This is intentionally conservative. Unknown provenance is SYSTEM_INFERRED rather
-    than USER_CONFIRMED, so an unfamiliar source cannot silently become factual state.
+    Unknown provenance is SYSTEM_INFERRED rather than USER_CONFIRMED, so an unfamiliar
+    source cannot silently mutate factual temporal state.
     """
     tags = {
         edge.provenance.strip().casefold().replace("-", "_").replace(" ", "_"),
