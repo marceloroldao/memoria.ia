@@ -107,12 +107,23 @@ def main() -> None:
         if sqlite_addresses.metrics() != bdr_addresses.metrics():
             raise AssertionError("backend topology metrics parity failed")
 
+        original_events = store.iter_events()
+        original_nodes = addresses.iter_nodes()
+        original_raw = addresses.iter_raw_memories()
+        original_transitions = store.iter_transitions()
+        sqlite_raw = sqlite_addresses.iter_raw_memories()
+        bdr_raw = bdr_addresses.iter_raw_memories()
+        sqlite_events = sqlite_store.iter_events()
+        bdr_events = bdr_store.iter_events()
+        sqlite_transitions = sqlite_store.iter_transitions()
+        bdr_transitions = bdr_store.iter_transitions()
+
         report = {
             "fixture": {
-                "observations": len(store._events),
-                "nodes": len(addresses._nodes),
-                "raw_memories": len(addresses._raw),
-                "transitions": len(store._transitions),
+                "observations": len(original_events),
+                "nodes": len(original_nodes),
+                "raw_memories": len(original_raw),
+                "transitions": len(original_transitions),
                 "node_reuse_ratio": baseline_metrics["node_reuse_ratio"],
                 "branching_factor": baseline_metrics["branching_factor"],
                 "duplicate_address_count": baseline_metrics["duplicate_address_count"],
@@ -137,9 +148,9 @@ def main() -> None:
             "parity": {
                 "current_state": True,
                 "topology_metrics": True,
-                "raw_count": len(sqlite_addresses._raw) == len(bdr_addresses._raw),
-                "event_count": len(sqlite_store._events) == len(bdr_store._events),
-                "transition_count": len(sqlite_store._transitions) == len(bdr_store._transitions),
+                "raw_count": len(sqlite_raw) == len(bdr_raw),
+                "event_count": len(sqlite_events) == len(bdr_events),
+                "transition_count": len(sqlite_transitions) == len(bdr_transitions),
             },
         }
         print(json.dumps(report, indent=2, sort_keys=True))
