@@ -49,11 +49,8 @@ class TemporalQueryResolver:
         self.store = store
 
     def _event_rows(self) -> tuple[tuple[object, str, str, str], ...]:
-        # The topological store is deliberately an isolated prototype. Keep this
-        # adapter read-only: it inspects persisted-in-memory occurrences and never
-        # mutates or promotes them while planning a query.
         rows: list[tuple[object, str, str, str]] = []
-        for event in self.store._events:  # noqa: SLF001 - experimental sidecar boundary
+        for event in self.store.iter_events():
             subject = self.store.addresses.node(event.subject_address)
             attribute = self.store.addresses.node(event.attribute_address)
             value = self.store.addresses.node(event.value_address)
