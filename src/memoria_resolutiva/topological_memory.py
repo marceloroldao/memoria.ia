@@ -104,6 +104,66 @@ class AddressSpace:
         raw = self._raw.get(raw_memory_address)
         return None if raw is None else raw.text
 
+    def iter_nodes(self) -> tuple[TopologicalNode, ...]:
+        """Return a deterministic read-only catalog view of all nodes."""
+        return tuple(sorted(self._nodes.values(), key=lambda item: item.address))
+
+    def iter_raw_memories(self) -> tuple[RawMemory, ...]:
+        """Return exact raw provenance records in deterministic address order."""
+        return tuple(sorted(self._raw.values(), key=lambda item: item.address))
+
+    def snapshot_counters(self) -> dict[str, int]:
+        return {
+            "ingestions": self._ingestions,
+            "new_nodes": self._new_nodes,
+            "reused_nodes": self._reused_nodes,
+        }
+
+    def restore_snapshot(
+        self,
+        *,
+        nodes: Iterable[TopologicalNode],
+        raw_memories: Iterable[RawMemory],
+        ingestions: int,
+        new_nodes: int,
+        reused_nodes: int,
+    ) -> None:
+        """Replace this empty address space from validated persistence records."""
+        if self._nodes or self._raw or self._ingestions or self._new_nodes or self._reused_nodes:
+            raise ValueError("address space must be empty before restore")
+        restored: dict[str, TopologicalNode] = {}
+        for source in nodes:
+            if source.address in restored:
+                raise ValueError(f"duplicate restored node address: {source.address}")
+            restored[source.address] = TopologicalNode(
+                address=source.address,
+                kind=source.kind,
+                canonical_value=source.canonical_value,
+                occurrences=int(source.occurrences),
+                components=tuple(source.components),
+                edges_out=set(source.edges_out),
+                edges_in=set(),
+            )
+        for node in restored.values():
+            for child_address in node.components:
+                if child_address not in restored:
+                    raise ValueError(f"restored component references unknown node: {child_address}")
+            for child_address in node.edges_out:
+                child = restored.get(child_address)
+                if child is None:
+                    raise ValueError(f"restored edge references unknown node: {child_address}")
+                child.edges_in.add(node.address)
+        raw_map: dict[str, RawMemory] = {}
+        for raw in raw_memories:
+            if raw.address in raw_map:
+                raise ValueError(f"duplicate restored raw address: {raw.address}")
+            raw_map[raw.address] = raw
+        self._nodes = restored
+        self._raw = raw_map
+        self._ingestions = int(ingestions)
+        self._new_nodes = int(new_nodes)
+        self._reused_nodes = int(reused_nodes)
+
     def ingest_text(self, text: str) -> IngestionResult:
         if not text or not text.strip():
             raise ValueError("text must be non-empty")
@@ -120,8 +180,6 @@ class AddressSpace:
             canonical_word = _canonical(surface)
             symbol_nodes = [self._intern("symbol", char)[0] for char in canonical_word if not char.isspace()]
 
-            # Prefix fragments make the lower trajectory inspectable without forcing
-            # every possible substring into memory.
             for length in range(2, len(canonical_word)):
                 prefix = canonical_word[:length]
                 prefix_components = tuple(node.address for node in symbol_nodes[:length])
@@ -221,6 +279,60 @@ class TemporalEventStore:
 
     def _value_address(self, value: str) -> str:
         return self.addresses._intern("value", value)[0].address
+
+    @property
+    def next_sequence(self) -> int:
+        return self._next_sequence
+
+    def iter_events(self) -> tuple[TemporalEvent, ...]:
+        return tuple(sorted(self._events, key=lambda item: item.sequence))
+
+    def iter_transitions(self) -> tuple[Transition, ...]:
+        return tuple(self._transitions)
+
+    def restore_history(
+        self,
+        *,
+        events: Iterable[TemporalEvent],
+        transitions: Iterable[Transition],
+        next_sequence: int,
+    ) -> None:
+        """Restore an empty temporal store from persistence records."""
+        if self._events or self._transitions or self._next_sequence != 1:
+            raise ValueError("temporal store must be empty before restore")
+        restored_events = sorted(tuple(events), key=lambda item: item.sequence)
+        sequences = [event.sequence for event in restored_events]
+        if len(sequences) != len(set(sequences)):
+            raise ValueError("duplicate temporal sequence in restored history")
+        if any(sequence <= 0 for sequence in sequences):
+            raise ValueError("temporal sequence must be positive")
+        known_nodes = {node.address for node in self.addresses.iter_nodes()}
+        known_raw = {raw.address for raw in self.addresses.iter_raw_memories()}
+        for event in restored_events:
+            for address in (event.subject_address, event.attribute_address, event.value_address):
+                if address not in known_nodes:
+                    raise ValueError(f"restored event references unknown node: {address}")
+            if event.raw_memory_address is not None and event.raw_memory_address not in known_raw:
+                raise ValueError(f"restored event references unknown raw memory: {event.raw_memory_address}")
+        restored_transitions = tuple(transitions)
+        event_sequences = set(sequences)
+        for transition in restored_transitions:
+            if transition.from_sequence not in event_sequences or transition.to_sequence not in event_sequences:
+                raise ValueError("restored transition references unknown event sequence")
+            for address in (
+                transition.subject_address,
+                transition.attribute_address,
+                transition.from_value_address,
+                transition.to_value_address,
+            ):
+                if address not in known_nodes:
+                    raise ValueError(f"restored transition references unknown node: {address}")
+        minimum_next = (max(sequences) + 1) if sequences else 1
+        if int(next_sequence) < minimum_next:
+            raise ValueError("restored next_sequence would move temporal time backward")
+        self._events = list(restored_events)
+        self._transitions = list(restored_transitions)
+        self._next_sequence = int(next_sequence)
 
     def observe_state(
         self,
