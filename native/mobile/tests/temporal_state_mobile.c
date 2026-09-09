@@ -16,6 +16,11 @@ static memoria_mobile_status compile_context(memoria_mobile_handle *h, const cha
     return memoria_mobile_compile_context_json(h,in,out);
 }
 
+static memoria_mobile_status validate_response(memoria_mobile_handle *h, const char *json, memoria_mobile_buffer *out) {
+    memoria_mobile_buffer in = {(const uint8_t *)json, strlen(json)};
+    return memoria_mobile_validate_response_json(h,in,out);
+}
+
 static int contains(memoria_mobile_buffer b, const char *needle) {
     return b.data && strstr((const char *)b.data,needle) != NULL;
 }
@@ -48,6 +53,38 @@ static int assert_alpha_temporal(memoria_mobile_handle *h) {
     CHECK(!contains(out,"selected_context"));
     CHECK(!contains(out,"broken"));
     memoria_mobile_free_buffer(out);
+    return 0;
+}
+
+static int assert_response_validation(memoria_mobile_handle *h) {
+    memoria_mobile_buffer out = {0};
+
+    CHECK(validate_response(h,
+        "{\"query\":\"what is device alpha mode now?\",\"response_id\":\"r-conflict\",\"model_id\":\"local-llm\",\"response_text\":\"device alpha mode is broken\"}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"candidate_memory_id\":\"response:r-conflict\""));
+    CHECK(contains(out,"\"source_type\":\"assistant_generated\""));
+    CHECK(contains(out,"\"promoted\":false"));
+    CHECK(contains(out,"\"overall_status\":\"CONFLICTS_WITH_CONTEXT\""));
+    CHECK(contains(out,"\"validation_status\":\"CONFLICTS_WITH_CONTEXT\""));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(assert_alpha_temporal(h) == 0);
+
+    CHECK(validate_response(h,
+        "{\"query\":\"what is device alpha mode now?\",\"response_id\":\"r-supported\",\"model_id\":\"local-llm\",\"response_text\":\"device alpha mode is active\"}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"overall_status\":\"SUPPORTED_BY_CONTEXT\""));
+    CHECK(contains(out,"\"promoted\":false"));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(assert_alpha_temporal(h) == 0);
+
+    CHECK(validate_response(h,
+        "{\"query\":\"what is device alpha mode now?\",\"response_id\":\"r-unverified\",\"model_id\":\"local-llm\",\"response_text\":\"device gamma mode is offline\"}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"overall_status\":\"UNVERIFIED\""));
+    CHECK(contains(out,"\"promoted\":false"));
+    memoria_mobile_free_buffer(out);
+    CHECK(assert_alpha_temporal(h) == 0);
     return 0;
 }
 
@@ -121,6 +158,7 @@ int main(void) {
     CHECK(assert_alpha_temporal(h) == 0);
     CHECK(assert_beta_temporal(h) == 0);
     CHECK(assert_session_trajectory_temporal(h) == 0);
+    CHECK(assert_response_validation(h) == 0);
 
     CHECK(compile_context(h,"{\"query\":\"what is unknown mode?\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out,"\"status\":\"UNRESOLVED\""));
@@ -135,6 +173,12 @@ int main(void) {
     CHECK(assert_alpha_temporal(h) == 0);
     CHECK(assert_beta_temporal(h) == 0);
     CHECK(assert_session_trajectory_temporal(h) == 0);
+
+    CHECK(validate_response(h,
+        "{\"query\":\"what is device alpha mode now?\",\"response_id\":\"r-conflict\",\"model_id\":\"local-llm\",\"response_text\":\"device alpha mode is broken\"}",
+        &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
+    CHECK(out.data == NULL);
+    CHECK(assert_alpha_temporal(h) == 0);
 
     CHECK(call(h,0,"{\"query\":\"what was unknown mode before and what is current now?\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
     memoria_mobile_free_buffer(out);

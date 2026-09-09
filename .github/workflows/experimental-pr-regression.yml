@@ -7,6 +7,7 @@ on:
       - freeze/topological-temporal-v1
       - freeze/topological-temporal-v1-integration-qualified
       - freeze/topological-conversation-runtime-v1-integration-qualified
+      - freeze/mobile-cognitive-packet-v1-integration-qualified
   workflow_dispatch:
 
 concurrency:

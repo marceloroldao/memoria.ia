@@ -6,6 +6,7 @@ on:
       - integration/v1.0-candidate
       - main
       - freeze/topological-conversation-runtime-v1-integration-qualified
+      - freeze/mobile-cognitive-packet-v1-integration-qualified
     paths:
       - "include/memoria_mobile.h"
       - "native/mobile/**"
@@ -104,6 +105,7 @@ jobs:
           grep -q "memoria_mobile_learn_turn_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_resolve_context_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_compile_context_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_validate_response_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_store_episode_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_recall_episode_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_export_snapshot_json" memoria-mobile-symbols.txt
