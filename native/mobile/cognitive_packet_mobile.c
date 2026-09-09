@@ -91,6 +91,58 @@ static int append_field(char *out, size_t cap, size_t *used, const char *json, c
     return append_text(out, cap, used, prefix) && append_value_or(out, cap, used, json, key, fallback);
 }
 
+static int append_existing_request_field(
+    char *out,
+    size_t cap,
+    size_t *used,
+    const char *json,
+    const char *key,
+    int *field_count
+) {
+    const char *start = find_value_start(json, key);
+    const char *end = find_value_end(start);
+    char prefix[160];
+    if (!start || !end) return 1;
+    if (*field_count > 0 && !append_text(out, cap, used, ",")) return 0;
+    if (snprintf(prefix, sizeof(prefix), "\"%s\":", key) < 0) return 0;
+    if (!append_text(out, cap, used, prefix) || !append_slice(out, cap, used, start, end)) return 0;
+    ++(*field_count);
+    return 1;
+}
+
+/*
+ * Context Compiler owns a stable semantic pass. It always supplies the reserved
+ * concept namespace `semantic` unless the caller explicitly selects another one.
+ * Volatile trajectory is consulted only when the stable pass is unresolved.
+ */
+static char *build_stable_request(const char *json) {
+    static const char *keys[] = {
+        "query", "namespace", "concept_namespace", "relation_source", "relation_target"
+    };
+    char *out;
+    size_t used = 0, i;
+    int field_count = 0;
+    int has_concept_namespace;
+    if (!json || !find_value_start(json, "query")) return NULL;
+    has_concept_namespace = find_value_start(json, "concept_namespace") != NULL;
+    out = (char *)malloc(PACKET_CAP);
+    if (!out) return NULL;
+    out[0] = 0;
+    if (!append_text(out, PACKET_CAP, &used, "{")) { free(out); return NULL; }
+    for (i = 0; i < sizeof(keys) / sizeof(keys[0]); ++i) {
+        if (!append_existing_request_field(out, PACKET_CAP, &used, json, keys[i], &field_count)) {
+            free(out);
+            return NULL;
+        }
+    }
+    if (!has_concept_namespace) {
+        if (field_count > 0 && !append_text(out, PACKET_CAP, &used, ",")) { free(out); return NULL; }
+        if (!append_text(out, PACKET_CAP, &used, "\"concept_namespace\":\"semantic\"")) { free(out); return NULL; }
+    }
+    if (!append_text(out, PACKET_CAP, &used, "}")) { free(out); return NULL; }
+    return out;
+}
+
 static memoria_mobile_status set_owned_response(memoria_mobile_buffer *out, char *json, size_t used, memoria_mobile_status status) {
     if (!out || !json) { free(json); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
     out->data = (const uint8_t *)json;
@@ -104,15 +156,39 @@ memoria_mobile_status memoria_mobile_compile_context_json(
     memoria_mobile_buffer *response_json
 ) {
     memoria_mobile_buffer resolved = {0};
+    memoria_mobile_buffer stable_buffer = {0};
     memoria_mobile_status status;
+    char *request_source = NULL;
+    char *stable_request = NULL;
     char *source = NULL;
     char *packet = NULL;
     size_t used = 0;
+    int has_conversation_window;
 
     if (!handle || !request_json.data || request_json.size == 0 || !response_json)
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
 
-    status = memoria_mobile_resolve_context_json(handle, request_json, &resolved);
+    request_source = (char *)malloc(request_json.size + 1u);
+    if (!request_source) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    memcpy(request_source, request_json.data, request_json.size);
+    request_source[request_json.size] = 0;
+    has_conversation_window = find_value_start(request_source, "conversation_window") != NULL;
+
+    stable_request = build_stable_request(request_source);
+    if (!stable_request) { free(request_source); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    stable_buffer.data = (const uint8_t *)stable_request;
+    stable_buffer.size = strlen(stable_request);
+    status = memoria_mobile_resolve_context_json(handle, stable_buffer, &resolved);
+
+    if (status == MEMORIA_MOBILE_UNRESOLVED && has_conversation_window) {
+        if (resolved.data) memoria_mobile_free_buffer(resolved);
+        resolved = (memoria_mobile_buffer){0};
+        status = memoria_mobile_resolve_context_json(handle, request_json, &resolved);
+    }
+
+    free(stable_request);
+    free(request_source);
+
     if (!resolved.data || resolved.size == 0) return status;
 
     source = (char *)malloc(resolved.size + 1u);

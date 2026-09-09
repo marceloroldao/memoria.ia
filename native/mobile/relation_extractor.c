@@ -29,19 +29,6 @@ static const char *skip_spaces(const char *p) {
     return p;
 }
 
-static const char *skip_optional_relative_marker(const char *p) {
-    const char *end;
-    p = skip_spaces(p);
-    if (*p == ',') {
-        ++p;
-        p = skip_spaces(p);
-    }
-    if (keyword_at(p, "que", &end) && (!*end || isspace((unsigned char)*end))) {
-        p = skip_spaces(end);
-    }
-    return p;
-}
-
 static int is_token_start(const char *text, const char *p) {
     if (p == text) return 1;
     return !is_word_byte((unsigned char)p[-1]);
@@ -161,6 +148,16 @@ static const char *skip_object_article(const char *p) {
     return p;
 }
 
+static const char *skip_optional_relative_marker(const char *p) {
+    const char *end;
+    p = skip_spaces(p);
+    if (*p == ',') p = skip_spaces(p + 1);
+    if (keyword_at(p, "que", &end)) {
+        if (*end && isspace((unsigned char)*end)) return skip_spaces(end);
+    }
+    return p;
+}
+
 static int parse_legacy_is_clause(
     const char *start,
     const char *end,
@@ -222,15 +219,15 @@ static int parse_copular_at(
 }
 
 /*
- * Deterministic natural naming form. This deliberately uses the nearest stable
- * noun-like token immediately before the naming marker instead of attempting
- * general coreference or semantic parsing. It also accepts an explicit relative
- * marker between entity and naming phrase. Examples:
- *   "meu gato se chama Lotus" -> gato is Lotus
- *   "eu tenho um gato que se chama Lotus" -> gato is Lotus
- *   "irmão, que se chama Vibe" -> irmão is Vibe
- *   "gato chamado Alt" -> gato is Alt
- *   "node named Orion" -> node is Orion
+ * Deterministic natural naming form. The named value is the stable entity and
+ * the nearest noun-like token before the marker is its type/role. This makes
+ * naming compatible with generic collection queries without domain tables:
+ *   "meu gato se chama Lotus" -> Lotus is gato
+ *   "sensor se chama Atlas" -> Atlas is sensor
+ *   "node named Orion" -> Orion is node
+ *   "irmão, que se chama Vibe" -> Vibe is irmão
+ *
+ * No general pronoun/coreference is attempted here.
  */
 static int parse_naming_at(
     const char *text,
@@ -238,13 +235,13 @@ static int parse_naming_at(
     memoria_relation *row,
     const char **end_out
 ) {
-    char left[96], right[96];
+    char type_term[96], named_entity[96];
     const char *p, *after_left, *marker_end, *after_right;
     int matched = 0;
 
     if (!is_token_start(text, start)) return 0;
-    if (!copy_word(start, left, sizeof(left), &after_left)) return 0;
-    if (!is_stable_relation_term(left)) return 0;
+    if (!copy_word(start, type_term, sizeof(type_term), &after_left)) return 0;
+    if (!is_stable_relation_term(type_term)) return 0;
     p = skip_optional_relative_marker(after_left);
 
     if (keyword_at(p, "se", &marker_end) && *marker_end && isspace((unsigned char)*marker_end)) {
@@ -258,13 +255,13 @@ static int parse_naming_at(
     if (*marker_end && !isspace((unsigned char)*marker_end)) return 0;
 
     p = skip_spaces(marker_end);
-    if (!copy_word(p, right, sizeof(right), &after_right)) return 0;
-    if (!is_stable_relation_term(right)) return 0;
+    if (!copy_word(p, named_entity, sizeof(named_entity), &after_right)) return 0;
+    if (!is_stable_relation_term(named_entity)) return 0;
 
-    strncpy(row->subject, left, sizeof(row->subject) - 1);
+    strncpy(row->subject, named_entity, sizeof(row->subject) - 1);
     row->subject[sizeof(row->subject) - 1] = 0;
     strcpy(row->predicate, "is");
-    strncpy(row->object, right, sizeof(row->object) - 1);
+    strncpy(row->object, type_term, sizeof(row->object) - 1);
     row->object[sizeof(row->object) - 1] = 0;
     row->confidence = 0.95;
     if (end_out) *end_out = after_right;
@@ -341,7 +338,6 @@ size_t memoria_extract_relations(const char *text, memoria_relation *out, size_t
 
     if (!text || !out || capacity == 0) return 0;
 
-    /* Preserve the mobile/native compound-subject contract for English `is`. */
     segment = text;
     for (p = text;; ++p) {
         if (is_clause_sep(*p)) {
@@ -353,21 +349,18 @@ size_t memoria_extract_relations(const char *text, memoria_relation *out, size_t
         }
     }
 
-    /* Product contract: collect explicit compact copular relations next. */
     for (p = text; *p && count < capacity; ++p) {
         if (parse_copular_at(text, p, &candidate, &match_end)) {
             add_unique(out, &count, capacity, &candidate);
         }
     }
 
-    /* Deterministic naming forms are explicit factual relations too. */
     for (p = text; *p && count < capacity; ++p) {
         if (parse_naming_at(text, p, &candidate, &match_end)) {
             add_unique(out, &count, capacity, &candidate);
         }
     }
 
-    /* Then collect lower-confidence Portuguese elliptic relations. */
     for (p = text; *p && count < capacity; ++p) {
         if (parse_elliptic_at(text, p, &candidate, &match_end)) {
             add_unique(out, &count, capacity, &candidate);
