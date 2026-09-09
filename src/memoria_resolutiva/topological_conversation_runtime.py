@@ -52,6 +52,8 @@ class TopologicalConversationRuntime:
         self.conversation = conversation
         self.namespace = namespace
         self.evidence = evidence or EvidenceCore()
+        if store is not None and addresses is None:
+            addresses = store.addresses
         self.addresses = addresses or AddressSpace()
         self.store = store or TemporalEventStore(self.addresses)
         if self.store.addresses is not self.addresses:
