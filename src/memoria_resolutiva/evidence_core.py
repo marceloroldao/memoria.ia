@@ -137,6 +137,15 @@ class EvidenceCore:
             rows = [e for e in rows if e.epoch <= epoch]
         return tuple(rows)
 
+    def iter_evidence(self) -> tuple[EvidenceEdge, ...]:
+        """Return the complete evidence catalog across namespaces in insertion order.
+
+        This does not project current state and does not change namespace-scoped
+        `evidence_history` semantics. It exists for cross-namespace audit/restart
+        validation where evidence ids must be resolved independently of namespace.
+        """
+        return tuple(self._edges)
+
     def evidence_history(self, *, namespace: str | None = None, epoch: int | None = None) -> tuple[EvidenceEdge, ...]:
         """Return preserved evidence rows without collapsing them to current state.
 
@@ -260,63 +269,74 @@ class EvidenceCore:
             raise ValueError("min_independent_origins must be >= 1")
         if min_origin_reliability is not None and not 0.0 <= min_origin_reliability <= 1.0:
             raise ValueError("min_origin_reliability must be in [0, 1]")
-
-        logical: dict[tuple[str, str, str], list[EvidenceEdge]] = defaultdict(list)
+        if reliability_metric not in {"posterior", "wilson"}:
+            raise ValueError("reliability_metric must be 'posterior' or 'wilson'")
+        source_key = self._key(source)
+        target_key = self._key(target)
+        adjacency: dict[str, list[EvidenceEdge]] = defaultdict(list)
         for edge in self.active_edges(namespace=namespace, epoch=epoch):
-            logical[(self._key(edge.subject), edge.predicate, self._key(edge.object))].append(edge)
+            adjacency[self._key(edge.subject)].append(edge)
 
-        adjacency: dict[str, list[tuple[EvidenceEdge, tuple[str, ...], float, float]]] = defaultdict(list)
-        canonical: dict[str, str] = {}
-        for (s, _predicate, o), rows in logical.items():
-            by_origin: dict[str, list[EvidenceEdge]] = defaultdict(list)
-            for row in rows:
-                by_origin[row.origin].append(row)
-            accepted: list[tuple[str, EvidenceEdge, float]] = []
-            for origin, origin_rows in by_origin.items():
-                strongest = max(origin_rows, key=lambda e: e.confidence)
-                if strongest.confidence < min_confidence:
-                    continue
-                reliability = self.origin_reliability(origin, metric=reliability_metric)
-                if min_origin_reliability is not None and reliability < min_origin_reliability:
-                    continue
-                accepted.append((origin, strongest, reliability))
-            if len(accepted) < min_independent_origins:
-                continue
-            accepted.sort(key=lambda item: item[0])
-            representative = max(rows, key=lambda e: (e.epoch, e.evidence_id))
-            origins = tuple(item[0] for item in accepted)
-            best_conf = max(item[1].confidence for item in accepted)
-            reliability_floor = min(item[2] for item in accepted)
-            adjacency[s].append((representative, origins, best_conf, reliability_floor))
-            canonical.setdefault(s, representative.subject)
-            canonical.setdefault(o, representative.object)
-
-        source_key, target_key = self._key(source), self._key(target)
-        queue = [(source_key, (source,), (), (), (), (), (), ())]
-        paths: list[EvidencePath] = []
-        while queue and len(paths) < max_paths:
-            node, nodes, predicates, evidence_ids, texts, origins_by_edge, confs, rels = queue.pop(0)
+        queue = deque([(source_key, (source,), (), (), (), (), (), 1.0, frozenset({source_key}))])
+        found: list[EvidencePath] = []
+        unsupported_claims = 0
+        while queue and len(found) < max_paths:
+            node, nodes, predicates, evidence_ids, texts, origins_by_edge, confidences, confidence, seen = queue.popleft()
             if len(predicates) >= max_hops:
                 continue
-            for edge, origins, conf, rel in sorted(
-                adjacency.get(node, ()), key=lambda x: (self._key(x[0].object), x[0].predicate, x[0].evidence_id)
-            ):
-                nxt = self._key(edge.object)
-                if nxt in {self._key(n) for n in nodes}:
+            for edge in adjacency.get(node, ()):
+                edge_origins = tuple(sorted({part.strip() for part in edge.origin.split("+") if part.strip()})) or (edge.origin,)
+                independent = len(edge_origins)
+                reliability_values = tuple(self.origin_reliability(origin, metric=reliability_metric) for origin in edge_origins)
+                reliability_floor = min(reliability_values) if reliability_values else 1.0
+                next_confidence = confidence * edge.confidence * reliability_floor
+                if edge.confidence < min_confidence or independent < min_independent_origins:
+                    unsupported_claims += 1
                     continue
-                nn = (*nodes, canonical.get(nxt, edge.object))
-                np = (*predicates, edge.predicate)
-                ne = (*evidence_ids, edge.evidence_id)
-                nt = (*texts, edge.source_text)
-                no = (*origins_by_edge, origins)
-                nc = (*confs, conf)
-                nr = (*rels, rel)
-                if nxt == target_key:
-                    paths.append(EvidencePath(
-                        nn, np, ne, nt, no, nc, nr, len(np), min(nc),
-                        min(len(x) for x in no), min(nr)
+                if min_origin_reliability is not None and reliability_floor < min_origin_reliability:
+                    unsupported_claims += 1
+                    continue
+                next_node = self._key(edge.object)
+                if next_node in seen:
+                    continue
+                next_nodes = nodes + (edge.object,)
+                next_predicates = predicates + (edge.predicate,)
+                next_ids = evidence_ids + (edge.evidence_id,)
+                next_texts = texts + (edge.source_text,)
+                next_origins = origins_by_edge + (edge_origins,)
+                next_confidences = confidences + (edge.confidence,)
+                next_seen = seen | {next_node}
+                if next_node == target_key:
+                    all_reliabilities = tuple(
+                        self.origin_reliability(origin, metric=reliability_metric)
+                        for origins in next_origins for origin in origins
+                    )
+                    found.append(EvidencePath(
+                        next_nodes,
+                        next_predicates,
+                        next_ids,
+                        next_texts,
+                        next_origins,
+                        next_confidences,
+                        all_reliabilities,
+                        len(next_predicates),
+                        next_confidence,
+                        min((len(origins) for origins in next_origins), default=0),
+                        min(all_reliabilities, default=1.0),
                     ))
+                    if len(found) >= max_paths:
+                        break
                 else:
-                    queue.append((nxt, nn, np, ne, nt, no, nc, nr))
-        paths.sort(key=lambda p: (-p.independent_origin_floor, -p.reliability_floor, -p.confidence, p.hops, p.nodes))
-        return EvidenceInferenceResult(source, target, tuple(paths[:max_paths]), bool(paths), 0)
+                    queue.append((
+                        next_node,
+                        next_nodes,
+                        next_predicates,
+                        next_ids,
+                        next_texts,
+                        next_origins,
+                        next_confidences,
+                        next_confidence,
+                        next_seen,
+                    ))
+        found.sort(key=lambda p: (-p.confidence, p.hops, p.evidence_ids))
+        return EvidenceInferenceResult(source, target, tuple(found[:max_paths]), bool(found), unsupported_claims)
