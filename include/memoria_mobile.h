@@ -76,6 +76,19 @@ memoria_mobile_status memoria_mobile_validate_response_json(
 );
 
 /*
+ * Additive ABI-v1 explicit Learning Gate. Only USER_CONFIRMED and
+ * SENSOR_OBSERVED validators may create a separate trusted memory from an
+ * assistant_generated candidate. The original candidate is never rewritten.
+ * learning:<decision_id> is the durable idempotency boundary for both accepted
+ * and rejected decisions.
+ */
+memoria_mobile_status memoria_mobile_decide_learning_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/*
  * Additive ABI-v1 structural activation entrypoint. It traverses persisted
  * relation edges directly and is intentionally independent of natural-language
  * query generation. Older ABI-v1 libraries may omit this optional symbol.
