@@ -52,6 +52,18 @@ memoria_mobile_status memoria_mobile_resolve_context_json(
 );
 
 /*
+ * Additive ABI-v1 cognitive packet compiler. It reuses the validated native
+ * resolver but returns only bounded structured fields needed by a language
+ * model/client. Raw selected_context text is intentionally omitted.
+ * Older ABI-v1 libraries may omit this optional symbol.
+ */
+memoria_mobile_status memoria_mobile_compile_context_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/*
  * Additive ABI-v1 structural activation entrypoint. It traverses persisted
  * relation edges directly and is intentionally independent of natural-language
  * query generation. Older ABI-v1 libraries may omit this optional symbol.
