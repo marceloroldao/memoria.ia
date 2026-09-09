@@ -29,6 +29,19 @@ static const char *skip_spaces(const char *p) {
     return p;
 }
 
+static const char *skip_optional_relative_marker(const char *p) {
+    const char *end;
+    p = skip_spaces(p);
+    if (*p == ',') {
+        ++p;
+        p = skip_spaces(p);
+    }
+    if (keyword_at(p, "que", &end) && (!*end || isspace((unsigned char)*end))) {
+        p = skip_spaces(end);
+    }
+    return p;
+}
+
 static int is_token_start(const char *text, const char *p) {
     if (p == text) return 1;
     return !is_word_byte((unsigned char)p[-1]);
@@ -211,11 +224,13 @@ static int parse_copular_at(
 /*
  * Deterministic natural naming form. This deliberately uses the nearest stable
  * noun-like token immediately before the naming marker instead of attempting
- * general coreference or semantic parsing. Examples:
+ * general coreference or semantic parsing. It also accepts an explicit relative
+ * marker between entity and naming phrase. Examples:
  *   "meu gato se chama Lotus" -> gato is Lotus
- *   "sensor se chama Atlas"  -> sensor is Atlas
- *   "gato chamado Alt"       -> gato is Alt
- *   "node named Orion"       -> node is Orion
+ *   "eu tenho um gato que se chama Lotus" -> gato is Lotus
+ *   "irmão, que se chama Vibe" -> irmão is Vibe
+ *   "gato chamado Alt" -> gato is Alt
+ *   "node named Orion" -> node is Orion
  */
 static int parse_naming_at(
     const char *text,
@@ -230,7 +245,7 @@ static int parse_naming_at(
     if (!is_token_start(text, start)) return 0;
     if (!copy_word(start, left, sizeof(left), &after_left)) return 0;
     if (!is_stable_relation_term(left)) return 0;
-    p = skip_spaces(after_left);
+    p = skip_optional_relative_marker(after_left);
 
     if (keyword_at(p, "se", &marker_end) && *marker_end && isspace((unsigned char)*marker_end)) {
         p = skip_spaces(marker_end);

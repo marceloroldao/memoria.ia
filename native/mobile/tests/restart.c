@@ -37,18 +37,18 @@ int main(void) {
     CHECK(call(h,1,"{\"role\":\"assistant\",\"text\":\"orion node is primary\",\"memory_id\":\"a1\",\"order\":2,\"source_authority\":0.35,\"ultimate_source_memory_id\":\"u1\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Real-device regression: natural naming must become durable structured evidence. */
-    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"meu gato se chama Lotus\",\"memory_id\":\"cat1\",\"order\":3}",&out) == MEMORIA_MOBILE_OK);
+    /* Exact real-device regression: relative naming must become durable structured evidence. */
+    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"eu tenho um gato que se chama lotus\",\"memory_id\":\"cat1\",\"order\":3}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"subject\":\"gato\""));
     CHECK(contains(out,"\"predicate\":\"is\""));
-    CHECK(contains(out,"\"object\":\"Lotus\""));
+    CHECK(contains(out,"\"object\":\"lotus\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
     /* Before restart, the cognitive packet must expose the trusted relation. */
     CHECK(call(h,5,"{\"query\":\"qual nome do meu gato?\"}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
     CHECK(contains(out,"\"subject\":\"gato\""));
-    CHECK(contains(out,"\"object\":\"Lotus\""));
+    CHECK(contains(out,"\"object\":\"lotus\""));
     CHECK(contains(out,"\"source_type\":\"user_assertion\""));
     CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
@@ -72,13 +72,13 @@ int main(void) {
     CHECK(contains(out,"\"object\":\"primary\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Cold restart parity: same question must still surface Lotus as trusted context. */
+    /* Cold restart parity: same question must still surface lotus as trusted context. */
     CHECK(call(h,5,"{\"query\":\"qual nome do meu gato?\"}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
     CHECK(contains(out,"\"memory_ids\":[\"cat1\"]"));
     CHECK(contains(out,"\"subject\":\"gato\""));
     CHECK(contains(out,"\"predicate\":\"is\""));
-    CHECK(contains(out,"\"object\":\"Lotus\""));
+    CHECK(contains(out,"\"object\":\"lotus\""));
     CHECK(contains(out,"\"source_type\":\"user_assertion\""));
     CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
