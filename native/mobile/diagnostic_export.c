@@ -228,3 +228,6 @@ fail:
     free(b.data);
     return NULL;
 }
+
+/* Additive mobile-only ABI implementation; diagnostic_export.c is only linked into memoria_mobile. */
+#include "cognitive_packet_mobile.c"
