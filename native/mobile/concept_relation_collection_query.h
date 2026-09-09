@@ -65,6 +65,23 @@ static int memoria_collection_extract_between(
     return type_surface[0] != 0;
 }
 
+static int memoria_collection_extract_tail(
+    const char *query,
+    const char *prefix,
+    char *type_surface,
+    size_t cap
+) {
+    const char *start, *end;
+    start = memoria_collection_find_ci(query, prefix);
+    if (!start) return 0;
+    start += strlen(prefix);
+    end = query + strlen(query);
+    memoria_collection_trim_copy(start, end, type_surface, cap);
+    if (!type_surface[0]) return 0;
+    memoria_collection_singularize_simple(type_surface);
+    return type_surface[0] != 0;
+}
+
 static inline memoria_collection_query_status memoria_collection_query_extract(
     const char *query,
     char *type_surface,
@@ -78,7 +95,13 @@ static inline memoria_collection_query_status memoria_collection_query_extract(
         memoria_collection_extract_between(query, "que ", " você conhece", type_surface, type_cap) ||
         memoria_collection_extract_between(query, "que ", " voce conhece", type_surface, type_cap) ||
         memoria_collection_extract_between(query, "which ", " do you know", type_surface, type_cap) ||
-        memoria_collection_extract_between(query, "what ", " do you know", type_surface, type_cap))
+        memoria_collection_extract_between(query, "what ", " do you know", type_surface, type_cap) ||
+        memoria_collection_extract_tail(query, "qual nome dos meus ", type_surface, type_cap) ||
+        memoria_collection_extract_tail(query, "qual o nome dos meus ", type_surface, type_cap) ||
+        memoria_collection_extract_tail(query, "quais são meus ", type_surface, type_cap) ||
+        memoria_collection_extract_tail(query, "quais sao meus ", type_surface, type_cap) ||
+        memoria_collection_extract_tail(query, "quais são os meus ", type_surface, type_cap) ||
+        memoria_collection_extract_tail(query, "quais sao os meus ", type_surface, type_cap))
         return MEMORIA_COLLECTION_QUERY_HIT;
 
     type_surface[0] = 0;
