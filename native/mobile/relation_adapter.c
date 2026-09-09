@@ -72,10 +72,3 @@ int memoria_relations_to_json(const memoria_relation *relations, size_t relation
         relations, NULL, relation_count, source_memory_id, out, out_size
     );
 }
-
-/*
- * Keep the additive cognitive ABI in a separate implementation unit while
- * compiling it through the already-stable mobile target. This avoids changing
- * target topology during the post-freeze experiment.
- */
-#include "cognitive_packet_mobile.c"
