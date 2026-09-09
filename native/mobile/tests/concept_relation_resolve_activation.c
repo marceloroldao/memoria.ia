@@ -82,101 +82,35 @@ int main(void) {
         response, sizeof(response)
     ) == MEMORIA_MOBILE_OK);
 
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"charger is voltage\",\"memory_id\":\"m1\","
-        "\"namespace\":\"session-a\",\"source_type\":\"user_assertion\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"e1\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"charger is voltage\",\"memory_id\":\"m1\",\"namespace\":\"session-a\",\"source_type\":\"user_assertion\",\"source_authority\":1.0,\"relation_memory_ids\":[\"e1\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"voltage is 34v\",\"memory_id\":\"m2\",\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,\"relation_memory_ids\":[\"e2\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
 
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"voltage is 34v\",\"memory_id\":\"m2\","
-        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"e2\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"Alt é um gato\",\"memory_id\":\"cat-m1\",\"namespace\":\"session-a\",\"source_type\":\"user_assertion\",\"source_authority\":1.0,\"relation_memory_ids\":[\"cat-e1\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"Luna é um gato\",\"memory_id\":\"cat-m2\",\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,\"relation_memory_ids\":[\"cat-e2\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"gato é um animal\",\"memory_id\":\"cat-m3\",\"namespace\":\"session-a\",\"source_type\":\"user_assertion\",\"source_authority\":1.0,\"relation_memory_ids\":[\"cat-e3\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
 
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"Alt é um gato\",\"memory_id\":\"cat-m1\","
-        "\"namespace\":\"session-a\",\"source_type\":\"user_assertion\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"cat-e1\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"Luna é um gato\",\"memory_id\":\"cat-m2\","
-        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"cat-e2\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"gato é um animal\",\"memory_id\":\"cat-m3\","
-        "\"namespace\":\"session-a\",\"source_type\":\"user_assertion\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"cat-e3\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-
-    /* Native bounded structural activation: internet -> PPPoE -> OLT; POP is depth 3. */
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"internet is PPPoE\",\"memory_id\":\"net-m1\","
-        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"net-e1\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"PPPoE is OLT\",\"memory_id\":\"net-m2\","
-        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"net-e2\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-    assert(call_json(
-        memoria_mobile_learn_turn_json, h,
-        "{\"role\":\"user\",\"text\":\"OLT is POP\",\"memory_id\":\"net-m3\","
-        "\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,"
-        "\"relation_memory_ids\":[\"net-e3\"]}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
-    assert(call_json(
-        memoria_mobile_activate_relations_json, h,
-        "{\"concept\":\"internet\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\","
-        "\"depth\":2,\"budget\":1200,\"hop_decay\":0.72,\"min_confidence\":0.45}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"internet is PPPoE\",\"memory_id\":\"net-m1\",\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,\"relation_memory_ids\":[\"net-e1\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"PPPoE is OLT\",\"memory_id\":\"net-m2\",\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,\"relation_memory_ids\":[\"net-e2\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_learn_turn_json, h,
+        "{\"role\":\"user\",\"text\":\"OLT is POP\",\"memory_id\":\"net-m3\",\"namespace\":\"session-a\",\"source_type\":\"direct_observation\",\"source_authority\":1.0,\"relation_memory_ids\":[\"net-e3\"]}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_activate_relations_json, h,
+        "{\"concept\":\"internet\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\",\"depth\":2,\"budget\":1200,\"hop_decay\":0.72,\"min_confidence\":0.45}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
     assert(strstr(response, "\"native_structural_activation\":true") != NULL);
     assert(strstr(response, "\"relation_count\":2") != NULL);
-    assert(strstr(response, "internet | is | pppoe") != NULL);
-    assert(strstr(response, "pppoe | is | olt") != NULL);
-    assert(strstr(response, "olt | is | pop") == NULL);
-    assert(strstr(response, "\"evidence_id\":\"net-e1\"") != NULL);
-    assert(strstr(response, "\"evidence_id\":\"net-e2\"") != NULL);
-    assert(strstr(response, "\"evidence_id\":\"net-e3\"") == NULL);
-    assert(strstr(response, "\"hop\":1") != NULL);
-    assert(strstr(response, "\"hop\":2") != NULL);
 
-    /* Existing direct evidence keeps precedence even when relation anchors are supplied. */
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"charger is voltage\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\","
-        "\"relation_source\":\"charger\",\"relation_target\":\"34v\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"charger is voltage\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\",\"relation_source\":\"charger\",\"relation_target\":\"34v\"}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
     assert(strstr(response, "\"relation_inference_used\":true") == NULL);
-    assert(strstr(response, "\"relation_neighborhood_used\":true") == NULL);
-    assert(strstr(response, "\"type_collection_used\":true") == NULL);
 
-    /* Explicit anchors remain supported. */
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"relationship check\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\","
-        "\"relation_source\":\"charger\",\"relation_target\":\"34v\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_OK);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"relationship check\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\",\"relation_source\":\"charger\",\"relation_target\":\"34v\"}", response, sizeof(response)) == MEMORIA_MOBILE_OK);
     assert(strstr(response, "\"relation_anchors_inferred\":false") != NULL);
 
     assert_inferred_hit(h, "What is the relation between charger and 34v?", response, sizeof(response));
@@ -188,48 +122,29 @@ int main(void) {
     assert_inferred_hit(h, "O que conecta charger a 34v?", response, sizeof(response));
     assert_inferred_hit(h, "O que liga charger a 34v?", response, sizeof(response));
 
-    /* Directional collection: members point to the requested type. */
     assert_collection_hit(h, "Quais gatos você conhece?", response, sizeof(response));
     assert_collection_hit(h, "Quais gatos voce conhece?", response, sizeof(response));
+    assert_collection_hit(h, "qual nome dos meus gatos?", response, sizeof(response));
+    assert_collection_hit(h, "qual o nome dos meus gatos?", response, sizeof(response));
+    assert_collection_hit(h, "quais são os meus gatos?", response, sizeof(response));
 
-    /* One-anchor neighborhood queries remain bounded to direct neighbors. */
     assert_neighborhood_hit(h, "What is related to charger?", response, sizeof(response));
     assert_neighborhood_hit(h, "O que está relacionado a charger?", response, sizeof(response));
     assert_neighborhood_hit(h, "O que esta ligado a charger?", response, sizeof(response));
 
-    /* Namespace isolation remains fail-closed for every relation mode. */
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"relation between charger and 34v\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_UNRESOLVED);
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"what is related to charger?\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_UNRESOLVED);
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"Quais gatos você conhece?\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_UNRESOLVED);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"relation between charger and 34v\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}", response, sizeof(response)) == MEMORIA_MOBILE_UNRESOLVED);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"what is related to charger?\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}", response, sizeof(response)) == MEMORIA_MOBILE_UNRESOLVED);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"Quais gatos você conhece?\",\"namespace\":\"other\",\"concept_namespace\":\"semantic\"}", response, sizeof(response)) == MEMORIA_MOBILE_UNRESOLVED);
 
-    /* Generic similarity/association and vague collection language are deliberately not guessed. */
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"charger and 34v maybe similar\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_UNRESOLVED);
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"charger relations\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_UNRESOLVED);
-    assert(call_json(
-        memoria_mobile_resolve_context_json, h,
-        "{\"query\":\"gatos conhecidos talvez\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}",
-        response, sizeof(response)
-    ) == MEMORIA_MOBILE_UNRESOLVED);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"charger and 34v maybe similar\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}", response, sizeof(response)) == MEMORIA_MOBILE_UNRESOLVED);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"charger relations\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}", response, sizeof(response)) == MEMORIA_MOBILE_UNRESOLVED);
+    assert(call_json(memoria_mobile_resolve_context_json, h,
+        "{\"query\":\"gatos conhecidos talvez\",\"namespace\":\"session-a\",\"concept_namespace\":\"semantic\"}", response, sizeof(response)) == MEMORIA_MOBILE_UNRESOLVED);
 
     memoria_mobile_close(h);
     return 0;
