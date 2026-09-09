@@ -73,19 +73,22 @@ int main(void) {
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
     CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"eu tenho um gato que se chama Lotus\",\"memory_id\":\"cat1\",\"order\":3}",&out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out,"\"subject\":\"gato\""));
+    CHECK(contains(out,"\"subject\":\"Lotus\""));
     CHECK(contains(out,"\"predicate\":\"is\""));
-    CHECK(contains(out,"\"object\":\"Lotus\""));
+    CHECK(contains(out,"\"object\":\"gato\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
     CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"ele tem um irmão, que se chama Vibe\",\"memory_id\":\"cat2\",\"order\":4}",&out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out,"\"subject\":\"irmão\""));
+    CHECK(contains(out,"\"subject\":\"Vibe\""));
     CHECK(contains(out,"\"predicate\":\"is\""));
-    CHECK(contains(out,"\"object\":\"Vibe\""));
+    CHECK(contains(out,"\"object\":\"irmão\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
+    /* Stable persistent collection must answer without any live conversation window. */
     CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
+    CHECK(contains(out,"\"members\":[{\"member_key\":\"surface:lotus\""));
+    CHECK(!contains(out,"surface:vibe"));
     CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
     before_restart_packet = copy_buffer(out);
     CHECK(before_restart_packet != NULL);
@@ -97,7 +100,7 @@ int main(void) {
         memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
     }
 
-    /* OFF.IA parity: trajectory window may grow, but it cannot eclipse a stable factual HIT. */
+    /* Growing OFF.IA trajectory windows cannot eclipse the persistent collection HIT. */
     CHECK(call(h,5,window_before_answer,&out) == MEMORIA_MOBILE_OK);
     CHECK(same_buffer(out,before_restart_packet));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
@@ -125,6 +128,8 @@ int main(void) {
 
     CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
+    CHECK(contains(out,"\"members\":[{\"member_key\":\"surface:lotus\""));
+    CHECK(!contains(out,"surface:vibe"));
     CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
     after_restart_packet = copy_buffer(out);
     CHECK(after_restart_packet != NULL);
@@ -138,7 +143,6 @@ int main(void) {
 
     CHECK(strcmp(before_restart_packet,after_restart_packet) == 0);
 
-    /* The same growing windows remain subordinate to stable recall after restart too. */
     CHECK(call(h,5,window_before_answer,&out) == MEMORIA_MOBILE_OK);
     CHECK(same_buffer(out,after_restart_packet));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
