@@ -8,6 +8,7 @@ on:
       - freeze/topological-conversation-runtime-v1-integration-qualified
       - freeze/mobile-cognitive-packet-v1-integration-qualified
       - freeze/mobile-response-validator-v1-integration-qualified
+      - freeze/mobile-learning-gate-v1-integration-qualified
     paths:
       - "include/memoria_mobile.h"
       - "native/mobile/**"

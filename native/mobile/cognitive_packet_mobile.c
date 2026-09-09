@@ -182,6 +182,3 @@ memoria_mobile_status memoria_mobile_compile_context_json(
     free(source);
     return set_owned_response(response_json, packet, used, MEMORIA_MOBILE_OK);
 }
-
-/* Phase 2 stays in the same mobile-only translation unit. */
-#include "response_validator_mobile.c"

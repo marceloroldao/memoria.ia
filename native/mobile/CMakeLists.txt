@@ -52,6 +52,9 @@ add_library(memoria_mobile SHARED
   relation_extractor.c
   relation_adapter.c
   diagnostic_export.c
+  cognitive_packet_mobile.c
+  response_validator_mobile.c
+  learning_gate_mobile.c
 )
 set_source_files_properties(memoria_mobile.c PROPERTIES
   COMPILE_DEFINITIONS "memoria_mobile_resolve_context_json=memoria_mobile_resolve_context_json_base"

@@ -228,7 +228,3 @@ fail:
     free(b.data);
     return NULL;
 }
-
-/* Additive mobile-only ABI implementations; this source is linked only into memoria_mobile. */
-#include "cognitive_packet_mobile.c"
-#include "learning_gate_mobile.c"
