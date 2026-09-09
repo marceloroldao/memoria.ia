@@ -229,5 +229,6 @@ fail:
     return NULL;
 }
 
-/* Additive mobile-only ABI implementation; diagnostic_export.c is only linked into memoria_mobile. */
+/* Additive mobile-only ABI implementations; this source is linked only into memoria_mobile. */
 #include "cognitive_packet_mobile.c"
+#include "learning_gate_mobile.c"
