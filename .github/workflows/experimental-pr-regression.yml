@@ -34,3 +34,50 @@ jobs:
           python -m pip install -e '.[product,test]'
       - name: Full regression
         run: python -m pytest -q
+
+  bdr-topological-parity:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Memoria.ia experiment
+        uses: actions/checkout@v4
+      - name: Checkout experimental Resolutive-DB bridge
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: experiment/python-atomic-bridge
+          path: bdr-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ zlib1g-dev
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Build BDR shared atomic ABI
+        run: |
+          cmake -S bdr-source/experimental/api_v86 -B bdr-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build bdr-build --target bdr_atomic_c_api_shared --config Release -j2
+      - name: Run real BDR topology and epistemic restart fixtures
+        env:
+          BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
+        run: python -m pytest -q tests/test_topological_bdr_persistence.py tests/test_epistemic_bdr_persistence.py tests/test_cognitive_cycle_restart.py
+      - name: Record BDR versus SQLite latency and growth evidence
+        env:
+          BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
+        run: python benchmarks/topological_persistence_benchmark.py | tee topological-persistence-benchmark.json
+      - name: Record multi-size scaling evidence
+        env:
+          BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
+        run: python benchmarks/topological_multisize_benchmark.py | tee topological-multisize-benchmark.json
+      - name: Upload benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: topological-persistence-benchmark
+          path: |
+            topological-persistence-benchmark.json
+            topological-multisize-benchmark.json
