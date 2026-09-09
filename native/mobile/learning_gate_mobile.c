@@ -1,6 +1,7 @@
 #include "memoria_mobile.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -193,6 +194,47 @@ static char *lg_load_turn(memoria_mobile_handle *handle, const char *memory_id) 
     }
 }
 
+static int lg_next_order(memoria_mobile_handle *handle, long *next_order) {
+    size_t offset = 0u;
+    long max_order = 0;
+    char request[128];
+    if (!handle || !next_order) return 0;
+    for (;;) {
+        memoria_mobile_buffer req, out = {0};
+        memoria_mobile_status status;
+        char *snapshot, *p;
+        long next;
+        int n = snprintf(request, sizeof(request), "{\"turn_offset\":%lu,\"turn_limit\":64,\"episode_limit\":1}", (unsigned long)offset);
+        if (n < 0 || (size_t)n >= sizeof(request)) return 0;
+        req.data = (const uint8_t *)request;
+        req.size = strlen(request);
+        status = memoria_mobile_export_snapshot_json(handle, req, &out);
+        if (status != MEMORIA_MOBILE_OK || !out.data || !out.size) {
+            if (out.data) memoria_mobile_free_buffer(out);
+            return 0;
+        }
+        snapshot = (char *)malloc(out.size + 1u);
+        if (!snapshot) { memoria_mobile_free_buffer(out); return 0; }
+        memcpy(snapshot, out.data, out.size);
+        snapshot[out.size] = 0;
+        memoria_mobile_free_buffer(out);
+        p = snapshot;
+        while ((p = strstr(p, "\"order\":")) != NULL) {
+            char *end = NULL;
+            long value = strtol(p + 8, &end, 10);
+            if (end != p + 8 && value > max_order) max_order = value;
+            p = end != p + 8 ? end : p + 8;
+        }
+        next = lg_json_long(snapshot, "next_offset", -1);
+        free(snapshot);
+        if (next < 0 || (size_t)next <= offset) break;
+        offset = (size_t)next;
+    }
+    if (max_order == LONG_MAX) return 0;
+    *next_order = max_order + 1;
+    return 1;
+}
+
 static memoria_mobile_status lg_write_turn(
     memoria_mobile_handle *handle,
     const char *memory_id,
@@ -201,7 +243,8 @@ static memoria_mobile_status lg_write_turn(
     const char *source_type,
     double authority,
     const char *parent_memory_id,
-    const char *role
+    const char *role,
+    long order
 ) {
     char *id = NULL, *tx = NULL, *ns = NULL, *st = NULL, *parent = NULL, *request = NULL;
     memoria_mobile_buffer req, out = {0};
@@ -214,14 +257,14 @@ static memoria_mobile_status lg_write_turn(
     parent = lg_json_escape(parent_memory_id ? parent_memory_id : "");
     if (!id || !tx || !ns || !st || !parent) goto fail;
     needed = snprintf(NULL, 0,
-        "{\"role\":\"%s\",\"text\":\"%s\",\"memory_id\":\"%s\",\"namespace\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"parent_memory_ids\":[\"%s\"]}",
-        role, tx, id, ns, st, authority, parent);
+        "{\"role\":\"%s\",\"text\":\"%s\",\"memory_id\":\"%s\",\"namespace\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"order\":%ld,\"parent_memory_ids\":[\"%s\"]}",
+        role, tx, id, ns, st, authority, order, parent);
     if (needed < 0) goto fail;
     request = (char *)malloc((size_t)needed + 1u);
     if (!request) goto fail;
     snprintf(request, (size_t)needed + 1u,
-        "{\"role\":\"%s\",\"text\":\"%s\",\"memory_id\":\"%s\",\"namespace\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"parent_memory_ids\":[\"%s\"]}",
-        role, tx, id, ns, st, authority, parent);
+        "{\"role\":\"%s\",\"text\":\"%s\",\"memory_id\":\"%s\",\"namespace\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,\"order\":%ld,\"parent_memory_ids\":[\"%s\"]}",
+        role, tx, id, ns, st, authority, order, parent);
     req.data = (const uint8_t *)request;
     req.size = strlen(request);
     status = memoria_mobile_learn_turn_json(handle, req, &out);
@@ -240,9 +283,10 @@ memoria_mobile_status memoria_mobile_decide_learning_json(
 ) {
     char *json = NULL, *decision_id = NULL, *candidate_id = NULL, *validator_source = NULL;
     char *validator_id = NULL, *namespace_id = NULL, *candidate = NULL, *candidate_text = NULL;
-    char *candidate_source = NULL, *candidate_namespace = NULL;
+    char *candidate_source = NULL, *candidate_namespace = NULL, *existing = NULL;
     char learning_id[LG_ID_CAP];
     char response[2048];
+    long order = 0;
     int accepted = 0, n;
     const char *trusted_source = NULL, *trusted_role = NULL;
     memoria_mobile_status status;
@@ -260,7 +304,7 @@ memoria_mobile_status memoria_mobile_decide_learning_json(
     namespace_id = lg_json_string(json, "namespace");
     if (!namespace_id) namespace_id = (char *)calloc(1u, 1u);
     if (!decision_id || !candidate_id || !validator_source || !validator_id || !namespace_id ||
-        !lg_json_bool(json, "accepted", &accepted) || !lg_safe_id(decision_id) || !lg_safe_id(candidate_id)) {
+        !lg_json_bool(json, "accepted", &accepted) || !lg_safe_id(decision_id) || !lg_safe_id(candidate_id) || !lg_safe_id(validator_id)) {
         status = MEMORIA_MOBILE_INVALID_ARGUMENT; goto done;
     }
     if (strcmp(validator_source, "USER_CONFIRMED") == 0) {
@@ -272,7 +316,8 @@ memoria_mobile_status memoria_mobile_decide_learning_json(
     }
     n = snprintf(learning_id, sizeof(learning_id), "learning:%s", decision_id);
     if (n < 0 || (size_t)n >= sizeof(learning_id)) { status = MEMORIA_MOBILE_INVALID_ARGUMENT; goto done; }
-    if (lg_load_turn(handle, learning_id)) { status = MEMORIA_MOBILE_INVALID_ARGUMENT; goto done; }
+    existing = lg_load_turn(handle, learning_id);
+    if (existing) { status = MEMORIA_MOBILE_INVALID_ARGUMENT; goto done; }
 
     candidate = lg_load_turn(handle, candidate_id);
     if (!candidate) { status = MEMORIA_MOBILE_NOT_FOUND; goto done; }
@@ -283,18 +328,19 @@ memoria_mobile_status memoria_mobile_decide_learning_json(
         strcmp(candidate_source, "assistant_generated") != 0 || strcmp(candidate_namespace, namespace_id) != 0) {
         status = MEMORIA_MOBILE_INVALID_ARGUMENT; goto done;
     }
+    if (!lg_next_order(handle, &order)) { status = MEMORIA_MOBILE_INTERNAL_ERROR; goto done; }
 
     if (accepted) {
-        status = lg_write_turn(handle, learning_id, candidate_text, namespace_id, trusted_source, 1.0, candidate_id, trusted_role);
+        status = lg_write_turn(handle, learning_id, candidate_text, namespace_id, trusted_source, 1.0, candidate_id, trusted_role, order);
     } else {
-        status = lg_write_turn(handle, learning_id, "learning decision rejected", namespace_id, "learning_decision", 0.0, candidate_id, "system");
+        status = lg_write_turn(handle, learning_id, "learning decision rejected", namespace_id, "learning_decision", 0.0, candidate_id, "system", order);
     }
     if (status != MEMORIA_MOBILE_OK) goto done;
 
     n = snprintf(response, sizeof(response),
-        "{\"status\":\"OK\",\"decision_id\":\"%s\",\"candidate_memory_id\":\"%s\",\"accepted\":%s,\"validator_source\":\"%s\",\"validator_id\":\"%s\",\"learning_memory_id\":\"%s\",\"promoted\":%s,\"original_candidate_source\":\"assistant_generated\"}",
+        "{\"status\":\"OK\",\"decision_id\":\"%s\",\"candidate_memory_id\":\"%s\",\"accepted\":%s,\"validator_source\":\"%s\",\"validator_id\":\"%s\",\"learning_memory_id\":\"%s\",\"promoted\":%s,\"original_candidate_source\":\"assistant_generated\",\"order\":%ld}",
         decision_id, candidate_id, accepted ? "true" : "false", validator_source, validator_id,
-        learning_id, accepted ? "true" : "false");
+        learning_id, accepted ? "true" : "false", order);
     if (n < 0 || (size_t)n >= sizeof(response)) { status = MEMORIA_MOBILE_INTERNAL_ERROR; goto done; }
     {
         uint8_t *buffer = (uint8_t *)malloc((size_t)n + 1u);
@@ -307,6 +353,6 @@ memoria_mobile_status memoria_mobile_decide_learning_json(
 
 done:
     free(json); free(decision_id); free(candidate_id); free(validator_source); free(validator_id); free(namespace_id);
-    free(candidate); free(candidate_text); free(candidate_source); free(candidate_namespace);
+    free(candidate); free(candidate_text); free(candidate_source); free(candidate_namespace); free(existing);
     return status;
 }
