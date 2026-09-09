@@ -61,6 +61,19 @@ int main(void) {
     assert(strcmp(rows[0].subject, "node") == 0);
     assert(strcmp(rows[0].object, "Orion") == 0);
 
+    /* Exact real-device phrasing: relative naming clauses must structure the user fact. */
+    n = memoria_extract_relations("eu tenho um gato que se chama lotus", rows, 8);
+    assert(n == 1);
+    assert(strcmp(rows[0].subject, "gato") == 0);
+    assert(strcmp(rows[0].predicate, "is") == 0);
+    assert(strcmp(rows[0].object, "lotus") == 0);
+
+    n = memoria_extract_relations("ele tem um irmão, que se chama  Vibe", rows, 8);
+    assert(n == 1);
+    assert(strcmp(rows[0].subject, "irmão") == 0);
+    assert(strcmp(rows[0].predicate, "is") == 0);
+    assert(strcmp(rows[0].object, "Vibe") == 0);
+
     /* Explicit copular rows are emitted before the lower-confidence elliptic row. */
     n = memoria_extract_relations("meu carro é um sedan e o motor um v8", rows, 8);
     assert(n == 2);
