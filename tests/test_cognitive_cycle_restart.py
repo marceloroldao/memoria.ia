@@ -7,11 +7,8 @@ from memoria_resolutiva.epistemic_bdr_persistence import (
     load_epistemic_audit_from_backend,
     save_epistemic_audit_to_backend,
 )
-from memoria_resolutiva.evidence_bdr_persistence import (
-    load_evidence_catalog_from_backend,
-    save_evidence_catalog_to_backend,
-)
 from memoria_resolutiva.evidence_core import EvidenceCore
+from memoria_resolutiva.evidence_state import EvidenceCorePersistence
 from memoria_resolutiva.evidence_temporal_bridge import (
     EpistemicSource,
     EvidenceTemporalBridge,
@@ -42,7 +39,7 @@ class FakeAtomicBackend:
         return self.state.get(key)
 
 
-def test_compile_response_validate_explicit_learn_and_cold_restart_preserves_full_boundary():
+def test_compile_response_validate_explicit_learn_and_cold_restart_preserves_full_boundary(tmp_path):
     namespace = "default"
     evidence = EvidenceCore()
     user_alt = evidence.observe_relation(
@@ -106,22 +103,30 @@ def test_compile_response_validate_explicit_learn_and_cold_restart_preserves_ful
 
     backend = FakeAtomicBackend()
     topology_stats = save_snapshot_to_backend(backend, addresses, store)
-    evidence_stats = save_evidence_catalog_to_backend(backend, evidence)
     audit_stats = save_epistemic_audit_to_backend(
         backend,
         bridge,
         gate,
         response_validator,
     )
+    evidence_persistence = EvidenceCorePersistence(
+        tmp_path / "evidence-state",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    evidence_receipt = evidence_persistence.store(evidence)
     assert topology_stats.bdr_sequence == 1
-    assert evidence_stats.bdr_sequence == 2
-    assert evidence_stats.evidence_rows == 3
-    assert audit_stats.bdr_sequence == 3
+    assert audit_stats.bdr_sequence == 2
     assert audit_stats.response_ids == 1
+    assert evidence_receipt.backend == "sqlite"
 
-    # True cold restart: reconstruct every runtime surface from durable records.
+    # True cold restart: no EvidenceCore rows are cloned from the previous process.
     restored_addresses, restored_store = load_snapshot_from_backend(backend)
-    restored_evidence = load_evidence_catalog_from_backend(backend)
+    restored_evidence = EvidenceCorePersistence(
+        tmp_path / "evidence-state",
+        backend="sqlite",
+        allow_fallback=False,
+    ).load(evidence_receipt)
     restored_bridge = EvidenceTemporalBridge(restored_addresses, restored_store)
     restored_gate = EpistemicLearningGate(restored_evidence)
     restored_validator = ResponseValidator(restored_evidence)
@@ -178,7 +183,7 @@ def test_compile_response_validate_explicit_learn_and_cold_restart_preserves_ful
             reason="duplicate",
         )
 
-    # Epoch continuity also survives the cold restart through public replay.
+    # Replay-based EvidenceCore persistence restores the next epoch too.
     continued = restored_evidence.observe_relation(
         "meu gato",
         "nome",
@@ -190,23 +195,3 @@ def test_compile_response_validate_explicit_learn_and_cold_restart_preserves_ful
         namespace=namespace,
     )
     assert continued.epoch == 3
-
-
-def test_evidence_catalog_fails_closed_when_referenced_record_is_missing():
-    evidence = EvidenceCore()
-    evidence.observe_relation(
-        "sensor",
-        "temperatura",
-        "25 C",
-        evidence_id="sensor-1",
-        source_text="25 C",
-        provenance="SENSOR_OBSERVED",
-        origin="sensor",
-    )
-    backend = FakeAtomicBackend()
-    save_evidence_catalog_to_backend(backend, evidence)
-    edge_key = next(key for key in backend.state if key.startswith("memoria.evidence.v1/edge/"))
-    del backend.state[edge_key]
-
-    with pytest.raises(ValueError, match="missing BDR evidence record"):
-        load_evidence_catalog_from_backend(backend)
