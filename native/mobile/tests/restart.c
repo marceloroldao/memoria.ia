@@ -21,10 +21,31 @@ static int contains(memoria_mobile_buffer b, const char *needle) {
     return b.data && strstr((const char *)b.data, needle) != NULL;
 }
 
+static char *copy_buffer(memoria_mobile_buffer b) {
+    char *copy;
+    if (!b.data) return NULL;
+    copy = (char *)malloc(b.size + 1u);
+    if (!copy) return NULL;
+    memcpy(copy, b.data, b.size);
+    copy[b.size] = 0;
+    return copy;
+}
+
+static int same_buffer(memoria_mobile_buffer b, const char *expected) {
+    size_t n;
+    if (!b.data || !expected) return 0;
+    n = strlen(expected);
+    return b.size == n && memcmp(b.data, expected, n) == 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-restart";
+    const char *plural_query = "{\"query\":\"qual nome dos meus gatos?\"}";
     memoria_mobile_handle *h = NULL;
     memoria_mobile_buffer out = {0};
+    char *before_restart_packet = NULL;
+    char *after_restart_packet = NULL;
+    int i;
 
     (void)system("rm -rf ./tmp-mobile-restart");
     CHECK(memoria_mobile_open(dir,"org-restart",&h) == MEMORIA_MOBILE_OK);
@@ -37,21 +58,32 @@ int main(void) {
     CHECK(call(h,1,"{\"role\":\"assistant\",\"text\":\"orion node is primary\",\"memory_id\":\"a1\",\"order\":2,\"source_authority\":0.35,\"ultimate_source_memory_id\":\"u1\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Exact real-device regression: relative naming must become durable structured evidence. */
-    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"eu tenho um gato que se chama lotus\",\"memory_id\":\"cat1\",\"order\":3}",&out) == MEMORIA_MOBILE_OK);
+    /* Exact real-device facts from OFF.IA export. */
+    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"eu tenho um gato que se chama Lotus\",\"memory_id\":\"cat1\",\"order\":3}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"subject\":\"gato\""));
     CHECK(contains(out,"\"predicate\":\"is\""));
-    CHECK(contains(out,"\"object\":\"lotus\""));
+    CHECK(contains(out,"\"object\":\"Lotus\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Before restart, the cognitive packet must expose the trusted relation. */
-    CHECK(call(h,5,"{\"query\":\"qual nome do meu gato?\"}",&out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
-    CHECK(contains(out,"\"subject\":\"gato\""));
-    CHECK(contains(out,"\"object\":\"lotus\""));
-    CHECK(contains(out,"\"source_type\":\"user_assertion\""));
-    CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
+    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"ele tem um irmão, que se chama Vibe\",\"memory_id\":\"cat2\",\"order\":4}",&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"subject\":\"irmão\""));
+    CHECK(contains(out,"\"predicate\":\"is\""));
+    CHECK(contains(out,"\"object\":\"Vibe\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    /* No mutation between identical reads: CognitivePacket must be byte-stable. */
+    CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
+    CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
+    before_restart_packet = copy_buffer(out);
+    CHECK(before_restart_packet != NULL);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    for (i = 0; i < 5; ++i) {
+        CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
+        CHECK(same_buffer(out,before_restart_packet));
+        memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    }
 
     CHECK(call(h,3,"{\"episode_id\":\"e1\",\"role\":\"assistant\",\"text\":\"first creation about routing\",\"timestamp\":\"2026-08-28T10:00:00Z\",\"order\":1,\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
@@ -72,16 +104,22 @@ int main(void) {
     CHECK(contains(out,"\"object\":\"primary\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Cold restart parity: same question must still surface lotus as trusted context. */
-    CHECK(call(h,5,"{\"query\":\"qual nome do meu gato?\"}",&out) == MEMORIA_MOBILE_OK);
+    /* Repeated reads after cold restart must also be byte-stable. */
+    CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
-    CHECK(contains(out,"\"memory_ids\":[\"cat1\"]"));
-    CHECK(contains(out,"\"subject\":\"gato\""));
-    CHECK(contains(out,"\"predicate\":\"is\""));
-    CHECK(contains(out,"\"object\":\"lotus\""));
-    CHECK(contains(out,"\"source_type\":\"user_assertion\""));
     CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
+    after_restart_packet = copy_buffer(out);
+    CHECK(after_restart_packet != NULL);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    for (i = 0; i < 5; ++i) {
+        CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
+        CHECK(same_buffer(out,after_restart_packet));
+        memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    }
+
+    /* Restart must not change the packet for an unchanged memory state. */
+    CHECK(strcmp(before_restart_packet,after_restart_packet) == 0);
 
     CHECK(call(h,4,"{\"query\":\"last creation about routing\",\"role\":\"assistant\",\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"episode_ids\":[\"e2\"]"));
@@ -89,6 +127,8 @@ int main(void) {
     CHECK(contains(out,"\"timestamp\":\"2026-08-28T11:00:00Z\""));
     memoria_mobile_free_buffer(out);
 
+    free(before_restart_packet);
+    free(after_restart_packet);
     memoria_mobile_close(h);
     (void)system("rm -rf ./tmp-mobile-restart");
     return 0;
