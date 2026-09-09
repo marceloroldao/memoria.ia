@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - freeze/topological-temporal-v1
   workflow_dispatch:
 
 concurrency:
@@ -15,7 +16,7 @@ permissions:
 
 jobs:
   regression:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/') || startsWith(github.head_ref, 'post-freeze/')
     strategy:
       fail-fast: true
       matrix:
@@ -36,7 +37,7 @@ jobs:
         run: python -m pytest -q
 
   bdr-topological-parity:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/') || startsWith(github.head_ref, 'post-freeze/')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -62,7 +63,7 @@ jobs:
         run: |
           cmake -S bdr-source/experimental/api_v86 -B bdr-build -DCMAKE_BUILD_TYPE=Release
           cmake --build bdr-build --target bdr_atomic_c_api_shared --config Release -j2
-      - name: Run real BDR topology and epistemic restart fixtures
+      - name: Run real BDR topology, evidence and epistemic restart fixtures
         env:
           BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
         run: python -m pytest -q tests/test_topological_bdr_persistence.py tests/test_epistemic_bdr_persistence.py tests/test_cognitive_cycle_restart.py
