@@ -53,7 +53,7 @@ class EpistemicLearningGate:
         ids = [item.decision_id for item in restored]
         if len(ids) != len(set(ids)):
             raise ValueError("learning audit contains duplicate decision_id")
-        evidence_ids = {edge.evidence_id for edge in self.evidence.evidence_history()}
+        evidence_ids = {edge.evidence_id for edge in self.evidence.iter_evidence()}
         for item in restored:
             self._clean(item.decision_id, "decision_id")
             self._clean(item.candidate_evidence_id, "candidate_evidence_id")
