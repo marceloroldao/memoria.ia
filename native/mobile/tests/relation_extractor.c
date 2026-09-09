@@ -38,6 +38,29 @@ int main(void) {
     assert(strcmp(rows[0].subject, "bateria") == 0);
     assert(strcmp(rows[0].object, "carregada") == 0);
 
+    /* Natural naming forms are deterministic relations, without domain tables. */
+    n = memoria_extract_relations("meu gato se chama Lotus", rows, 8);
+    assert(n == 1);
+    assert(strcmp(rows[0].subject, "gato") == 0);
+    assert(strcmp(rows[0].predicate, "is") == 0);
+    assert(strcmp(rows[0].object, "Lotus") == 0);
+    assert(near(rows[0].confidence, 0.95));
+
+    n = memoria_extract_relations("sensor se chama Atlas", rows, 8);
+    assert(n == 1);
+    assert(strcmp(rows[0].subject, "sensor") == 0);
+    assert(strcmp(rows[0].object, "Atlas") == 0);
+
+    n = memoria_extract_relations("gato chamado Alt", rows, 8);
+    assert(n == 1);
+    assert(strcmp(rows[0].subject, "gato") == 0);
+    assert(strcmp(rows[0].object, "Alt") == 0);
+
+    n = memoria_extract_relations("node named Orion", rows, 8);
+    assert(n == 1);
+    assert(strcmp(rows[0].subject, "node") == 0);
+    assert(strcmp(rows[0].object, "Orion") == 0);
+
     /* Explicit copular rows are emitted before the lower-confidence elliptic row. */
     n = memoria_extract_relations("meu carro é um sedan e o motor um v8", rows, 8);
     assert(n == 2);
