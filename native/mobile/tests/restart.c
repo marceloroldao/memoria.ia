@@ -12,6 +12,7 @@ static memoria_mobile_status call(memoria_mobile_handle *h, int op, const char *
         case 1: return memoria_mobile_learn_turn_json(h,in,out);
         case 2: return memoria_mobile_resolve_context_json(h,in,out);
         case 3: return memoria_mobile_store_episode_json(h,in,out);
+        case 5: return memoria_mobile_compile_context_json(h,in,out);
         default: return memoria_mobile_recall_episode_json(h,in,out);
     }
 }
@@ -36,6 +37,22 @@ int main(void) {
     CHECK(call(h,1,"{\"role\":\"assistant\",\"text\":\"orion node is primary\",\"memory_id\":\"a1\",\"order\":2,\"source_authority\":0.35,\"ultimate_source_memory_id\":\"u1\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
+    /* Real-device regression: natural naming must become durable structured evidence. */
+    CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"meu gato se chama Lotus\",\"memory_id\":\"cat1\",\"order\":3}",&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"subject\":\"gato\""));
+    CHECK(contains(out,"\"predicate\":\"is\""));
+    CHECK(contains(out,"\"object\":\"Lotus\""));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    /* Before restart, the cognitive packet must expose the trusted relation. */
+    CHECK(call(h,5,"{\"query\":\"qual nome do meu gato?\"}",&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
+    CHECK(contains(out,"\"subject\":\"gato\""));
+    CHECK(contains(out,"\"object\":\"Lotus\""));
+    CHECK(contains(out,"\"source_type\":\"user_assertion\""));
+    CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
     CHECK(call(h,3,"{\"episode_id\":\"e1\",\"role\":\"assistant\",\"text\":\"first creation about routing\",\"timestamp\":\"2026-08-28T10:00:00Z\",\"order\":1,\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
     CHECK(call(h,3,"{\"episode_id\":\"e2\",\"role\":\"assistant\",\"text\":\"second creation about routing\",\"timestamp\":\"2026-08-28T11:00:00Z\",\"order\":3,\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);
@@ -53,6 +70,17 @@ int main(void) {
     CHECK(contains(out,"\"subject\":\"orion node\""));
     CHECK(contains(out,"\"predicate\":\"is\""));
     CHECK(contains(out,"\"object\":\"primary\""));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    /* Cold restart parity: same question must still surface Lotus as trusted context. */
+    CHECK(call(h,5,"{\"query\":\"qual nome do meu gato?\"}",&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
+    CHECK(contains(out,"\"memory_ids\":[\"cat1\"]"));
+    CHECK(contains(out,"\"subject\":\"gato\""));
+    CHECK(contains(out,"\"predicate\":\"is\""));
+    CHECK(contains(out,"\"object\":\"Lotus\""));
+    CHECK(contains(out,"\"source_type\":\"user_assertion\""));
+    CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
     CHECK(call(h,4,"{\"query\":\"last creation about routing\",\"role\":\"assistant\",\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);

@@ -208,6 +208,54 @@ static int parse_copular_at(
     return 1;
 }
 
+/*
+ * Deterministic natural naming form. This deliberately uses the nearest stable
+ * noun-like token immediately before the naming marker instead of attempting
+ * general coreference or semantic parsing. Examples:
+ *   "meu gato se chama Lotus" -> gato is Lotus
+ *   "sensor se chama Atlas"  -> sensor is Atlas
+ *   "gato chamado Alt"       -> gato is Alt
+ *   "node named Orion"       -> node is Orion
+ */
+static int parse_naming_at(
+    const char *text,
+    const char *start,
+    memoria_relation *row,
+    const char **end_out
+) {
+    char left[96], right[96];
+    const char *p, *after_left, *marker_end, *after_right;
+    int matched = 0;
+
+    if (!is_token_start(text, start)) return 0;
+    if (!copy_word(start, left, sizeof(left), &after_left)) return 0;
+    if (!is_stable_relation_term(left)) return 0;
+    p = skip_spaces(after_left);
+
+    if (keyword_at(p, "se", &marker_end) && *marker_end && isspace((unsigned char)*marker_end)) {
+        p = skip_spaces(marker_end);
+        if (keyword_at(p, "chama", &marker_end)) matched = 1;
+    } else if (keyword_at(p, "chamado", &marker_end) || keyword_at(p, "chamada", &marker_end) ||
+               keyword_at(p, "named", &marker_end)) {
+        matched = 1;
+    }
+    if (!matched) return 0;
+    if (*marker_end && !isspace((unsigned char)*marker_end)) return 0;
+
+    p = skip_spaces(marker_end);
+    if (!copy_word(p, right, sizeof(right), &after_right)) return 0;
+    if (!is_stable_relation_term(right)) return 0;
+
+    strncpy(row->subject, left, sizeof(row->subject) - 1);
+    row->subject[sizeof(row->subject) - 1] = 0;
+    strcpy(row->predicate, "is");
+    strncpy(row->object, right, sizeof(row->object) - 1);
+    row->object[sizeof(row->object) - 1] = 0;
+    row->confidence = 0.95;
+    if (end_out) *end_out = after_right;
+    return 1;
+}
+
 static int parse_elliptic_at(
     const char *text,
     const char *start,
@@ -293,6 +341,13 @@ size_t memoria_extract_relations(const char *text, memoria_relation *out, size_t
     /* Product contract: collect explicit compact copular relations next. */
     for (p = text; *p && count < capacity; ++p) {
         if (parse_copular_at(text, p, &candidate, &match_end)) {
+            add_unique(out, &count, capacity, &candidate);
+        }
+    }
+
+    /* Deterministic naming forms are explicit factual relations too. */
+    for (p = text; *p && count < capacity; ++p) {
+        if (parse_naming_at(text, p, &candidate, &match_end)) {
             add_unique(out, &count, capacity, &candidate);
         }
     }
