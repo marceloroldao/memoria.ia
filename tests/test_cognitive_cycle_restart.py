@@ -7,6 +7,10 @@ from memoria_resolutiva.epistemic_bdr_persistence import (
     load_epistemic_audit_from_backend,
     save_epistemic_audit_to_backend,
 )
+from memoria_resolutiva.evidence_bdr_persistence import (
+    load_evidence_catalog_from_backend,
+    save_evidence_catalog_to_backend,
+)
 from memoria_resolutiva.evidence_core import EvidenceCore
 from memoria_resolutiva.evidence_temporal_bridge import (
     EpistemicSource,
@@ -38,25 +42,7 @@ class FakeAtomicBackend:
         return self.state.get(key)
 
 
-def _clone_namespace(source: EvidenceCore, namespace: str) -> EvidenceCore:
-    clone = EvidenceCore()
-    for edge in source.evidence_history(namespace=namespace):
-        clone.observe_relation(
-            edge.subject,
-            edge.predicate,
-            edge.object,
-            evidence_id=edge.evidence_id,
-            source_text=edge.source_text,
-            provenance=edge.provenance,
-            origin=edge.origin,
-            confidence=edge.confidence,
-            namespace=edge.namespace,
-            epoch=edge.epoch,
-        )
-    return clone
-
-
-def test_compile_response_validate_explicit_learn_and_restart_preserves_full_boundary():
+def test_compile_response_validate_explicit_learn_and_cold_restart_preserves_full_boundary():
     namespace = "default"
     evidence = EvidenceCore()
     user_alt = evidence.observe_relation(
@@ -120,6 +106,7 @@ def test_compile_response_validate_explicit_learn_and_restart_preserves_full_bou
 
     backend = FakeAtomicBackend()
     topology_stats = save_snapshot_to_backend(backend, addresses, store)
+    evidence_stats = save_evidence_catalog_to_backend(backend, evidence)
     audit_stats = save_epistemic_audit_to_backend(
         backend,
         bridge,
@@ -127,11 +114,14 @@ def test_compile_response_validate_explicit_learn_and_restart_preserves_full_bou
         response_validator,
     )
     assert topology_stats.bdr_sequence == 1
-    assert audit_stats.bdr_sequence == 2
+    assert evidence_stats.bdr_sequence == 2
+    assert evidence_stats.evidence_rows == 3
+    assert audit_stats.bdr_sequence == 3
     assert audit_stats.response_ids == 1
 
+    # True cold restart: reconstruct every runtime surface from durable records.
     restored_addresses, restored_store = load_snapshot_from_backend(backend)
-    restored_evidence = _clone_namespace(evidence, namespace)
+    restored_evidence = load_evidence_catalog_from_backend(backend)
     restored_bridge = EvidenceTemporalBridge(restored_addresses, restored_store)
     restored_gate = EpistemicLearningGate(restored_evidence)
     restored_validator = ResponseValidator(restored_evidence)
@@ -144,9 +134,19 @@ def test_compile_response_validate_explicit_learn_and_restart_preserves_full_bou
 
     assert loaded.response_ids == 1
     assert restored_validator.iter_response_ids() == ("response-1",)
+    assert tuple(edge.evidence_id for edge in restored_evidence.iter_evidence()) == (
+        "user-alt",
+        "response:response-1:claim:1",
+        "learning:confirm-response-1",
+    )
+    restored_candidate = next(
+        edge for edge in restored_evidence.iter_evidence()
+        if edge.evidence_id == candidate.evidence_id
+    )
+    assert restored_candidate.provenance == EpistemicSource.LLM_GENERATED.value
+
     restored_current = restored_store.resolve("meu gato", "nome", TemporalOperator.CURRENT)
     assert restored_store.value_text(restored_current.value_address) == "bob"
-
     restarted_packet = ContextCompiler(
         restored_store,
         projections=restored_bridge.iter_projections(),
@@ -163,11 +163,6 @@ def test_compile_response_validate_explicit_learn_and_restart_preserves_full_bou
             namespace=namespace,
         )
 
-    restored_candidate = next(
-        edge
-        for edge in restored_evidence.evidence_history(namespace=namespace)
-        if edge.evidence_id == candidate.evidence_id
-    )
     before_events = len(restored_store.iter_events())
     duplicate_projection = restored_bridge.project_edge(restored_candidate)
     assert duplicate_projection.promoted is False
@@ -182,3 +177,36 @@ def test_compile_response_validate_explicit_learn_and_restart_preserves_full_bou
             validator_id="user",
             reason="duplicate",
         )
+
+    # Epoch continuity also survives the cold restart through public replay.
+    continued = restored_evidence.observe_relation(
+        "meu gato",
+        "nome",
+        "Bob",
+        evidence_id="user-after-restart",
+        source_text="Bob continua sendo o nome.",
+        provenance="USER_CONFIRMED",
+        origin="user",
+        namespace=namespace,
+    )
+    assert continued.epoch == 3
+
+
+def test_evidence_catalog_fails_closed_when_referenced_record_is_missing():
+    evidence = EvidenceCore()
+    evidence.observe_relation(
+        "sensor",
+        "temperatura",
+        "25 C",
+        evidence_id="sensor-1",
+        source_text="25 C",
+        provenance="SENSOR_OBSERVED",
+        origin="sensor",
+    )
+    backend = FakeAtomicBackend()
+    save_evidence_catalog_to_backend(backend, evidence)
+    edge_key = next(key for key in backend.state if key.startswith("memoria.evidence.v1/edge/"))
+    del backend.state[edge_key]
+
+    with pytest.raises(ValueError, match="missing BDR evidence record"):
+        load_evidence_catalog_from_backend(backend)
