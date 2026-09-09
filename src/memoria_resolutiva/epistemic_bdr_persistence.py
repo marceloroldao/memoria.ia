@@ -12,6 +12,7 @@ from .evidence_temporal_bridge import (
     EvidenceTemporalBridge,
 )
 from .learning_gate import EpistemicLearningGate, LearningDecision
+from .response_validator import ResponseValidator
 
 
 _SCHEMA_VERSION = 1
@@ -27,6 +28,7 @@ class AtomicBatchBackend(Protocol):
 class EpistemicBDRStats:
     projections: int
     decisions: int
+    response_ids: int
     physical_records: int
     bdr_sequence: int
 
@@ -48,12 +50,14 @@ def save_epistemic_audit_to_backend(
     backend: AtomicBatchBackend,
     bridge: EvidenceTemporalBridge,
     gate: EpistemicLearningGate,
+    response_validator: ResponseValidator | None = None,
 ) -> EpistemicBDRStats:
-    """Persist projection and learning audit as one independent atomic BDR batch.
+    """Persist epistemic audit as one independent atomic BDR batch.
 
-    The epistemic namespace is intentionally separate from topological CURRENT/HISTORY.
-    It records why evidence was promoted/quarantined and how learning decisions were
-    validated without redefining factual state storage.
+    The namespace is intentionally separate from topological CURRENT/HISTORY. It stores
+    projection/learning audit and, when supplied, the Response Validator idempotency
+    boundary. ``response_ids`` is additive inside schema v1 so older manifests that do
+    not contain the field remain readable.
     """
     puts: list[tuple[str, bytes]] = []
     projection_keys: list[str] = []
@@ -88,16 +92,19 @@ def save_epistemic_audit_to_backend(
             "promoted_evidence_id": decision.promoted_evidence_id,
         })))
 
+    response_ids = () if response_validator is None else response_validator.iter_response_ids()
     manifest = {
         "schema_version": _SCHEMA_VERSION,
         "projection_keys": projection_keys,
         "decision_keys": decision_keys,
+        "response_ids": list(response_ids),
     }
     puts.append((_ROOT_KEY, _encode_json(manifest)))
     sequence = backend.write_batch(puts)
     return EpistemicBDRStats(
         projections=len(projection_keys),
         decisions=len(decision_keys),
+        response_ids=len(response_ids),
         physical_records=len(puts),
         bdr_sequence=sequence,
     )
@@ -107,12 +114,22 @@ def load_epistemic_audit_from_backend(
     backend: AtomicBatchBackend,
     bridge: EvidenceTemporalBridge,
     gate: EpistemicLearningGate,
+    response_validator: ResponseValidator | None = None,
 ) -> EpistemicBDRStats:
     manifest_raw = _decode_json(backend.get(_ROOT_KEY), _ROOT_KEY)
     if not isinstance(manifest_raw, dict):
         raise ValueError("invalid BDR epistemic root manifest")
     if int(manifest_raw.get("schema_version", 0)) != _SCHEMA_VERSION:
         raise ValueError("unsupported BDR epistemic snapshot schema version")
+
+    response_ids_raw = manifest_raw.get("response_ids", [])
+    if not isinstance(response_ids_raw, list):
+        raise ValueError("invalid BDR response validator id list")
+    response_ids = tuple(str(value).strip() for value in response_ids_raw)
+    if any(not value for value in response_ids):
+        raise ValueError("response validator id must be non-empty")
+    if len(response_ids) != len(set(response_ids)):
+        raise ValueError("response validator audit contains duplicate response_id")
 
     events_by_sequence = {event.sequence: event for event in bridge.store.iter_events()}
     projections: list[EvidenceProjection] = []
@@ -171,17 +188,26 @@ def load_epistemic_audit_from_backend(
             ),
         ))
 
-    # Validate everything before mutating either runtime audit surface.
+    # Validate every record before mutating the runtime audit surfaces.
     bridge.restore_projection_audit(projections)
     try:
         gate.restore_decisions(decisions)
     except Exception:
         bridge.restore_projection_audit(())
         raise
+    if response_validator is not None:
+        try:
+            response_validator.restore_response_ids(response_ids)
+        except Exception:
+            # The response-id list is fully prevalidated above; this protects callers
+            # that accidentally provide a non-empty validator instance.
+            bridge.restore_projection_audit(())
+            raise
 
     return EpistemicBDRStats(
         projections=len(projections),
         decisions=len(decisions),
+        response_ids=len(response_ids),
         physical_records=len(projections) + len(decisions) + 1,
         bdr_sequence=0,
     )
@@ -192,9 +218,10 @@ def save_epistemic_audit_bdr(
     library_path: str | Path,
     bridge: EvidenceTemporalBridge,
     gate: EpistemicLearningGate,
+    response_validator: ResponseValidator | None = None,
 ) -> EpistemicBDRStats:
     with CtypesAtomicBDR(root, library_path) as backend:
-        return save_epistemic_audit_to_backend(backend, bridge, gate)
+        return save_epistemic_audit_to_backend(backend, bridge, gate, response_validator)
 
 
 def load_epistemic_audit_bdr(
@@ -202,12 +229,14 @@ def load_epistemic_audit_bdr(
     library_path: str | Path,
     bridge: EvidenceTemporalBridge,
     gate: EpistemicLearningGate,
+    response_validator: ResponseValidator | None = None,
 ) -> EpistemicBDRStats:
     with CtypesAtomicBDR(root, library_path) as backend:
-        stats = load_epistemic_audit_from_backend(backend, bridge, gate)
+        stats = load_epistemic_audit_from_backend(backend, bridge, gate, response_validator)
         return EpistemicBDRStats(
             projections=stats.projections,
             decisions=stats.decisions,
+            response_ids=stats.response_ids,
             physical_records=stats.physical_records,
             bdr_sequence=backend.last_sequence(),
         )
