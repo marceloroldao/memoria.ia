@@ -11,6 +11,11 @@ static memoria_mobile_status call(memoria_mobile_handle *h, int learn, const cha
     return learn ? memoria_mobile_learn_turn_json(h,in,out) : memoria_mobile_resolve_context_json(h,in,out);
 }
 
+static memoria_mobile_status compile_context(memoria_mobile_handle *h, const char *json, memoria_mobile_buffer *out) {
+    memoria_mobile_buffer in = {(const uint8_t *)json, strlen(json)};
+    return memoria_mobile_compile_context_json(h,in,out);
+}
+
 static int contains(memoria_mobile_buffer b, const char *needle) {
     return b.data && strstr((const char *)b.data,needle) != NULL;
 }
@@ -27,6 +32,20 @@ static int assert_alpha_temporal(memoria_mobile_handle *h) {
     CHECK(contains(out,"\"previous_value\":\"standby\""));
     CHECK(contains(out,"\"current_value\":\"active\""));
     CHECK(contains(out,"\"transition_detected\":true"));
+    CHECK(!contains(out,"broken"));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
+    CHECK(compile_context(h,"{\"query\":\"what was device alpha mode before and what is current now?\"}",&out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
+    CHECK(contains(out,"\"status\":\"HIT\""));
+    CHECK(contains(out,"\"memory_ids\":[\"a1\",\"a2\"]"));
+    CHECK(contains(out,"\"temporal_state_used\":true"));
+    CHECK(contains(out,"\"previous_memory_id\":\"a1\""));
+    CHECK(contains(out,"\"current_memory_id\":\"a2\""));
+    CHECK(contains(out,"\"previous_value\":\"standby\""));
+    CHECK(contains(out,"\"current_value\":\"active\""));
+    CHECK(contains(out,"\"transition_detected\":true"));
+    CHECK(!contains(out,"selected_context"));
     CHECK(!contains(out,"broken"));
     memoria_mobile_free_buffer(out);
     return 0;
@@ -66,14 +85,12 @@ static int assert_session_trajectory_temporal(memoria_mobile_handle *h) {
     CHECK(contains(out,"\"current_value\":\"running\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* A trajectory-local antecedent from another session must not leak. */
     CHECK(call(h,0,
         "{\"query\":\"what was its mode before and what is current now?\",\"session_id\":\"s-beta\",\"conversation_window\":["
         "{\"session_id\":\"s-alpha\",\"role\":\"user\",\"text\":\"device alpha mode is active\",\"order\":1}]}",
         &out) == MEMORIA_MOBILE_UNRESOLVED);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Explicitly naming two temporal targets is ambiguous and must fail closed. */
     CHECK(call(h,0,
         "{\"query\":\"what was device alpha mode or device beta mode before and what is current now?\"}",
         &out) == MEMORIA_MOBILE_UNRESOLVED);
@@ -104,6 +121,12 @@ int main(void) {
     CHECK(assert_alpha_temporal(h) == 0);
     CHECK(assert_beta_temporal(h) == 0);
     CHECK(assert_session_trajectory_temporal(h) == 0);
+
+    CHECK(compile_context(h,"{\"query\":\"what is unknown mode?\"}",&out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out,"\"status\":\"UNRESOLVED\""));
+    CHECK(contains(out,"\"packet\":null"));
+    CHECK(!contains(out,"selected_context"));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
     memoria_mobile_close(h); h = NULL;
