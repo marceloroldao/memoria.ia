@@ -64,6 +64,18 @@ memoria_mobile_status memoria_mobile_compile_context_json(
 );
 
 /*
+ * Additive ABI-v1 response validator. Model responses are extracted into
+ * relation claims, compared with compiled factual context, and persisted only
+ * as low-authority assistant_generated candidates. SUPPORTED means consistent,
+ * never authoritative. Duplicate response_id values fail closed.
+ */
+memoria_mobile_status memoria_mobile_validate_response_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/*
  * Additive ABI-v1 structural activation entrypoint. It traverses persisted
  * relation edges directly and is intentionally independent of natural-language
  * query generation. Older ABI-v1 libraries may omit this optional symbol.
