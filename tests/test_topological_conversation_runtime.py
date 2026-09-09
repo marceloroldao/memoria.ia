@@ -6,7 +6,7 @@ from memoria_resolutiva.conversation_contract import ConversationIngestResult, C
 from memoria_resolutiva.evidence_temporal_bridge import EpistemicSource
 from memoria_resolutiva.response_validator import ResponseClaim, ResponseClaimStatus
 from memoria_resolutiva.topological_conversation_runtime import TopologicalConversationRuntime
-from memoria_resolutiva.topological_memory import TemporalOperator
+from memoria_resolutiva.topological_memory import AddressSpace, TemporalEventStore, TemporalOperator
 
 
 class FakeConversationService:
@@ -47,7 +47,7 @@ class FakeConversationService:
         self.flush_calls += 1
 
 
-def _cat_relation(*, value: str = "Alt", memory_id: str = "rel-1") -> dict:
+def _cat_relation(*, value: str = "Alt", memory_id: str = "rel-1", namespace: str = "default") -> dict:
     return {
         "subject": "meu gato",
         "predicate": "nome",
@@ -55,7 +55,7 @@ def _cat_relation(*, value: str = "Alt", memory_id: str = "rel-1") -> dict:
         "memory_id": memory_id,
         "confidence": 0.95,
         "epoch": None,
-        "namespace": "default",
+        "namespace": namespace,
     }
 
 
@@ -196,6 +196,44 @@ def test_unresolved_user_text_creates_no_factual_relation_and_resolve_fails_clos
     assert resolution.packet is None
     assert resolution.hit is False
     assert resolution.unresolved is True
+
+
+def test_restored_store_supplies_address_space_when_addresses_argument_is_omitted():
+    conversation = FakeConversationService()
+    restored_addresses = AddressSpace()
+    restored_store = TemporalEventStore(restored_addresses)
+
+    runtime = TopologicalConversationRuntime(
+        conversation,
+        store=restored_store,
+    )
+
+    assert runtime.store is restored_store
+    assert runtime.addresses is restored_addresses
+    assert runtime.bridge.addresses is restored_addresses
+
+
+def test_explicit_mismatched_store_and_address_space_fails_closed():
+    conversation = FakeConversationService()
+    addresses = AddressSpace()
+    other_store = TemporalEventStore(AddressSpace())
+
+    with pytest.raises(ValueError, match="same topology"):
+        TopologicalConversationRuntime(
+            conversation,
+            addresses=addresses,
+            store=other_store,
+        )
+
+
+def test_session_namespace_from_memoria_relation_is_preserved():
+    conversation = FakeConversationService()
+    conversation.next_relations = (_cat_relation(namespace="session-a"),)
+    runtime = TopologicalConversationRuntime(conversation)
+
+    runtime.ingest_user("Meu gato se chama Alt.", session_id="session-a")
+    edge = runtime.evidence.iter_evidence()[0]
+    assert edge.namespace == "session-a"
 
 
 def test_flush_only_delegates_to_memoria_conversation_service():
