@@ -39,7 +39,7 @@ jobs:
   bdr-topological-parity:
     if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/') || startsWith(github.head_ref, 'post-freeze/')
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout Memoria.ia experiment
         uses: actions/checkout@v4
@@ -53,20 +53,39 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake g++ zlib1g-dev
-          python -m pip install --upgrade pip
-          python -m pip install -e '.[product,test]'
-      - name: Build BDR shared atomic ABI
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install pybind11
+      - name: Build BDR shared and native-link artifacts
         run: |
           cmake -S bdr-source/experimental/api_v86 -B bdr-build -DCMAKE_BUILD_TYPE=Release
-          cmake --build bdr-build --target bdr_atomic_c_api_shared --config Release -j2
-      - name: Run real BDR topology, evidence and epistemic restart fixtures
+          cmake --build bdr-build --target bdr_atomic_c_api_shared bdr_v1_candidate --config Release -j2
+          test -f bdr-build/libbdr_atomic_c_api.so
+          test -f bdr-build/libbdr.a
+      - name: Install Memoria.ia with native BDR extension
+        env:
+          MEMORIA_BUILD_BDR: '1'
+          BDR_INCLUDE_DIR: ${{ github.workspace }}/bdr-source/experimental/api_v86/include
+          BDR_LIBRARY_FILE: ${{ github.workspace }}/bdr-build/libbdr.a
+        run: python -m pip install -e '.[product,test]' --no-build-isolation
+      - name: Verify both BDR bindings are active
         env:
           BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
-        run: python -m pytest -q tests/test_topological_bdr_persistence.py tests/test_epistemic_bdr_persistence.py tests/test_cognitive_cycle_restart.py
+        run: |
+          python - <<'PY'
+          import os
+          from memoria_resolutiva.bdr_store import native_bdr_available
+          assert native_bdr_available(), 'native EvidenceCore BDR extension is unavailable'
+          assert os.path.isfile(os.environ['BDR_ATOMIC_LIB'])
+          print('native EvidenceCore BDR + shared atomic BDR available')
+          PY
+      - name: Run real BDR topology, EvidenceCore and epistemic cold restart fixtures
+        env:
+          BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
+        run: python -m pytest -q tests/test_evidence_state_v1_candidate.py tests/test_topological_bdr_persistence.py tests/test_epistemic_bdr_persistence.py tests/test_cognitive_cycle_restart.py
       - name: Record BDR versus SQLite latency and growth evidence
         env:
           BDR_ATOMIC_LIB: ${{ github.workspace }}/bdr-build/libbdr_atomic_c_api.so
