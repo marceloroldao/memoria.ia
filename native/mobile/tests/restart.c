@@ -41,6 +41,20 @@ static int same_buffer(memoria_mobile_buffer b, const char *expected) {
 int main(void) {
     const char *dir = "./tmp-mobile-restart";
     const char *plural_query = "{\"query\":\"qual nome dos meus gatos?\"}";
+    const char *window_before_answer =
+        "{\"query\":\"qual nome dos meus gatos?\",\"session_id\":\"device-test\",\"conversation_window\":["
+        "{\"session_id\":\"device-test\",\"role\":\"user\",\"text\":\"eu tenho um gato que se chama Lotus\",\"order\":1},"
+        "{\"session_id\":\"device-test\",\"role\":\"assistant\",\"text\":\"Lotus é um gato.\",\"order\":2},"
+        "{\"session_id\":\"device-test\",\"role\":\"user\",\"text\":\"ele tem um irmão, que se chama Vibe\",\"order\":3},"
+        "{\"session_id\":\"device-test\",\"role\":\"assistant\",\"text\":\"Vibe é o irmão de Lotus.\",\"order\":4}]}";
+    const char *window_after_answer =
+        "{\"query\":\"qual nome dos meus gatos?\",\"session_id\":\"device-test\",\"conversation_window\":["
+        "{\"session_id\":\"device-test\",\"role\":\"user\",\"text\":\"eu tenho um gato que se chama Lotus\",\"order\":1},"
+        "{\"session_id\":\"device-test\",\"role\":\"assistant\",\"text\":\"Lotus é um gato.\",\"order\":2},"
+        "{\"session_id\":\"device-test\",\"role\":\"user\",\"text\":\"ele tem um irmão, que se chama Vibe\",\"order\":3},"
+        "{\"session_id\":\"device-test\",\"role\":\"assistant\",\"text\":\"Vibe é o irmão de Lotus.\",\"order\":4},"
+        "{\"session_id\":\"device-test\",\"role\":\"user\",\"text\":\"qual nome dos meus gatos?\",\"order\":5},"
+        "{\"session_id\":\"device-test\",\"role\":\"assistant\",\"text\":\"Os meus gatos são Lotus e Vibe.\",\"order\":6}]}";
     memoria_mobile_handle *h = NULL;
     memoria_mobile_buffer out = {0};
     char *before_restart_packet = NULL;
@@ -58,7 +72,6 @@ int main(void) {
     CHECK(call(h,1,"{\"role\":\"assistant\",\"text\":\"orion node is primary\",\"memory_id\":\"a1\",\"order\":2,\"source_authority\":0.35,\"ultimate_source_memory_id\":\"u1\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Exact real-device facts from OFF.IA export. */
     CHECK(call(h,1,"{\"role\":\"user\",\"text\":\"eu tenho um gato que se chama Lotus\",\"memory_id\":\"cat1\",\"order\":3}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"subject\":\"gato\""));
     CHECK(contains(out,"\"predicate\":\"is\""));
@@ -71,7 +84,6 @@ int main(void) {
     CHECK(contains(out,"\"object\":\"Vibe\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* No mutation between identical reads: CognitivePacket must be byte-stable. */
     CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
     CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
@@ -85,6 +97,14 @@ int main(void) {
         memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
     }
 
+    /* OFF.IA parity: trajectory window may grow, but it cannot eclipse a stable factual HIT. */
+    CHECK(call(h,5,window_before_answer,&out) == MEMORIA_MOBILE_OK);
+    CHECK(same_buffer(out,before_restart_packet));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call(h,5,window_after_answer,&out) == MEMORIA_MOBILE_OK);
+    CHECK(same_buffer(out,before_restart_packet));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+
     CHECK(call(h,3,"{\"episode_id\":\"e1\",\"role\":\"assistant\",\"text\":\"first creation about routing\",\"timestamp\":\"2026-08-28T10:00:00Z\",\"order\":1,\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
     CHECK(call(h,3,"{\"episode_id\":\"e2\",\"role\":\"assistant\",\"text\":\"second creation about routing\",\"timestamp\":\"2026-08-28T11:00:00Z\",\"order\":3,\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);
@@ -93,7 +113,6 @@ int main(void) {
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
     memoria_mobile_close(h); h=NULL;
 
-    /* Process/app restart equivalent: a fresh handle reconstructs only from BDR. */
     CHECK(memoria_mobile_open(dir,"org-restart",&h) == MEMORIA_MOBILE_OK);
     CHECK(call(h,2,"{\"query\":\"orion node primary\"}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"memory_ids\":[\"u1\"]"));
@@ -104,7 +123,6 @@ int main(void) {
     CHECK(contains(out,"\"object\":\"primary\""));
     memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
-    /* Repeated reads after cold restart must also be byte-stable. */
     CHECK(call(h,5,plural_query,&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"packet_schema\":\"memoria.cognitive.packet.v1\""));
     CHECK(!contains(out,"\"source_type\":\"assistant_generated\""));
@@ -118,8 +136,15 @@ int main(void) {
         memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
     }
 
-    /* Restart must not change the packet for an unchanged memory state. */
     CHECK(strcmp(before_restart_packet,after_restart_packet) == 0);
+
+    /* The same growing windows remain subordinate to stable recall after restart too. */
+    CHECK(call(h,5,window_before_answer,&out) == MEMORIA_MOBILE_OK);
+    CHECK(same_buffer(out,after_restart_packet));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call(h,5,window_after_answer,&out) == MEMORIA_MOBILE_OK);
+    CHECK(same_buffer(out,after_restart_packet));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
 
     CHECK(call(h,4,"{\"query\":\"last creation about routing\",\"role\":\"assistant\",\"event_type\":\"creation\",\"topics_csv\":\"routing\"}",&out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out,"\"episode_ids\":[\"e2\"]"));
