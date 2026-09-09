@@ -111,13 +111,9 @@ static int append_existing_request_field(
 }
 
 /*
- * Context Compiler precedence:
- *   1. persistent semantic/temporal/concept state without volatile trajectory;
- *   2. only when that is unresolved, retry the original request with conversation_window.
- *
- * This keeps a growing LLM conversation window from eclipsing an already justified
- * persistent fact. The legacy resolver ABI itself is not changed; trajectory callers
- * that explicitly use memoria_mobile_resolve_context_json retain their old behavior.
+ * Context Compiler owns a stable semantic pass. It always supplies the reserved
+ * concept namespace `semantic` unless the caller explicitly selects another one.
+ * Volatile trajectory is consulted only when the stable pass is unresolved.
  */
 static char *build_stable_request(const char *json) {
     static const char *keys[] = {
@@ -126,7 +122,9 @@ static char *build_stable_request(const char *json) {
     char *out;
     size_t used = 0, i;
     int field_count = 0;
+    int has_concept_namespace;
     if (!json || !find_value_start(json, "query")) return NULL;
+    has_concept_namespace = find_value_start(json, "concept_namespace") != NULL;
     out = (char *)malloc(PACKET_CAP);
     if (!out) return NULL;
     out[0] = 0;
@@ -136,6 +134,10 @@ static char *build_stable_request(const char *json) {
             free(out);
             return NULL;
         }
+    }
+    if (!has_concept_namespace) {
+        if (field_count > 0 && !append_text(out, PACKET_CAP, &used, ",")) { free(out); return NULL; }
+        if (!append_text(out, PACKET_CAP, &used, "\"concept_namespace\":\"semantic\"")) { free(out); return NULL; }
     }
     if (!append_text(out, PACKET_CAP, &used, "}")) { free(out); return NULL; }
     return out;
@@ -161,6 +163,7 @@ memoria_mobile_status memoria_mobile_compile_context_json(
     char *source = NULL;
     char *packet = NULL;
     size_t used = 0;
+    int has_conversation_window;
 
     if (!handle || !request_json.data || request_json.size == 0 || !response_json)
         return MEMORIA_MOBILE_INVALID_ARGUMENT;
@@ -169,21 +172,20 @@ memoria_mobile_status memoria_mobile_compile_context_json(
     if (!request_source) return MEMORIA_MOBILE_INTERNAL_ERROR;
     memcpy(request_source, request_json.data, request_json.size);
     request_source[request_json.size] = 0;
+    has_conversation_window = find_value_start(request_source, "conversation_window") != NULL;
 
-    if (find_value_start(request_source, "conversation_window")) {
-        stable_request = build_stable_request(request_source);
-        if (!stable_request) { free(request_source); return MEMORIA_MOBILE_INTERNAL_ERROR; }
-        stable_buffer.data = (const uint8_t *)stable_request;
-        stable_buffer.size = strlen(stable_request);
-        status = memoria_mobile_resolve_context_json(handle, stable_buffer, &resolved);
-        if (status == MEMORIA_MOBILE_UNRESOLVED) {
-            if (resolved.data) memoria_mobile_free_buffer(resolved);
-            resolved = (memoria_mobile_buffer){0};
-            status = memoria_mobile_resolve_context_json(handle, request_json, &resolved);
-        }
-    } else {
+    stable_request = build_stable_request(request_source);
+    if (!stable_request) { free(request_source); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    stable_buffer.data = (const uint8_t *)stable_request;
+    stable_buffer.size = strlen(stable_request);
+    status = memoria_mobile_resolve_context_json(handle, stable_buffer, &resolved);
+
+    if (status == MEMORIA_MOBILE_UNRESOLVED && has_conversation_window) {
+        if (resolved.data) memoria_mobile_free_buffer(resolved);
+        resolved = (memoria_mobile_buffer){0};
         status = memoria_mobile_resolve_context_json(handle, request_json, &resolved);
     }
+
     free(stable_request);
     free(request_source);
 
