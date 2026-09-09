@@ -113,7 +113,11 @@ def test_external_validation_can_promote_separate_trusted_evidence_after_respons
         validator_id="user",
         reason="Usuário confirmou a correção.",
     )
-    promoted = next(edge for edge in evidence.evidence_history() if edge.evidence_id == decision.promoted_evidence_id)
+    promoted = next(
+        edge
+        for edge in evidence.evidence_history(namespace=candidate.namespace)
+        if edge.evidence_id == decision.promoted_evidence_id
+    )
     projection = bridge.project_edge(promoted)
 
     assert candidate.provenance == "LLM_GENERATED"
