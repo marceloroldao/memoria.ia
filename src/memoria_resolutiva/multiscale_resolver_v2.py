@@ -36,14 +36,25 @@ class MultiscaleMatch:
     supporting_depths: tuple[int, ...]
 
     @property
-    def multiscale_key(self) -> tuple[int, tuple[tuple[int, int, int, int, int], ...], str]:
-        # More distinct hierarchy levels agreeing on the same trajectory is the
-        # primary signal. Within that, compare scale evidence lexicographically.
-        # No learned scalar weights are introduced.
-        ranked = tuple(
-            sorted((evidence.structural_key for evidence in self.scale_evidence), reverse=True)
+    def atomic_evidence(self) -> ScaleEvidence | None:
+        return next((item for item in self.scale_evidence if item.depth == 0), None)
+
+    @property
+    def multiscale_key(self) -> tuple[tuple[int, int, int, int, int], int, tuple[tuple[int, int, int, int, int], ...], str]:
+        # Atomic geometry is the non-derived observation boundary and therefore
+        # dominates the count of hierarchy levels. Derived scales may reinforce a
+        # candidate only after atomic convergence is tied. This prevents recurrent
+        # bad compositions from manufacturing consensus without introducing learned
+        # scalar weights or semantic rules.
+        atomic = self.atomic_evidence
+        atomic_key = atomic.structural_key if atomic is not None else (-1, -1, -10**9, -10**9, -10**9)
+        derived = tuple(
+            sorted(
+                (evidence.structural_key for evidence in self.scale_evidence if evidence.depth != 0),
+                reverse=True,
+            )
         )
-        return (len(self.supporting_depths), ranked, self.trajectory_id)
+        return (atomic_key, len(self.supporting_depths), derived, self.trajectory_id)
 
 
 class MultiscaleAddressResolver:
