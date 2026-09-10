@@ -19,6 +19,7 @@ The system must not infer meaning from hard-coded semantic regexes, fixed intent
 7. Existing RC/restart3 code remains untouched; this V2 engine is additive until it outperforms the frozen baseline.
 8. Text is only one modality adapter. Audio, video, sensors and future inputs may supply precomputed address streams to the same topology engine.
 9. Immediate identical-address loops do not advance state or reinforce a trajectory.
+10. Recurrent contiguous address sequences may gain their own deterministic composition address. Composition is a derived view and never destroys the atomic trajectory or raw provenance.
 
 ## Experimental flow
 
@@ -29,7 +30,9 @@ INPUT / QUESTION / SENSOR STREAM
 same deterministic address space
       |
       v
-address sequence + local compositions
+atomic address sequence
+      |
+      +--> recurrent local compositions -> reusable composition addresses
       |
       v
 candidate stored occurrence trajectories
@@ -45,7 +48,7 @@ portal-aware collapse
 ranked trajectory candidates
 ```
 
-The laboratory implementation deliberately does not attempt to know what words or symbols mean. It only compares reusable addresses, ordering, occurrence trajectories and topology.
+The laboratory implementation deliberately does not attempt to know what words or symbols mean. It only compares reusable addresses, ordering, occurrence trajectories, recurring compositions and topology.
 
 ## Initial acceptance corpus
 
@@ -64,6 +67,52 @@ Queries:
 - `qual a cor do meu carro` -> trajectory ending in `azul`
 
 These expectations are test labels only. They are not encoded as semantic rules in the engine.
+
+## Reusable hierarchical address compositions
+
+A recurring contiguous sequence of addresses may become a reusable higher-level address solely because it recurs in observed trajectories.
+
+Example:
+
+```text
+A(meu) -> A(gato)
+A(meu) -> A(gato)
+```
+
+may create:
+
+```text
+AC2(A(meu), A(gato)) -> ac2:...
+```
+
+No semantic claim such as `owner`, `pet`, `noun phrase` or `entity` is attached. The composition means only: **this address subsequence has appeared repeatedly as the same ordered local structure**.
+
+Properties of the first composition engine:
+
+- deterministic address derived from ordered child addresses;
+- minimum recurrence required before discovery;
+- same rule for text, audio, video and sensor address streams;
+- longest recurrent composition selected first when several overlap;
+- original atomic trajectory remains preserved;
+- raw provenance remains preserved;
+- cold restart rebuilds the same composition catalogue;
+- query composition is read-only.
+
+Compositions may themselves later become children of larger compositions, but recursive promotion is intentionally deferred until the first-level behavior is benchmarked. This avoids uncontrolled hierarchy growth before the topology is understood.
+
+The experimental objective is not compression alone. A composition can create a shorter path through a stable recurring region:
+
+```text
+A(meu) -> A(gato) -> A(dorme) -> A(aqui)
+```
+
+becomes a derived view such as:
+
+```text
+AC2(meu,gato) -> A(dorme) -> A(aqui)
+```
+
+If a query also traverses `AC2(meu,gato)`, the same region can be reached with fewer discrete steps while preserving the lower-level route for audit and alternative resolution.
 
 ## Topological black holes (Resolutive ontology metaphor)
 
@@ -136,7 +185,7 @@ video:  visual:edge17 -> visual:hub3 -> visual:motion8
 sensor: temp:bin21 -> temp:bin22 -> temp:bin21
 ```
 
-All use the same immediate-loop rule, density engine and occurrence-trajectory model. The modality-specific front end is responsible only for generating stable reusable addresses.
+All use the same immediate-loop rule, density engine, composition engine and occurrence-trajectory model. The modality-specific front end is responsible only for generating stable reusable addresses.
 
 ## Next benchmark
 
@@ -153,7 +202,12 @@ Run the same resolver as the memory grows through 100, 1,000 and 10,000 trajecto
 - rejected immediate-loop count;
 - convergence quality before and after loop rejection;
 - portal-aware versus density-blind ranking;
-- modality-agnostic stream parity.
+- modality-agnostic stream parity;
+- number of reusable compositions discovered;
+- atomic versus composed trajectory length;
+- atomic versus composed query hops;
+- ambiguity before and after composition;
+- composition catalogue determinism after restart.
 
 The hypothesis to test is:
 
