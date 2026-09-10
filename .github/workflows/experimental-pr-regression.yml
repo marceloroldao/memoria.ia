@@ -47,6 +47,9 @@ jobs:
       - name: V2 adversarial hierarchy and hub evidence
         if: runner.os == 'Linux'
         run: python benchmarks/adversarial_structure_v2_benchmark.py | tee adversarial-structure-v2-benchmark.json
+      - name: V2 adversarial corpus evidence
+        if: runner.os == 'Linux'
+        run: python benchmarks/adversarial_corpus_v2_benchmark.py | tee adversarial-corpus-v2-benchmark.json
       - name: Upload V2 recovery evidence
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
@@ -59,6 +62,12 @@ jobs:
         with:
           name: adversarial-structure-v2-benchmark
           path: adversarial-structure-v2-benchmark.json
+      - name: Upload V2 adversarial corpus evidence
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: adversarial-corpus-v2-benchmark
+          path: adversarial-corpus-v2-benchmark.json
 
   bdr-topological-parity:
     if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/') || startsWith(github.head_ref, 'post-freeze/')
