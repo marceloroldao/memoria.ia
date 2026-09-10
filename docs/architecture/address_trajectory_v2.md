@@ -21,6 +21,7 @@ The system must not infer meaning from hard-coded semantic regexes, fixed intent
 9. Immediate identical-address loops do not advance state or reinforce a trajectory.
 10. Recurrent contiguous address sequences may gain their own deterministic composition address. Composition is a derived view and never destroys the atomic trajectory or raw provenance.
 11. Compositions may recursively compose into higher levels, but promotion is bounded by recurrence, cross-trajectory support, maximum depth and maximum catalogue size per level.
+12. Resolution may occur simultaneously at atomic and hierarchical scales. No semantic level is preselected; agreement across scales is additional structural evidence.
 
 ## Experimental flow
 
@@ -31,24 +32,27 @@ INPUT / QUESTION / SENSOR STREAM
 same deterministic address space
       |
       v
-atomic address sequence
-      |
-      +--> recurrent compositions
-              |
-              +--> recurrent compositions of compositions
-      |
-      v
-candidate stored occurrence trajectories
-      |
-      v
-structural convergence
-(address overlap + order + discrete hops)
-      |
-      v
-portal-aware collapse
-      |
-      v
-ranked trajectory candidates
+atomic address sequence ----------------------+
+      |                                        |
+      +--> recurrent compositions              |
+              |                                |
+              +--> compositions of compositions|
+      |                                        |
+      +------------ multiscale views <---------+
+                       |
+                       v
+              occurrence trajectories
+                       |
+                       v
+              structural convergence
+      (overlap + order + discrete hops +
+             cross-scale agreement)
+                       |
+                       v
+               portal-aware collapse
+                       |
+                       v
+              ranked trajectory candidates
 ```
 
 The laboratory implementation deliberately does not attempt to know what words or symbols mean. It only compares reusable addresses, ordering, occurrence trajectories, recurring compositions and topology.
@@ -117,6 +121,28 @@ The hierarchical engine is deliberately bounded:
 - hierarchy is fully rebuildable after cold restart.
 
 The purpose is not compression alone. Higher-level addresses create shorter alternative paths through recurring regions while preserving the lower-level path for audit and alternative resolution.
+
+## Multiscale convergence
+
+`MultiscaleAddressResolver` evaluates the same query in depth 0 (atomic) and every hierarchy depth that actually exists. It does not choose a semantic level such as word, phrase, entity or concept.
+
+For a candidate trajectory, each scale independently exposes a structural evidence tuple:
+
+```text
+E_depth = (
+  address overlap,
+  ordered overlap,
+  maximum hops to terminal,
+  total hops to terminal,
+  trajectory length
+)
+```
+
+A candidate supported at several depths gains a stronger multiscale position because independent structural views converge on the same stored occurrence trajectory. No scalar learned weight is added across levels.
+
+Important guardrail: hierarchy agreement is not allowed to create facts. It only ranks already-stored trajectories. The query remains read-only and the atomic path remains available even when higher-level compositions exist.
+
+This also creates a falsifiable risk: a bad recurrent composition can produce false cross-scale consensus. The benchmark therefore records distractor behavior and must reject the V2 design if hierarchical support systematically amplifies wrong trajectories.
 
 ## Topological black holes (Resolutive ontology metaphor)
 
@@ -212,7 +238,10 @@ The experimental battery covers 100, 1,000 and 10,000 trajectories and measures:
 - total hierarchy depth reached;
 - catalogue cap enforcement;
 - hierarchy rebuild determinism;
-- combinatorial growth under adversarial recurrent streams.
+- combinatorial growth under adversarial recurrent streams;
+- multiscale support depth per candidate;
+- false consensus from recurrent distractors;
+- multiscale versus atomic ranking stability.
 
 The hypothesis to test is:
 
