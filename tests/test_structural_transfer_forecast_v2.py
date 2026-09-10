@@ -36,9 +36,30 @@ def _held_relation():
 
 
 def _candidate(prefix: str):
+    # Match the learned future's anonymous local role: index 4 of a six-address
+    # trajectory, with two independent lineages and one distinct successor per
+    # predecessor. Literal addresses remain disjoint.
     occurrences = (
-        occ(prefix + "1", prefix + "L1", prefix + "p1", prefix + ":future", prefix + "s1", prefix + "t1"),
-        occ(prefix + "2", prefix + "L2", prefix + "p2", prefix + ":future", prefix + "s2", prefix + "t2"),
+        occ(
+            prefix + "1",
+            prefix + "L1",
+            prefix + "p0",
+            prefix + "p1",
+            prefix + "p2",
+            prefix + "p3",
+            prefix + ":future",
+            prefix + "s1",
+        ),
+        occ(
+            prefix + "2",
+            prefix + "L2",
+            prefix + "q0",
+            prefix + "q1",
+            prefix + "q2",
+            prefix + "q3",
+            prefix + ":future",
+            prefix + "s2",
+        ),
     )
     return StructuralFutureCandidate(prefix + ":candidate", build_role_profile(occurrences, prefix + ":future"))
 
