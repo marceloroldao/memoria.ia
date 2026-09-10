@@ -54,24 +54,18 @@ class TrajectoryMatch:
 
     @property
     def structural_key(self) -> tuple[int, int, int, int, int, str]:
-        # Lexicographic structural ranking: no learned scalar weights.
+        # Lexicographic structural ranking: address geometry only.
+        # No learned scalar weights and no dependency on raw textual provenance.
         coverage_num = self.query_coverage_num
         coverage_den = max(self.query_coverage_den, 1)
-        unexplained = max(0, len(self.addresses_for_length()) - self.overlap)
         return (
             coverage_num,
             -coverage_den,
             self.ordered_overlap,
             self.adjacency_overlap,
-            self.overlap - unexplained,
+            self.overlap,
             self.trajectory_id,
         )
-
-    def addresses_for_length(self) -> tuple[str, ...]:
-        # Legacy structural tie-break support for raw text trajectories.
-        # Non-text address streams use raw_text only as provenance and therefore
-        # fall back to an empty tuple here; the primary structural fields dominate.
-        return _units(self.raw_text) if self.raw_text else ()
 
 
 class AddressTrajectoryMemory:
