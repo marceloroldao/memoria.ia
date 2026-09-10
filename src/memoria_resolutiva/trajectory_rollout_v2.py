@@ -18,9 +18,9 @@ class RolloutPath:
     @property
     def structural_key(self) -> tuple[int, int, int, int, tuple[str, ...]]:
         return (
+            len(self.matched_addresses),
             len(self.supporting_depths),
             len(self.trajectory_ids),
-            len(self.matched_addresses),
             len(self.continuation_addresses),
             self.continuation_addresses,
         )
@@ -155,6 +155,15 @@ class TrajectoryRolloutResolver:
                     matched_addresses=matched,
                 )
             )
+
+        # Only structurally maximal address convergence may open active rollout
+        # branches. A weaker occurrence that shares a dense/hub address remains in
+        # memory but cannot hitchhike into the current future merely because that
+        # address is globally frequent. This preserves occurrence continuity without
+        # semantic thresholds or learned scalar weights.
+        if paths:
+            max_matched = max(len(path.matched_addresses) for path in paths)
+            paths = [path for path in paths if len(path.matched_addresses) == max_matched]
 
         paths.sort(key=lambda item: item.structural_key, reverse=True)
         visible = tuple(paths[: max(0, branch_limit)])
