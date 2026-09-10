@@ -62,6 +62,7 @@ class BranchEvolutionSession:
         self._active = tuple(EvolvingBranch(path=path, cursor=0) for path in initial.branches)
         self._observations: list[tuple[str, ...]] = []
         self._eliminated: set[str] = set()
+        self._last_observed_address: str | None = None
 
     @staticmethod
     def _advance(branch: EvolvingBranch, observed: tuple[str, ...]) -> EvolvingBranch | None:
@@ -74,9 +75,10 @@ class BranchEvolutionSession:
         return EvolvingBranch(path=branch.path, cursor=end)
 
     def observe_addresses(self, addresses: tuple[str, ...]) -> BranchEvolutionState:
-        # Immediate identical-address loops are collapsed consistently with ingest/query.
+        # One-step cache persists across observation calls. A repeated address cannot
+        # manufacture an extra transition merely because it arrived in a new packet.
         collapsed: list[str] = []
-        current: str | None = None
+        current = self._last_observed_address
         for address in addresses:
             if address == current:
                 continue
@@ -84,6 +86,7 @@ class BranchEvolutionSession:
             current = address
         observed = tuple(collapsed)
         if observed:
+            self._last_observed_address = observed[-1]
             self._observations.append(observed)
 
         survivors: list[EvolvingBranch] = []
