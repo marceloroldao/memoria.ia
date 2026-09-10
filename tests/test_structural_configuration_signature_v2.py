@@ -4,16 +4,16 @@ from memoria_resolutiva.structural_configuration_signature_v2 import configurati
 
 def _memory_for_role_transfer():
     memory = AddressTrajectoryMemory()
-    # train:a and held:a occupy the same anonymous role in disjoint local regions.
-    for prefix in ("t1", "t2"):
-        memory.ingest_address_stream((prefix, "train:a", "m1", "z1"))
-    for prefix in ("h1", "h2"):
-        memory.ingest_address_stream((prefix, "held:a", "m2", "z2"))
 
-    for prefix in ("t3", "t4"):
-        memory.ingest_address_stream((prefix, "train:b", "n1", "w1"))
-    for prefix in ("h3", "h4"):
-        memory.ingest_address_stream((prefix, "held:b", "n2", "w2"))
+    # Two disjoint literal regions with the same anonymous role geometry.
+    # Each directional transition is supported by two independent trajectories so
+    # direction can be part of the structural signature without weakening the
+    # epistemic support threshold.
+    for i in (1, 2):
+        memory.ingest_address_stream((f"tf{i}", "train:a", "train:b", f"tfs{i}"))
+        memory.ingest_address_stream((f"tr{i}", "train:b", "train:a", f"trs{i}"))
+        memory.ingest_address_stream((f"hf{i}", "held:a", "held:b", f"hfs{i}"))
+        memory.ingest_address_stream((f"hr{i}", "held:b", "held:a", f"hrs{i}"))
     return memory
 
 
