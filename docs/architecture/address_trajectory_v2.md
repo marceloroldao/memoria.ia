@@ -25,6 +25,7 @@ The system must not infer meaning from hard-coded semantic regexes, fixed intent
 13. A structurally matched trajectory exposes a frontier: the nearest unresolved continuation after the matched configuration, not necessarily the terminal token of the stored experience.
 14. Several possible frontier continuations remain separate branch hypotheses until topology provides enough structural separation to collapse one. Equal structural evidence remains explicitly ambiguous.
 15. Multi-step rollout follows each compatible stored occurrence without jumping through shared global addresses. The resolver exposes the longest common future prefix and the first real divergence between competing continuation paths.
+16. New observations update only the active branch state. An incompatible branch may be removed from the current hypothesis set without deleting, rewriting or marking its stored trajectory false.
 
 ## Experimental flow
 
@@ -65,6 +66,13 @@ atomic address sequence ----------------------+
                        |
                        v
               competing branches
+                       |
+                       v
+              new observations
+                       |
+                       v
+          ephemeral branch-state filter
+      (survive / eliminate from current state)
 ```
 
 The laboratory implementation deliberately does not attempt to know what words or symbols mean. It only compares reusable addresses, ordering, occurrence trajectories, recurring compositions and topology.
@@ -203,6 +211,33 @@ must never yield `y`. Reusing `hub` may seed several candidate occurrences durin
 
 Identical future sequences from multiple stored experiences are aggregated as one continuation path with several supporting trajectory IDs. Different future sequences remain separate branches. Queries remain read-only and rollout is deterministic after cold restart.
 
+## Dynamic branch state under new observations
+
+`DynamicBranchStateResolver` turns rollout into an ephemeral active state. It begins with all structurally compatible continuation paths and consumes later observations address by address.
+
+Example:
+
+```text
+T1: alpha -> beta -> gamma -> delta
+T2: alpha -> beta -> gamma -> omega
+query: alpha beta
+```
+
+Initial active futures:
+
+```text
+gamma -> delta
+gamma -> omega
+```
+
+After observing `gamma`, both remain active. After observing `delta`, only T1 remains compatible.
+
+This does **not** mean T2 became false. T2 is only eliminated from the current branch state because it does not explain this particular observed continuation. The stored occurrence remains intact and may become relevant in another context or later query.
+
+Unexpected observations may exhaust the current active set completely. Exhaustion means `none of the currently predicted stored continuations match`, not `the observation is invalid` and not `the old memories are false`. A future recovery mechanism may then open a new retrieval from the newly observed configuration rather than forcing an existing branch.
+
+The branch state is read-only with respect to memory, deterministic after restart, and modality-agnostic once observations arrive as stable addresses.
+
 ## Topological black holes (Resolutive ontology metaphor)
 
 The project may use **topological black hole** as an internal metaphor for an address that connects many otherwise distinct trajectories or contexts. This is not a claim about physical black holes or real-world physics.
@@ -311,7 +346,12 @@ The experimental battery covers 100, 1,000 and 10,000 trajectories and measures:
 - occurrence-continuity violations;
 - identical-future aggregation;
 - bounded rollout length;
-- rollout determinism after restart.
+- rollout determinism after restart;
+- active branch count after each new observation;
+- incompatible-branch elimination rate;
+- unexpected-observation exhaustion rate;
+- false memory mutation count (must remain zero);
+- dynamic-state determinism after restart.
 
 The hypothesis to test is:
 
