@@ -37,6 +37,18 @@ def test_shared_terminal_without_bridge_never_creates_witness():
     assert discover_witnesses(occ) == ()
 
 
+def test_hyperdense_shared_bridge_fails_closed():
+    occ = tuple(
+        TrajectoryOccurrence(
+            traj(f"T{i}", f"src{i}", "dense:1", "dense:2", "hub"),
+            f"L{i}",
+            f"O{i}",
+        )
+        for i in range(100)
+    )
+    assert discover_witnesses(occ, max_bucket_signatures=32) == ()
+
+
 def test_one_shared_bridge_address_is_insufficient_by_default():
     occ = (
         TrajectoryOccurrence(traj("T1", "a", "bridge", "hub"), "L1", "O1"),
@@ -85,7 +97,6 @@ def test_no_transitive_closure_is_created():
     )
     witnesses = discover_witnesses(occ)
     assert len(witnesses) == 2
-    # Detector emits only directly observed pairs; it never synthesizes A~C.
     direct_pairs = {(w.left_signature_id, w.right_signature_id) for w in witnesses}
     assert len(direct_pairs) == 2
 
