@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from .structural_relation_abstraction_v2 import (
     StructuralRelationProfile,
@@ -17,6 +17,7 @@ from .structural_role_abstraction_v2 import (
 class StructuralFutureCandidate:
     candidate_id: str
     role_profile: StructuralRoleProfile
+    context_relation: StructuralRelationProfile | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,14 +39,16 @@ def forecast_structural_future(
 ) -> StructuralTransferForecast:
     """Select a held-out future only when structural evidence is uniquely compatible.
 
-    The function never maps literal addresses between corpora.  First the observed
-    relation itself must transfer structurally.  Then the learned future role is
-    compared against already-observed candidate roles in the held-out topology.
-    Zero compatible candidates => unresolved. Multiple compatible candidates =>
-    ambiguous/fail-closed. Exactly one => structurally forecastable candidate.
+    Transfer is conservative and two-stage.  The observed relation must first be
+    structurally transferable.  Candidate futures must then match the learned
+    future role.  When relational provenance is supplied for a candidate, that
+    context must also match the held-out relation; a local-role lookalike in a
+    different relation is not allowed to win.
 
-    This deliberately transfers a *role constraint*, not a semantic label or an
-    unseen concrete address.
+    Missing context is treated as missing evidence, never as negative evidence.
+    Therefore a multi-candidate conflict containing context-free candidates remains
+    ambiguous rather than silently discarding them.  No literal address mapping,
+    learned scalar weight, semantic label or candidate-order tiebreak is used.
     """
     relation_match = compare_structural_relations(
         learned_relation,
@@ -55,31 +58,71 @@ def forecast_structural_future(
     if not relation_match.supported:
         return StructuralTransferForecast(False, None, "relation-not-transferable", False)
 
-    compatible: list[str] = []
+    role_compatible: list[StructuralFutureCandidate] = []
+    context_supported: list[StructuralFutureCandidate] = []
+    context_missing = False
+
     for candidate in heldout_candidates:
-        match = compare_structural_roles(
+        role_match = compare_structural_roles(
             learned_future_role,
             candidate.role_profile,
             min_independent_lineages=min_independent_lineages,
         )
-        if match.supported:
-            compatible.append(candidate.candidate_id)
+        if not role_match.supported:
+            continue
 
-    compatible_ids = tuple(sorted(set(compatible)))
-    if not compatible_ids:
+        role_compatible.append(candidate)
+        if candidate.context_relation is None:
+            context_missing = True
+            continue
+
+        context_match = compare_structural_relations(
+            candidate.context_relation,
+            heldout_relation,
+            min_independent_lineages=min_independent_lineages,
+        )
+        if context_match.supported:
+            context_supported.append(candidate)
+
+    role_ids = tuple(sorted({candidate.candidate_id for candidate in role_compatible}))
+    if not role_ids:
         return StructuralTransferForecast(False, None, "no-compatible-future-role", False)
-    if len(compatible_ids) > 1:
+
+    # A unique role match remains valid when no contrary contextual evidence exists.
+    if len(role_ids) == 1:
+        only = role_compatible[0]
+        if only.context_relation is None:
+            return StructuralTransferForecast(True, only.candidate_id, "structural-transfer", False, role_ids)
+        if context_supported:
+            return StructuralTransferForecast(
+                True,
+                only.candidate_id,
+                "structural-transfer-context",
+                False,
+                role_ids,
+            )
+        return StructuralTransferForecast(False, None, "future-context-mismatch", False)
+
+    # Missing context cannot be used to eliminate a candidate. Fail closed.
+    if context_missing:
+        return StructuralTransferForecast(False, None, "structural-future-conflict", True, role_ids)
+
+    contextual_ids = tuple(sorted({candidate.candidate_id for candidate in context_supported}))
+    if not contextual_ids:
+        return StructuralTransferForecast(False, None, "no-compatible-future-context", False)
+    if len(contextual_ids) > 1:
         return StructuralTransferForecast(
             False,
             None,
-            "structural-future-conflict",
+            "structural-future-context-conflict",
             True,
-            compatible_ids,
+            contextual_ids,
         )
+
     return StructuralTransferForecast(
         True,
-        compatible_ids[0],
-        "structural-transfer",
+        contextual_ids[0],
+        "structural-transfer-context",
         False,
-        compatible_ids,
+        contextual_ids,
     )
