@@ -22,6 +22,8 @@ The system must not infer meaning from hard-coded semantic regexes, fixed intent
 10. Recurrent contiguous address sequences may gain their own deterministic composition address. Composition is a derived view and never destroys the atomic trajectory or raw provenance.
 11. Compositions may recursively compose into higher levels, but promotion is bounded by recurrence, cross-trajectory support, maximum depth and maximum catalogue size per level.
 12. Resolution may occur simultaneously at atomic and hierarchical scales. No semantic level is preselected; agreement across scales is additional structural evidence.
+13. A structurally matched trajectory exposes a frontier: the nearest unresolved continuation after the matched configuration, not necessarily the terminal token of the stored experience.
+14. Several possible frontier continuations remain separate branch hypotheses until topology provides enough structural separation to collapse one. Equal structural evidence remains explicitly ambiguous.
 
 ## Experimental flow
 
@@ -49,10 +51,14 @@ atomic address sequence ----------------------+
              cross-scale agreement)
                        |
                        v
-               portal-aware collapse
+              trajectory frontier
                        |
                        v
-              ranked trajectory candidates
+            branch hypotheses by
+             continuation address
+                       |
+                       v
+       collapse only if structurally separated
 ```
 
 The laboratory implementation deliberately does not attempt to know what words or symbols mean. It only compares reusable addresses, ordering, occurrence trajectories, recurring compositions and topology.
@@ -143,6 +149,42 @@ A candidate supported at several depths gains a stronger multiscale position bec
 Important guardrail: hierarchy agreement is not allowed to create facts. It only ranks already-stored trajectories. The query remains read-only and the atomic path remains available even when higher-level compositions exist.
 
 This also creates a falsifiable risk: a bad recurrent composition can produce false cross-scale consensus. The benchmark therefore records distractor behavior and must reject the V2 design if hierarchical support systematically amplifies wrong trajectories.
+
+## Trajectory frontier and branching
+
+`TrajectoryFrontierResolver` does not assume that the terminal address of a stored experience is the answer. After locating the best matched configuration, it returns the nearest address not already represented in the query configuration.
+
+Example:
+
+```text
+stored: alpha -> beta -> gamma -> delta
+query:  alpha -> beta
+frontier: gamma
+```
+
+This makes resolution a continuation problem: given the current address configuration and known trajectories, what unresolved address lies immediately beyond the matched state?
+
+`BranchingFrontierResolver` then groups frontier candidates by continuation address. This creates explicit branch hypotheses:
+
+```text
+alpha -> beta -> gamma
+alpha -> beta -> omega
+```
+
+for query `alpha beta` becomes two hypotheses: `gamma` and `omega`.
+
+If both branches have exactly the same structural evidence, the resolver does **not** use deterministic address ordering as cognitive superiority. It returns ambiguity and no collapse.
+
+If several independent trajectories share the same first continuation address, they are still one branch until a real divergence occurs:
+
+```text
+meu -> gato -> e -> Lotus
+meu -> gato -> e -> Vibe
+```
+
+For query `meu gato`, the immediate branch is only `e`, supported by both trajectories. Divergence exists only later. This prevents the engine from inventing ambiguity before the topology actually forks.
+
+Branch hypotheses are compared only by structural properties such as number of supporting hierarchy depths, number of independent frontier candidates, union of matched addresses and discrete distance to the frontier. No learned probability or semantic intent is introduced.
 
 ## Topological black holes (Resolutive ontology metaphor)
 
@@ -241,7 +283,12 @@ The experimental battery covers 100, 1,000 and 10,000 trajectories and measures:
 - combinatorial growth under adversarial recurrent streams;
 - multiscale support depth per candidate;
 - false consensus from recurrent distractors;
-- multiscale versus atomic ranking stability.
+- multiscale versus atomic ranking stability;
+- frontier correctness when the continuation is not the stored terminal;
+- number of competing branch hypotheses;
+- equal-evidence ambiguity preservation;
+- repeated-trajectory support for the same branch;
+- first-real-divergence correctness.
 
 The hypothesis to test is:
 
