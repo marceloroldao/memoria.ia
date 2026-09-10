@@ -62,6 +62,9 @@ jobs:
       - name: V2 structural role abstraction evidence
         if: runner.os == 'Linux'
         run: python benchmarks/structural_role_abstraction_v2_benchmark.py | tee structural-role-abstraction-v2-benchmark.json
+      - name: V2 structural relation abstraction evidence
+        if: runner.os == 'Linux'
+        run: python benchmarks/structural_relation_abstraction_v2_benchmark.py | tee structural-relation-abstraction-v2-benchmark.json
       - name: Upload V2 recovery evidence
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
@@ -104,6 +107,12 @@ jobs:
         with:
           name: structural-role-abstraction-v2-benchmark
           path: structural-role-abstraction-v2-benchmark.json
+      - name: Upload V2 structural relation abstraction evidence
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: structural-relation-abstraction-v2-benchmark
+          path: structural-relation-abstraction-v2-benchmark.json
 
   restart3-frozen-reference:
     if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/') || startsWith(github.head_ref, 'post-freeze/')
