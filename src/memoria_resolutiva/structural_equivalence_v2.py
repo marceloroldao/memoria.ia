@@ -43,11 +43,18 @@ class StructuralEquivalenceState:
 
     events: list[ConvergenceEvent] = field(default_factory=list)
     min_supporting_witnesses: int = 2
+    _event_index: set[ConvergenceEvent] = field(default_factory=set, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self._event_index = set(self.events)
+        if len(self._event_index) != len(self.events):
+            self.events = list(self._event_index)
 
     def observe(self, event: ConvergenceEvent) -> None:
-        if event not in self.events:
-            self.events.append(event)
-            self.events.sort()
+        if event in self._event_index:
+            return
+        self._event_index.add(event)
+        self.events.append(event)
 
     def observe_many(self, events: Iterable[ConvergenceEvent]) -> None:
         for event in events:
@@ -114,4 +121,4 @@ class StructuralEquivalenceState:
         )
 
     def snapshot(self) -> tuple[ConvergenceEvent, ...]:
-        return tuple(sorted(self.events))
+        return tuple(sorted(self._event_index))
