@@ -19,9 +19,13 @@ class FrontierCandidate:
 
     @property
     def structural_key(self) -> tuple[int, int, int, int, str]:
+        # Atomic address convergence is the primary discriminator. Hierarchical
+        # agreement is secondary evidence and must not manufacture consensus for a
+        # trajectory that matches fewer addresses in the observed configuration.
+        # This is lexicographic structural dominance, not a learned/scalar weight.
         return (
-            len(self.supporting_depths),
             len(self.matched_addresses),
+            len(self.supporting_depths),
             -self.distance,
             -self.frontier_index,
             self.trajectory_id,
