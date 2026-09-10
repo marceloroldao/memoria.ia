@@ -42,17 +42,20 @@ class AddressConvergenceResolver:
 
     @staticmethod
     def _ordered_positions(query: tuple[str, ...], candidate: tuple[str, ...]) -> int:
+        # Longest common subsequence over addresses only. Query addresses absent
+        # from a candidate do not poison later valid matches.
         if not query or not candidate:
             return 0
-        cursor = 0
-        count = 0
-        for address in query:
-            while cursor < len(candidate) and candidate[cursor] != address:
-                cursor += 1
-            if cursor < len(candidate):
-                count += 1
-                cursor += 1
-        return count
+        prev = [0] * (len(candidate) + 1)
+        for q in query:
+            curr = [0]
+            for index, c in enumerate(candidate, start=1):
+                if q == c:
+                    curr.append(prev[index - 1] + 1)
+                else:
+                    curr.append(max(curr[-1], prev[index]))
+            prev = curr
+        return prev[-1]
 
     def resolve(self, text: str, *, limit: int = 5) -> tuple[ConvergenceMatch, ...]:
         query_tokens = self.memory.decompose(text)
