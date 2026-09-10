@@ -36,6 +36,14 @@ class BranchState:
     ambiguous: bool
 
 
+@dataclass(frozen=True, slots=True)
+class BranchRecovery:
+    previous: BranchState
+    observation_addresses: tuple[str, ...]
+    recovered: BranchState
+    recovered_any: bool
+
+
 class DynamicBranchStateResolver:
     """Update rollout hypotheses with new observations without creating facts.
 
@@ -218,3 +226,55 @@ class DynamicBranchStateResolver:
     def observe_text(self, state: BranchState, text: str) -> BranchState:
         tokens = self.memory._collapse_immediate_tokens(self.memory.decompose(text))
         return self.observe_addresses(state, tuple(token.address for token in tokens))
+
+    def recover_addresses(
+        self,
+        state: BranchState,
+        addresses: tuple[str, ...],
+        *,
+        query_label: str = "<recovery>",
+        max_steps: int = 8,
+        candidate_limit: int = 64,
+        branch_limit: int = 16,
+    ) -> BranchRecovery:
+        """Open a new retrieval episode from an unexpected observed configuration.
+
+        Recovery is explicit and only intended after the current branch state is
+        exhausted. It never stitches the old trajectory to a new one; the prior
+        state is preserved alongside a fresh retrieval seeded by the observation.
+        """
+        if not state.exhausted:
+            raise ValueError("recovery requires an exhausted branch state")
+        observation = self._collapse_immediate_addresses(addresses)
+        recovered = self.begin_addresses(
+            observation,
+            query_label=query_label,
+            max_steps=max_steps,
+            candidate_limit=candidate_limit,
+            branch_limit=branch_limit,
+        )
+        return BranchRecovery(
+            previous=state,
+            observation_addresses=observation,
+            recovered=recovered,
+            recovered_any=not recovered.exhausted,
+        )
+
+    def recover_text(
+        self,
+        state: BranchState,
+        text: str,
+        *,
+        max_steps: int = 8,
+        candidate_limit: int = 64,
+        branch_limit: int = 16,
+    ) -> BranchRecovery:
+        tokens = self.memory._collapse_immediate_tokens(self.memory.decompose(text))
+        return self.recover_addresses(
+            state,
+            tuple(token.address for token in tokens),
+            query_label=text,
+            max_steps=max_steps,
+            candidate_limit=candidate_limit,
+            branch_limit=branch_limit,
+        )
