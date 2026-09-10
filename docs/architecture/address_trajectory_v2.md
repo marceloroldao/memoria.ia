@@ -20,6 +20,7 @@ The system must not infer meaning from hard-coded semantic regexes, fixed intent
 8. Text is only one modality adapter. Audio, video, sensors and future inputs may supply precomputed address streams to the same topology engine.
 9. Immediate identical-address loops do not advance state or reinforce a trajectory.
 10. Recurrent contiguous address sequences may gain their own deterministic composition address. Composition is a derived view and never destroys the atomic trajectory or raw provenance.
+11. Compositions may recursively compose into higher levels, but promotion is bounded by recurrence, cross-trajectory support, maximum depth and maximum catalogue size per level.
 
 ## Experimental flow
 
@@ -32,7 +33,9 @@ same deterministic address space
       v
 atomic address sequence
       |
-      +--> recurrent local compositions -> reusable composition addresses
+      +--> recurrent compositions
+              |
+              +--> recurrent compositions of compositions
       |
       v
 candidate stored occurrence trajectories
@@ -79,40 +82,41 @@ A(meu) -> A(gato)
 A(meu) -> A(gato)
 ```
 
+may create a first-level composition:
+
+```text
+HC2_1(A(meu), A(gato)) -> hc2:...
+```
+
+If a higher-level sequence also recurs, the first-level composition can participate as a child:
+
+```text
+HC2_1(meu,gato) -> A(dorme)
+HC2_1(meu,gato) -> A(dorme)
+```
+
 may create:
 
 ```text
-AC2(A(meu), A(gato)) -> ac2:...
+HC2_2(HC2_1(meu,gato), A(dorme)) -> hc2:...
 ```
 
-No semantic claim such as `owner`, `pet`, `noun phrase` or `entity` is attached. The composition means only: **this address subsequence has appeared repeatedly as the same ordered local structure**.
+No semantic claim such as `owner`, `pet`, `noun phrase`, `event` or `entity` is attached. Each composition means only: **this ordered local address structure recurred often enough to receive a reusable address**.
 
-Properties of the first composition engine:
+The hierarchical engine is deliberately bounded:
 
-- deterministic address derived from ordered child addresses;
-- minimum recurrence required before discovery;
-- same rule for text, audio, video and sensor address streams;
-- longest recurrent composition selected first when several overlap;
-- original atomic trajectory remains preserved;
-- raw provenance remains preserved;
-- cold restart rebuilds the same composition catalogue;
-- query composition is read-only.
+- deterministic address derived from ordered child addresses and hierarchy depth;
+- minimum occurrence count before promotion;
+- minimum distinct trajectory count before promotion;
+- configurable minimum and maximum child count;
+- maximum hierarchy depth;
+- maximum compositions per level;
+- deterministic longest-first collapse;
+- original atomic trajectories remain untouched;
+- raw provenance remains untouched;
+- hierarchy is fully rebuildable after cold restart.
 
-Compositions may themselves later become children of larger compositions, but recursive promotion is intentionally deferred until the first-level behavior is benchmarked. This avoids uncontrolled hierarchy growth before the topology is understood.
-
-The experimental objective is not compression alone. A composition can create a shorter path through a stable recurring region:
-
-```text
-A(meu) -> A(gato) -> A(dorme) -> A(aqui)
-```
-
-becomes a derived view such as:
-
-```text
-AC2(meu,gato) -> A(dorme) -> A(aqui)
-```
-
-If a query also traverses `AC2(meu,gato)`, the same region can be reached with fewer discrete steps while preserving the lower-level route for audit and alternative resolution.
+The purpose is not compression alone. Higher-level addresses create shorter alternative paths through recurring regions while preserving the lower-level path for audit and alternative resolution.
 
 ## Topological black holes (Resolutive ontology metaphor)
 
@@ -187,27 +191,28 @@ sensor: temp:bin21 -> temp:bin22 -> temp:bin21
 
 All use the same immediate-loop rule, density engine, composition engine and occurrence-trajectory model. The modality-specific front end is responsible only for generating stable reusable addresses.
 
-## Next benchmark
+## Scaling benchmark
 
-Run the same resolver as the memory grows through 100, 1,000 and 10,000 trajectories. Measure:
+The experimental battery covers 100, 1,000 and 10,000 trajectories and measures:
 
-- top-1 trajectory accuracy on a held-out labeled test set;
+- top-1 trajectory accuracy;
 - top-k candidate recall;
-- ambiguity gap between first and second candidate;
-- query determinism before/after cold restart;
-- query immutability (state checksum must not change);
+- ambiguity gap;
+- determinism after restart;
+- query immutability;
 - latency and memory growth;
 - density distribution of hyper-connected addresses;
 - false shortcuts caused by dense addresses;
 - rejected immediate-loop count;
-- convergence quality before and after loop rejection;
 - portal-aware versus density-blind ranking;
 - modality-agnostic stream parity;
-- number of reusable compositions discovered;
-- atomic versus composed trajectory length;
-- atomic versus composed query hops;
-- ambiguity before and after composition;
-- composition catalogue determinism after restart.
+- reusable compositions discovered per level;
+- atomic versus hierarchical trajectory length;
+- nested composition count;
+- total hierarchy depth reached;
+- catalogue cap enforcement;
+- hierarchy rebuild determinism;
+- combinatorial growth under adversarial recurrent streams.
 
 The hypothesis to test is:
 
