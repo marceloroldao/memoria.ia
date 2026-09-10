@@ -80,12 +80,26 @@ def test_cold_restart_rebuilds_same_initial_hypotheses() -> None:
     assert first == second
 
 
-def test_non_text_address_stream_works_through_same_state_machine() -> None:
+def test_non_text_address_stream_uses_same_state_machine() -> None:
     memory = AddressTrajectoryMemory()
     memory.ingest_address_stream(("s:A", "s:B", "s:C"), surfaces=("A", "B", "C"), provenance="sensor-1")
     memory.ingest_address_stream(("s:A", "s:B", "s:D"), surfaces=("A", "B", "D"), provenance="sensor-2")
 
-    # Seed with text cannot address arbitrary external symbols, so verify the same
-    # state representation can still be built from deterministic textual adapters
-    # in this first test battery; direct-address hypothesis seeding is the next API.
-    assert len(memory.snapshot()) == 2
+    resolver = IncrementalTrajectoryHypothesisResolver.from_addresses(memory, ("s:A", "s:B"))
+    initial = resolver.state()
+    assert initial.ambiguous is True
+    assert {h.remaining_addresses[0] for h in initial.active} == {"s:C", "s:D"}
+
+    after = resolver.observe_addresses(("s:C",), label="sensor:C")
+    assert after.ambiguous is False
+    assert len(after.active) == 1
+    assert after.collapsed_trajectory_id is not None
+
+
+def test_direct_address_seed_collapses_immediate_duplicate_states() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest_address_stream(("s:A", "s:B", "s:C"), surfaces=("A", "B", "C"))
+    resolver = IncrementalTrajectoryHypothesisResolver.from_addresses(memory, ("s:A", "s:A", "s:B"))
+    state = resolver.state()
+    assert len(state.active) == 1
+    assert state.active[0].remaining_addresses == ("s:C",)
