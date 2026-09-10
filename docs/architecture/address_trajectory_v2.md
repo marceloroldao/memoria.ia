@@ -24,6 +24,7 @@ The system must not infer meaning from hard-coded semantic regexes, fixed intent
 12. Resolution may occur simultaneously at atomic and hierarchical scales. No semantic level is preselected; agreement across scales is additional structural evidence.
 13. A structurally matched trajectory exposes a frontier: the nearest unresolved continuation after the matched configuration, not necessarily the terminal token of the stored experience.
 14. Several possible frontier continuations remain separate branch hypotheses until topology provides enough structural separation to collapse one. Equal structural evidence remains explicitly ambiguous.
+15. Multi-step rollout follows each compatible stored occurrence without jumping through shared global addresses. The resolver exposes the longest common future prefix and the first real divergence between competing continuation paths.
 
 ## Experimental flow
 
@@ -54,11 +55,16 @@ atomic address sequence ----------------------+
               trajectory frontier
                        |
                        v
-            branch hypotheses by
-             continuation address
+              multi-step rollout
+      (stay inside each stored occurrence)
                        |
                        v
-       collapse only if structurally separated
+             shared future prefix
+                       |
+                 first divergence
+                       |
+                       v
+              competing branches
 ```
 
 The laboratory implementation deliberately does not attempt to know what words or symbols mean. It only compares reusable addresses, ordering, occurrence trajectories, recurring compositions and topology.
@@ -150,7 +156,7 @@ Important guardrail: hierarchy agreement is not allowed to create facts. It only
 
 This also creates a falsifiable risk: a bad recurrent composition can produce false cross-scale consensus. The benchmark therefore records distractor behavior and must reject the V2 design if hierarchical support systematically amplifies wrong trajectories.
 
-## Trajectory frontier and branching
+## Trajectory frontier, branching and rollout
 
 `TrajectoryFrontierResolver` does not assume that the terminal address of a stored experience is the answer. After locating the best matched configuration, it returns the nearest address not already represented in the query configuration.
 
@@ -162,29 +168,40 @@ query:  alpha -> beta
 frontier: gamma
 ```
 
-This makes resolution a continuation problem: given the current address configuration and known trajectories, what unresolved address lies immediately beyond the matched state?
+`BranchingFrontierResolver` groups frontier candidates by continuation address. If several independent trajectories share the same first continuation address, they remain one branch until topology actually diverges.
 
-`BranchingFrontierResolver` then groups frontier candidates by continuation address. This creates explicit branch hypotheses:
+`TrajectoryRolloutResolver` extends this rule beyond one step. Every compatible stored occurrence is followed forward independently, up to a bounded number of addresses. Paths are never stitched together through a shared hub.
 
-```text
-alpha -> beta -> gamma
-alpha -> beta -> omega
-```
-
-for query `alpha beta` becomes two hypotheses: `gamma` and `omega`.
-
-If both branches have exactly the same structural evidence, the resolver does **not** use deterministic address ordering as cognitive superiority. It returns ambiguity and no collapse.
-
-If several independent trajectories share the same first continuation address, they are still one branch until a real divergence occurs:
+Example:
 
 ```text
-meu -> gato -> e -> Lotus
-meu -> gato -> e -> Vibe
+T1: alpha -> beta -> gamma -> delta
+T2: alpha -> beta -> gamma -> omega
+query: alpha beta
 ```
 
-For query `meu gato`, the immediate branch is only `e`, supported by both trajectories. Divergence exists only later. This prevents the engine from inventing ambiguity before the topology actually forks.
+Rollout exposes:
 
-Branch hypotheses are compared only by structural properties such as number of supporting hierarchy depths, number of independent frontier candidates, union of matched addresses and discrete distance to the frontier. No learned probability or semantic intent is introduced.
+```text
+shared future: gamma
+first divergence:
+  branch T1 -> delta
+  branch T2 -> omega
+```
+
+The shared prefix is therefore structural evidence common to all active continuations. Divergence begins only at the first address where the occurrence trajectories actually differ.
+
+A critical anti-shortcut invariant is:
+
+```text
+T1: a -> hub -> x
+T2: b -> hub -> y
+query: a hub
+```
+
+must never yield `y`. Reusing `hub` may seed several candidate occurrences during retrieval, but once an occurrence trajectory is being rolled out, traversal stays inside that stored experience. This prevents false global-graph jumps through hyper-connected addresses.
+
+Identical future sequences from multiple stored experiences are aggregated as one continuation path with several supporting trajectory IDs. Different future sequences remain separate branches. Queries remain read-only and rollout is deterministic after cold restart.
 
 ## Topological black holes (Resolutive ontology metaphor)
 
@@ -288,7 +305,13 @@ The experimental battery covers 100, 1,000 and 10,000 trajectories and measures:
 - number of competing branch hypotheses;
 - equal-evidence ambiguity preservation;
 - repeated-trajectory support for the same branch;
-- first-real-divergence correctness.
+- first-real-divergence correctness;
+- multi-step shared-prefix length;
+- first divergence index;
+- occurrence-continuity violations;
+- identical-future aggregation;
+- bounded rollout length;
+- rollout determinism after restart.
 
 The hypothesis to test is:
 
