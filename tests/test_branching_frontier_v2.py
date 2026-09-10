@@ -4,14 +4,26 @@ from memoria_resolutiva.branching_frontier_v2 import BranchingFrontierResolver
 
 def test_equal_structural_branches_remain_ambiguous() -> None:
     memory = AddressTrajectoryMemory()
+    memory.ingest("alpha beta gamma")
+    memory.ingest("alpha beta omega")
+    resolver = BranchingFrontierResolver(memory)
+
+    result = resolver.resolve("alpha beta")
+    assert result.ambiguous is True
+    assert result.collapsed is None
+    assert {item.surface for item in result.hypotheses[:2]} == {"gamma", "omega"}
+
+
+def test_shared_first_continuation_is_one_branch_until_real_divergence() -> None:
+    memory = AddressTrajectoryMemory()
     memory.ingest("meu gato e Lotus")
     memory.ingest("meu gato e Vibe")
     resolver = BranchingFrontierResolver(memory)
 
     result = resolver.resolve("meu gato")
-    assert result.ambiguous is True
-    assert result.collapsed is None
-    assert {item.surface for item in result.hypotheses[:2]} == {"e"}
+    assert result.hypotheses
+    assert result.hypotheses[0].surface == "e"
+    assert result.hypotheses[0].candidate_count >= 2
 
 
 def test_independent_trajectories_can_support_same_branch_address() -> None:
