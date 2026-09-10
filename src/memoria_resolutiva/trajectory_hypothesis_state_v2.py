@@ -69,9 +69,65 @@ class IncrementalTrajectoryHypothesisResolver:
                 continue
             self._active[trajectory.trajectory_id] = (cursor, 0, match.supporting_depths)
 
+    @classmethod
+    def from_addresses(
+        cls,
+        memory: AddressTrajectoryMemory,
+        seed_addresses: tuple[str, ...],
+        *,
+        seed_label: str = "<address-stream>",
+        candidate_limit: int = 64,
+        shared_lookahead: int = 8,
+    ) -> "IncrementalTrajectoryHypothesisResolver":
+        """Seed the same hypothesis state machine directly from stable addresses.
+
+        This path is intended for audio, video, sensor and other modality adapters.
+        It deliberately bypasses text decomposition while preserving occurrence
+        continuity and the same no-jump/no-weight invariants.
+        """
+        if shared_lookahead < 1:
+            raise ValueError("shared_lookahead must be >= 1")
+        obj = cls.__new__(cls)
+        obj.memory = memory
+        obj.seed_query = seed_label
+        obj.shared_lookahead = shared_lookahead
+        obj._observations = []
+        obj._eliminated = set()
+        obj._by_id = {t.trajectory_id: t for t in memory.snapshot()}
+        obj._active = {}
+
+        seed = cls._collapse_immediate_addresses(seed_addresses)
+        candidates: list[tuple[int, int, str, AddressTrajectory]] = []
+        seed_set = set(seed)
+        for trajectory in memory.snapshot():
+            overlap = len(seed_set & set(trajectory.addresses))
+            if overlap == 0:
+                continue
+            ordered = memory._ordered_overlap(seed, trajectory.addresses)
+            candidates.append((overlap, ordered, trajectory.trajectory_id, trajectory))
+        candidates.sort(reverse=True, key=lambda item: (item[0], item[1], item[2]))
+
+        for _, _, trajectory_id, trajectory in candidates[: max(candidate_limit, 1)]:
+            cursor = cls._cursor_after_seed(trajectory, seed)
+            if cursor is None:
+                continue
+            obj._active[trajectory_id] = (cursor, 0, (0,))
+        return obj
+
     def _addresses(self, text: str) -> tuple[str, ...]:
         tokens = self.memory._collapse_immediate_tokens(self.memory.decompose(text))
         return tuple(token.address for token in tokens)
+
+    @staticmethod
+    def _collapse_immediate_addresses(addresses: tuple[str, ...]) -> tuple[str, ...]:
+        output: list[str] = []
+        current: str | None = None
+        for address in addresses:
+            if address == current:
+                continue
+            output.append(address)
+            current = address
+        return tuple(output)
 
     @staticmethod
     def _cursor_after_seed(
@@ -97,9 +153,8 @@ class IncrementalTrajectoryHypothesisResolver:
     ) -> int | None:
         """Advance only inside the same occurrence trajectory.
 
-        The observation must match the next unresolved addresses in order. Leading
-        addresses already passed in the trajectory are ignored only when they are
-        not part of the unresolved suffix. No cross-trajectory search is allowed.
+        The observation must match the next unresolved addresses in order. No
+        cross-trajectory search is allowed.
         """
         if not observation:
             return cursor
@@ -110,9 +165,9 @@ class IncrementalTrajectoryHypothesisResolver:
             return None
         return cursor + len(observation)
 
-    def observe(self, text: str) -> HypothesisState:
-        observation = self._addresses(text)
-        self._observations.append(text)
+    def _observe_addresses(self, observation: tuple[str, ...], label: str) -> HypothesisState:
+        observation = self._collapse_immediate_addresses(observation)
+        self._observations.append(label)
 
         survivors: dict[str, tuple[int, int, tuple[int, ...]]] = {}
         for trajectory_id, (cursor, matched_count, depths) in self._active.items():
@@ -124,6 +179,17 @@ class IncrementalTrajectoryHypothesisResolver:
             survivors[trajectory_id] = (advanced, matched_count + 1, depths)
         self._active = survivors
         return self.state()
+
+    def observe(self, text: str) -> HypothesisState:
+        return self._observe_addresses(self._addresses(text), text)
+
+    def observe_addresses(
+        self,
+        addresses: tuple[str, ...],
+        *,
+        label: str = "<address-observation>",
+    ) -> HypothesisState:
+        return self._observe_addresses(addresses, label)
 
     @staticmethod
     def _common_prefix(
