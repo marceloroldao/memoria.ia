@@ -135,9 +135,6 @@ class DynamicBranchStateResolver:
             ranked.append((overlap, ordered, trajectory.trajectory_id, trajectory))
         ranked.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
 
-        # Weak candidates may be useful during ordinary initial retrieval, but they
-        # must not coexist with strictly stronger structural convergence. This keeps
-        # dense addresses from opening unrelated occurrence futures.
         if ranked:
             best_overlap, best_ordered = ranked[0][0], ranked[0][1]
             ranked = [item for item in ranked if (item[0], item[1]) == (best_overlap, best_ordered)]
@@ -192,10 +189,6 @@ class DynamicBranchStateResolver:
     def observe_address(state: BranchState, address: str) -> BranchState:
         if not address:
             raise ValueError("address must be non-empty")
-
-        # Immediate-loop rejection must persist across observation calls. The last
-        # accepted address is the ephemeral cache state; receiving it again does not
-        # advance a branch, eliminate alternatives or create reinforcement.
         if state.observed_addresses and state.observed_addresses[-1] == address:
             return state
 
@@ -257,12 +250,17 @@ class DynamicBranchStateResolver:
         the current observed configuration is authoritative only as geometry. We look
         for that ordered suffix inside stored occurrences and continue within the same
         occurrence. If the full observation is unseen, progressively shorter suffixes
-        may reseed retrieval. No old branch address is stitched into the new seed.
+        may reseed retrieval. If a fallback suffix fans out beyond operational bounds,
+        recovery fails closed instead of selecting an arbitrary subset of equivalent
+        futures. No old branch address is stitched into the new seed.
         """
         if not observation:
             return BranchState(query_label, (), (), (), True, False)
 
         snapshot = self.memory.snapshot()
+        candidate_cap = max(candidate_limit, 1)
+        branch_cap = max(branch_limit, 0)
+
         for start_suffix in range(len(observation)):
             suffix = observation[start_suffix:]
             grouped: dict[
@@ -270,10 +268,9 @@ class DynamicBranchStateResolver:
                 list[tuple[str, tuple[str | None, ...]]],
             ] = defaultdict(list)
             candidates_seen = 0
+            overflow = False
 
             for trajectory in snapshot:
-                if candidates_seen >= max(candidate_limit, 1):
-                    break
                 addresses = trajectory.addresses
                 if len(addresses) < len(suffix):
                     continue
@@ -296,9 +293,14 @@ class DynamicBranchStateResolver:
 
                 if matched_this_trajectory:
                     candidates_seen += 1
+                    if candidates_seen > candidate_cap:
+                        overflow = True
+                        break
 
             if not grouped:
                 continue
+            if overflow or len(grouped) > branch_cap:
+                return BranchState(query_label, (), (), (), True, False)
 
             active: list[ActiveBranch] = []
             for continuation, members in grouped.items():
@@ -314,7 +316,7 @@ class DynamicBranchStateResolver:
                     )
                 )
             active.sort(key=lambda item: item.structural_key, reverse=True)
-            visible = tuple(active[: max(0, branch_limit)])
+            visible = tuple(active)
             return BranchState(
                 query=query_label,
                 observed_addresses=(),
@@ -336,12 +338,6 @@ class DynamicBranchStateResolver:
         candidate_limit: int = 64,
         branch_limit: int = 16,
     ) -> BranchRecovery:
-        """Open a new retrieval episode from an unexpected observed configuration.
-
-        Recovery is explicit and only intended after the current branch state is
-        exhausted. It never stitches the old trajectory to a new one; the prior
-        state is preserved alongside a fresh retrieval seeded by the observation.
-        """
         if not state.exhausted:
             raise ValueError("recovery requires an exhausted branch state")
         observation = self._collapse_immediate_addresses(addresses)
