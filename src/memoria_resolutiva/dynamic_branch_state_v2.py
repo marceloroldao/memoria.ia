@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import defaultdict
 
 from memoria_resolutiva.address_trajectory_v2 import AddressTrajectoryMemory, AddressTrajectory
 from memoria_resolutiva.trajectory_rollout_v2 import RolloutPath, TrajectoryRolloutResolver
@@ -18,9 +19,9 @@ class ActiveBranch:
     @property
     def structural_key(self) -> tuple[int, int, int, int, tuple[str, ...]]:
         return (
+            len(self.matched_addresses),
             len(self.supporting_depths),
             len(self.trajectory_ids),
-            len(self.matched_addresses),
             -self.consumed_steps,
             self.remaining_addresses,
         )
@@ -134,6 +135,13 @@ class DynamicBranchStateResolver:
             ranked.append((overlap, ordered, trajectory.trajectory_id, trajectory))
         ranked.sort(key=lambda item: (item[0], item[1], item[2]), reverse=True)
 
+        # Weak candidates may be useful during ordinary initial retrieval, but they
+        # must not coexist with strictly stronger structural convergence. This keeps
+        # dense addresses from opening unrelated occurrence futures.
+        if ranked:
+            best_overlap, best_ordered = ranked[0][0], ranked[0][1]
+            ranked = [item for item in ranked if (item[0], item[1]) == (best_overlap, best_ordered)]
+
         grouped: dict[tuple[str, ...], list[tuple[str, tuple[str | None, ...], tuple[str, ...]]]] = {}
         for _, _, trajectory_id, trajectory in ranked[: max(candidate_limit, 1)]:
             positions = [
@@ -227,6 +235,90 @@ class DynamicBranchStateResolver:
         tokens = self.memory._collapse_immediate_tokens(self.memory.decompose(text))
         return self.observe_addresses(state, tuple(token.address for token in tokens))
 
+    def _reseed_exact_occurrences(
+        self,
+        observation: tuple[str, ...],
+        *,
+        query_label: str,
+        max_steps: int,
+        candidate_limit: int,
+        branch_limit: int,
+    ) -> BranchState:
+        """Fresh retrieval from the longest observed suffix found contiguously.
+
+        Recovery differs deliberately from ordinary broad retrieval: after exhaustion
+        the current observed configuration is authoritative only as geometry. We look
+        for that ordered suffix inside stored occurrences and continue within the same
+        occurrence. If the full observation is unseen, progressively shorter suffixes
+        may reseed retrieval. No old branch address is stitched into the new seed.
+        """
+        if not observation:
+            return BranchState(query_label, (), (), (), True, False)
+
+        snapshot = self.memory.snapshot()
+        for start_suffix in range(len(observation)):
+            suffix = observation[start_suffix:]
+            grouped: dict[
+                tuple[str, ...],
+                list[tuple[str, tuple[str | None, ...]]],
+            ] = defaultdict(list)
+            candidates_seen = 0
+
+            for trajectory in snapshot:
+                if candidates_seen >= max(candidate_limit, 1):
+                    break
+                addresses = trajectory.addresses
+                if len(addresses) < len(suffix):
+                    continue
+
+                matched_this_trajectory = False
+                for start in range(0, len(addresses) - len(suffix) + 1):
+                    if addresses[start : start + len(suffix)] != suffix:
+                        continue
+                    cursor = start + len(suffix)
+                    continuation = addresses[cursor : cursor + max_steps]
+                    if not continuation:
+                        continue
+                    surfaces = tuple(
+                        trajectory.surfaces[index] if index < len(trajectory.surfaces) else None
+                        for index in range(cursor, min(len(addresses), cursor + max_steps))
+                    )
+                    grouped[continuation].append((trajectory.trajectory_id, surfaces))
+                    matched_this_trajectory = True
+                    break
+
+                if matched_this_trajectory:
+                    candidates_seen += 1
+
+            if not grouped:
+                continue
+
+            active: list[ActiveBranch] = []
+            for continuation, members in grouped.items():
+                trajectory_ids = tuple(sorted({member[0] for member in members}))
+                active.append(
+                    ActiveBranch(
+                        trajectory_ids=trajectory_ids,
+                        remaining_addresses=continuation,
+                        remaining_surfaces=members[0][1],
+                        supporting_depths=(0,),
+                        matched_addresses=tuple(dict.fromkeys(suffix)),
+                        consumed_steps=0,
+                    )
+                )
+            active.sort(key=lambda item: item.structural_key, reverse=True)
+            visible = tuple(active[: max(0, branch_limit)])
+            return BranchState(
+                query=query_label,
+                observed_addresses=(),
+                active=visible,
+                eliminated_trajectory_ids=(),
+                exhausted=not visible,
+                ambiguous=len(visible) > 1,
+            )
+
+        return BranchState(query_label, (), (), (), True, False)
+
     def recover_addresses(
         self,
         state: BranchState,
@@ -246,7 +338,7 @@ class DynamicBranchStateResolver:
         if not state.exhausted:
             raise ValueError("recovery requires an exhausted branch state")
         observation = self._collapse_immediate_addresses(addresses)
-        recovered = self.begin_addresses(
+        recovered = self._reseed_exact_occurrences(
             observation,
             query_label=query_label,
             max_steps=max_steps,
