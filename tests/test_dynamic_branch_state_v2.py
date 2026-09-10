@@ -100,3 +100,37 @@ def test_direct_address_seed_and_observation_reject_immediate_self_loops() -> No
     assert state.exhausted is False
     assert len(state.active) == 1
     assert state.active[0].consumed_steps == 1
+
+
+def test_exhausted_state_can_reorient_from_new_observation_without_stitching() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    memory.ingest("x y z")
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin("a b")
+    state = resolver.observe_text(state, "x")
+    assert state.exhausted is True
+
+    recovery = resolver.recover_text(state, "x")
+    assert recovery.recovered_any is True
+    assert recovery.previous == state
+    assert recovery.recovered.exhausted is False
+    assert len(recovery.recovered.active) == 1
+    assert recovery.recovered.active[0].remaining_surfaces == ("y", "z")
+    assert recovery.recovered.active[0].trajectory_ids == ("AT2",)
+
+
+def test_recovery_is_explicit_and_rejected_while_old_state_is_still_active() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("a b")
+    assert state.exhausted is False
+
+    try:
+        resolver.recover_text(state, "a")
+    except ValueError as error:
+        assert "exhausted" in str(error)
+    else:
+        raise AssertionError("recovery must not silently replace an active trajectory state")
