@@ -50,6 +50,9 @@ jobs:
       - name: V2 adversarial corpus evidence
         if: runner.os == 'Linux'
         run: python benchmarks/adversarial_corpus_v2_benchmark.py | tee adversarial-corpus-v2-benchmark.json
+      - name: V2 probe of frozen restart3 shared fixture
+        if: runner.os == 'Linux'
+        run: python benchmarks/v2_restart3_shared_fixture.py | tee v2-restart3-shared-fixture.json
       - name: Upload V2 recovery evidence
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
@@ -68,6 +71,45 @@ jobs:
         with:
           name: adversarial-corpus-v2-benchmark
           path: adversarial-corpus-v2-benchmark.json
+      - name: Upload V2 versus restart3 shared fixture evidence
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-restart3-shared-fixture
+          path: v2-restart3-shared-fixture.json
+
+  restart3-frozen-reference:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/') || startsWith(github.head_ref, 'post-freeze/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact qualified restart3 baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 5fa39ea39ce9d09518e8b726f6297bf8db02ef1c
+      - name: Checkout restart3 pinned Resolutive-DB
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+          path: deps/resolutive-DB
+      - name: Configure exact restart3 mobile runtime
+        run: >-
+          cmake -S native/mobile -B build/restart3-reference
+          -DCMAKE_BUILD_TYPE=Release
+          -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
+      - name: Build exact restart3 mobile reference
+        run: cmake --build build/restart3-reference --target memoria_mobile_restart --config Release -j2
+      - name: Run exact restart3 repeated collection/restart acceptance
+        run: ctest --test-dir build/restart3-reference -R '^memoria_mobile_restart$' --output-on-failure
+      - name: Record immutable reference metadata
+        run: |
+          printf '%s\n' '{"schema":"memoria.restart3.frozen-reference.1","memoria_sha":"5fa39ea39ce9d09518e8b726f6297bf8db02ef1c","bdr_sha":"1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e","fixture":"native/mobile/tests/restart.c","qualified":true}' > restart3-frozen-reference.json
+      - name: Upload frozen restart3 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: restart3-frozen-reference
+          path: restart3-frozen-reference.json
 
   bdr-topological-parity:
     if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'experiment/') || startsWith(github.head_ref, 'post-freeze/')
