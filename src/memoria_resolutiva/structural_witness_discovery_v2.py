@@ -58,14 +58,7 @@ class DiscoveredWitness:
         )
 
 
-def _shared_suffix_before_terminal(
-    left: tuple[str, ...], right: tuple[str, ...]
-) -> tuple[str, ...]:
-    """Return the maximal contiguous shared suffix excluding the terminal.
-
-    The terminal itself is intentionally excluded so that a globally dense hub
-    cannot manufacture a witness merely because many trajectories end there.
-    """
+def _shared_suffix_before_terminal(left: tuple[str, ...], right: tuple[str, ...]) -> tuple[str, ...]:
     if len(left) < 2 or len(right) < 2 or left[-1] != right[-1]:
         return ()
     left_body = left[:-1]
@@ -74,93 +67,114 @@ def _shared_suffix_before_terminal(
     max_size = min(len(left_body), len(right_body))
     while size < max_size and left_body[-1 - size] == right_body[-1 - size]:
         size += 1
-    if size == 0:
-        return ()
-    return left_body[-size:]
+    return left_body[-size:] if size else ()
 
 
 def discover_witnesses(
     occurrences: Iterable[TrajectoryOccurrence],
     *,
     min_bridge_addresses: int = 2,
+    max_bucket_signatures: int = 32,
+    max_witnesses_per_pair: int = 8,
 ) -> tuple[DiscoveredWitness, ...]:
-    """Derive convergence witnesses without semantic labels.
+    """Derive convergence witnesses from topology only.
 
-    Two occurrences may witness structural convergence only when:
-    - their lineages are independent;
-    - their terminal address is identical;
-    - they share a contiguous bridge immediately before that terminal;
-    - the source prefixes before that bridge are both non-empty and distinct.
-
-    Each trajectory pair is one witness. Replaying the same lineage therefore
-    cannot multiply epistemic support. No transitive closure is produced.
+    Candidate discovery is indexed by the minimal contiguous bridge immediately
+    before a common terminal. A bucket with excessive distinct source signatures
+    fails closed instead of manufacturing a combinatorial cloud of equivalences.
     """
     if min_bridge_addresses < 1:
         raise ValueError("min_bridge_addresses must be >= 1")
+    if max_bucket_signatures < 2:
+        raise ValueError("max_bucket_signatures must be >= 2")
+    if max_witnesses_per_pair < 1:
+        raise ValueError("max_witnesses_per_pair must be >= 1")
 
-    items = tuple(occurrences)
+    buckets: dict[tuple[tuple[str, ...], str], list[TrajectoryOccurrence]] = {}
+    for occurrence in occurrences:
+        addresses = occurrence.trajectory.addresses
+        if len(addresses) < min_bridge_addresses + 2:
+            continue
+        bridge = addresses[-(min_bridge_addresses + 1) : -1]
+        terminal = addresses[-1]
+        buckets.setdefault((bridge, terminal), []).append(occurrence)
+
     found: list[DiscoveredWitness] = []
-    seen: set[str] = set()
 
-    for left, right in combinations(items, 2):
-        if left.lineage_id == right.lineage_id:
+    for (minimal_bridge, terminal), bucket in sorted(buckets.items()):
+        prepared: list[tuple[TrajectoryOccurrence, tuple[str, ...], str]] = []
+        distinct_signatures: set[str] = set()
+        for occurrence in bucket:
+            addresses = occurrence.trajectory.addresses
+            prefix = addresses[: -(min_bridge_addresses + 1)]
+            if not prefix:
+                continue
+            signature_id = structural_signature(prefix)
+            distinct_signatures.add(signature_id)
+            prepared.append((occurrence, prefix, signature_id))
+
+        if len(distinct_signatures) < 2:
             continue
-        la = left.trajectory.addresses
-        ra = right.trajectory.addresses
-        bridge = _shared_suffix_before_terminal(la, ra)
-        if len(bridge) < min_bridge_addresses:
+        if len(distinct_signatures) > max_bucket_signatures:
+            # Hyperdense structural bridge: unresolved by design.
             continue
 
-        left_prefix = la[: -(len(bridge) + 1)]
-        right_prefix = ra[: -(len(bridge) + 1)]
-        if not left_prefix or not right_prefix or left_prefix == right_prefix:
-            continue
+        per_pair_count: dict[tuple[str, str], int] = {}
+        for (left, left_prefix, left_sig), (right, right_prefix, right_sig) in combinations(prepared, 2):
+            if left.lineage_id == right.lineage_id or left_sig == right_sig:
+                continue
 
-        left_sig = structural_signature(left_prefix)
-        right_sig = structural_signature(right_prefix)
-        terminal = la[-1]
-        pair_occurrences = tuple(sorted((left.occurrence_id, right.occurrence_id)))
-        witness_id = _digest(
-            "witness",
-            pair_occurrences + bridge + (terminal,),
-        )
-        if witness_id in seen:
-            continue
-        seen.add(witness_id)
+            bridge = _shared_suffix_before_terminal(left.trajectory.addresses, right.trajectory.addresses)
+            if len(bridge) < min_bridge_addresses:
+                continue
 
-        if left_sig <= right_sig:
-            witness = DiscoveredWitness(
-                witness_id=witness_id,
-                left_signature_id=left_sig,
-                right_signature_id=right_sig,
-                terminal_region_id=terminal,
-                bridge_addresses=bridge,
-                left_occurrence_id=left.occurrence_id,
-                right_occurrence_id=right.occurrence_id,
-                left_lineage_id=left.lineage_id,
-                right_lineage_id=right.lineage_id,
-            )
-        else:
-            witness = DiscoveredWitness(
-                witness_id=witness_id,
-                left_signature_id=right_sig,
-                right_signature_id=left_sig,
-                terminal_region_id=terminal,
-                bridge_addresses=bridge,
-                left_occurrence_id=right.occurrence_id,
-                right_occurrence_id=left.occurrence_id,
-                left_lineage_id=right.lineage_id,
-                right_lineage_id=left.lineage_id,
-            )
-        found.append(witness)
+            # Recompute source signatures against the maximal shared bridge so
+            # witness identity follows the actual observed convergence geometry.
+            left_source = left.trajectory.addresses[: -(len(bridge) + 1)]
+            right_source = right.trajectory.addresses[: -(len(bridge) + 1)]
+            if not left_source or not right_source or left_source == right_source:
+                continue
+            left_source_sig = structural_signature(left_source)
+            right_source_sig = structural_signature(right_source)
+            pair = tuple(sorted((left_source_sig, right_source_sig)))
+            if per_pair_count.get(pair, 0) >= max_witnesses_per_pair:
+                continue
+
+            pair_occurrences = tuple(sorted((left.occurrence_id, right.occurrence_id)))
+            witness_id = _digest("witness", pair_occurrences + bridge + (terminal,))
+
+            if left_source_sig <= right_source_sig:
+                witness = DiscoveredWitness(
+                    witness_id=witness_id,
+                    left_signature_id=left_source_sig,
+                    right_signature_id=right_source_sig,
+                    terminal_region_id=terminal,
+                    bridge_addresses=bridge,
+                    left_occurrence_id=left.occurrence_id,
+                    right_occurrence_id=right.occurrence_id,
+                    left_lineage_id=left.lineage_id,
+                    right_lineage_id=right.lineage_id,
+                )
+            else:
+                witness = DiscoveredWitness(
+                    witness_id=witness_id,
+                    left_signature_id=right_source_sig,
+                    right_signature_id=left_source_sig,
+                    terminal_region_id=terminal,
+                    bridge_addresses=bridge,
+                    left_occurrence_id=right.occurrence_id,
+                    right_occurrence_id=left.occurrence_id,
+                    left_lineage_id=right.lineage_id,
+                    right_lineage_id=left.lineage_id,
+                )
+            found.append(witness)
+            per_pair_count[pair] = per_pair_count.get(pair, 0) + 1
 
     found.sort(key=lambda item: item.witness_id)
     return tuple(found)
 
 
-def events_from_discovered_witnesses(
-    witnesses: Iterable[DiscoveredWitness],
-) -> tuple[ConvergenceEvent, ...]:
+def events_from_discovered_witnesses(witnesses: Iterable[DiscoveredWitness]) -> tuple[ConvergenceEvent, ...]:
     events: list[ConvergenceEvent] = []
     for sequence, witness in enumerate(witnesses, start=1):
         events.extend(witness.events(sequence=sequence))
