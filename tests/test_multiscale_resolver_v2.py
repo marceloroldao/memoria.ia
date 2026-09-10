@@ -1,5 +1,9 @@
 from memoria_resolutiva.address_trajectory_v2 import AddressTrajectoryMemory
-from memoria_resolutiva.multiscale_resolver_v2 import MultiscaleAddressResolver
+from memoria_resolutiva.multiscale_resolver_v2 import (
+    MultiscaleAddressResolver,
+    MultiscaleMatch,
+    ScaleEvidence,
+)
 
 
 def _memory() -> AddressTrajectoryMemory:
@@ -67,3 +71,47 @@ def test_hierarchy_does_not_need_semantic_domain_rules() -> None:
     levels = resolver.hierarchy.build()
     assert levels
     assert any(composition.children[:2] == ("x:A", "x:B") for composition in levels[0].compositions)
+
+
+def _evidence(*, depth: int, overlap: int, ordered_overlap: int) -> ScaleEvidence:
+    return ScaleEvidence(
+        depth=depth,
+        query_addresses=("q1", "q2", "q3"),
+        trajectory_addresses=("t1", "t2", "t3", "t4"),
+        overlap=overlap,
+        ordered_overlap=ordered_overlap,
+        max_hops_to_terminal=1,
+        sum_hops_to_terminal=1,
+    )
+
+
+def test_atomic_convergence_dominates_hierarchical_vote_count() -> None:
+    """A recurrent bad composition must not outvote stronger atomic geometry.
+
+    This fixture intentionally constructs the ranking boundary directly. The
+    stronger candidate matches all three observed atomic addresses but has only one
+    supporting depth. The misleading candidate matches only two atomic addresses but
+    appears supported at three hierarchy levels. Structural convergence at depth 0
+    must dominate the number of derived hierarchy views, otherwise a repeated bad
+    composition can manufacture false consensus.
+    """
+    stronger_atomic = MultiscaleMatch(
+        trajectory_id="AT-strong",
+        raw_text="",
+        terminal_surface="correct",
+        scale_evidence=(_evidence(depth=0, overlap=3, ordered_overlap=3),),
+        supporting_depths=(0,),
+    )
+    misleading_hierarchy = MultiscaleMatch(
+        trajectory_id="AT-derived",
+        raw_text="",
+        terminal_surface="wrong",
+        scale_evidence=(
+            _evidence(depth=0, overlap=2, ordered_overlap=2),
+            _evidence(depth=1, overlap=2, ordered_overlap=2),
+            _evidence(depth=2, overlap=2, ordered_overlap=2),
+        ),
+        supporting_depths=(0, 1, 2),
+    )
+
+    assert stronger_atomic.multiscale_key > misleading_hierarchy.multiscale_key
