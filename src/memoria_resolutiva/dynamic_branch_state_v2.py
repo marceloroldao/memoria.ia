@@ -192,6 +192,13 @@ class DynamicBranchStateResolver:
     def observe_address(state: BranchState, address: str) -> BranchState:
         if not address:
             raise ValueError("address must be non-empty")
+
+        # Immediate-loop rejection must persist across observation calls. The last
+        # accepted address is the ephemeral cache state; receiving it again does not
+        # advance a branch, eliminate alternatives or create reinforcement.
+        if state.observed_addresses and state.observed_addresses[-1] == address:
+            return state
+
         survivors: list[ActiveBranch] = []
         eliminated: set[str] = set(state.eliminated_trajectory_ids)
 
