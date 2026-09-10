@@ -55,8 +55,6 @@ def test_context_is_derived_from_candidate_trajectory_without_manual_relation():
     _, held_relation = held_fixture()
     good = candidate_from_context("good", ("ctx:a", "ctx:b", "ctx:c"))
 
-    # Give the candidate's context the same anonymous topology as the held relation.
-    # Literal addresses remain disjoint from held:* and train:*.
     good_context_occ = good.occurrences
     good_context = build_relation_profile(good_context_occ, ("ctx:a", "ctx:b", "ctx:c"))
     assert good_context.relation_id == held_relation.relation_id
@@ -77,9 +75,14 @@ def test_local_role_lookalike_in_wrong_relation_is_rejected_automatically():
     _, held_relation = held_fixture()
 
     good = candidate_from_context("good", ("good:a", "good:b", "good:c"))
+
+    # Keep the future's local role exactly equal to the learned future:
+    # same position, one shared predecessor (wrong:c), two successors and two
+    # independent lineages.  Change only the ancestor relation topology by
+    # reusing the same predecessor before wrong:a in both occurrences.
     wrong_occ = (
-        occ("W1", "WL1", "wp0", "wrong:a", "wrong:b", "wrong:c", "wrong:future", "wx1", "tail"),
-        occ("W2", "WL2", "wq0", "wrong:a", "wrong:b", "wrong:c", "wrong:future", "wx2", "tail"),
+        occ("W1", "WL1", "wp0", "wrong:a", "wrong:b", "wrong:c", "wrong:future", "wx1"),
+        occ("W2", "WL2", "wp0", "wrong:a", "wrong:b", "wrong:c", "wrong:future", "wx2"),
     )
     wrong = StructuralFutureCandidate(
         "wrong:candidate",
@@ -88,9 +91,10 @@ def test_local_role_lookalike_in_wrong_relation_is_rejected_automatically():
         focus_address="wrong:future",
     )
 
-    # Both candidates intentionally share the learned future's local role geometry.
     assert good.role_profile.role_id == learned_future.role_id
     assert wrong.role_profile.role_id == learned_future.role_id
+    wrong_context = build_relation_profile(wrong_occ, ("wrong:a", "wrong:b", "wrong:c"))
+    assert wrong_context.relation_id != held_relation.relation_id
 
     result = forecast_structural_future(
         learned_relation=learned_relation,
@@ -140,6 +144,5 @@ def test_single_lineage_context_is_missing_evidence_not_false_confirmation():
         learned_future_role=learned_future,
         heldout_candidates=(candidate,),
     )
-    # The candidate role itself also lacks independent support, so it cannot resolve.
     assert result.resolved is False
     assert result.source == "no-compatible-future-role"
