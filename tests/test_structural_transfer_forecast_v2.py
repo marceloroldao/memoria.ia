@@ -36,9 +36,10 @@ def _held_relation():
 
 
 def _candidate(prefix: str):
-    # Match the learned future's anonymous local role: index 4 of a six-address
-    # trajectory, with two independent lineages and one distinct successor per
-    # predecessor. Literal addresses remain disjoint.
+    # Exact anonymous analogue of the learned future:
+    # one shared predecessor, two distinct successors, same local position,
+    # and two independent lineages. Literal addresses are entirely different.
+    shared_predecessor = prefix + ":bridge"
     occurrences = (
         occ(
             prefix + "1",
@@ -46,7 +47,7 @@ def _candidate(prefix: str):
             prefix + "p0",
             prefix + "p1",
             prefix + "p2",
-            prefix + "p3",
+            shared_predecessor,
             prefix + ":future",
             prefix + "s1",
         ),
@@ -56,7 +57,7 @@ def _candidate(prefix: str):
             prefix + "q0",
             prefix + "q1",
             prefix + "q2",
-            prefix + "q3",
+            shared_predecessor,
             prefix + ":future",
             prefix + "s2",
         ),
