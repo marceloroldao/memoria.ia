@@ -55,11 +55,9 @@ class TrajectoryMatch:
     @property
     def structural_key(self) -> tuple[int, int, int, int, int, str]:
         # Lexicographic structural ranking: no learned scalar weights.
-        # Prefer coverage first, then ordered compatibility, then adjacency,
-        # then raw overlap. Shorter unexplained tails break structural ties.
         coverage_num = self.query_coverage_num
         coverage_den = max(self.query_coverage_den, 1)
-        unexplained = max(0, len(_units(self.raw_text)) - self.overlap)
+        unexplained = max(0, len(self.addresses_for_length()) - self.overlap)
         return (
             coverage_num,
             -coverage_den,
@@ -69,12 +67,20 @@ class TrajectoryMatch:
             self.trajectory_id,
         )
 
+    def addresses_for_length(self) -> tuple[str, ...]:
+        # Legacy structural tie-break support for raw text trajectories.
+        # Non-text address streams use raw_text only as provenance and therefore
+        # fall back to an empty tuple here; the primary structural fields dominate.
+        return _units(self.raw_text) if self.raw_text else ()
+
 
 class AddressTrajectoryMemory:
-    """Experimental V2 resolver based on reusable addresses and trajectory fit.
+    """Experimental V2 memory based on reusable addresses and trajectory fit.
 
-    Ingestion and query share exactly the same decomposition. The engine does not
-    attach semantic meaning to any token and does not learn scalar weights.
+    Text is only one adapter. External modalities may ingest already-addressed
+    streams (audio, video, sensors, etc.) through ``ingest_address_stream``.
+    Immediate self-loops are collapsed by address equality, independently of
+    modality or vocabulary.
     """
 
     def __init__(self) -> None:
@@ -85,19 +91,84 @@ class AddressTrajectoryMemory:
     def decompose(text: str) -> tuple[AddressToken, ...]:
         return tuple(AddressToken(unit, _address("unit", unit)) for unit in _units(text))
 
-    def ingest(self, text: str) -> AddressTrajectory:
-        tokens = self.decompose(text)
-        if not tokens:
-            raise ValueError("text must be non-empty")
+    @staticmethod
+    def _collapse_immediate_tokens(tokens: tuple[AddressToken, ...]) -> tuple[AddressToken, ...]:
+        accepted: list[AddressToken] = []
+        current: str | None = None
+        for token in tokens:
+            if token.address == current:
+                continue
+            accepted.append(token)
+            current = token.address
+        return tuple(accepted)
+
+    def _append_trajectory(
+        self,
+        *,
+        raw_text: str,
+        addresses: tuple[str, ...],
+        surfaces: tuple[str, ...],
+    ) -> AddressTrajectory:
+        if not addresses:
+            raise ValueError("trajectory must contain at least one address")
+        if len(addresses) != len(surfaces):
+            raise ValueError("addresses and surfaces must have equal length")
         trajectory = AddressTrajectory(
             trajectory_id=f"AT{self._next_id}",
-            raw_text=text,
-            addresses=tuple(token.address for token in tokens),
-            surfaces=tuple(token.surface for token in tokens),
+            raw_text=raw_text,
+            addresses=addresses,
+            surfaces=surfaces,
         )
         self._next_id += 1
         self._trajectories.append(trajectory)
         return trajectory
+
+    def ingest(self, text: str) -> AddressTrajectory:
+        tokens = self._collapse_immediate_tokens(self.decompose(text))
+        if not tokens:
+            raise ValueError("text must be non-empty")
+        return self._append_trajectory(
+            raw_text=text,
+            addresses=tuple(token.address for token in tokens),
+            surfaces=tuple(token.surface for token in tokens),
+        )
+
+    def ingest_address_stream(
+        self,
+        addresses: tuple[str, ...],
+        *,
+        surfaces: tuple[str, ...] | None = None,
+        provenance: str = "",
+    ) -> AddressTrajectory:
+        """Ingest a modality-agnostic stream of precomputed addresses.
+
+        Consecutive duplicate addresses are rejected before trajectory creation.
+        The caller may provide human-readable surfaces for diagnostics; otherwise
+        addresses themselves are used as surfaces. No semantic interpretation is
+        performed here.
+        """
+        if not addresses:
+            raise ValueError("address stream must be non-empty")
+        if surfaces is None:
+            surfaces = addresses
+        if len(addresses) != len(surfaces):
+            raise ValueError("addresses and surfaces must have equal length")
+
+        kept_addresses: list[str] = []
+        kept_surfaces: list[str] = []
+        current: str | None = None
+        for address, surface in zip(addresses, surfaces):
+            if address == current:
+                continue
+            kept_addresses.append(address)
+            kept_surfaces.append(surface)
+            current = address
+
+        return self._append_trajectory(
+            raw_text=provenance,
+            addresses=tuple(kept_addresses),
+            surfaces=tuple(kept_surfaces),
+        )
 
     def snapshot(self) -> tuple[AddressTrajectory, ...]:
         return tuple(self._trajectories)
@@ -118,7 +189,6 @@ class AddressTrajectoryMemory:
 
     @staticmethod
     def _ordered_overlap(query: tuple[str, ...], candidate: tuple[str, ...]) -> int:
-        # Longest common subsequence length, address equality only.
         if not query or not candidate:
             return 0
         prev = [0] * (len(candidate) + 1)
@@ -139,7 +209,7 @@ class AddressTrajectoryMemory:
         return len(query_pairs & candidate_pairs)
 
     def resolve(self, text: str, *, limit: int = 5) -> tuple[TrajectoryMatch, ...]:
-        query_tokens = self.decompose(text)
+        query_tokens = self._collapse_immediate_tokens(self.decompose(text))
         query = tuple(token.address for token in query_tokens)
         if not query:
             return ()
