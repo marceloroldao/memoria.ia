@@ -17,30 +17,35 @@ The system must not infer meaning from hard-coded semantic regexes, fixed intent
 5. Low-information memory is allowed to return ambiguous or poor candidates; the engine must expose that uncertainty instead of hiding it behind rules.
 6. Query execution must be read-only. Repeating a question cannot create or reinforce factual state.
 7. Existing RC/restart3 code remains untouched; this V2 engine is additive until it outperforms the frozen baseline.
+8. Text is only one modality adapter. Audio, video, sensors and future inputs may supply precomputed address streams to the same topology engine.
+9. Immediate identical-address loops do not advance state or reinforce a trajectory.
 
 ## Experimental flow
 
 ```text
-INPUT / QUESTION
+INPUT / QUESTION / SENSOR STREAM
       |
       v
-same deterministic decomposition
+same deterministic address space
       |
       v
 address sequence + local compositions
       |
       v
-candidate stored trajectories
+candidate stored occurrence trajectories
       |
       v
-structural fit
-(address overlap + order + adjacency)
+structural convergence
+(address overlap + order + discrete hops)
+      |
+      v
+portal-aware collapse
       |
       v
 ranked trajectory candidates
 ```
 
-The first laboratory implementation deliberately does not attempt to know what words mean. It only compares reusable addresses and their ordering.
+The laboratory implementation deliberately does not attempt to know what words or symbols mean. It only compares reusable addresses, ordering, occurrence trajectories and topology.
 
 ## Initial acceptance corpus
 
@@ -66,7 +71,7 @@ The project may use **topological black hole** as an internal metaphor for an ad
 
 Conventional language stopwords such as `de`, `e`, `a`, `the`, `of`, etc. are not removed by vocabulary lists. They remain first-class addresses. If they appear across many trajectories and connect many distinct neighbors, the topology itself reveals that they are hyper-connected.
 
-The same principle is modality-agnostic. A recurrent audio pattern, visual primitive, sensor symbol or other reusable address can become hyper-connected for the same structural reason. The engine must therefore quantify topology, not hard-code language-specific stopword dictionaries.
+The same principle is modality-agnostic. A recurrent audio pattern, visual primitive, sensor symbol or other reusable address can become hyper-connected for the same structural reason. The engine therefore quantifies topology rather than hard-coding language-specific stopword dictionaries.
 
 For each address, the initial density engine exposes a structural vector rather than a learned scalar weight:
 
@@ -82,7 +87,17 @@ D(address) = (
 
 Ranking is lexicographic and deterministic in the first experiment. No semantic meaning is assigned to density by the engine itself.
 
-### Immediate-loop rejection
+### Portal role instead of deletion
+
+A hyper-connected address is not banned. It remains traversable and can still be a valid answer. The first portal-aware rule is deliberately conservative:
+
+1. compare structural convergence first;
+2. if one trajectory has stronger structural support, it wins regardless of terminal density;
+3. only when structural support ties, prefer the less-dense terminal as the collapse point.
+
+This means density acts as a topological role, not as a stopword penalty or learned weight. A dense address behaves more like a portal between many trajectories than a preferred destination, unless the trajectory evidence specifically converges on it.
+
+## Immediate-loop rejection
 
 A repeated identical input must not manufacture trajectory length or reinforcement.
 
@@ -104,9 +119,24 @@ Thus:
 de de de de de de de de
 ```
 
-produces one accepted state transition for the run of identical addresses, not eight. If another address occurs and `de` appears later, it can be accepted again because the current cache state changed.
+produces one accepted address state for the immediate run, not eight. If another address occurs and `de` appears later, it can be accepted again because the current cache state changed.
 
-This rule is generic: it applies equally to words, symbols, audio units, image-derived units, sensors or any future modality represented by an address.
+Raw provenance is still preserved, so the original input can be audited even when the trajectory representation collapses immediate self-loops.
+
+## Modality-agnostic streams
+
+`AddressTrajectoryMemory.ingest_address_stream(...)` accepts precomputed addresses directly. This decouples the topology engine from text tokenization.
+
+Example conceptual streams:
+
+```text
+text:   addr(meu) -> addr(gato) -> addr(verde)
+audio:  audio:A -> audio:B -> audio:A
+video:  visual:edge17 -> visual:hub3 -> visual:motion8
+sensor: temp:bin21 -> temp:bin22 -> temp:bin21
+```
+
+All use the same immediate-loop rule, density engine and occurrence-trajectory model. The modality-specific front end is responsible only for generating stable reusable addresses.
 
 ## Next benchmark
 
@@ -121,7 +151,9 @@ Run the same resolver as the memory grows through 100, 1,000 and 10,000 trajecto
 - density distribution of hyper-connected addresses;
 - false shortcuts caused by dense addresses;
 - rejected immediate-loop count;
-- convergence quality before and after loop rejection.
+- convergence quality before and after loop rejection;
+- portal-aware versus density-blind ranking;
+- modality-agnostic stream parity.
 
 The hypothesis to test is:
 
