@@ -5,15 +5,12 @@ from memoria_resolutiva.structural_configuration_signature_v2 import configurati
 def _memory_for_role_transfer():
     memory = AddressTrajectoryMemory()
 
-    # Two disjoint literal regions with the same anonymous role geometry.
-    # Each directional transition is supported by two independent trajectories so
-    # direction can be part of the structural signature without weakening the
-    # epistemic support threshold.
+    # Two disjoint literal regions with the same anonymous forward geometry.
+    # Each transition is independently supported; no reverse edge is added here,
+    # so direction is observable from topology rather than literal identity.
     for i in (1, 2):
         memory.ingest_address_stream((f"tf{i}", "train:a", "train:b", f"tfs{i}"))
-        memory.ingest_address_stream((f"tr{i}", "train:b", "train:a", f"trs{i}"))
         memory.ingest_address_stream((f"hf{i}", "held:a", "held:b", f"hfs{i}"))
-        memory.ingest_address_stream((f"hr{i}", "held:b", "held:a", f"hrs{i}"))
     return memory
 
 
@@ -26,13 +23,30 @@ def test_disjoint_literal_addresses_can_share_configuration_signature_by_role():
     assert learned.signature_id == held.signature_id
 
 
-def test_order_is_part_of_structural_configuration_signature():
+def test_reverse_order_fails_closed_when_topology_supports_only_forward_transition():
     memory = _memory_for_role_transfer()
     forward = configuration_role_signature(memory, ("train:a", "train:b"))
     reverse = configuration_role_signature(memory, ("train:b", "train:a"))
     assert forward.supported is True
+    assert reverse.supported is False
+    assert reverse.signature_id is None
+    assert reverse.reason == "insufficient-transition-support"
+
+
+def test_perfectly_symmetric_bidirectional_topology_does_not_invent_orientation():
+    memory = AddressTrajectoryMemory()
+    for i in (1, 2):
+        memory.ingest_address_stream((f"f{i}", "sym:a", "sym:b", f"fs{i}"))
+        memory.ingest_address_stream((f"r{i}", "sym:b", "sym:a", f"rs{i}"))
+
+    forward = configuration_role_signature(memory, ("sym:a", "sym:b"))
+    reverse = configuration_role_signature(memory, ("sym:b", "sym:a"))
+    assert forward.supported is True
     assert reverse.supported is True
-    assert forward.signature_id != reverse.signature_id
+    # With identical anonymous roles and equally supported directions there is no
+    # structural information that distinguishes orientation. Equality is correct;
+    # forcing a difference would re-introduce hidden identity/semantic knowledge.
+    assert forward.signature_id == reverse.signature_id
 
 
 def test_unseen_address_fails_closed():
