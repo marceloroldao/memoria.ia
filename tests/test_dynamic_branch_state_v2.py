@@ -128,8 +128,6 @@ def test_state_change_allows_same_address_again_later() -> None:
     state = resolver.observe_address(state, c)
     assert state.exhausted is False
 
-    # Exhaust and recover into a different occurrence whose geometry contains c
-    # again after an intervening x. The second c is valid because cache state moved.
     x = memory.decompose("x")[0].address
     state = resolver.observe_address(state, x)
     assert state.exhausted is True
@@ -173,3 +171,22 @@ def test_recovery_is_explicit_and_rejected_while_old_state_is_still_active() -> 
         assert "exhausted" in str(error)
     else:
         raise AssertionError("recovery must not silently replace an active trajectory state")
+
+
+def test_dense_hub_recovery_fails_closed_instead_of_truncating_equal_futures() -> None:
+    """A hyperdense fallback suffix must not select an arbitrary bounded subset."""
+    memory = AddressTrajectoryMemory()
+    memory.ingest("start expected")
+    for index in range(24):
+        memory.ingest(f"source{index} hub future{index}")
+
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("start")
+    unexpected = memory.decompose("unseen")[0].address
+    state = resolver.observe_address(state, unexpected)
+    assert state.exhausted is True
+
+    recovery = resolver.recover_text(state, "unseen hub", branch_limit=8)
+    assert recovery.recovered_any is False
+    assert recovery.recovered.exhausted is True
+    assert recovery.recovered.active == ()
