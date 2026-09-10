@@ -27,6 +27,7 @@ def test_supported_equivalence_can_bridge_unresolved_signature():
     assert result.source == "structural-equivalence"
     assert result.equivalent_signature_ids == ("B",)
     assert result.supporting_witnesses == ("W1", "W2")
+    assert result.competing_terminal_region_ids == ("target",)
     assert state.snapshot() == before
 
 
@@ -34,7 +35,7 @@ def test_direct_evidence_always_precedes_equivalence():
     state = supported_state()
     result = resolve_via_structural_equivalence(
         query_signature_id="Q", equivalence_state=state,
-        signature_terminals={"B": "wrong"}, known_signature_ids=["B"],
+        signature_terminals={"B": ("wrong-1", "wrong-2")}, known_signature_ids=["B"],
         direct_terminal_region_id="direct-target",
     )
     assert result.resolved is True
@@ -89,6 +90,34 @@ def test_conflicting_supported_routes_fail_closed():
     assert result.ambiguous is True
     assert result.source == "equivalence-conflict"
     assert result.equivalent_signature_ids == ("B", "C")
+    assert result.competing_terminal_region_ids == ("target-1", "target-2")
+
+
+def test_single_equivalent_signature_with_multiple_futures_stays_ambiguous():
+    state = supported_state()
+    result = resolve_via_structural_equivalence(
+        query_signature_id="Q", equivalence_state=state,
+        signature_terminals={"B": ("target-2", "target-1")},
+        known_signature_ids=["B"],
+    )
+    assert result.resolved is False
+    assert result.ambiguous is True
+    assert result.source == "equivalence-conflict"
+    assert result.equivalent_signature_ids == ("B",)
+    assert result.competing_terminal_region_ids == ("target-1", "target-2")
+
+
+def test_duplicate_identical_futures_do_not_create_false_ambiguity():
+    state = supported_state()
+    result = resolve_via_structural_equivalence(
+        query_signature_id="Q", equivalence_state=state,
+        signature_terminals={"B": ("target", "target", "target")},
+        known_signature_ids=["B"],
+    )
+    assert result.resolved is True
+    assert result.ambiguous is False
+    assert result.terminal_region_id == "target"
+    assert result.competing_terminal_region_ids == ("target",)
 
 
 def test_multiple_supported_routes_to_same_terminal_can_converge():
@@ -101,7 +130,7 @@ def test_multiple_supported_routes_to_same_terminal_can_converge():
     ])
     result = resolve_via_structural_equivalence(
         query_signature_id="Q", equivalence_state=state,
-        signature_terminals={"B": "target", "C": "target"},
+        signature_terminals={"B": ("target",), "C": ("target", "target")},
         known_signature_ids=["C", "B"],
     )
     assert result.resolved is True
@@ -129,11 +158,11 @@ def test_reconstructed_snapshot_produces_identical_resolution():
     state = supported_state()
     first = resolve_via_structural_equivalence(
         query_signature_id="Q", equivalence_state=state,
-        signature_terminals={"B": "target"}, known_signature_ids=["B"]
+        signature_terminals={"B": ("target",)}, known_signature_ids=["B"]
     )
     restored = StructuralEquivalenceState(events=list(state.snapshot()))
     second = resolve_via_structural_equivalence(
         query_signature_id="Q", equivalence_state=restored,
-        signature_terminals={"B": "target"}, known_signature_ids=["B"]
+        signature_terminals={"B": ("target",)}, known_signature_ids=["B"]
     )
     assert second == first
