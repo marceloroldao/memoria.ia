@@ -69,3 +69,34 @@ def test_cold_restart_same_initial_dynamic_state() -> None:
     restored = AddressTrajectoryMemory.restore(memory.snapshot())
     second = DynamicBranchStateResolver(restored).begin("x y")
     assert first == second
+
+
+def test_direct_address_stream_filters_sensor_branches() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest_address_stream(("s:A", "s:B", "s:C"), surfaces=("A", "B", "C"), provenance="sensor-1")
+    memory.ingest_address_stream(("s:A", "s:B", "s:D"), surfaces=("A", "B", "D"), provenance="sensor-2")
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin_addresses(("s:A", "s:B"), max_steps=2)
+    assert state.ambiguous is True
+    assert {branch.remaining_addresses[0] for branch in state.active} == {"s:C", "s:D"}
+
+    state = resolver.observe_addresses(state, ("s:C",))
+    assert state.exhausted is False
+    assert state.ambiguous is False
+    assert len(state.active) == 1
+
+
+def test_direct_address_seed_and_observation_reject_immediate_self_loops() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest_address_stream(("s:A", "s:B", "s:C"), surfaces=("A", "B", "C"))
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin_addresses(("s:A", "s:A", "s:B"))
+    assert len(state.active) == 1
+    assert state.active[0].remaining_addresses == ("s:C",)
+
+    state = resolver.observe_addresses(state, ("s:C", "s:C"))
+    assert state.exhausted is False
+    assert len(state.active) == 1
+    assert state.active[0].consumed_steps == 1
