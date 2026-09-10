@@ -43,6 +43,53 @@ def test_partial_shape_similarity_does_not_transfer():
     assert match.reason == "topology-mismatch"
 
 
+def test_equal_counts_and_positions_but_different_incidence_geometry_do_not_transfer():
+    # Both sides have the same trajectory length, focus position, two predecessors
+    # and two successors. Left is a one-to-one matching; right is crossed/all-to-all.
+    # A count-only role fingerprint would collide here.
+    left_occ = (
+        TrajectoryOccurrence(traj("L1", "p1", "focus:left", "s1", "tail1"), "LL1", "LO1"),
+        TrajectoryOccurrence(traj("L2", "p2", "focus:left", "s2", "tail2"), "LL2", "LO2"),
+    )
+    right_occ = (
+        TrajectoryOccurrence(traj("R1", "q1", "focus:right", "u1", "end1"), "RL1", "RO1"),
+        TrajectoryOccurrence(traj("R2", "q1", "focus:right", "u2", "end2"), "RL2", "RO2"),
+        TrajectoryOccurrence(traj("R3", "q2", "focus:right", "u1", "end3"), "RL3", "RO3"),
+        TrajectoryOccurrence(traj("R4", "q2", "focus:right", "u2", "end4"), "RL4", "RO4"),
+    )
+    left = build_role_profile(left_occ, "focus:left")
+    right = build_role_profile(right_occ, "focus:right")
+    assert left.predecessor_diversity == right.predecessor_diversity == 2
+    assert left.successor_diversity == right.successor_diversity == 2
+    assert left.local_shapes == right.local_shapes
+    match = compare_structural_roles(left, right)
+    assert match.supported is False
+    assert match.reason == "topology-mismatch"
+
+
+def test_same_degree_spectra_but_different_independent_support_do_not_transfer():
+    # Neighbor coupling is the same shape, but one side is independently reinforced
+    # per incidence while the other is replay-heavy. The support spectrum must differ.
+    left_occ = (
+        TrajectoryOccurrence(traj("L1", "p1", "focus:left", "s1", "t1"), "L1", "O1"),
+        TrajectoryOccurrence(traj("L2", "p1", "focus:left", "s1", "t2"), "L2", "O2"),
+        TrajectoryOccurrence(traj("L3", "p2", "focus:left", "s2", "t3"), "L3", "O3"),
+        TrajectoryOccurrence(traj("L4", "p2", "focus:left", "s2", "t4"), "L4", "O4"),
+    )
+    right_occ = (
+        TrajectoryOccurrence(traj("R1", "q1", "focus:right", "u1", "v1"), "sameA", "RO1"),
+        TrajectoryOccurrence(traj("R2", "q1", "focus:right", "u1", "v2"), "sameA", "RO2"),
+        TrajectoryOccurrence(traj("R3", "q2", "focus:right", "u2", "v3"), "sameB", "RO3"),
+        TrajectoryOccurrence(traj("R4", "q2", "focus:right", "u2", "v4"), "sameB", "RO4"),
+    )
+    left = build_role_profile(left_occ, "focus:left")
+    right = build_role_profile(right_occ, "focus:right")
+    assert left.predecessor_degree_spectrum == right.predecessor_degree_spectrum
+    assert left.successor_degree_spectrum == right.successor_degree_spectrum
+    assert left.incidence_support_spectrum != right.incidence_support_spectrum
+    assert compare_structural_roles(left, right).supported is False
+
+
 def test_single_lineage_cannot_establish_transferable_role():
     left_occ = (
         TrajectoryOccurrence(traj("T1", "a", "focus:left", "b", "c"), "same", "O1"),
