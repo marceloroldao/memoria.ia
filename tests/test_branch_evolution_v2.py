@@ -69,14 +69,20 @@ def test_cold_restart_reproduces_same_evolution() -> None:
     assert state1 == state2
 
 
-def test_address_stream_observation_uses_same_rule() -> None:
+def test_address_stream_observation_collapses_immediate_repeats() -> None:
     memory = AddressTrajectoryMemory()
-    memory.ingest_address_stream(("sensor:A", "sensor:B", "sensor:C"))
-    memory.ingest_address_stream(("sensor:A", "sensor:B", "sensor:D"))
-
     session = BranchEvolutionSession(memory, "")
-    # Empty text has no query candidates, so use a text-independent session by
-    # seeding the same address geometry through a stored synthetic query string.
-    # This test instead verifies the observation path itself collapses repeats.
+
     state = session.observe_addresses(("sensor:C", "sensor:C"))
     assert state.observations == (("sensor:C",),)
+
+
+def test_immediate_loop_cache_persists_across_observation_calls() -> None:
+    memory = AddressTrajectoryMemory()
+    session = BranchEvolutionSession(memory, "")
+
+    first = session.observe_addresses(("sensor:C",))
+    second = session.observe_addresses(("sensor:C",))
+
+    assert first.observations == (("sensor:C",),)
+    assert second.observations == (("sensor:C",),)
