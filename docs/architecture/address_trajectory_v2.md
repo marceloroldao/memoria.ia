@@ -69,7 +69,7 @@ The laboratory implementation deliberately does not attempt to know what words o
 
 ## Recovery after branch exhaustion
 
-`TrajectoryRecoveryResolver` handles the case in which a new observation cannot be consumed by any currently active continuation.
+`DynamicBranchStateResolver.recover_text(...)` and `recover_addresses(...)` handle the case in which a new observation cannot be consumed by any currently active continuation.
 
 Example:
 
@@ -89,11 +89,11 @@ T1: a -> hub -> x
 T2: b -> hub -> y
 ```
 
-an exhausted T1 state cannot jump to T2 merely because both contain `hub`. Recovery starts from the complete newly observed configuration and retrieves stored occurrences again. Occurrence continuity remains intact inside each rollout.
+an exhausted T1 state cannot jump to T2 merely because both contain `hub`. Recovery starts from the newly observed configuration and retrieves stored occurrences again. Occurrence continuity remains intact inside each rollout.
 
 If no stored trajectory explains the new observation, recovery returns unresolved. It does not create a new fact automatically. Learning/ingestion, if later permitted by policy, remains a separate operation.
 
-Recovery is read-only, deterministic after cold restart, and modality-agnostic once stable addresses are supplied.
+`BranchRecovery` preserves the exhausted prior state beside the recovered state, so reorientation is auditable instead of silently replacing history. Recovery is explicit, read-only, deterministic after cold restart, and modality-agnostic once stable addresses are supplied.
 
 ## Structural hierarchy and multiscale convergence
 
