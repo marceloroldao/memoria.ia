@@ -102,6 +102,45 @@ def test_direct_address_seed_and_observation_reject_immediate_self_loops() -> No
     assert state.active[0].consumed_steps == 1
 
 
+def test_immediate_self_loop_is_rejected_across_separate_observation_calls() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c d")
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("a b")
+
+    c = memory.decompose("c")[0].address
+    first = resolver.observe_address(state, c)
+    second = resolver.observe_address(first, c)
+
+    assert second == first
+    assert second.active[0].consumed_steps == 1
+    assert second.active[0].remaining_surfaces == ("d",)
+
+
+def test_state_change_allows_same_address_again_later() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    memory.ingest("c x c y")
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin("a b")
+    c = memory.decompose("c")[0].address
+    state = resolver.observe_address(state, c)
+    assert state.exhausted is False
+
+    # Exhaust and recover into a different occurrence whose geometry contains c
+    # again after an intervening x. The second c is valid because cache state moved.
+    x = memory.decompose("x")[0].address
+    state = resolver.observe_address(state, x)
+    assert state.exhausted is True
+    recovery = resolver.recover_text(state, "c x")
+    assert recovery.recovered_any is True
+
+    recovered = resolver.observe_address(recovery.recovered, c)
+    assert recovered.exhausted is False
+    assert recovered.active[0].remaining_surfaces == ("y",)
+
+
 def test_exhausted_state_can_reorient_from_new_observation_without_stitching() -> None:
     memory = AddressTrajectoryMemory()
     memory.ingest("a b c")
