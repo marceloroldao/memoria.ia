@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from .address_trajectory_v2 import AddressTrajectoryMemory
-from .structural_configuration_signature_v2 import configuration_role_signature
+from .causal_configuration_signature_v2 import causal_configuration_signature
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,13 +33,14 @@ class EndToEndAddressResolver:
 
     Precedence is conservative:
     1. exact contiguous frontier evidence;
-    2. anonymous structural-role fallback;
+    2. anonymous *causal* structural fallback;
     3. unresolved.
 
     The fallback is rebuilt read-only from stored trajectory occurrences. It never
-    persists an inferred edge. A structurally matching window must itself be
-    supported by the anonymous configuration signature, and competing futures are
-    preserved as ambiguity rather than ranked by hash, order or scalar weight.
+    persists an inferred edge. Prediction deliberately uses a causal structural
+    signature that excludes successors/future position from the role fingerprint;
+    otherwise a known continuation would leak into the comparison with a frontier
+    whose future has not yet been observed.
     """
 
     def __init__(
@@ -69,7 +70,7 @@ class EndToEndAddressResolver:
         return futures
 
     def _structural_futures(self, query_addresses: tuple[str, ...]) -> dict[str, dict[str, object]]:
-        query_signature = configuration_role_signature(
+        query_signature = causal_configuration_signature(
             self.memory,
             query_addresses,
             min_independent_lineages=self.min_independent_lineages,
@@ -88,7 +89,7 @@ class EndToEndAddressResolver:
                 if window == query_addresses:
                     # Exact evidence was already considered by the direct tier.
                     continue
-                candidate_signature = configuration_role_signature(
+                candidate_signature = causal_configuration_signature(
                     self.memory,
                     window,
                     min_independent_lineages=self.min_independent_lineages,
