@@ -28,13 +28,13 @@ def _transition_mode(
     *,
     min_independent_lineages: int,
 ) -> str | None:
-    """Return an anonymous directional relation between two observed roles.
+    """Describe the queried ordered transition without leaking address identity.
 
-    Literal addresses are used only to count whether the ordered transition is
-    independently observed. The returned mode contains no address identity or
-    scalar weight. It distinguishes forward-only, reverse-only and bidirectional
-    topology, which is necessary when two concrete addresses occupy the same
-    anonymous local role.
+    The ordered transition ``left -> right`` must itself have independent support.
+    Observing only ``right -> left`` is not evidence for the queried order and
+    therefore fails closed.  When both orders are independently supported the
+    anonymous relation is bidirectional; otherwise the queried direction is
+    forward-only.
     """
     forward_lineages: set[str] = set()
     reverse_lineages: set[str] = set()
@@ -49,13 +49,13 @@ def _transition_mode(
     forward_supported = len(forward_lineages) >= min_independent_lineages
     reverse_supported = len(reverse_lineages) >= min_independent_lineages
 
-    if forward_supported and reverse_supported:
-        return "bidirectional"
-    if forward_supported:
-        return "forward-only"
+    # Crucial: support in the opposite direction cannot validate the order that
+    # is currently being queried.
+    if not forward_supported:
+        return None
     if reverse_supported:
-        return "reverse-only"
-    return None
+        return "bidirectional"
+    return "forward-only"
 
 
 def configuration_role_signature(
@@ -69,13 +69,15 @@ def configuration_role_signature(
 
     Literal addresses are used only to locate each address and its observed
     transitions in memory. They are never included in the resulting signature.
-    Every component and every adjacent transition must have enough independent
-    trajectory support and remain structurally discriminative; otherwise the
-    configuration fails closed.
+    Every component and every adjacent *queried-direction* transition must have
+    enough independent trajectory support and remain structurally discriminative;
+    otherwise the configuration fails closed.
 
     Role IDs alone are insufficient when two addresses occupy the same local role:
     A->B and B->A would otherwise collapse to [role, role]. The signature therefore
-    also encodes the anonymous *directional transition mode* between adjacent roles.
+    also encodes the anonymous directional regime between adjacent roles. Perfectly
+    symmetric bidirectional topology remains symmetric; the engine does not invent
+    an orientation that is absent from the evidence.
     """
     if not addresses:
         return StructuralConfigurationSignature(None, (), False, "empty-configuration")
