@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .temporal_causal_window_v2 import TemporalCausalEvent, TemporalCausalPath, resolve_temporal_causal_path
+from .temporal_causal_window_v2 import (
+    TemporalCausalEvent,
+    TemporalCausalPath,
+    evaluate_temporal_causal_path,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,19 +33,32 @@ def candidate_paths_to_latest(state: CausalBufferState) -> tuple[TemporalCausalP
     if len(state.events) < 2:
         return ()
     target = state.events[-1]
+    if target.kind != "observation":
+        return ()
+
     paths: list[TemporalCausalPath] = []
     for index, source in enumerate(state.events[:-1]):
+        if source.kind != "intervention":
+            continue
         mediators = tuple(
-            item for item in state.events[index + 1 : -1]
+            item
+            for item in state.events[index + 1 : -1]
             if source.tick < item.tick < target.tick
         )
-        path = resolve_temporal_causal_path(
+        path = evaluate_temporal_causal_path(
             source,
             target,
-            mediators,
+            mediators=mediators,
             max_tick_distance=state.max_tick_distance,
         )
         if path.supported:
             paths.append(path)
-    paths.sort(key=lambda item: (item.source.tick, item.target.tick, item.source.address, item.target.address))
+    paths.sort(
+        key=lambda item: (
+            item.source.tick,
+            item.target.tick,
+            item.source.address,
+            item.target.address,
+        )
+    )
     return tuple(paths)
