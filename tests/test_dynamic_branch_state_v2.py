@@ -1,0 +1,192 @@
+from memoria_resolutiva.address_trajectory_v2 import AddressTrajectoryMemory
+from memoria_resolutiva.dynamic_branch_state_v2 import DynamicBranchStateResolver
+
+
+def test_new_observation_eliminates_only_incompatible_branch() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("alpha beta gamma delta")
+    memory.ingest("alpha beta gamma omega")
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin("alpha beta", max_steps=4)
+    assert state.ambiguous is True
+    gamma = memory.decompose("gamma")[0].address
+    state = resolver.observe_address(state, gamma)
+    assert state.ambiguous is True
+
+    delta = memory.decompose("delta")[0].address
+    state = resolver.observe_address(state, delta)
+    assert state.exhausted is False
+    assert state.ambiguous is False
+    assert len(state.active) == 1
+    assert any(tid in state.eliminated_trajectory_ids for tid in ("AT1", "AT2"))
+
+
+def test_underlying_memory_is_never_mutated_or_marked_false() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    memory.ingest("a b d")
+    before = memory.snapshot()
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("a b")
+    c = memory.decompose("c")[0].address
+    state = resolver.observe_address(state, c)
+    assert memory.snapshot() == before
+    assert state.eliminated_trajectory_ids
+
+
+def test_unexpected_observation_can_exhaust_ephemeral_state_without_deleting_memory() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    memory.ingest("a b d")
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("a b")
+    unknown = memory.decompose("z")[0].address
+    state = resolver.observe_address(state, unknown)
+    assert state.exhausted is True
+    assert state.active == ()
+    assert len(memory.snapshot()) == 2
+
+
+def test_observe_text_consumes_multiple_steps_in_order() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("start mid left end")
+    memory.ingest("start mid right end")
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("start")
+    state = resolver.observe_text(state, "mid left")
+    assert state.exhausted is False
+    assert state.ambiguous is False
+    assert len(state.active) == 1
+    assert state.active[0].consumed_steps == 2
+
+
+def test_cold_restart_same_initial_dynamic_state() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("x y p q")
+    memory.ingest("x y r s")
+    first = DynamicBranchStateResolver(memory).begin("x y")
+    restored = AddressTrajectoryMemory.restore(memory.snapshot())
+    second = DynamicBranchStateResolver(restored).begin("x y")
+    assert first == second
+
+
+def test_direct_address_stream_filters_sensor_branches() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest_address_stream(("s:A", "s:B", "s:C"), surfaces=("A", "B", "C"), provenance="sensor-1")
+    memory.ingest_address_stream(("s:A", "s:B", "s:D"), surfaces=("A", "B", "D"), provenance="sensor-2")
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin_addresses(("s:A", "s:B"), max_steps=2)
+    assert state.ambiguous is True
+    assert {branch.remaining_addresses[0] for branch in state.active} == {"s:C", "s:D"}
+
+    state = resolver.observe_addresses(state, ("s:C",))
+    assert state.exhausted is False
+    assert state.ambiguous is False
+    assert len(state.active) == 1
+
+
+def test_direct_address_seed_and_observation_reject_immediate_self_loops() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest_address_stream(("s:A", "s:B", "s:C"), surfaces=("A", "B", "C"))
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin_addresses(("s:A", "s:A", "s:B"))
+    assert len(state.active) == 1
+    assert state.active[0].remaining_addresses == ("s:C",)
+
+    state = resolver.observe_addresses(state, ("s:C", "s:C"))
+    assert state.exhausted is False
+    assert len(state.active) == 1
+    assert state.active[0].consumed_steps == 1
+
+
+def test_immediate_self_loop_is_rejected_across_separate_observation_calls() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c d")
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("a b")
+
+    c = memory.decompose("c")[0].address
+    first = resolver.observe_address(state, c)
+    second = resolver.observe_address(first, c)
+
+    assert second == first
+    assert second.active[0].consumed_steps == 1
+    assert second.active[0].remaining_surfaces == ("d",)
+
+
+def test_state_change_allows_same_address_again_later() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    memory.ingest("c x c y")
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin("a b")
+    c = memory.decompose("c")[0].address
+    state = resolver.observe_address(state, c)
+    assert state.exhausted is False
+
+    x = memory.decompose("x")[0].address
+    state = resolver.observe_address(state, x)
+    assert state.exhausted is True
+    recovery = resolver.recover_text(state, "c x")
+    assert recovery.recovered_any is True
+
+    recovered = resolver.observe_address(recovery.recovered, c)
+    assert recovered.exhausted is False
+    assert recovered.active[0].remaining_surfaces == ("y",)
+
+
+def test_exhausted_state_can_reorient_from_new_observation_without_stitching() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    memory.ingest("x y z")
+    resolver = DynamicBranchStateResolver(memory)
+
+    state = resolver.begin("a b")
+    state = resolver.observe_text(state, "x")
+    assert state.exhausted is True
+
+    recovery = resolver.recover_text(state, "x")
+    assert recovery.recovered_any is True
+    assert recovery.previous == state
+    assert recovery.recovered.exhausted is False
+    assert len(recovery.recovered.active) == 1
+    assert recovery.recovered.active[0].remaining_surfaces == ("y", "z")
+    assert recovery.recovered.active[0].trajectory_ids == ("AT2",)
+
+
+def test_recovery_is_explicit_and_rejected_while_old_state_is_still_active() -> None:
+    memory = AddressTrajectoryMemory()
+    memory.ingest("a b c")
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("a b")
+    assert state.exhausted is False
+
+    try:
+        resolver.recover_text(state, "a")
+    except ValueError as error:
+        assert "exhausted" in str(error)
+    else:
+        raise AssertionError("recovery must not silently replace an active trajectory state")
+
+
+def test_dense_hub_recovery_fails_closed_instead_of_truncating_equal_futures() -> None:
+    """A hyperdense fallback suffix must not select an arbitrary bounded subset."""
+    memory = AddressTrajectoryMemory()
+    memory.ingest("start expected")
+    for index in range(24):
+        memory.ingest(f"source{index} hub future{index}")
+
+    resolver = DynamicBranchStateResolver(memory)
+    state = resolver.begin("start")
+    unexpected = memory.decompose("unseen")[0].address
+    state = resolver.observe_address(state, unexpected)
+    assert state.exhausted is True
+
+    recovery = resolver.recover_text(state, "unseen hub", branch_limit=8)
+    assert recovery.recovered_any is False
+    assert recovery.recovered.exhausted is True
+    assert recovery.recovered.active == ()

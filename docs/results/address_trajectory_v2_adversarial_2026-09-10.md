@@ -1,0 +1,144 @@
+# Address-Trajectory V2 — adversarial structural findings
+
+Date: 2026-09-10
+Status: experimental; adversarial gate passed; ready to begin formal comparison against restart3, not qualified or merged
+Canonical PR: #296 (draft)
+Baseline (must remain unchanged): `freeze/mobile-repeated-collection-recall-v1-integration-qualified` @ `5fa39ea39ce9d09518e8b726f6297bf8db02ef1c`
+
+## Purpose
+
+This record captures negative findings and the corresponding structural corrections. It deliberately does not reinterpret failures as success and does not promote the V2 experiment into the frozen/mobile path.
+
+## Negative finding A — false hierarchical consensus
+
+Observed risk: a trajectory with weaker atomic convergence could rank ahead of a stronger atomic match merely because recurrent compositions caused it to appear supported at more hierarchy depths.
+
+This violates the intended rule that derived hierarchy is supporting evidence rather than an independent vote capable of outvoting the observed atomic configuration.
+
+Correction:
+
+- depth-0/atomic structural evidence now dominates the multiscale ranking lexicographically;
+- hierarchy depth count and derived-scale evidence are considered only after atomic evidence is tied;
+- no learned scalar weights, semantic regex, domain vocabulary or intent labels were introduced.
+
+A dedicated adversarial test constructs a stronger atomic candidate (3/3 overlap, one depth) against a weaker candidate (2/3 overlap, three depths). The stronger atomic candidate must rank first.
+
+## Negative finding B — hyperdense recovery truncation
+
+Observed risk: after exhaustion, recovery may shorten the observed configuration to a suffix. If the suffix is a hyperdense address such as a hub, many structurally equal occurrence futures can be found. Applying `branch_limit` to that set would retain only an arbitrary bounded subset and would incorrectly make an operational truncation look like cognition.
+
+Correction:
+
+- recovery continues to prefer the longest contiguous observed suffix;
+- recovery never stitches the exhausted occurrence to another occurrence;
+- if a recovery seed exceeds `candidate_limit` or yields more distinct continuation branches than `branch_limit`, recovery now fails closed;
+- fail-closed means `recovered_any = false`, `active = ()`, `exhausted = true`;
+- the observation is not marked false and persistent memory is not modified.
+
+This intentionally trades recall for epistemic/structural safety when the available geometry is insufficient to preserve all equivalent alternatives inside the configured bound.
+
+## Regression evidence before corpus extension
+
+Experimental PR regression run #391 completed successfully on head `ff6abb06c314b64733da871ef8c58609d9d24fe5`:
+
+- Ubuntu: 905 passed, 35 skipped;
+- Windows: regression success;
+- BDR/topological parity: success;
+- recovery scaling benchmark: success;
+- adversarial structure benchmark: success;
+- false hierarchical consensus probe: 0;
+- false hyperdense reseeds: 0 at 100 / 1,000 / 10,000 hub trajectories;
+- all adversarial recovery probes remained read-only and restart deterministic.
+
+The hyperdense fail-closed probe reported approximate Ubuntu latency:
+
+- 100 hub trajectories: 0.27 ms;
+- 1,000 hub trajectories: 2.36 ms;
+- 10,000 hub trajectories: 24.52 ms.
+
+These numbers are run-specific observations, not performance guarantees.
+
+## Corpus-level adversarial evidence
+
+Run #393 evaluated `benchmarks/adversarial_corpus_v2_benchmark.py` on the experimental branch. The corpus deliberately gives recurrent misleading regions much higher frequency than the single fully matching occurrence. In each scenario, wrong trajectories repeatedly contain the same `bridge -> key -> wrong` region while the correct trajectory uniquely preserves the complete `anchor -> bridge -> key` configuration.
+
+Results at 100 / 1,000 / 10,000 trajectories:
+
+| Metric | 100 | 1,000 | 10,000 |
+|---|---:|---:|---:|
+| atomic top-1 | 1.0 | 1.0 | 1.0 |
+| multiscale top-1 | 1.0 | 1.0 | 1.0 |
+| multiscale top-3 | 1.0 | 1.0 | 1.0 |
+| false hierarchical consensus | 0 | 0 | 0 |
+| false reseed | 0 | 0 | 0 |
+| hierarchy depth | 1 | 1 | 1 |
+| composition count | 24 | 24 | 24 |
+| query read-only | yes | yes | yes |
+| cold restart deterministic | yes | yes | yes |
+
+Observed resource/performance growth on Ubuntu:
+
+| Metric | 100 | 1,000 | 10,000 |
+|---|---:|---:|---:|
+| peak Python bytes while building | 99,168 | 945,600 | 8,314,256 |
+| hierarchy build | 1.85 ms | 16.35 ms | 178.05 ms |
+| mean multiscale query | 4.13 ms | 34.27 ms | 361.99 ms |
+| max multiscale query | 6.33 ms | 35.17 ms | 371.32 ms |
+| atomic addresses | 400 | 4,000 | 40,000 |
+| final hierarchical addresses | 208 | 2,008 | 20,008 |
+
+The transformed address count is approximately half of the atomic count in this synthetic corpus, but this is structural hop reduction in this fixture, not a general compression claim.
+
+The result is important because the misleading recurrent sequence is generated by the corpus itself and receives strong composition support. It still cannot overrule the more complete atomic trajectory after the ranking correction.
+
+## Negative performance finding
+
+Correctness survived the 10,000-trajectory adversarial corpus, but the current implementation rebuilds hierarchy during multiscale resolution. Mean query latency grew from about 4 ms at 100 trajectories to about 362 ms at 10,000. This is now a recorded V2 limitation and must not be hidden by reducing the benchmark size.
+
+The next performance architecture should cache/version the structural hierarchy or maintain it incrementally while preserving query immutability and deterministic restart behavior.
+
+## Current interpretation
+
+The adversarial gate required before formal restart3 comparison is now satisfied:
+
+- direct false-consensus boundary is protected;
+- corpus-generated misleading recurrence did not manufacture a wrong winner;
+- hyperdense recovery overflow fails closed rather than truncating equal futures;
+- false reseed remained zero in the tested matrices;
+- persistent memory remained unchanged by query/recovery;
+- restart behavior remained deterministic;
+- Ubuntu, Windows and BDR regression gates passed on run #393.
+
+This is sufficient evidence to **begin** a formal V2-versus-restart3 comparison. It is not evidence that V2 is superior, production-ready, or ready to merge.
+
+## Still-open risks
+
+1. The current adversarial corpus reached only one effective derived hierarchy depth; deeper nested false-consensus corpora are still required.
+2. Fail-closed recovery under hyperdensity increases unresolved rate by design; the recall/safety tradeoff must be compared against restart3.
+3. Hierarchy rebuilding makes 10k multiscale queries too expensive for a mature runtime target.
+4. Candidate and branch overflows are currently represented as exhaustion; explicit overflow diagnostics should be added before product integration.
+5. Long-running incremental temporal evolution, deletion/revocation and persistence of V2-specific hierarchy state are not yet qualified.
+6. Formal restart3 parity/advantage has not yet been measured on a shared acceptance corpus.
+
+## Next gate — formal restart3 comparison
+
+Use the same immutable fixtures against:
+
+- restart3 baseline `5fa39ea39ce9d09518e8b726f6297bf8db02ef1c`;
+- current Address-Trajectory V2 experimental head.
+
+Compare at minimum:
+
+- repeated recall and cold restart;
+- top-1/top-k and unresolved rate;
+- ambiguity preservation;
+- false shortcuts/hub jumps;
+- false hierarchical consensus;
+- branch survival/exhaustion/recovery;
+- read amplification or mutation;
+- provenance/history preservation;
+- latency and memory growth;
+- dependence on semantic extraction/domain rules;
+- behavior when the same information is expressed through stable non-text addresses.
+
+Do not merge PR #296 based solely on the adversarial gate. The comparison report must state advantages, regressions and unresolved limitations for both architectures.
