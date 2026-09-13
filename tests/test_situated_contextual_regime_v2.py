@@ -42,8 +42,10 @@ def test_r1_and_r2_maintain_independent_active_regimes():
 
     r1 = regimes.get(situated_context_key(("agent", "region:r1"), "action:probe"))
     r2 = regimes.get(situated_context_key(("agent", "region:r2"), "action:probe"))
-    assert r1.active_consequence_addresses == ("effect:x",)
-    assert r2.active_consequence_addresses == ("effect:y",)
+    assert r1.active is not None
+    assert r2.active is not None
+    assert r1.active.consequence_addresses == ("effect:x",)
+    assert r2.active.consequence_addresses == ("effect:y",)
 
 
 def test_return_to_r1_recovers_prior_local_regime_without_relearning():
@@ -68,7 +70,8 @@ def test_return_to_r1_recovers_prior_local_regime_without_relearning():
     before_return = regimes.get(situated_context_key(("agent", "region:r1"), "action:probe"))
     after_return = regimes.get(situated_context_key(("agent", "region:r1"), "action:probe"))
     assert before_return == after_return
-    assert after_return.active_consequence_addresses == ("effect:x",)
+    assert after_return.active is not None
+    assert after_return.active.consequence_addresses == ("effect:x",)
 
 
 def test_noise_in_r1_does_not_modify_r2_local_regime():
