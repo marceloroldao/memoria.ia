@@ -1,0 +1,57 @@
+name: Native dynamic episode capacity
+
+on:
+  push:
+    branches:
+      - experiment/v2-bdr-v1.2.0-rc1-validation
+    paths:
+      - 'patches/dynamic-episode-capacity.patch'
+      - 'native/mobile/tests/dynamic_episode_capacity.c'
+      - '.github/workflows/native-dynamic-episode-capacity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Memoria.ia validation branch
+        uses: actions/checkout@v4
+
+      - name: Checkout exact published BDR candidate
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
+          path: resolutive-DB
+
+      - name: Verify frozen BDR identity
+        shell: bash
+        run: |
+          test "$(git -C resolutive-DB rev-parse HEAD)" = "eb77ad7286f234243ca1ed1a2af2d55df8c12238"
+
+      - name: Apply candidate dynamic episode patch
+        shell: bash
+        run: git apply --check patches/dynamic-episode-capacity.patch && git apply patches/dynamic-episode-capacity.patch
+
+      - name: Configure native runtime
+        shell: bash
+        run: cmake -S native/mobile -B native-build -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/resolutive-DB"
+
+      - name: Build native runtime
+        shell: bash
+        run: cmake --build native-build --target memoria_mobile --config Release -j2
+
+      - name: Compile capacity regression probe
+        shell: bash
+        run: |
+          cc -std=c11 -Iinclude native/mobile/tests/dynamic_episode_capacity.c \
+            -Lnative-build -lmemoria_mobile -Wl,-rpath,"$GITHUB_WORKSPACE/native-build" \
+            -o native-build/memoria_mobile_dynamic_episode_capacity
+
+      - name: Validate 1000 episodes and cold reopen
+        shell: bash
+        run: ./native-build/memoria_mobile_dynamic_episode_capacity
