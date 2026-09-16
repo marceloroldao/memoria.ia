@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from typing import Protocol
+from urllib.parse import quote
 
 from .address_trajectory_v2 import AddressTrajectory, AddressTrajectoryMemory
 
@@ -42,8 +43,11 @@ def _decode(data: bytes | None, key: bytes) -> object:
         raise ValueError(f"invalid BDR JSON record: {key!r}") from exc
 
 
-def _trajectory_key(trajectory_id: int) -> bytes:
-    return _TRAJECTORY_PREFIX + f"{trajectory_id:020d}".encode("ascii")
+def _trajectory_key(trajectory_id: str) -> bytes:
+    # trajectory_id belongs to Memoria V2. Treat it as an opaque stable identity;
+    # do not reinterpret AT1/AT2 as a BDR numeric sequence.
+    encoded = quote(trajectory_id, safe="").encode("ascii")
+    return _TRAJECTORY_PREFIX + encoded
 
 
 def save_address_trajectory_snapshot(
@@ -104,7 +108,7 @@ def load_address_trajectory_snapshot(
         if not isinstance(record, dict):
             raise ValueError(f"invalid trajectory record: {raw_key}")
         trajectories.append(AddressTrajectory(
-            trajectory_id=int(record["trajectory_id"]),
+            trajectory_id=str(record["trajectory_id"]),
             raw_text=str(record["raw_text"]),
             addresses=tuple(str(item) for item in record.get("addresses", [])),
             surfaces=tuple(str(item) for item in record.get("surfaces", [])),
@@ -114,6 +118,4 @@ def load_address_trajectory_snapshot(
     if expected != len(trajectories):
         raise ValueError("incomplete Address-Trajectory V2 BDR snapshot")
 
-    memory = AddressTrajectoryMemory()
-    memory.restore(trajectories)
-    return memory
+    return AddressTrajectoryMemory.restore(tuple(trajectories))
