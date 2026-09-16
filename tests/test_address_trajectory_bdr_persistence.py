@@ -26,9 +26,19 @@ class FakeAtomicBackend:
         return self.records.get(bytes(key))
 
 
-def _resolve_signature(memory: AddressTrajectoryMemory, query: str) -> list[tuple[int, float, tuple[str, ...]]]:
+def _resolve_signature(memory: AddressTrajectoryMemory, query: str) -> list[tuple[object, ...]]:
     return [
-        (match.trajectory_id, match.score, match.addresses)
+        (
+            match.trajectory_id,
+            match.raw_text,
+            match.overlap,
+            match.ordered_overlap,
+            match.adjacency_overlap,
+            match.query_coverage_num,
+            match.query_coverage_den,
+            match.terminal_surface,
+            match.structural_key,
+        )
         for match in memory.resolve(query, limit=10)
     ]
 
@@ -65,9 +75,9 @@ def test_v2_restore_continues_trajectory_ids_without_drift() -> None:
     restored = load_address_trajectory_snapshot(backend)
     third = restored.ingest("gato Alt depois do restart")
 
-    assert first.trajectory_id == 1
-    assert second.trajectory_id == 2
-    assert third.trajectory_id == 3
+    assert first.trajectory_id == "AT1"
+    assert second.trajectory_id == "AT2"
+    assert third.trajectory_id == "AT3"
 
 
 def test_missing_physical_record_fails_closed_instead_of_partial_restore() -> None:
