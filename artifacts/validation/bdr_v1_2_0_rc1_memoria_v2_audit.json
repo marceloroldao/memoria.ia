@@ -1,0 +1,34 @@
+{
+  "schema": "memoria.validation.audit.v1",
+  "date": "2026-09-16",
+  "memoria": {
+    "default_branch": "main",
+    "main_sha": "cc543c57c21efa5ccfd59610aeedf7c891bc1dc1",
+    "v2_branch": "experiment/address-trajectory-v2",
+    "v2_sha": "3a930902a9ab08fc68b6a29ef94f6ed1acf96a03",
+    "validation_branch": "experiment/v2-bdr-v1.2.0-rc1-validation",
+    "package_version": "1.0.0rc7",
+    "v2_kind": "experimental address-trajectory architecture"
+  },
+  "bdr": {
+    "tag": "v1.2.0-rc1",
+    "annotated_tag_sha": "1a17213f276c22d657853bc2fed83a707a22abc3",
+    "commit": "eb77ad7286f234243ca1ed1a2af2d55df8c12238",
+    "doi": "10.5281/zenodo.22784729",
+    "prerelease": true,
+    "frozen": true,
+    "ci_run": 35053229786,
+    "ci_conclusion": "success"
+  },
+  "baseline_ci": {
+    "memoria_v2_run": 34776318059,
+    "memoria_v2_conclusion": "success"
+  },
+  "discrepancies": [
+    "Memoria main is not the active Address-Trajectory V2 line.",
+    "Current Address-Trajectory V2 does not implement the full earlier topological/temporal/epistemic surface.",
+    "BDR main has advanced beyond the published RC1 tag and must not be consumed.",
+    "Existing BDR 24/240/1200/5000/10000 evidence targets Memoria 99a1585d, not current V2."
+  ],
+  "decision": "PROCEED_BASELINE_AND_ADDITIVE_VALIDATION"
+}
