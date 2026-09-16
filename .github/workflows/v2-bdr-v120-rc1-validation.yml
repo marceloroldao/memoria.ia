@@ -1,9 +1,14 @@
 name: V2 BDR v1.2.0-rc1 validation
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - experiment/v2-bdr-v1.2.0-rc1-validation
+    paths:
+      - 'src/memoria_resolutiva/address_trajectory_v2.py'
+      - 'src/memoria_resolutiva/address_trajectory_bdr_persistence.py'
+      - 'tests/test_address_trajectory_bdr_persistence.py'
+      - '.github/workflows/v2-bdr-v120-rc1-validation.yml'
   workflow_dispatch:
 
 permissions:
@@ -11,9 +16,8 @@ permissions:
 
 jobs:
   v2-contract:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'experiment/v2-bdr-v1.2.0-rc1-validation'
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -33,7 +37,6 @@ jobs:
         run: python -m pytest -q
 
   real-bdr-rc1:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'experiment/v2-bdr-v1.2.0-rc1-validation'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
