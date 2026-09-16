@@ -1,0 +1,43 @@
+{
+  "schema": "memoria.validation.baseline.v1",
+  "date": "2026-09-16",
+  "phase": "pre_integration",
+  "memoria_source": {
+    "branch": "experiment/address-trajectory-v2",
+    "sha": "3a930902a9ab08fc68b6a29ef94f6ed1acf96a03",
+    "package_version": "1.0.0rc7"
+  },
+  "validation_branch": "experiment/v2-bdr-v1.2.0-rc1-validation",
+  "bdr_target": {
+    "tag": "v1.2.0-rc1",
+    "sha": "eb77ad7286f234243ca1ed1a2af2d55df8c12238",
+    "doi": "10.5281/zenodo.22784729"
+  },
+  "existing_ci_evidence": {
+    "workflow": "experimental PR regression",
+    "run_id": 34776318059,
+    "conclusion": "success",
+    "note": "This run is evidence for the unmodified V2 source SHA. Fresh validation-branch CI will be required after integration changes."
+  },
+  "baseline_scope": {
+    "full_pytest_config": "python -m pytest -q",
+    "python_ci": "3.12",
+    "ci_os_matrix": ["ubuntu-latest", "windows-latest"],
+    "v2_benchmarks_present": [
+      "recovery_after_exhaustion_v2_benchmark.py",
+      "adversarial_structure_v2_benchmark.py",
+      "adversarial_corpus_v2_benchmark.py",
+      "v2_restart3_shared_fixture.py",
+      "structural_equivalence_state_v2_benchmark.py",
+      "structural_witness_discovery_v2_benchmark.py",
+      "structural_role_abstraction_v2_benchmark.py",
+      "structural_relation_abstraction_v2_benchmark.py"
+    ]
+  },
+  "pre_existing_classification": {
+    "baseline_ci_failure": null,
+    "status": "GREEN_AT_SOURCE_SHA"
+  },
+  "fresh_execution_required": true,
+  "reason": "The connector can inspect Actions evidence but cannot execute the repository test suite directly; fresh branch CI must be triggered by an integration PR/push workflow event or workflow_dispatch."
+}
