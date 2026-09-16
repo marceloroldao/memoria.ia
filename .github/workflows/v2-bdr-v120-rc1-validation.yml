@@ -1,0 +1,68 @@
+name: V2 BDR v1.2.0-rc1 validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v2-contract:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'experiment/v2-bdr-v1.2.0-rc1-validation'
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install Memoria.ia
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Run V2 persistence contract tests
+        run: python -m pytest -q tests/test_address_trajectory_bdr_persistence.py
+      - name: Run full regression
+        run: python -m pytest -q
+
+  real-bdr-rc1:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'experiment/v2-bdr-v1.2.0-rc1-validation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Memoria.ia validation branch
+        uses: actions/checkout@v4
+      - name: Checkout exact published BDR candidate
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
+          path: bdr-source
+      - name: Verify frozen BDR identity
+        shell: bash
+        run: |
+          test "$(git -C bdr-source rev-parse HEAD)" = "eb77ad7286f234243ca1ed1a2af2d55df8c12238"
+          grep -q 'BDR_ATOMIC_C_ABI_VERSION 2u' bdr-source/experimental/api_v86/include/bdr/atomic_c_api.h
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install build and test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ zlib1g-dev
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product,test]'
+      - name: Build exact RC1 atomic ABI v2
+        run: |
+          cmake -S bdr-source/experimental/api_v86 -B bdr-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build bdr-build --target bdr_atomic_c_api_shared --config Release -j2
+      - name: Run codec boundary tests
+        run: python -m pytest -q tests/test_address_trajectory_bdr_persistence.py
