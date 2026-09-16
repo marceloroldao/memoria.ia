@@ -2,56 +2,53 @@ name: Native dynamic episode capacity
 
 on:
   push:
-    branches:
-      - experiment/v2-bdr-v1.2.0-rc1-validation
-    paths:
-      - 'patches/dynamic-episode-capacity.patch'
-      - 'native/mobile/tests/dynamic_episode_capacity.c'
-      - '.github/workflows/native-dynamic-episode-capacity.yml'
+    branches: [experiment/v2-bdr-v1.2.0-rc1-validation]
+    paths: ['native/mobile/tests/dynamic_episode_capacity.c', '.github/workflows/native-dynamic-episode-capacity.yml']
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Checkout Memoria.ia validation branch
-        uses: actions/checkout@v4
-
-      - name: Checkout exact published BDR candidate
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: marceloroldao/resolutive-DB
           ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
           path: resolutive-DB
-
       - name: Verify frozen BDR identity
-        shell: bash
+        run: test "$(git -C resolutive-DB rev-parse HEAD)" = "eb77ad7286f234243ca1ed1a2af2d55df8c12238"
+      - name: Apply candidate dynamic episode changes
+        shell: python
         run: |
-          test "$(git -C resolutive-DB rev-parse HEAD)" = "eb77ad7286f234243ca1ed1a2af2d55df8c12238"
-
-      - name: Apply candidate dynamic episode patch
-        shell: bash
-        run: git apply --check patches/dynamic-episode-capacity.patch && git apply patches/dynamic-episode-capacity.patch
-
-      - name: Configure native runtime
-        shell: bash
+          from pathlib import Path
+          p=Path('native/mobile/memoria_mobile.c'); s=p.read_text()
+          R=[
+          ('#define INITIAL_TURN_CAPACITY 256u\n#define INITIAL_MEMORY_INDEX_CAPACITY 1024u\n#define MAX_EPISODES 256\n','#define INITIAL_TURN_CAPACITY 256u\n#define INITIAL_EPISODE_CAPACITY 256u\n#define INITIAL_MEMORY_INDEX_CAPACITY 1024u\n'),
+          ('    episode_row episodes[MAX_EPISODES];\n    size_t episode_count;\n','    episode_row *episodes;\n    size_t episode_count;\n    size_t episode_capacity;\n'),
+          ('        !memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence) ||\n        !memoria_concept_runtime_open(data_dir, organization_id, &h->concept_runtime) ||\n        episodes > MAX_EPISODES) {','        !memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence) ||\n        !memoria_concept_runtime_open(data_dir, organization_id, &h->concept_runtime)) {'),
+          ('    for (i = 0; i < episodes; ++i) {\n','    if (episodes && !ensure_episode_capacity(h, episodes)) { memoria_mobile_close(h); return MEMORIA_MOBILE_INTERNAL_ERROR; }\n    for (i = 0; i < episodes; ++i) {\n'),
+          ('    if (h->episode_count >= MAX_EPISODES) return unresolved(out, "native episode capacity reached");\n','    if (!ensure_episode_capacity(h, h->episode_count + 1u)) return MEMORIA_MOBILE_INTERNAL_ERROR;\n'),
+          ('    memoria_episode_source eps[MAX_EPISODES];\n','    memoria_episode_source *eps = NULL;\n'),
+          ('    if (!query) { free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }\n    for (i = 0; i < h->episode_count; ++i) {','    if (!query) { free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }\n    if (h->episode_count) { eps = (memoria_episode_source *)calloc(h->episode_count, sizeof(*eps)); if (!eps) { free(query); free(session_id); free(role); free(event_type); free(topics); free(json); return MEMORIA_MOBILE_INTERNAL_ERROR; } }\n    for (i = 0; i < h->episode_count; ++i) {'),
+          ('    if (!r.hit) return unresolved(out, "no justified native episode");\n','    if (!r.hit) { free(eps); return unresolved(out, "no justified native episode"); }\n'),
+          ('    if (!ctx || !st || !root) { free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }\n','    if (!ctx || !st || !root) { free(eps); free(ctx); free(st); free(root); return MEMORIA_MOBILE_INTERNAL_ERROR; }\n'),
+          ('    free(ctx); free(st); free(root);\n    return response_status;\n}\n\nmemoria_mobile_status memoria_mobile_flush','    free(eps); free(ctx); free(st); free(root);\n    return response_status;\n}\n\nmemoria_mobile_status memoria_mobile_flush'),
+          ('    free(h->turns);\n    free(h->semantic_sources);\n','    free(h->turns);\n    free(h->episodes);\n    free(h->semantic_sources);\n')]
+          for a,b in R:
+              if a not in s: raise SystemExit('missing anchor: '+a[:80])
+              s=s.replace(a,b,1)
+          marker='\n\nstatic int source_triggers_semantic_consolidation'
+          helper='''\n\nstatic int ensure_episode_capacity(memoria_mobile_handle *h, size_t needed) {\n    episode_row *resized; size_t old_capacity, new_capacity;\n    if (!h) return 0; if (needed <= h->episode_capacity) return 1;\n    old_capacity=h->episode_capacity; new_capacity=old_capacity ? old_capacity : INITIAL_EPISODE_CAPACITY;\n    while (new_capacity < needed) { if (new_capacity > ((size_t)-1)/2u) { new_capacity=needed; break; } new_capacity*=2u; }\n    if (new_capacity > ((size_t)-1)/sizeof(*resized)) return 0;\n    resized=(episode_row *)realloc(h->episodes,new_capacity*sizeof(*resized)); if (!resized) return 0;\n    memset(resized+old_capacity,0,(new_capacity-old_capacity)*sizeof(*resized));\n    h->episodes=resized; h->episode_capacity=new_capacity; return 1;\n}\n'''
+          if marker not in s: raise SystemExit('missing helper anchor')
+          p.write_text(s.replace(marker,helper+marker,1))
+      - name: Configure
         run: cmake -S native/mobile -B native-build -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/resolutive-DB"
-
-      - name: Build native runtime
-        shell: bash
+      - name: Build
         run: cmake --build native-build --target memoria_mobile --config Release -j2
-
-      - name: Compile capacity regression probe
-        shell: bash
-        run: |
-          cc -std=c11 -Iinclude native/mobile/tests/dynamic_episode_capacity.c \
-            -Lnative-build -lmemoria_mobile -Wl,-rpath,"$GITHUB_WORKSPACE/native-build" \
-            -o native-build/memoria_mobile_dynamic_episode_capacity
-
+      - name: Compile regression probe
+        run: cc -std=c11 -Iinclude native/mobile/tests/dynamic_episode_capacity.c -Lnative-build -lmemoria_mobile -Wl,-rpath,"$GITHUB_WORKSPACE/native-build" -o native-build/memoria_mobile_dynamic_episode_capacity
       - name: Validate 1000 episodes and cold reopen
-        shell: bash
         run: ./native-build/memoria_mobile_dynamic_episode_capacity
