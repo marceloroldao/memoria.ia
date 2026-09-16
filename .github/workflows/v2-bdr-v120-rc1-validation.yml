@@ -7,7 +7,9 @@ on:
     paths:
       - 'src/memoria_resolutiva/address_trajectory_v2.py'
       - 'src/memoria_resolutiva/address_trajectory_bdr_persistence.py'
+      - 'src/memoria_resolutiva/bdr_atomic_bridge_v2.py'
       - 'tests/test_address_trajectory_bdr_persistence.py'
+      - 'tests/test_address_trajectory_bdr_rc1_integration.py'
       - '.github/workflows/v2-bdr-v120-rc1-validation.yml'
   workflow_dispatch:
 
@@ -67,5 +69,13 @@ jobs:
         run: |
           cmake -S bdr-source/experimental/api_v86 -B bdr-build -DCMAKE_BUILD_TYPE=Release
           cmake --build bdr-build --target bdr_atomic_c_api_shared --config Release -j2
+      - name: Locate built Atomic ABI v2 library
+        shell: bash
+        run: |
+          LIB="$(find "$GITHUB_WORKSPACE/bdr-build" -type f \( -name 'libbdr_atomic_c_api_shared.so' -o -name 'libbdr_atomic_c_api.so' \) | head -n1)"
+          test -n "$LIB"
+          echo "MEMORIA_BDR_ATOMIC_V2_LIB=$LIB" >> "$GITHUB_ENV"
       - name: Run codec boundary tests
         run: python -m pytest -q tests/test_address_trajectory_bdr_persistence.py
+      - name: Run real RC1 cold-restart integration
+        run: python -m pytest -q tests/test_address_trajectory_bdr_rc1_integration.py
