@@ -15,6 +15,12 @@ int memoria_concept_runtime_open(
     memoria_concept_runtime **out
 );
 
+int memoria_concept_runtime_open_shared(
+    bdr_atomic_c_handle *db,
+    const char *organization_id,
+    memoria_concept_runtime **out
+);
+
 const memoria_concept_index *memoria_concept_runtime_index(const memoria_concept_runtime *runtime);
 const char *memoria_concept_runtime_fingerprint(const memoria_concept_runtime *runtime);
 int memoria_concept_runtime_apply_catalog(
