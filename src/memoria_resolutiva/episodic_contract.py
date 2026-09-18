@@ -43,6 +43,10 @@ class EpisodeRecallRequest(BaseModel):
     topics: list[str] = Field(default_factory=list)
 
 
+class EpisodeFormatRequest(BaseModel):
+    confirm: str = Field(min_length=1, max_length=32)
+
+
 class EpisodicService(Protocol):
     def store(self, request: EpisodeStoreRequest): ...
 
@@ -55,6 +59,10 @@ class EpisodicService(Protocol):
         event_type: str | None = None,
         limit: int = 1000,
     ) -> list[dict[str, object]]: ...
+
+    def page(self, *, offset: int = 0, limit: int = 512) -> dict[str, object]: ...
+
+    def format_store(self) -> dict[str, object]: ...
 
 
 def attach_episodic_routes(app: FastAPI, *, api_key: str, service: EpisodicService) -> None:
@@ -94,6 +102,25 @@ def attach_episodic_routes(app: FastAPI, *, api_key: str, service: EpisodicServi
             "count": len(episodes),
             "episodes": episodes,
         }
+
+    @app.get("/api/v1/episodes/page", dependencies=[Depends(require_admin)])
+    def episode_page(
+        offset: int = Query(default=0, ge=0),
+        limit: int = Query(default=512, ge=1, le=2000),
+    ):
+        try:
+            return service.page(offset=offset, limit=limit)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/v1/episodes/format", dependencies=[Depends(require_admin)])
+    def format_episode_store(request: EpisodeFormatRequest):
+        if request.confirm != "FORMATAR":
+            raise HTTPException(status_code=400, detail="confirmation must be exactly FORMATAR")
+        try:
+            return service.format_store()
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @app.post("/api/v1/episodes/recall", dependencies=[Depends(require_admin)])
     def recall_episode(request: EpisodeRecallRequest):

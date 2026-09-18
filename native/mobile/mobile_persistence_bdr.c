@@ -384,6 +384,106 @@ fail:
     free(v); memoria_persistence_free_episode(e); return 0;
 }
 
+static int flush_delete_batch(
+    memoria_persistence *p,
+    bdr_atomic_c_operation *ops,
+    char keys[][KEY_CAP],
+    size_t *count
+) {
+    bdr_atomic_c_batch_result result = {0};
+    size_t n = *count;
+    (void)keys;
+    if (!n) return 1;
+    if (bdr_atomic_c_write_batch(p->db, ops, n, &result) != BDR_ATOMIC_C_OK ||
+        result.durable != 1 || result.operations != n) return 0;
+    *count = 0;
+    return 1;
+}
+
+static int queue_delete(
+    memoria_persistence *p,
+    bdr_atomic_c_operation *ops,
+    char keys[][KEY_CAP],
+    size_t *count,
+    const char *kind,
+    size_t slot,
+    const char *field
+) {
+    size_t i;
+    if (*count >= MAX_OPS && !flush_delete_batch(p, ops, keys, count)) return 0;
+    i = *count;
+    if (!key_of(p, keys[i], KEY_CAP, kind, slot, field)) return 0;
+    ops[i].type = BDR_ATOMIC_C_DELETE;
+    ops[i].key = keys[i];
+    ops[i].key_size = strlen(keys[i]);
+    ops[i].value = NULL;
+    ops[i].value_size = 0;
+    *count = i + 1;
+    return 1;
+}
+
+int memoria_persistence_reset(
+    memoria_persistence *p,
+    const memoria_persist_turn *turns,
+    size_t turn_count,
+    const memoria_persist_episode *episodes,
+    size_t episode_count
+) {
+    static const char *turn_fields[] = {
+        "memory_id","namespace","text","role","source_type","ultimate_source_memory_id",
+        "authority","order","relation_count","superseded","created_time","superseded_by","parent_count"
+    };
+    static const char *episode_fields[] = {
+        "episode_id","session_id","role","text","timestamp","event_type","topics_csv",
+        "source_type","ultimate_source_memory_id","authority","order","superseded"
+    };
+    bdr_atomic_c_operation ops[MAX_OPS];
+    char keys[MAX_OPS][KEY_CAP];
+    char vals[4][VAL_CAP];
+    bdr_atomic_c_batch_result result = {0};
+    size_t n = 0, i, j;
+    if (!p || (turn_count && !turns) || (episode_count && !episodes)) return 0;
+
+    /* Publish the empty logical state first. A crash during physical cleanup
+       therefore reopens as an empty store instead of a partially deleted one. */
+    snprintf(vals[0], VAL_CAP, "%u", MEMORIA_MOBILE_STATE_SCHEMA);
+    snprintf(vals[1], VAL_CAP, "0");
+    snprintf(vals[2], VAL_CAP, "0");
+    snprintf(vals[3], VAL_CAP, "0");
+    if (!add_meta(p,ops,keys,&n,"schema",vals[0]) ||
+        !add_meta(p,ops,keys,&n,"turn_count",vals[1]) ||
+        !add_meta(p,ops,keys,&n,"episode_count",vals[2]) ||
+        !add_meta(p,ops,keys,&n,"sequence",vals[3])) return 0;
+    if (bdr_atomic_c_write_batch(p->db,ops,n,&result) != BDR_ATOMIC_C_OK ||
+        result.durable != 1 || result.operations != n) return 0;
+    n = 0;
+
+    for (i = 0; i < turn_count; ++i) {
+        for (j = 0; j < sizeof(turn_fields)/sizeof(turn_fields[0]); ++j)
+            if (!queue_delete(p,ops,keys,&n,"turn",i+1u,turn_fields[j])) return 0;
+        for (j = 0; j < turns[i].parent_count; ++j) {
+            char field[64];
+            snprintf(field,sizeof(field),"parent/%zu",j);
+            if (!queue_delete(p,ops,keys,&n,"turn",i+1u,field)) return 0;
+        }
+        for (j = 0; j < turns[i].relation_count; ++j) {
+            static const char *parts[]={"subject","predicate","object","memory_id","confidence"};
+            size_t k;
+            for (k=0;k<sizeof(parts)/sizeof(parts[0]);++k) {
+                char field[64];
+                snprintf(field,sizeof(field),"relation/%zu/%s",j,parts[k]);
+                if (!queue_delete(p,ops,keys,&n,"turn",i+1u,field)) return 0;
+            }
+        }
+    }
+    for (i = 0; i < episode_count; ++i)
+        for (j = 0; j < sizeof(episode_fields)/sizeof(episode_fields[0]); ++j)
+            if (!queue_delete(p,ops,keys,&n,"episode",i+1u,episode_fields[j])) return 0;
+
+    if (!flush_delete_batch(p,ops,keys,&n)) return 0;
+    return bdr_atomic_c_sync(p->db) == BDR_ATOMIC_C_OK;
+}
+
 int memoria_persistence_sync(memoria_persistence *p) {
     return p && bdr_atomic_c_sync(p->db) == BDR_ATOMIC_C_OK;
 }

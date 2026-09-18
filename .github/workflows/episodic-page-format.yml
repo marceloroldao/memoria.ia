@@ -1,0 +1,52 @@
+name: Episodic page and guarded format
+
+on:
+  push:
+    branches: [feature/episodic-page-format]
+    paths:
+      - 'include/memoria_mobile.h'
+      - 'native/mobile/**'
+      - 'src/memoria_resolutiva/episodic_contract.py'
+      - 'src/memoria_resolutiva/native_episodic.py'
+      - 'src/memoria_resolutiva/native_runtime.py'
+      - 'tests/test_episodic_page_format.py'
+      - '.github/workflows/episodic-page-format.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
+          path: resolutive-DB
+
+      - name: Verify concurrent RC2 validation was preserved
+        run: |
+          test -f .github/workflows/v2-bdr-v120-rc2-validation.yml
+          test -f tests/test_address_trajectory_bdr_rc2_torn_tail.py
+
+      - name: Configure native runtime
+        run: cmake -S native/mobile -B native-build -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/resolutive-DB"
+
+      - name: Build native runtime
+        run: cmake --build native-build --target memoria_mobile --config Release -j2
+
+      - name: Compile page/format regression probe
+        run: cc -std=c11 -Iinclude native/mobile/tests/episode_page_format.c -Lnative-build -lmemoria_mobile -Wl,-rpath,"$GITHUB_WORKSPACE/native-build" -o native-build/memoria_mobile_episode_page_format
+
+      - name: Validate page beyond 256 and destructive format
+        run: ./native-build/memoria_mobile_episode_page_format
+
+      - name: Install Python test dependencies
+        run: python -m pip install -e . pytest httpx fastapi
+
+      - name: Validate HTTP page beyond 5000 and confirmation contract
+        run: pytest -q tests/test_episodic_page_format.py

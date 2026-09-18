@@ -1538,6 +1538,46 @@ done:
     return status;
 }
 
+memoria_mobile_status memoria_mobile_format_store_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *json = NULL, *confirm = NULL;
+    size_t removed_turns, removed_episodes, i;
+    memoria_mobile_status status;
+    if (!h || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    out->data = NULL; out->size = 0;
+    json = buffer_to_string(req);
+    if (!json) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    confirm = json_string(json, "confirm");
+    if (!confirm || strcmp(confirm, "FORMATAR") != 0) {
+        free(confirm); free(json);
+        return set_response(out, "{\"status\":\"INVALID_ARGUMENT\",\"reason\":\"confirmation must be FORMATAR\"}", MEMORIA_MOBILE_INVALID_ARGUMENT);
+    }
+    free(confirm); free(json);
+    removed_turns = h->turn_count;
+    removed_episodes = h->episode_count;
+    if (!memoria_persistence_reset(h->persistence, h->turns, h->turn_count, h->episodes, h->episode_count))
+        return MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    for (i = 0; i < h->turn_count; ++i) free_turn(&h->turns[i]);
+    for (i = 0; i < h->episode_count; ++i) free_episode(&h->episodes[i]);
+    h->turn_count = 0;
+    h->episode_count = 0;
+    h->sequence = 0;
+    h->memory_index_count = 0;
+    if (h->memory_index && h->memory_index_capacity)
+        memset(h->memory_index, 0, h->memory_index_capacity * sizeof(*h->memory_index));
+    if (h->semantic_sources && h->semantic_capacity)
+        memset(h->semantic_sources, 0, h->semantic_capacity * sizeof(*h->semantic_sources));
+    status = set_responsef(
+        out, MEMORIA_MOBILE_OK,
+        "{\"status\":\"OK\",\"formatted\":true,\"removed_turns\":%zu,\"removed_episodes\":%zu}",
+        removed_turns, removed_episodes
+    );
+    return status;
+}
+
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *h) {
     if (!h) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     return memoria_persistence_sync(h->persistence) && memoria_concept_runtime_sync(h->concept_runtime)

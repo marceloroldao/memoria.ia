@@ -165,6 +165,50 @@ class NativeEpisodicService:
             str(response["ultimate_source_memory_id"]) if response.get("ultimate_source_memory_id") else None,
         )
 
+    def page(self, *, offset: int = 0, limit: int = 512) -> dict[str, object]:
+        if offset < 0:
+            raise ValueError("episode page offset must be non-negative")
+        if limit < 1 or limit > 2000:
+            raise ValueError("episode page limit must be between 1 and 2000")
+        collected: list[dict[str, object]] = []
+        cursor = offset
+        total = 0
+        while len(collected) < limit:
+            page_size = min(64, limit - len(collected))
+            status, snapshot = self._call(
+                "memoria_mobile_export_snapshot_json",
+                {
+                    "turn_offset": 0,
+                    "turn_limit": 1,
+                    "episode_offset": cursor,
+                    "episode_limit": page_size,
+                },
+            )
+            if status != MEMORIA_MOBILE_OK or snapshot.get("status") != "OK":
+                raise RuntimeError(f"native diagnostic snapshot failed: status={status}")
+            counts = snapshot.get("counts") or {}
+            total = int(counts.get("episodes") or 0) if isinstance(counts, dict) else 0
+            episodes = snapshot.get("episodes") or []
+            if not isinstance(episodes, list):
+                raise RuntimeError("native diagnostic snapshot returned invalid episodes")
+            collected.extend(dict(row) for row in episodes if isinstance(row, dict))
+            page = snapshot.get("episode_page") or {}
+            next_offset = page.get("next_offset") if isinstance(page, dict) else None
+            if next_offset is None or not episodes:
+                break
+            cursor = int(next_offset)
+        returned = len(collected)
+        next_offset = offset + returned if offset + returned < total else None
+        return {
+            "schema": "memoria-episode-page/v1",
+            "offset": offset,
+            "limit": limit,
+            "returned": returned,
+            "total": total,
+            "next_offset": next_offset,
+            "episodes": collected,
+        }
+
     def history(
         self,
         *,
@@ -208,6 +252,19 @@ class NativeEpisodicService:
             offset = int(next_offset)
         collected.sort(key=lambda item: (str(item.get("session_id") or ""), int(item.get("order") or 0)))
         return collected
+
+    def format_store(self) -> dict[str, object]:
+        status, response = self._call("memoria_mobile_format_store_json", {"confirm": "FORMATAR"})
+        if status == MEMORIA_MOBILE_INVALID_ARGUMENT:
+            raise ValueError(str(response.get("reason") or "native format rejected request"))
+        if status != MEMORIA_MOBILE_OK or response.get("status") != "OK":
+            raise RuntimeError(f"native format failed: status={status}")
+        return {
+            "schema": "memoria-episode-format/v1",
+            "formatted": True,
+            "removed_turns": int(response.get("removed_turns") or 0),
+            "removed_episodes": int(response.get("removed_episodes") or 0),
+        }
 
     def flush(self) -> None:
         if not self._closed:
