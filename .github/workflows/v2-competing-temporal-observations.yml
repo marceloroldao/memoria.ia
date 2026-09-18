@@ -1,0 +1,38 @@
+name: V2 competing temporal observations
+
+on:
+  push:
+    branches:
+      - experiment/v2-competing-temporal-observations
+    paths:
+      - 'src/memoria_resolutiva/v2_ontogenesis.py'
+      - 'src/memoria_resolutiva/evidence_core.py'
+      - 'src/memoria_resolutiva/episodic_recall.py'
+      - 'tests/test_v2_competing_temporal_observations.py'
+      - 'tests/test_v2_ontogenesis_ingestion.py'
+      - '.github/workflows/v2-competing-temporal-observations.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest
+      - name: Run V2 temporal/ontogenesis acceptance
+        run: |
+          pytest -q \
+            tests/test_v2_competing_temporal_observations.py \
+            tests/test_v2_ontogenesis_ingestion.py
