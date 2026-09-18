@@ -846,31 +846,53 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     if (!h) return MEMORIA_MOBILE_INTERNAL_ERROR;
     h->data_dir = dup_string(data_dir);
     h->organization_id = dup_string(organization_id);
-    if (!h->data_dir || !h->organization_id ||
-        !memoria_persistence_open(data_dir, organization_id, &h->persistence) ||
-        !memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence) ||
-        !memoria_concept_runtime_open(data_dir, organization_id, &h->concept_runtime)) {
+    if (!h->data_dir || !h->organization_id) {
+        fprintf(stderr, "[memoria-mobile] open failed: identity allocation\n");
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    if (!memoria_persistence_open(data_dir, organization_id, &h->persistence)) {
+        fprintf(stderr, "[memoria-mobile] open failed: persistence_open data_dir=%s org=%s\n", data_dir, organization_id);
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    }
+    if (!memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence)) {
+        fprintf(stderr, "[memoria-mobile] open failed: persistence_meta data_dir=%s org=%s\n", data_dir, organization_id);
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    }
+    if (!memoria_concept_runtime_open(data_dir, organization_id, &h->concept_runtime)) {
+        fprintf(stderr, "[memoria-mobile] open failed: concept_runtime_open data_dir=%s org=%s turns=%zu episodes=%zu sequence=%lu\n",
+                data_dir, organization_id, turns, episodes, sequence);
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
     }
     if (turns && !ensure_turn_capacity(h, turns)) {
+        fprintf(stderr, "[memoria-mobile] open failed: turn_capacity turns=%zu\n", turns);
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
     for (i = 0; i < turns; ++i) {
         if (!memoria_persistence_load_turn(h->persistence, i + 1, &h->turns[i])) {
+            fprintf(stderr, "[memoria-mobile] open failed: load_turn slot=%zu/%zu\n", i + 1u, turns);
             memoria_mobile_close(h);
             return MEMORIA_MOBILE_PERSISTENCE_ERROR;
         }
     }
     h->turn_count = turns;
     if (!memory_index_rebuild(h)) {
+        fprintf(stderr, "[memoria-mobile] open failed: memory_index_rebuild turns=%zu\n", turns);
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
-    if (episodes && !ensure_episode_capacity(h, episodes)) { memoria_mobile_close(h); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    if (episodes && !ensure_episode_capacity(h, episodes)) {
+        fprintf(stderr, "[memoria-mobile] open failed: episode_capacity episodes=%zu\n", episodes);
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
     for (i = 0; i < episodes; ++i) {
         if (!memoria_persistence_load_episode(h->persistence, i + 1, &h->episodes[i])) {
+            fprintf(stderr, "[memoria-mobile] open failed: load_episode slot=%zu/%zu\n", i + 1u, episodes);
             memoria_mobile_close(h);
             return MEMORIA_MOBILE_PERSISTENCE_ERROR;
         }
@@ -880,7 +902,6 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     *out_handle = h;
     return MEMORIA_MOBILE_OK;
 }
-
 memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *text, *role, *id, *namespace_id, *source_type, *root, *created_time;
     char *corrections[MAX_CORRECTIONS] = {0};
