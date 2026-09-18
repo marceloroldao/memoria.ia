@@ -57,6 +57,7 @@ class NativeRuntime:
         for optional_name in (
             "memoria_mobile_apply_concept_catalog_json",
             "memoria_mobile_activate_relations_json",
+            "memoria_mobile_format_store_json",
         ):
             optional_function = getattr(self._lib, optional_name, None)
             if optional_function is not None:
