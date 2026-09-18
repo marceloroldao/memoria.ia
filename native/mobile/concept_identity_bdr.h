@@ -2,6 +2,7 @@
 #define MEMORIA_CONCEPT_IDENTITY_BDR_H
 
 #include "concept_identity_state.h"
+#include "bdr/atomic_c_api.h"
 
 #include <stddef.h>
 
@@ -9,6 +10,12 @@ typedef struct memoria_concept_bdr memoria_concept_bdr;
 
 int memoria_concept_bdr_open(
     const char *data_dir,
+    const char *organization_id,
+    memoria_concept_bdr **out
+);
+
+int memoria_concept_bdr_open_shared(
+    bdr_atomic_c_handle *db,
     const char *organization_id,
     memoria_concept_bdr **out
 );

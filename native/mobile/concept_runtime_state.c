@@ -33,6 +33,30 @@ int memoria_concept_runtime_open(
     return 1;
 }
 
+int memoria_concept_runtime_open_shared(
+    bdr_atomic_c_handle *db,
+    const char *organization_id,
+    memoria_concept_runtime **out
+) {
+    memoria_concept_runtime *runtime;
+    memoria_concept_state_row rows[MEMORIA_CONCEPT_MAX_CONCEPTS];
+    size_t row_count = 0;
+    if (!db || !organization_id || !*organization_id || !out) return 0;
+    *out = NULL;
+    runtime = (memoria_concept_runtime *)calloc(1, sizeof(*runtime));
+    if (!runtime) return 0;
+    memoria_concept_index_init(&runtime->index);
+    if (!memoria_concept_bdr_open_shared(db, organization_id, &runtime->store) ||
+        !memoria_concept_bdr_load(runtime->store, rows, MEMORIA_CONCEPT_MAX_CONCEPTS, &row_count) ||
+        !memoria_concept_bdr_load_fingerprint(runtime->store, runtime->fingerprint, sizeof(runtime->fingerprint)) ||
+        memoria_concept_state_import(&runtime->index, rows, row_count) != MEMORIA_CONCEPT_OK) {
+        memoria_concept_runtime_close(runtime);
+        return 0;
+    }
+    *out = runtime;
+    return 1;
+}
+
 const memoria_concept_index *memoria_concept_runtime_index(const memoria_concept_runtime *runtime) {
     return runtime ? &runtime->index : NULL;
 }

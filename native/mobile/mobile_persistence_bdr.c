@@ -484,6 +484,10 @@ int memoria_persistence_reset(
     return bdr_atomic_c_sync(p->db) == BDR_ATOMIC_C_OK;
 }
 
+bdr_atomic_c_handle *memoria_persistence_bdr_handle(memoria_persistence *p) {
+    return p ? p->db : NULL;
+}
+
 int memoria_persistence_sync(memoria_persistence *p) {
     return p && bdr_atomic_c_sync(p->db) == BDR_ATOMIC_C_OK;
 }

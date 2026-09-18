@@ -2,7 +2,7 @@ name: Episodic page and guarded format
 
 on:
   push:
-    branches: [feature/episodic-page-format]
+    branches: [feature/episodic-page-format, fix/native-shared-bdr-handle]
     paths:
       - 'include/memoria_mobile.h'
       - 'native/mobile/**'
@@ -44,6 +44,12 @@ jobs:
 
       - name: Validate page beyond 256 and destructive format
         run: ./native-build/memoria_mobile_episode_page_format
+
+      - name: Compile shared-BDR cold-reopen regression probe
+        run: cc -std=c11 -Iinclude native/mobile/tests/shared_bdr_product_reopen.c -Lnative-build -lmemoria_mobile -Wl,-rpath,"$GITHUB_WORKSPACE/native-build" -o native-build/memoria_mobile_shared_bdr_product_reopen
+
+      - name: Validate product catalog plus 300 episodes across cold reopen
+        run: ./native-build/memoria_mobile_shared_bdr_product_reopen
 
       - name: Install Python test dependencies
         run: python -m pip install -e . pytest httpx fastapi

@@ -2,6 +2,7 @@
 #define MEMORIA_MOBILE_PERSISTENCE_H
 
 #include "relation_extractor.h"
+#include "bdr/atomic_c_api.h"
 
 #include <stddef.h>
 
@@ -58,6 +59,7 @@ int memoria_persistence_save_turn_with_supersessions(
 int memoria_persistence_load_turn(memoria_persistence *p, size_t slot, memoria_persist_turn *out);
 int memoria_persistence_save_episode(memoria_persistence *p, size_t slot, unsigned long sequence, const memoria_persist_episode *episode);
 int memoria_persistence_load_episode(memoria_persistence *p, size_t slot, memoria_persist_episode *out);
+bdr_atomic_c_handle *memoria_persistence_bdr_handle(memoria_persistence *p);
 int memoria_persistence_sync(memoria_persistence *p);
 int memoria_persistence_reset(
     memoria_persistence *p,
