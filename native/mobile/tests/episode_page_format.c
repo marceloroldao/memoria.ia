@@ -28,7 +28,7 @@ int main(void) {
     (void)system("rm -rf ./tmp-mobile-page-format");
     CHECK(memoria_mobile_open(dir, "page-format", &h) == MEMORIA_MOBILE_OK);
 
-    for (i = 1; i <= 300; ++i) {
+    for (i = 1; i <= 20000; ++i) {
         snprintf(json, sizeof(json),
                  "{\"episode_id\":\"ep-%d\",\"session_id\":\"temporal\",\"role\":\"user\","
                  "\"text\":\"raw episode %d\",\"event_type\":\"raw\",\"topics_csv\":\"raw\",\"order\":%d}",
@@ -38,19 +38,19 @@ int main(void) {
     }
 
     CHECK(call_json(memoria_mobile_export_snapshot_json, h,
-        "{\"turn_offset\":0,\"turn_limit\":1,\"episode_offset\":250,\"episode_limit\":64}", &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"episodes\":300"));
-    CHECK(contains(out, "\"offset\":250"));
+        "{\"turn_offset\":0,\"turn_limit\":1,\"episode_offset\":19950,\"episode_limit\":64}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"episodes\":20000"));
+    CHECK(contains(out, "\"offset\":19950"));
     CHECK(contains(out, "\"returned\":50"));
-    CHECK(contains(out, "\"episode_id\":\"ep-251\""));
-    CHECK(contains(out, "\"episode_id\":\"ep-300\""));
+    CHECK(contains(out, "\"episode_id\":\"ep-19951\""));
+    CHECK(contains(out, "\"episode_id\":\"ep-20000\""));
     memoria_mobile_free_buffer(out); out.data = NULL; out.size = 0;
 
     CHECK(call_json(memoria_mobile_format_store_json, h, "{\"confirm\":\"NO\"}", &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
     memoria_mobile_free_buffer(out); out.data = NULL; out.size = 0;
 
     CHECK(call_json(memoria_mobile_format_store_json, h, "{\"confirm\":\"FORMATAR\"}", &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"removed_episodes\":300"));
+    CHECK(contains(out, "\"removed_episodes\":20000"));
     memoria_mobile_free_buffer(out); out.data = NULL; out.size = 0;
 
     CHECK(call_json(memoria_mobile_export_snapshot_json, h,
