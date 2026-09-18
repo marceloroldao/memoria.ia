@@ -849,7 +849,11 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     if (!h->data_dir || !h->organization_id ||
         !memoria_persistence_open(data_dir, organization_id, &h->persistence) ||
         !memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence) ||
-        !memoria_concept_runtime_open(data_dir, organization_id, &h->concept_runtime)) {
+        !memoria_concept_runtime_open_shared(
+            memoria_persistence_bdr_handle(h->persistence),
+            organization_id,
+            &h->concept_runtime
+        )) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
     }
