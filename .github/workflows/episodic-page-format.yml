@@ -28,6 +28,11 @@ jobs:
           ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
           path: resolutive-DB
 
+      - name: Verify concurrent RC2 validation was preserved
+        run: |
+          test -f .github/workflows/v2-bdr-v120-rc2-validation.yml
+          test -f tests/test_address_trajectory_bdr_rc2_torn_tail.py
+
       - name: Configure native runtime
         run: cmake -S native/mobile -B native-build -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/resolutive-DB"
 
