@@ -75,13 +75,10 @@ class V2OntogenesisIngestor:
                 support[seq] += 1
                 if support[seq] >= self.min_composition_support:
                     promoted.add(seq)
-        # Keep maximal repeated structures. Smaller components remain derivable
-        # from lexical edges and can be promoted independently in other contexts.
-        maximal = [
-            seq for seq in promoted
-            if not any(len(other) > len(seq) and any(other[i:i + len(seq)] == seq for i in range(len(other) - len(seq) + 1)) for other in promoted)
-        ]
-        return tuple(sorted(maximal, key=lambda seq: (-len(seq), seq)))
+        # Keep every supported address. A longer recurrence must not erase a
+        # previously promoted reusable sub-composition: both are valid nodes in
+        # the hierarchy and may branch differently in future observations.
+        return tuple(sorted(promoted, key=lambda seq: (-len(seq), seq)))
 
     def observe(
         self,
