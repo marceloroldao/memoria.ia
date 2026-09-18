@@ -10,6 +10,7 @@ on:
       - 'src/memoria_resolutiva/episodic_recall.py'
       - 'tests/test_v2_competing_temporal_observations.py'
       - 'tests/test_v2_ontogenesis_ingestion.py'
+      - 'tests/test_v2_reusable_compositions.py'
       - '.github/workflows/v2-competing-temporal-observations.yml'
   workflow_dispatch:
 
@@ -35,4 +36,5 @@ jobs:
         run: |
           pytest -q \
             tests/test_v2_competing_temporal_observations.py \
-            tests/test_v2_ontogenesis_ingestion.py
+            tests/test_v2_ontogenesis_ingestion.py \
+            tests/test_v2_reusable_compositions.py
