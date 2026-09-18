@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 import hashlib
 
@@ -20,17 +20,13 @@ class OntogenesisObservation:
 
 
 class V2OntogenesisIngestor:
-    """Additive V2 ingestion boundary: preserve first, interpret second.
-
-    Raw observations remain immutable. Repeated contiguous structure can promote
-    itself into content-addressed compositions without phrase-specific rules.
-    Promotion never replaces source episodes or lexical evidence.
-    """
+    """Preserve observations and promote reusable structure without fixed semantics."""
 
     TOKEN_PREDICATE = "contains_token"
     NEXT_PREDICATE = "next_token"
     COMPOSITION_MEMBER_PREDICATE = "composition_member"
     OCCURRENCE_COMPOSITION_PREDICATE = "uses_composition"
+    COMPOSITION_BRANCH_PREDICATE = "composition_branch"
 
     def __init__(self, core: EvidenceCore, *, min_composition_support: int = 2, max_composition_tokens: int = 8) -> None:
         if min_composition_support < 2:
@@ -43,16 +39,15 @@ class V2OntogenesisIngestor:
         self.max_composition_tokens = max_composition_tokens
         self._next_order: dict[str | None, int] = {}
         self._sequence_support: dict[str | None, Counter[tuple[str, ...]]] = {}
+        self._continuations: dict[str | None, dict[tuple[str, ...], Counter[str]]] = {}
 
     @staticmethod
     def _stable_id(namespace: str | None, order: int, text: str) -> str:
-        payload = f"{namespace or ''}\0{order}\0{text}".encode("utf-8")
-        return hashlib.blake2b(payload, digest_size=12).hexdigest()
+        return hashlib.blake2b(f"{namespace or ''}\0{order}\0{text}".encode(), digest_size=12).hexdigest()
 
     @staticmethod
     def _composition_id(tokens: tuple[str, ...]) -> str:
-        payload = "\0".join(tokens).encode("utf-8")
-        return "composition:" + hashlib.blake2b(payload, digest_size=12).hexdigest()
+        return "composition:" + hashlib.blake2b("\0".join(tokens).encode(), digest_size=12).hexdigest()
 
     def _order(self, namespace: str | None) -> int:
         if namespace not in self._next_order:
@@ -62,32 +57,34 @@ class V2OntogenesisIngestor:
         self._next_order[namespace] += 1
         return order
 
-    def _support(self, namespace: str | None) -> Counter[tuple[str, ...]]:
-        return self._sequence_support.setdefault(namespace, Counter())
-
-    def _promoted_sequences(self, words: tuple[str, ...], namespace: str | None) -> tuple[tuple[str, ...], ...]:
-        support = self._support(namespace)
-        promoted: set[tuple[str, ...]] = set()
+    def _learn_structure(self, words: tuple[str, ...], namespace: str | None) -> tuple[tuple[str, ...], ...]:
+        support = self._sequence_support.setdefault(namespace, Counter())
+        continuations = self._continuations.setdefault(namespace, defaultdict(Counter))
         upper = min(len(words), self.max_composition_tokens)
-        for size in range(2, upper + 1):
-            for start in range(0, len(words) - size + 1):
-                seq = words[start:start + size]
-                support[seq] += 1
-                if support[seq] >= self.min_composition_support:
-                    promoted.add(seq)
-        # Keep every supported address. A longer recurrence must not erase a
-        # previously promoted reusable sub-composition: both are valid nodes in
-        # the hierarchy and may branch differently in future observations.
-        return tuple(sorted(promoted, key=lambda seq: (-len(seq), seq)))
 
-    def observe(
-        self,
-        text: str,
-        *,
-        namespace: str | None = None,
-        provenance: str = "user",
-        timestamp: str | None = None,
-    ) -> OntogenesisObservation:
+        for size in range(2, upper + 1):
+            for start in range(len(words) - size + 1):
+                support[words[start:start + size]] += 1
+        for end in range(2, upper + 1):
+            prefix = words[:end]
+            if end < len(words):
+                continuations[prefix][words[end]] += 1
+
+        candidates: set[tuple[str, ...]] = set()
+        # A branching prefix is a stable structural node even if a longer full
+        # trajectory later recurs. This is the trunk/branch distinction.
+        for prefix, branches in continuations.items():
+            if support[prefix] >= self.min_composition_support and len(branches) >= 2:
+                candidates.add(prefix)
+
+        # Repeated full observations are valid specific compositions too.
+        if 2 <= len(words) <= self.max_composition_tokens and support[words] >= self.min_composition_support:
+            candidates.add(words)
+
+        return tuple(sorted(candidates, key=lambda seq: (-len(seq), seq)))
+
+    def observe(self, text: str, *, namespace: str | None = None, provenance: str = "user",
+                timestamp: str | None = None) -> OntogenesisObservation:
         raw = text.strip()
         if not raw:
             raise ValueError("text must be non-empty")
@@ -111,24 +108,31 @@ class V2OntogenesisIngestor:
             if index:
                 edges.append(self.core.observe_relation(
                     words[index - 1], self.NEXT_PREDICATE, token,
-                    evidence_id=f"{episode_id}:next:{index - 1}:{index}", source_text=raw,
+                    evidence_id=f"{episode_id}:next:{index-1}:{index}", source_text=raw,
                     provenance=provenance, origin="user", namespace=namespace,
                 ))
 
-        promoted = self._promoted_sequences(words, namespace)
-        composition_ids: list[str] = []
+        promoted = self._learn_structure(words, namespace)
+        ids: list[str] = []
         for seq in promoted:
-            composition_id = self._composition_id(seq)
-            composition_ids.append(composition_id)
+            cid = self._composition_id(seq)
+            ids.append(cid)
             edges.append(self.core.observe_relation(
-                occurrence, self.OCCURRENCE_COMPOSITION_PREDICATE, composition_id,
-                evidence_id=f"{episode_id}:composition:{composition_id}", source_text=raw,
+                occurrence, self.OCCURRENCE_COMPOSITION_PREDICATE, cid,
+                evidence_id=f"{episode_id}:composition:{cid}", source_text=raw,
                 provenance=provenance, origin="user", namespace=namespace,
             ))
             for index, token in enumerate(seq):
                 edges.append(self.core.observe_relation(
-                    composition_id, self.COMPOSITION_MEMBER_PREDICATE, f"{index}:{token}",
-                    evidence_id=f"{episode_id}:member:{composition_id}:{index}", source_text=raw,
+                    cid, self.COMPOSITION_MEMBER_PREDICATE, f"{index}:{token}",
+                    evidence_id=f"{episode_id}:member:{cid}:{index}", source_text=raw,
                     provenance=provenance, origin="user", namespace=namespace,
                 ))
-        return OntogenesisObservation(episode_id, episode_id, order, words, tuple(edges), tuple(composition_ids))
+            branches = self._continuations.get(namespace, {}).get(seq, {})
+            for branch in sorted(branches):
+                edges.append(self.core.observe_relation(
+                    cid, self.COMPOSITION_BRANCH_PREDICATE, branch,
+                    evidence_id=f"{episode_id}:branch:{cid}:{branch}", source_text=raw,
+                    provenance=provenance, origin="user", namespace=namespace,
+                ))
+        return OntogenesisObservation(episode_id, episode_id, order, words, tuple(edges), tuple(ids))
