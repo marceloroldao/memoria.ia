@@ -41,7 +41,7 @@ jobs:
         run: ./native-build/memoria_mobile_episode_page_format
 
       - name: Install Python test dependencies
-        run: python -m pip install -e . pytest httpx
+        run: python -m pip install -e . pytest httpx fastapi
 
       - name: Validate HTTP page beyond 5000 and confirmation contract
         run: pytest -q tests/test_episodic_page_format.py
