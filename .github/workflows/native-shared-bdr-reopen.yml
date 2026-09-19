@@ -25,7 +25,7 @@ jobs:
         run: |
           test "$(git -C resolutive-DB rev-parse HEAD)" = "eb77ad7286f234243ca1ed1a2af2d55df8c12238"
       - name: Configure native runtime
-        run: cmake -S native/mobile -B native-build -DRESOLUTIVE_DB_SOURCE_DIR="$GITHUB_WORKSPACE/resolutive-DB"
+        run: cmake -S native/mobile -B native-build -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/resolutive-DB"
       - name: Build native runtime
         run: cmake --build native-build --parallel 2
       - name: Compile isolated cold-reopen probe
