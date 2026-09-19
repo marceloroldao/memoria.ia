@@ -1104,8 +1104,12 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     int trajectory_mode, concept_retry_used = 0;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (h->episode_count) {
+        eps = (memoria_episode_source *)calloc(h->episode_count, sizeof(*eps));
+        if (!eps) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
     json = buffer_to_string(req);
-    if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    if (!json) { free(eps); return MEMORIA_MOBILE_INTERNAL_ERROR; }
     query = json_string(json, "query");
     namespace_id = json_string(json, "namespace");
     concept_namespace = json_string(json, "concept_namespace");
@@ -1292,7 +1296,7 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
     unsigned long next_sequence;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
-    if (h->episode_count >= MAX_EPISODES) return unresolved(out, "native episode capacity reached");
+    if (!ensure_episode_capacity(h, h->episode_count + 1u)) return MEMORIA_MOBILE_INTERNAL_ERROR;
     memset(&candidate, 0, sizeof(candidate));
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -1356,7 +1360,7 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
 
 memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *query, *session_id, *role, *event_type, *topics, *ctx, *st, *root;
-    memoria_episode_source eps[MAX_EPISODES];
+    memoria_episode_source *eps = NULL;
     memoria_episode_result r;
     size_t i, episode_count = 0;
     memoria_mobile_status response_status;
@@ -1368,7 +1372,7 @@ memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *
     role = json_string(json, "role");
     event_type = json_string(json, "event_type");
     topics = json_string(json, "topics_csv");
-    if (!query) { free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    if (!query) { free(eps); free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
     for (i = 0; i < h->episode_count; ++i) {
         episode_row *e = &h->episodes[i];
         if (strcmp(session_id ? session_id : "", e->session_id ? e->session_id : "") != 0) continue;
@@ -1386,6 +1390,7 @@ memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *
         ++episode_count;
     }
     r = memoria_episode_recall_latest(query, role, event_type, topics, eps, episode_count);
+    free(eps);
     free(query); free(session_id); free(role); free(event_type); free(topics); free(json);
     if (!r.hit) return unresolved(out, "no justified native episode");
     ctx = json_escape(r.text);
