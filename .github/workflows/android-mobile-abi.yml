@@ -80,9 +80,10 @@ jobs:
           repository: marceloroldao/resolutive-DB
           ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
           path: deps/resolutive-DB
-      - uses: android-actions/setup-android@v3
       - name: Install Android NDK
-        run: sdkmanager "ndk;27.2.12479018"
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018"
       - name: Configure arm64-v8a with atomic BDR
         run: >-
           cmake -S native/mobile -B build/mobile-android
