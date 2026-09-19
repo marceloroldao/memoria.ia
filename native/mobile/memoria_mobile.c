@@ -23,8 +23,8 @@
 #include <time.h>
 
 #define INITIAL_TURN_CAPACITY 256u
+#define INITIAL_EPISODE_CAPACITY 256u
 #define INITIAL_MEMORY_INDEX_CAPACITY 1024u
-#define MAX_EPISODES 256
 #define MAX_RELATIONS_PER_TURN MEMORIA_PERSIST_MAX_RELATIONS
 
 typedef memoria_persist_turn turn_row;
@@ -50,8 +50,9 @@ struct memoria_mobile_handle {
     memory_index_slot *memory_index;
     size_t memory_index_capacity;
     size_t memory_index_count;
-    episode_row episodes[MAX_EPISODES];
+    episode_row *episodes;
     size_t episode_count;
+    size_t episode_capacity;
     unsigned long sequence;
 };
 
@@ -782,6 +783,27 @@ static int ensure_semantic_capacity(memoria_mobile_handle *h, size_t needed) {
 }
 
 
+static int ensure_episode_capacity(memoria_mobile_handle *h, size_t needed) {
+    episode_row *resized;
+    size_t old_capacity, new_capacity;
+    if (!h) return 0;
+    if (needed <= h->episode_capacity) return 1;
+    old_capacity = h->episode_capacity;
+    new_capacity = old_capacity ? old_capacity : INITIAL_EPISODE_CAPACITY;
+    while (new_capacity < needed) {
+        if (new_capacity > ((size_t)-1) / 2u) { new_capacity = needed; break; }
+        new_capacity *= 2u;
+    }
+    if (new_capacity > ((size_t)-1) / sizeof(*resized)) return 0;
+    resized = (episode_row *)realloc(h->episodes, new_capacity * sizeof(*resized));
+    if (!resized) return 0;
+    memset(resized + old_capacity, 0, (new_capacity - old_capacity) * sizeof(*resized));
+    h->episodes = resized;
+    h->episode_capacity = new_capacity;
+    return 1;
+}
+
+
 static int source_triggers_semantic_consolidation(const char *source_type) {
     if (!source_type) return 0;
     return strcmp(source_type, "user_assertion") == 0 ||
@@ -831,8 +853,7 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
             memoria_persistence_bdr_handle(h->persistence),
             organization_id,
             &h->concept_runtime
-        ) ||
-        episodes > MAX_EPISODES) {
+        )) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
     }
@@ -848,6 +869,10 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     }
     h->turn_count = turns;
     if (!memory_index_rebuild(h)) {
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    if (episodes && !ensure_episode_capacity(h, episodes)) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
@@ -1535,6 +1560,7 @@ void memoria_mobile_close(memoria_mobile_handle *h) {
     memoria_concept_runtime_close(h->concept_runtime);
     memoria_persistence_close(h->persistence);
     free(h->turns);
+    free(h->episodes);
     free(h->semantic_sources);
     free(h->memory_index);
     free(h->data_dir);
