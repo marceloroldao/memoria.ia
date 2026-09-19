@@ -2,7 +2,6 @@
 #define MEMORIA_MOBILE_PERSISTENCE_H
 
 #include "relation_extractor.h"
-#include "bdr/atomic_c_api.h"
 
 #include <stddef.h>
 
@@ -12,6 +11,7 @@
 #define MEMORIA_PERSIST_MEMORY_ID_CAP 384u
 #define MEMORIA_PERSIST_TIME_CAP 129u
 
+typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_persistence memoria_persistence;
 
 typedef struct memoria_persist_turn {
