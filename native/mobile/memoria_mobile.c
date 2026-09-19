@@ -846,14 +846,28 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     if (!h) return MEMORIA_MOBILE_INTERNAL_ERROR;
     h->data_dir = dup_string(data_dir);
     h->organization_id = dup_string(organization_id);
-    if (!h->data_dir || !h->organization_id ||
-        !memoria_persistence_open(data_dir, organization_id, &h->persistence) ||
-        !memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence) ||
-        !memoria_concept_runtime_open_shared(
+    if (!h->data_dir || !h->organization_id) {
+        fprintf(stderr, "[memoria-mobile] open failed: allocate paths\n");
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    }
+    if (!memoria_persistence_open(data_dir, organization_id, &h->persistence)) {
+        fprintf(stderr, "[memoria-mobile] open failed: persistence_open data_dir=%s org=%s\n", data_dir, organization_id);
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    }
+    if (!memoria_persistence_meta(h->persistence, &turns, &episodes, &sequence)) {
+        fprintf(stderr, "[memoria-mobile] open failed: persistence_meta org=%s\n", organization_id);
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_PERSISTENCE_ERROR;
+    }
+    fprintf(stderr, "[memoria-mobile] open meta: turns=%zu episodes=%zu sequence=%lu org=%s\n", turns, episodes, sequence, organization_id);
+    if (!memoria_concept_runtime_open_shared(
             memoria_persistence_bdr_handle(h->persistence),
             organization_id,
             &h->concept_runtime
         )) {
+        fprintf(stderr, "[memoria-mobile] open failed: concept_runtime_open_shared org=%s\n", organization_id);
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
     }
@@ -863,6 +877,7 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     }
     for (i = 0; i < turns; ++i) {
         if (!memoria_persistence_load_turn(h->persistence, i + 1, &h->turns[i])) {
+            fprintf(stderr, "[memoria-mobile] open failed: load_turn slot=%zu/%zu org=%s\n", i + 1u, turns, organization_id);
             memoria_mobile_close(h);
             return MEMORIA_MOBILE_PERSISTENCE_ERROR;
         }
@@ -878,6 +893,7 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     }
     for (i = 0; i < episodes; ++i) {
         if (!memoria_persistence_load_episode(h->persistence, i + 1, &h->episodes[i])) {
+            fprintf(stderr, "[memoria-mobile] open failed: load_episode slot=%zu/%zu org=%s\n", i + 1u, episodes, organization_id);
             memoria_mobile_close(h);
             return MEMORIA_MOBILE_PERSISTENCE_ERROR;
         }
