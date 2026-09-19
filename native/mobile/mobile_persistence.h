@@ -11,6 +11,7 @@
 #define MEMORIA_PERSIST_MEMORY_ID_CAP 384u
 #define MEMORIA_PERSIST_TIME_CAP 129u
 
+typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_persistence memoria_persistence;
 
 typedef struct memoria_persist_turn {
@@ -58,6 +59,7 @@ int memoria_persistence_save_turn_with_supersessions(
 int memoria_persistence_load_turn(memoria_persistence *p, size_t slot, memoria_persist_turn *out);
 int memoria_persistence_save_episode(memoria_persistence *p, size_t slot, unsigned long sequence, const memoria_persist_episode *episode);
 int memoria_persistence_load_episode(memoria_persistence *p, size_t slot, memoria_persist_episode *out);
+bdr_atomic_c_handle *memoria_persistence_bdr_handle(memoria_persistence *p);
 int memoria_persistence_sync(memoria_persistence *p);
 void memoria_persistence_free_turn(memoria_persist_turn *turn);
 void memoria_persistence_free_episode(memoria_persist_episode *episode);

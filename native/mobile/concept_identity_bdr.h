@@ -5,10 +5,17 @@
 
 #include <stddef.h>
 
+typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_concept_bdr memoria_concept_bdr;
 
 int memoria_concept_bdr_open(
     const char *data_dir,
+    const char *organization_id,
+    memoria_concept_bdr **out
+);
+
+int memoria_concept_bdr_open_shared(
+    bdr_atomic_c_handle *db,
     const char *organization_id,
     memoria_concept_bdr **out
 );

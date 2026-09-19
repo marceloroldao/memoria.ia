@@ -12,6 +12,7 @@
 struct memoria_concept_bdr {
     bdr_atomic_c_handle *db;
     char *org;
+    int owns_db;
 };
 
 static char *dup_text(const char *s) {
@@ -148,6 +149,7 @@ int memoria_concept_bdr_open(const char *data_dir, const char *organization_id, 
     store = (memoria_concept_bdr *)calloc(1, sizeof(*store));
     if (!store) return 0;
     store->org = dup_text(organization_id);
+    store->owns_db = 1;
     if (!store->org || bdr_atomic_c_open(data_dir, &store->db) != BDR_ATOMIC_C_OK ||
         bdr_atomic_c_abi_version() != BDR_ATOMIC_C_ABI_VERSION ||
         bdr_atomic_c_integrity_check(store->db) != BDR_ATOMIC_C_OK) {
@@ -196,6 +198,26 @@ int memoria_concept_bdr_save_catalog(memoria_concept_bdr *store, const memoria_c
 done:
     free(ops); free(keys); free(values);
     return ok;
+}
+
+int memoria_concept_bdr_open_shared(
+    bdr_atomic_c_handle *db,
+    const char *organization_id,
+    memoria_concept_bdr **out
+) {
+    memoria_concept_bdr *store;
+    if (!db || !organization_id || !*organization_id || !out) return 0;
+    *out = NULL;
+    if (bdr_atomic_c_abi_version() != BDR_ATOMIC_C_ABI_VERSION ||
+        bdr_atomic_c_integrity_check(db) != BDR_ATOMIC_C_OK) return 0;
+    store = (memoria_concept_bdr *)calloc(1, sizeof(*store));
+    if (!store) return 0;
+    store->org = dup_text(organization_id);
+    if (!store->org) { free(store); return 0; }
+    store->db = db;
+    store->owns_db = 0;
+    *out = store;
+    return 1;
 }
 
 int memoria_concept_bdr_save(memoria_concept_bdr *store, const memoria_concept_state_row *rows, size_t row_count) {
@@ -251,7 +273,7 @@ int memoria_concept_bdr_sync(memoria_concept_bdr *store) {
 
 void memoria_concept_bdr_close(memoria_concept_bdr *store) {
     if (!store) return;
-    if (store->db) bdr_atomic_c_close(store->db);
+    if (store->db && store->owns_db) bdr_atomic_c_close(store->db);
     free(store->org);
     free(store);
 }

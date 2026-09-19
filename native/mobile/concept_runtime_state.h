@@ -7,10 +7,17 @@
 
 #define MEMORIA_CONCEPT_FINGERPRINT_CAP 96u
 
+typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_concept_runtime memoria_concept_runtime;
 
 int memoria_concept_runtime_open(
     const char *data_dir,
+    const char *organization_id,
+    memoria_concept_runtime **out
+);
+
+int memoria_concept_runtime_open_shared(
+    bdr_atomic_c_handle *db,
     const char *organization_id,
     memoria_concept_runtime **out
 );
