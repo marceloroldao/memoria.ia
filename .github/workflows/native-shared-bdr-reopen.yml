@@ -1,0 +1,34 @@
+name: Minimal shared BDR cold reopen
+
+on:
+  push:
+    branches:
+      - fix/minimal-native-shared-bdr-reopen
+  pull_request:
+    paths:
+      - "native/mobile/**"
+      - "include/**"
+      - ".github/workflows/native-shared-bdr-reopen.yml"
+
+jobs:
+  cold-reopen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout frozen BDR v1.2.0-rc1
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
+          path: resolutive-DB
+      - name: Verify frozen BDR candidate
+        run: |
+          test "$(git -C resolutive-DB rev-parse HEAD)" = "eb77ad7286f234243ca1ed1a2af2d55df8c12238"
+      - name: Configure native runtime
+        run: cmake -S native/mobile -B native-build -DRESOLUTIVE_DB_SOURCE_DIR="$GITHUB_WORKSPACE/resolutive-DB"
+      - name: Build native runtime
+        run: cmake --build native-build --parallel 2
+      - name: Compile isolated cold-reopen probe
+        run: cc -std=c11 -Iinclude native/mobile/tests/shared_bdr_minimal_reopen.c -Lnative-build -lmemoria_mobile -Wl,-rpath,"$GITHUB_WORKSPACE/native-build" -o native-build/shared_bdr_minimal_reopen
+      - name: Validate single-handle BDR cold reopen twice
+        run: ./native-build/shared_bdr_minimal_reopen
