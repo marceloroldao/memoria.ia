@@ -1104,12 +1104,8 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     int trajectory_mode, concept_retry_used = 0;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
-    if (h->episode_count) {
-        eps = (memoria_episode_source *)calloc(h->episode_count, sizeof(*eps));
-        if (!eps) return MEMORIA_MOBILE_INTERNAL_ERROR;
-    }
     json = buffer_to_string(req);
-    if (!json) { free(eps); return MEMORIA_MOBILE_INTERNAL_ERROR; }
+    if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     query = json_string(json, "query");
     namespace_id = json_string(json, "namespace");
     concept_namespace = json_string(json, "concept_namespace");
@@ -1365,6 +1361,10 @@ memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *
     size_t i, episode_count = 0;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (h->episode_count) {
+        eps = (memoria_episode_source *)calloc(h->episode_count, sizeof(*eps));
+        if (!eps) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     query = json_string(json, "query");
