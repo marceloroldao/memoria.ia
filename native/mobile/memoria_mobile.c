@@ -23,8 +23,8 @@
 #include <time.h>
 
 #define INITIAL_TURN_CAPACITY 256u
+#define INITIAL_EPISODE_CAPACITY 256u
 #define INITIAL_MEMORY_INDEX_CAPACITY 1024u
-#define MAX_EPISODES 256
 #define MAX_RELATIONS_PER_TURN MEMORIA_PERSIST_MAX_RELATIONS
 
 typedef memoria_persist_turn turn_row;
@@ -50,8 +50,9 @@ struct memoria_mobile_handle {
     memory_index_slot *memory_index;
     size_t memory_index_capacity;
     size_t memory_index_count;
-    episode_row episodes[MAX_EPISODES];
+    episode_row *episodes;
     size_t episode_count;
+    size_t episode_capacity;
     unsigned long sequence;
 };
 
@@ -782,6 +783,27 @@ static int ensure_semantic_capacity(memoria_mobile_handle *h, size_t needed) {
 }
 
 
+static int ensure_episode_capacity(memoria_mobile_handle *h, size_t needed) {
+    episode_row *resized;
+    size_t old_capacity, new_capacity;
+    if (!h) return 0;
+    if (needed <= h->episode_capacity) return 1;
+    old_capacity = h->episode_capacity;
+    new_capacity = old_capacity ? old_capacity : INITIAL_EPISODE_CAPACITY;
+    while (new_capacity < needed) {
+        if (new_capacity > ((size_t)-1) / 2u) { new_capacity = needed; break; }
+        new_capacity *= 2u;
+    }
+    if (new_capacity > ((size_t)-1) / sizeof(*resized)) return 0;
+    resized = (episode_row *)realloc(h->episodes, new_capacity * sizeof(*resized));
+    if (!resized) return 0;
+    memset(resized + old_capacity, 0, (new_capacity - old_capacity) * sizeof(*resized));
+    h->episodes = resized;
+    h->episode_capacity = new_capacity;
+    return 1;
+}
+
+
 static int source_triggers_semantic_consolidation(const char *source_type) {
     if (!source_type) return 0;
     return strcmp(source_type, "user_assertion") == 0 ||
@@ -831,8 +853,7 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
             memoria_persistence_bdr_handle(h->persistence),
             organization_id,
             &h->concept_runtime
-        ) ||
-        episodes > MAX_EPISODES) {
+        )) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
     }
@@ -848,6 +869,10 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
     }
     h->turn_count = turns;
     if (!memory_index_rebuild(h)) {
+        memoria_mobile_close(h);
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    if (episodes && !ensure_episode_capacity(h, episodes)) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
     }
@@ -1267,7 +1292,7 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
     unsigned long next_sequence;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
-    if (h->episode_count >= MAX_EPISODES) return unresolved(out, "native episode capacity reached");
+    if (!ensure_episode_capacity(h, h->episode_count + 1u)) return MEMORIA_MOBILE_INTERNAL_ERROR;
     memset(&candidate, 0, sizeof(candidate));
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -1331,11 +1356,15 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
 
 memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *h, memoria_mobile_buffer req, memoria_mobile_buffer *out) {
     char *json, *query, *session_id, *role, *event_type, *topics, *ctx, *st, *root;
-    memoria_episode_source eps[MAX_EPISODES];
+    memoria_episode_source *eps = NULL;
     memoria_episode_result r;
     size_t i, episode_count = 0;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (h->episode_count) {
+        eps = (memoria_episode_source *)calloc(h->episode_count, sizeof(*eps));
+        if (!eps) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
     json = buffer_to_string(req);
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     query = json_string(json, "query");
@@ -1343,7 +1372,7 @@ memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *
     role = json_string(json, "role");
     event_type = json_string(json, "event_type");
     topics = json_string(json, "topics_csv");
-    if (!query) { free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
+    if (!query) { free(eps); free(json); free(session_id); free(role); free(event_type); free(topics); return MEMORIA_MOBILE_INVALID_ARGUMENT; }
     for (i = 0; i < h->episode_count; ++i) {
         episode_row *e = &h->episodes[i];
         if (strcmp(session_id ? session_id : "", e->session_id ? e->session_id : "") != 0) continue;
@@ -1361,6 +1390,7 @@ memoria_mobile_status memoria_mobile_recall_episode_json(memoria_mobile_handle *
         ++episode_count;
     }
     r = memoria_episode_recall_latest(query, role, event_type, topics, eps, episode_count);
+    free(eps);
     free(query); free(session_id); free(role); free(event_type); free(topics); free(json);
     if (!r.hit) return unresolved(out, "no justified native episode");
     ctx = json_escape(r.text);
@@ -1535,6 +1565,7 @@ void memoria_mobile_close(memoria_mobile_handle *h) {
     memoria_concept_runtime_close(h->concept_runtime);
     memoria_persistence_close(h->persistence);
     free(h->turns);
+    free(h->episodes);
     free(h->semantic_sources);
     free(h->memory_index);
     free(h->data_dir);
