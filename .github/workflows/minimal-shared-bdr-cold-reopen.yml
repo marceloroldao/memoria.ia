@@ -1,0 +1,45 @@
+name: Minimal native shared-BDR cold reopen
+
+on:
+  push:
+    branches:
+      - fix/minimal-native-shared-bdr-reopen
+    paths:
+      - 'native/mobile/**'
+      - 'include/memoria_mobile.h'
+      - '.github/workflows/minimal-shared-bdr-cold-reopen.yml'
+  pull_request:
+    paths:
+      - 'native/mobile/**'
+      - 'include/memoria_mobile.h'
+      - '.github/workflows/minimal-shared-bdr-cold-reopen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cold-reopen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Memoria.ia
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen BDR v1.2.0-rc1
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
+          path: .bdr-rc1
+
+      - name: Configure native runtime against frozen BDR
+        run: cmake -S native/mobile -B native-build -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/.bdr-rc1"
+
+      - name: Build native runtime
+        run: cmake --build native-build --parallel 2
+
+      - name: Compile minimal shared-BDR cold-reopen probe
+        run: cc -std=c11 -Iinclude native/mobile/tests/shared_bdr_cold_reopen_minimal.c -Lnative-build -lmemoria_mobile -Wl,-rpath,"$GITHUB_WORKSPACE/native-build" -o native-build/memoria_mobile_shared_bdr_cold_reopen_minimal
+
+      - name: Validate catalog plus episodes across full cold reopen
+        run: ./native-build/memoria_mobile_shared_bdr_cold_reopen_minimal
