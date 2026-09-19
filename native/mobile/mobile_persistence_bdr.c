@@ -120,11 +120,37 @@ int memoria_persistence_open(const char *data_dir, const char *organization_id, 
     p = (memoria_persistence *)calloc(1, sizeof(*p));
     if (!p) return 0;
     p->org = sdup(organization_id);
-    if (!p->org || bdr_atomic_c_open(data_dir, &p->db) != BDR_ATOMIC_C_OK ||
-        bdr_atomic_c_abi_version() != BDR_ATOMIC_C_ABI_VERSION ||
-        bdr_atomic_c_integrity_check(p->db) != BDR_ATOMIC_C_OK) {
+    if (!p->org) {
+        fprintf(stderr, "[memoria-persistence] open failed: organization allocation org=%s\\n", organization_id);
         memoria_persistence_close(p);
         return 0;
+    }
+    {
+        bdr_atomic_c_status open_status = bdr_atomic_c_open(data_dir, &p->db);
+        if (open_status != BDR_ATOMIC_C_OK) {
+            fprintf(stderr, "[memoria-persistence] open failed: bdr_atomic_c_open status=%d data_dir=%s org=%s\\n",
+                    (int)open_status, data_dir, organization_id);
+            memoria_persistence_close(p);
+            return 0;
+        }
+    }
+    {
+        unsigned int runtime_abi = bdr_atomic_c_abi_version();
+        if (runtime_abi != BDR_ATOMIC_C_ABI_VERSION) {
+            fprintf(stderr, "[memoria-persistence] open failed: abi runtime=%u expected=%u data_dir=%s org=%s\\n",
+                    runtime_abi, (unsigned int)BDR_ATOMIC_C_ABI_VERSION, data_dir, organization_id);
+            memoria_persistence_close(p);
+            return 0;
+        }
+    }
+    {
+        bdr_atomic_c_status integrity_status = bdr_atomic_c_integrity_check(p->db);
+        if (integrity_status != BDR_ATOMIC_C_OK) {
+            fprintf(stderr, "[memoria-persistence] open failed: integrity_check status=%d data_dir=%s org=%s\\n",
+                    (int)integrity_status, data_dir, organization_id);
+            memoria_persistence_close(p);
+            return 0;
+        }
     }
     *out = p;
     return 1;
