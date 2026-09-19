@@ -2,10 +2,10 @@
 #define MEMORIA_CONCEPT_IDENTITY_BDR_H
 
 #include "concept_identity_state.h"
-#include "bdr/atomic_c_api.h"
 
 #include <stddef.h>
 
+typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_concept_bdr memoria_concept_bdr;
 
 int memoria_concept_bdr_open(
