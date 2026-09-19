@@ -36,7 +36,7 @@ int main(void) {
     CHECK(contains(out, "\"status\":\"OK\""));
     memoria_mobile_free_buffer(out); out.data = NULL; out.size = 0;
 
-    for (i = 1; i <= 32; ++i) {
+    for (i = 1; i <= 300; ++i) {
         snprintf(json, sizeof(json),
             "{\"episode_id\":\"restart-%d\",\"session_id\":\"product\",\"role\":\"user\","
             "\"text\":\"raw product episode %d\",\"event_type\":\"restart\","
@@ -49,8 +49,8 @@ int main(void) {
 
     CHECK(memoria_mobile_open(dir, org, &h) == MEMORIA_MOBILE_OK);
     CHECK(call_json(memoria_mobile_recall_episode_json, h,
-        "{\"query\":\"raw product episode 32\",\"session_id\":\"product\"}", &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"episode_ids\":[\"restart-32\"]"));
+        "{\"query\":\"raw product episode 300\",\"session_id\":\"product\"}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"episode_ids\":[\"restart-300\"]"));
     memoria_mobile_free_buffer(out); out.data = NULL; out.size = 0;
     memoria_mobile_close(h); h = NULL;
 
