@@ -16,6 +16,7 @@ from .llm_adapter import LLMAdapterError
 from .product_applications import ApplicationAuth, ApplicationRegistry
 from .product_chat import ProductChatService, token_reduction
 from .product_identity import MemoryScope, NodeIdentity
+from .native_resolve import NativeResolveService
 from .product_service import EnterpriseMemoryService, MemoryRevoked, OrganizationMismatch
 
 API_PREFIX = "/api/v1"
@@ -58,6 +59,11 @@ class ChatRequest(BaseModel):
     scope: ScopeModel = ScopeModel()
 
 
+class NativeResolveRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=20000)
+    scope: ScopeModel = ScopeModel()
+
+
 class CompareChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=20000)
     baseline_context: list[str] = Field(default_factory=list)
@@ -86,6 +92,7 @@ def create_app(
     node_identity: NodeIdentity | None = None,
     chat_service: ProductChatService | None = None,
     application_registry: ApplicationRegistry | None = None,
+    native_resolve_service: NativeResolveService | None = None,
     lifespan=None,
 ) -> FastAPI:
     if not api_key:
@@ -327,6 +334,13 @@ def create_app(
                 "revoked": record.revoked,
             },
         }
+
+    @app.post(f"{API_PREFIX}/resolve/native")
+    def resolve_native(request: NativeResolveRequest, auth: AuthContext = Depends(require_scope("chat.use"))):
+        if native_resolve_service is None:
+            raise HTTPException(status_code=503, detail="native resolver is not configured")
+        result = native_resolve_service.resolve(scope=scope_from(request.scope, auth), message=request.message)
+        return result.as_dict()
 
     @app.post(f"{API_PREFIX}/chat")
     def chat(request: ChatRequest, auth: AuthContext = Depends(require_scope("chat.use"))):
