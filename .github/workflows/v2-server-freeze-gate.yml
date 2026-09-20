@@ -1,0 +1,96 @@
+name: V2 server freeze gate
+
+on:
+  push:
+    branches:
+      - release/v2-server-freeze-candidate
+      - freeze/v2-server-rc1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest
+      - name: Validate V2 ontogenesis and zero-LLM resolution
+        run: |
+          pytest -q \
+            tests/test_v2_competing_temporal_observations.py \
+            tests/test_v2_ontogenesis_ingestion.py \
+            tests/test_v2_reusable_compositions.py \
+            tests/test_native_resolve.py \
+            tests/test_native_server_runtime_default.py \
+            tests/test_rc7_server_runtime_wiring.py
+
+  production-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build pinned native production image
+        run: docker build --pull -t memoria-v2-server:test .
+      - name: Start server
+        run: |
+          docker run -d --name memoria-v2-server -p 18080:8080 \
+            -e MEMORIA_ORGANIZATION_ID=ci-v2-org \
+            -e MEMORIA_API_KEY=ci-v2-secret \
+            memoria-v2-server:test
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:18080/api/v1/health >/dev/null && exit 0
+            sleep 1
+          done
+          docker logs memoria-v2-server
+          exit 1
+      - name: Validate native runtime and persistence
+        run: |
+          curl -fsS http://127.0.0.1:18080/api/v1/storage/health > /tmp/storage.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/storage.json'))
+          assert d['conversation_runtime']=='native', d
+          assert d['episodic_runtime']=='native', d
+          PY
+          curl -fsS -H 'X-Memoria-Key: ci-v2-secret' -H 'Content-Type: application/json' \
+            -d '{"role":"user","text":"sensor = active","session_id":"freeze-gate","order":1}' \
+            http://127.0.0.1:18080/api/v1/conversation/ingest >/tmp/ingest.json
+          curl -fsS -H 'X-Memoria-Key: ci-v2-secret' -H 'Content-Type: application/json' \
+            -d '{"query":"sensor active","session_id":"freeze-gate"}' \
+            http://127.0.0.1:18080/api/v1/conversation/resolve >/tmp/resolve.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/resolve.json'))
+          assert d['status']=='HIT', d
+          PY
+          docker restart memoria-v2-server >/dev/null
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:18080/api/v1/health >/dev/null && break
+            sleep 1
+          done
+          curl -fsS -H 'X-Memoria-Key: ci-v2-secret' -H 'Content-Type: application/json' \
+            -d '{"query":"sensor active","session_id":"freeze-gate"}' \
+            http://127.0.0.1:18080/api/v1/conversation/resolve >/tmp/reopen.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/reopen.json'))
+          assert d['status']=='HIT', d
+          assert d['selected_context']=='sensor = active', d
+          PY
+      - name: Logs
+        if: always()
+        run: docker logs memoria-v2-server || true
+      - name: Cleanup
+        if: always()
+        run: docker rm -f memoria-v2-server || true
