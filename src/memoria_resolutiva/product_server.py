@@ -12,6 +12,7 @@ from .llm_adapter import MockLLMAdapter
 from .native_conversation import NativeConversationService
 from .native_concept_catalog import build_native_concept_catalog
 from .native_episodic import NativeEpisodicService
+from .native_resolve import NativeResolveService
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
 from .product_admin_config import attach_configuration_routes
 from .product_applications import ApplicationRegistry
@@ -253,6 +254,7 @@ def build_app():
 
     chat_conversation_resolver = SemanticActivationConversationResolver(conversation_service)
     chat_service = _build_chat_service(service, configuration, conversation_resolver=chat_conversation_resolver)
+    native_resolve_service = NativeResolveService(chat_conversation_resolver)
     app = create_app(
         service,
         api_key=api_key,
@@ -260,6 +262,7 @@ def build_app():
         node_identity=node_identity,
         chat_service=chat_service,
         application_registry=application_registry,
+        native_resolve_service=native_resolve_service,
         lifespan=lifespan,
     )
 
