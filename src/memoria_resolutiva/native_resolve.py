@@ -47,6 +47,26 @@ class NativeResolveService:
 
         for namespace in namespaces:
             result = self.resolver.resolve(query=message, session_id=namespace)
+            # Direct recall is deliberately first. If it cannot collapse the
+            # intention, activate the persisted relation graph from query
+            # concepts and let the nearest bounded structural attractor expose
+            # candidate evidence. No embeddings/LLM are involved here.
+            if str(getattr(result, "status", "") or "").upper() != "HIT":
+                activate = getattr(self.resolver, "activate_relations", None)
+                if callable(activate):
+                    words = [w.strip(" ?!.,:;").casefold() for w in message.split()]
+                    stop = {"qual", "quais", "que", "é", "e", "era", "foi", "a", "o", "as", "os", "da", "do", "de", "minha", "meu"}
+                    concepts = [w for w in words if len(w) > 2 and w not in stop]
+                    for concept in concepts[:4]:
+                        activated = activate(concept=concept, session_id=namespace)
+                        if str(activated.get("status", "")).upper() == "HIT":
+                            class _Activated: pass
+                            candidate = _Activated()
+                            candidate.status = "HIT"
+                            candidate.confidence = activated.get("confidence", 0.0)
+                            candidate.selected_context = activated.get("selected_context", "")
+                            result = candidate
+                            break
             status = str(getattr(result, "status", "") or "").upper()
             try:
                 confidence = max(0.0, min(1.0, float(getattr(result, "confidence", 0.0) or 0.0)))
