@@ -126,8 +126,9 @@ def test_active_temporal_history_is_bounded_by_numerical_precision_not_fixed_lag
     for sequence in range(500):
         field.observe(observation(sequence, [sequence + 1]))
 
-    assert field.active_history_size("h1") <= field.temporal_horizon
-    assert field.active_history_size("h1") > 4
+    # The deque contains the current event plus all still-contributing past lags.
+    assert field.active_history_size("h1") <= field.temporal_horizon + 1
+    assert field.active_history_size("h1") > 5
 
 
 def test_replay_is_deterministic_and_non_semantic():
@@ -173,7 +174,7 @@ def test_ten_thousand_event_recurrent_stream_keeps_active_history_bounded():
         field.observe(observation(sequence, [sequence % vocabulary]))
 
     assert field.observation_count == 10_000
-    assert field.active_history_size("h1") <= field.temporal_horizon
+    assert field.active_history_size("h1") <= field.temporal_horizon + 1
     # One-symbol events produce only temporal pairs; the recurring structural
     # universe bounds the possible directed pair identities.
     assert field.edge_count <= vocabulary * vocabulary
