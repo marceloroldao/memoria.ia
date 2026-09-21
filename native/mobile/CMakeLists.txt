@@ -28,6 +28,19 @@ set_target_properties(memoria_concept_internal PROPERTIES
   C_STANDARD 11 C_STANDARD_REQUIRED YES C_VISIBILITY_PRESET hidden
 )
 
+add_library(memoria_structural_internal STATIC
+  structural_text_kernel.c
+  structural_text_runtime.c
+)
+target_include_directories(memoria_structural_internal PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(memoria_structural_internal PUBLIC bdr_atomic_c_api)
+if(UNIX)
+  target_link_libraries(memoria_structural_internal PUBLIC m)
+endif()
+set_target_properties(memoria_structural_internal PROPERTIES
+  C_STANDARD 11 C_STANDARD_REQUIRED YES C_VISIBILITY_PRESET hidden
+)
+
 add_library(memoria_mobile SHARED
   memoria_mobile.c
   concept_relation_resolve_bridge.c
@@ -52,13 +65,12 @@ add_library(memoria_mobile SHARED
   relation_extractor.c
   relation_adapter.c
   diagnostic_export.c
-  structural_text_kernel.c
 )
 set_source_files_properties(memoria_mobile.c PROPERTIES
   COMPILE_DEFINITIONS "memoria_mobile_resolve_context_json=memoria_mobile_resolve_context_json_base"
 )
 target_include_directories(memoria_mobile PUBLIC ${CMAKE_CURRENT_LIST_DIR}/../../include ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api memoria_concept_internal)
+target_link_libraries(memoria_mobile PRIVATE bdr_atomic_c_api memoria_concept_internal memoria_structural_internal)
 set_target_properties(memoria_mobile PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES LINKER_LANGUAGE CXX)
 
 if(NOT ANDROID)
@@ -236,6 +248,12 @@ if(NOT ANDROID)
   target_include_directories(memoria_relation_extractor_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
   set_target_properties(memoria_relation_extractor_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_relation_extractor_test COMMAND memoria_relation_extractor_test)
+
+  add_executable(memoria_structural_text_runtime_restart_test tests/structural_text_runtime_restart.c)
+  target_link_libraries(memoria_structural_text_runtime_restart_test PRIVATE memoria_structural_internal)
+  target_include_directories(memoria_structural_text_runtime_restart_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  set_target_properties(memoria_structural_text_runtime_restart_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_structural_text_runtime_restart_test COMMAND memoria_structural_text_runtime_restart_test)
 
   add_executable(memoria_structural_text_kernel_test tests/structural_text_parity.c structural_text_kernel.c)
   target_include_directories(memoria_structural_text_kernel_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
