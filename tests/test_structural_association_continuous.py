@@ -27,6 +27,25 @@ def observation(sequence, trail, *, hierarchy="h1"):
     }
 
 
+def temporal_observation(
+    sequence,
+    trail,
+    *,
+    t_start,
+    t_end=None,
+    clock_id="clock:test",
+    hierarchy="h1",
+):
+    item = observation(sequence, trail, hierarchy=hierarchy)
+    item["provenance"]["temporal"] = {
+        "clock_id": clock_id,
+        "t_start": float(t_start),
+        "t_end": float(t_start if t_end is None else t_end),
+        "unit": "s",
+    }
+    return item
+
+
 def _lag_weight(lag):
     field = ContinuousStructuralAssociationField(
         temporal_decay=0.2,
@@ -228,3 +247,148 @@ def test_unique_stream_forms_causal_band_not_all_to_all_graph():
         - (horizon * (horizon + 1)) // 2
     )
     assert field.edge_count == expected_edges
+
+
+def test_physical_time_decay_distinguishes_10ms_from_5s_at_same_causal_lag():
+    near = ContinuousStructuralAssociationField(
+        temporal_decay=0.5,
+        within_decay=0.5,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    near.observe(temporal_observation(0, [1], t_start=0.0))
+    near.observe(temporal_observation(1, [2], t_start=0.01))
+
+    far = ContinuousStructuralAssociationField(
+        temporal_decay=0.5,
+        within_decay=0.5,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    far.observe(temporal_observation(0, [1], t_start=0.0))
+    far.observe(temporal_observation(1, [2], t_start=5.0))
+
+    near_weight = near.association("h1", 1, 2, channel="temporal")
+    far_weight = far.association("h1", 1, 2, channel="temporal")
+
+    assert abs(near_weight - exp(-0.01)) < 1e-12
+    assert abs(far_weight - exp(-5.0)) < 1e-12
+    assert near_weight > far_weight
+
+
+def test_physical_time_can_bridge_many_unrelated_causal_events():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.6,
+        within_decay=0.6,
+        physical_time_decay=2.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    field.observe(temporal_observation(0, [1], t_start=10.0, clock_id="audio"))
+
+    for sequence in range(1, 101):
+        field.observe(
+            temporal_observation(
+                sequence,
+                [1000 + sequence],
+                t_start=float(sequence),
+                clock_id="other",
+            )
+        )
+
+    field.observe(
+        temporal_observation(101, [2], t_start=10.01, clock_id="audio")
+    )
+
+    weight = field.association("h1", 1, 2, channel="temporal")
+    assert abs(weight - exp(-2.0 * 0.01)) < 1e-12
+
+
+def test_physical_time_falls_back_to_causal_lag_without_explicit_clock():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.2,
+        within_decay=0.2,
+        physical_time_decay=5.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    field.observe(observation(0, [1]))
+    field.observe(observation(1, [100]))
+    field.observe(observation(2, [2]))
+
+    weight = field.association("h1", 1, 2, channel="temporal")
+    assert abs(weight - exp(-0.2)) < 1e-12
+
+
+def test_physical_time_rejects_clock_reversal_before_state_advances():
+    field = ContinuousStructuralAssociationField(
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+    )
+    field.observe(temporal_observation(0, [1], t_start=2.0, clock_id="sensor"))
+    before = field.snapshot()
+
+    try:
+        field.observe(
+            temporal_observation(1, [2], t_start=1.0, clock_id="sensor")
+        )
+    except ValueError as exc:
+        assert "non-decreasing" in str(exc)
+    else:
+        raise AssertionError("clock reversal must be rejected")
+
+    assert field.snapshot() == before
+
+
+def test_physical_temporal_density_saturation_is_explicit_not_silent():
+    field = ContinuousStructuralAssociationField(
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        max_physical_history_events=3,
+    )
+    for sequence in range(3):
+        field.observe(
+            temporal_observation(
+                sequence,
+                [sequence + 1],
+                t_start=0.0,
+                clock_id="dense",
+            )
+        )
+
+    before = field.snapshot()
+    try:
+        field.observe(
+            temporal_observation(3, [4], t_start=0.0, clock_id="dense")
+        )
+    except RuntimeError as exc:
+        assert "RealitySlices" in str(exc)
+    else:
+        raise AssertionError("dense physical history must fail explicitly")
+
+    assert field.snapshot() == before
+
+
+def test_physical_history_expires_only_after_numerical_time_horizon():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=1.0,
+        within_decay=1.0,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-4,
+    )
+    horizon = field.physical_horizon_seconds
+    assert horizon is not None
+    field.observe(temporal_observation(0, [1], t_start=0.0, clock_id="sensor"))
+    field.observe(
+        temporal_observation(
+            1,
+            [2],
+            t_start=horizon + 0.001,
+            clock_id="sensor",
+        )
+    )
+
+    assert field.association("h1", 1, 2, channel="temporal") == 0.0
