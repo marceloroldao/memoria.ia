@@ -314,3 +314,58 @@ def test_same_provenance_with_updated_metrics_is_preserved_without_support_infla
     hypothesis = resolution.hypotheses[0]
     assert hypothesis.independent_support == 3
     assert resolution.resolved is True
+
+
+def test_independent_reinforcement_resolves_competition_without_erasing_loser():
+    memory = StructuralTemporalObservationMemory()
+
+    _ingest(
+        memory,
+        orientation="a_before_b",
+        candidate="tec_forward_initial",
+        slices=("1", "2", "3"),
+        frames=("f1", "f2", "f3"),
+    )
+    _ingest(
+        memory,
+        orientation="b_before_a",
+        candidate="tec_backward",
+        slices=("4", "5", "6"),
+        frames=("f4", "f5", "f6"),
+    )
+
+    tied = memory.resolve(
+        "temporal:pattern:10",
+        "temporal:pattern:20",
+        min_independent_slices=3,
+    )
+    assert tied.resolved is False
+    assert tied.ambiguous is True
+
+    _ingest(
+        memory,
+        orientation="a_before_b",
+        candidate="tec_forward_reinforced",
+        slices=("7", "8"),
+        frames=("f7", "f8"),
+    )
+
+    reinforced = memory.resolve(
+        "temporal:pattern:10",
+        "temporal:pattern:20",
+        min_independent_slices=3,
+    )
+
+    assert reinforced.resolved is True
+    assert reinforced.ambiguous is False
+    assert reinforced.supported_orientation == "a_before_b"
+    assert reinforced.reason == "reinforced-supported-orientation"
+
+    hypotheses = {
+        item.orientation: item
+        for item in reinforced.hypotheses
+    }
+    assert hypotheses["a_before_b"].independent_support == 5
+    assert hypotheses["b_before_a"].independent_support == 3
+    assert hypotheses["a_before_b"].supported is True
+    assert hypotheses["b_before_a"].supported is True
