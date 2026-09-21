@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+from math import isfinite
 import os
 from pathlib import Path
 from threading import RLock
@@ -71,6 +72,34 @@ def _normalize_event(event: dict[str, Any]) -> dict[str, Any]:
     if any(item < 0 for item in normalized["relation_ids"]):
         raise ValueError("StructuralEvent relation ids must be >= 0")
     return normalized
+
+
+def _normalize_temporal(temporal: dict[str, Any] | None) -> dict[str, Any] | None:
+    if temporal is None:
+        return None
+    if not isinstance(temporal, dict):
+        raise ValueError("structural temporal coordinate must be an object")
+    clock_id = str(temporal.get("clock_id") or "").strip()
+    if not clock_id:
+        raise ValueError("structural temporal clock_id is required")
+    unit = str(temporal.get("unit") or "s").strip()
+    if unit != "s":
+        raise ValueError("structural temporal unit must be 's'")
+    try:
+        t_start = float(temporal["t_start"])
+        t_end = float(temporal["t_end"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("structural temporal t_start/t_end must be numeric") from exc
+    if not isfinite(t_start) or not isfinite(t_end):
+        raise ValueError("structural temporal coordinates must be finite")
+    if t_end < t_start:
+        raise ValueError("structural temporal t_end must be >= t_start")
+    return {
+        "clock_id": clock_id,
+        "t_start": t_start,
+        "t_end": t_end,
+        "unit": "s",
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,8 +284,10 @@ class StructuralObservationStore:
         event: dict[str, Any],
         *,
         provenance: dict[str, Any] | None = None,
+        temporal: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], bool]:
         normalized = _normalize_event(event)
+        normalized_temporal = _normalize_temporal(temporal)
         observation_id = self.observation_id(normalized)
         envelope = {
             "format": STRUCTURAL_OBSERVATION_FORMAT,
@@ -265,6 +296,8 @@ class StructuralObservationStore:
             "provenance": {} if provenance is None else provenance,
             "semantic_projection": False,
         }
+        if normalized_temporal is not None:
+            envelope["temporal"] = normalized_temporal
         payload = _canonical_json(envelope)
 
         with self._lock:
