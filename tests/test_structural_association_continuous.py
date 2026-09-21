@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from math import exp
 
+import pytest
+
 from memoria_resolutiva.structural_association_continuous import (
     ContinuousStructuralAssociationField,
 )
@@ -25,6 +27,17 @@ def observation(sequence, trail, *, hierarchy="h1"):
         "provenance": {"hierarchy_id": hierarchy},
         "semantic_projection": False,
     }
+
+
+def physical_observation(sequence, trail, t_start, t_end=None, *, clock="clock:main", hierarchy="h1"):
+    item = observation(sequence, trail, hierarchy=hierarchy)
+    item["temporal"] = {
+        "clock_id": clock,
+        "t_start": float(t_start),
+        "t_end": float(t_start if t_end is None else t_end),
+        "unit": "s",
+    }
+    return item
 
 
 def _lag_weight(lag):
@@ -228,3 +241,113 @@ def test_unique_stream_forms_causal_band_not_all_to_all_graph():
         - (horizon * (horizon + 1)) // 2
     )
     assert field.edge_count == expected_edges
+
+
+
+def test_physical_time_weight_depends_on_seconds_not_event_count():
+    sparse = ContinuousStructuralAssociationField(
+        temporal_decay=0.7,
+        within_decay=0.5,
+        forgetting_rate=0,
+        trace_floor=1e-9,
+        temporal_axis="physical",
+    )
+    sparse.observe(physical_observation(0, [1], 0.0))
+    sparse.observe(physical_observation(1, [2], 1.0))
+    sparse_weight = sparse.association("h1", 1, 2, channel="temporal")
+
+    dense = ContinuousStructuralAssociationField(
+        temporal_decay=0.7,
+        within_decay=0.5,
+        forgetting_rate=0,
+        trace_floor=1e-9,
+        temporal_axis="physical",
+    )
+    dense.observe(physical_observation(0, [1], 0.0))
+    for sequence in range(1, 10):
+        dense.observe(
+            physical_observation(sequence, [1000 + sequence], sequence / 10.0)
+        )
+    dense.observe(physical_observation(10, [2], 1.0))
+    dense_weight = dense.association("h1", 1, 2, channel="temporal")
+
+    expected = exp(-0.7)
+    assert abs(sparse_weight - expected) < 1e-12
+    assert abs(dense_weight - expected) < 1e-12
+
+
+def test_physical_time_distinguishes_same_event_lag_with_different_elapsed_time():
+    close = ContinuousStructuralAssociationField(
+        temporal_decay=1.0,
+        within_decay=0.5,
+        forgetting_rate=0,
+        trace_floor=1e-9,
+        temporal_axis="physical",
+    )
+    far = ContinuousStructuralAssociationField(
+        temporal_decay=1.0,
+        within_decay=0.5,
+        forgetting_rate=0,
+        trace_floor=1e-9,
+        temporal_axis="physical",
+    )
+
+    close.observe(physical_observation(0, [1], 0.0))
+    close.observe(physical_observation(1, [2], 0.01))
+    far.observe(physical_observation(0, [1], 0.0))
+    far.observe(physical_observation(1, [2], 5.0))
+
+    close_weight = close.association("h1", 1, 2, channel="temporal")
+    far_weight = far.association("h1", 1, 2, channel="temporal")
+    assert close_weight > far_weight > 0.0
+    assert abs(close_weight - exp(-0.01)) < 1e-12
+    assert abs(far_weight - exp(-5.0)) < 1e-12
+
+
+def test_physical_time_isolates_clock_domains():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.5,
+        within_decay=0.5,
+        forgetting_rate=0,
+        trace_floor=1e-9,
+        temporal_axis="physical",
+    )
+    field.observe(physical_observation(0, [1], 0.0, clock="clock:a"))
+    field.observe(physical_observation(1, [2], 0.1, clock="clock:b"))
+
+    assert field.association("h1", 1, 2, channel="temporal") == 0.0
+
+
+def test_physical_time_rejects_out_of_order_without_mutating_state():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.5,
+        within_decay=0.5,
+        forgetting_rate=0,
+        trace_floor=1e-9,
+        temporal_axis="physical",
+    )
+    field.observe(physical_observation(0, [1], 1.0))
+    before = field.snapshot()
+
+    with pytest.raises(ValueError, match="monotonic"):
+        field.observe(physical_observation(1, [2], 0.5))
+
+    assert field.snapshot() == before
+    assert field.observation_count == 1
+
+
+def test_physical_history_is_bounded_by_elapsed_seconds_not_sample_count():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=1.0,
+        within_decay=0.5,
+        forgetting_rate=0,
+        trace_floor=1e-4,
+        temporal_axis="physical",
+    )
+    step = 0.1
+    for sequence in range(2_000):
+        field.observe(physical_observation(sequence, [sequence + 1], sequence * step))
+
+    maximum_active = int(field.physical_temporal_horizon_seconds / step) + 2
+    assert field.active_history_size("h1", clock_id="clock:main") <= maximum_active
+    assert field.active_history_size("h1", clock_id="clock:main") < 200
