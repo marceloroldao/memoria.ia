@@ -7,10 +7,16 @@ from memoria_resolutiva.product_identity import OrganizationIdentity
 from memoria_resolutiva.product_service import EnterpriseMemoryService
 
 
-def client(tmp_path, *, with_chat=False):
+def client(tmp_path, *, with_chat=False, format_callback=None):
     service = EnterpriseMemoryService(OrganizationIdentity("org-a", "Org A"))
     chat_service = ProductChatService(service, MockLLMAdapter()) if with_chat else None
-    app = create_app(service, api_key="secret", data_dir=tmp_path, chat_service=chat_service)
+    app = create_app(
+        service,
+        api_key="secret",
+        data_dir=tmp_path,
+        chat_service=chat_service,
+        format_callback=format_callback,
+    )
     return TestClient(app)
 
 
@@ -196,3 +202,38 @@ def test_compare_reports_observed_token_reduction(tmp_path):
     body = r.json()
     assert body["baseline"]["metrics"]["input_tokens"] > body["memoria"]["metrics"]["input_tokens"]
     assert body["token_reduction"] > 0
+
+
+def test_admin_format_requires_admin_and_exact_confirmation(tmp_path):
+    calls = []
+    c = client(tmp_path, format_callback=lambda confirm: calls.append(confirm) or {"status": "OK", "wal_preserved": True})
+
+    unauthenticated = c.post("/api/v1/admin/format", json={"confirm": "FORMATAR"})
+    assert unauthenticated.status_code == 401
+
+    rejected = c.post(
+        "/api/v1/admin/format",
+        headers={"X-Memoria-Key": "secret"},
+        json={"confirm": "formatar"},
+    )
+    assert rejected.status_code == 400
+    assert calls == []
+
+    accepted = c.post(
+        "/api/v1/admin/format",
+        headers={"X-Memoria-Key": "secret"},
+        json={"confirm": "FORMATAR"},
+    )
+    assert accepted.status_code == 200
+    assert accepted.json() == {"status": "OK", "wal_preserved": True}
+    assert calls == ["FORMATAR"]
+
+
+def test_admin_format_is_fail_closed_without_runtime_support(tmp_path):
+    c = client(tmp_path)
+    response = c.post(
+        "/api/v1/admin/format",
+        headers={"X-Memoria-Key": "secret"},
+        json={"confirm": "FORMATAR"},
+    )
+    assert response.status_code == 501
