@@ -6,6 +6,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
+from memoria_resolutiva.bdr_store import native_bdr_available
+
 
 def _env(data_dir: Path) -> dict[str, str]:
     env = os.environ.copy()
@@ -179,3 +183,79 @@ with TestClient(app) as client:
     assert result["enabled"] is False
     assert result["backend"] is None
     assert result["ingest_status"] == 404
+
+
+@pytest.mark.skipif(not native_bdr_available(), reason="native BDR extension not built")
+def test_server_v2_zero_llm_survives_restart_on_native_bdr(tmp_path: Path):
+    data_dir = tmp_path / "server-bdr"
+    env = _env(data_dir)
+    env["MEMORIA_STORAGE_BACKEND"] = "bdr"
+
+    first = _run(
+        """
+import json
+from fastapi.testclient import TestClient
+from memoria_resolutiva.product_server import app
+
+headers = {"X-Memoria-Key": "v2-secret"}
+with TestClient(app) as client:
+    for text in (
+        "meu gato e da cor verde",
+        "meu carro e da cor azul",
+        "minha camisa e da cor preta",
+    ):
+        response = client.post(
+            "/api/v1/v2/trajectory/ingest",
+            headers=headers,
+            json={"session_id": "s1", "text": text},
+        )
+        response.raise_for_status()
+
+    resolved = client.post(
+        "/api/v1/resolve/native",
+        headers=headers,
+        json={
+            "message": "qual a cor da minha camisa?",
+            "scope": {"agent_id": "s1"},
+        },
+    )
+    resolved.raise_for_status()
+    health = client.get("/api/v1/storage/health").json()
+    print(json.dumps({
+        "resolved": resolved.json(),
+        "health": health,
+    }, sort_keys=True))
+""",
+        env,
+    )
+
+    assert first["resolved"]["status"] == "RESOLVED"
+    assert first["resolved"]["text"] == "preta"
+    assert first["resolved"]["external_calls"] == 0
+    assert first["health"]["v2_trajectory_backend"] == "bdr"
+
+    restarted = _run(
+        """
+import json
+from fastapi.testclient import TestClient
+from memoria_resolutiva.product_server import app
+
+headers = {"X-Memoria-Key": "v2-secret"}
+with TestClient(app) as client:
+    response = client.post(
+        "/api/v1/resolve/native",
+        headers=headers,
+        json={
+            "message": "qual a cor da minha camisa?",
+            "scope": {"agent_id": "s1"},
+        },
+    )
+    response.raise_for_status()
+    print(json.dumps(response.json(), sort_keys=True))
+""",
+        env,
+    )
+
+    assert restarted["status"] == "RESOLVED"
+    assert restarted["text"] == "preta"
+    assert restarted["external_calls"] == 0
