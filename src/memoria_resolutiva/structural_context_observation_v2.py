@@ -141,8 +141,9 @@ class StructuralContextObservationMemory:
     ) -> StructuralContextObservation:
         if not source_candidate_id:
             raise ValueError("source_candidate_id must be non-empty")
+        original_antecedents = tuple(str(value) for value in antecedent_patterns)
         antecedents, consequence = _canonical_context(
-            antecedent_patterns,
+            original_antecedents,
             consequence_pattern,
         )
         slices = tuple(sorted(_stable_unique(supporting_slice_ids)))
@@ -154,8 +155,7 @@ class StructuralContextObservationMemory:
         if len(lower) != 2:
             raise ValueError("lower_order_reliabilities must contain exactly two values")
         # Canonicalize lower-order metrics together with antecedents.
-        original = tuple(str(value) for value in antecedent_patterns)
-        if original[0] > original[1]:
+        if original_antecedents[0] > original_antecedents[1]:
             lower = (lower[1], lower[0])
 
         metrics = {
