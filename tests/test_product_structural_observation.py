@@ -105,7 +105,10 @@ def test_structural_routes_require_admin_key(tmp_path):
     assert client.get("/api/v1/structural/health").status_code == 401
     assert client.post(
         "/api/v1/structural/observations",
-        json={"event": _event(), "provenance": {}},
+        json={
+            "event": _event(),
+            "provenance": {"hierarchy_id": "hierarchy:test"},
+        },
     ).status_code == 401
 
 
