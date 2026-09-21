@@ -92,6 +92,17 @@ memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
     memoria_mobile_buffer *response_json
 );
 
+/*
+ * Destructive logical format. Requires {"confirm":"FORMATAR"}.
+ * The underlying BDR WAL is preserved; current resident keys are deleted by
+ * one durable atomic batch and in-memory state is reset on the same handle.
+ */
+memoria_mobile_status memoria_mobile_format_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *handle);
 void memoria_mobile_free_buffer(memoria_mobile_buffer buffer);
 void memoria_mobile_close(memoria_mobile_handle *handle);

@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: marceloroldao/resolutive-DB
-          ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+          ref: d09914b85646353d8fd004ccf99e96a94fab9eef
           path: deps/resolutive-DB
       - name: Configure durable host runtime
         run: >-
@@ -78,7 +78,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: marceloroldao/resolutive-DB
-          ref: 1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+          ref: d09914b85646353d8fd004ccf99e96a94fab9eef
           path: deps/resolutive-DB
       - name: Install Android NDK
         run: |
@@ -106,5 +106,6 @@ jobs:
           grep -q "memoria_mobile_store_episode_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_recall_episode_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_export_snapshot_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_format_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_flush" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_close" memoria-mobile-symbols.txt

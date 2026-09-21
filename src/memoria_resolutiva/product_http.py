@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 import hmac
 
 try:
@@ -77,6 +78,10 @@ class CreateApplicationRequest(BaseModel):
     scopes: list[str] = Field(default_factory=lambda: ["memory.read", "memory.write", "chat.use"])
 
 
+class FormatDatabaseRequest(BaseModel):
+    confirm: str = Field(min_length=1, max_length=32)
+
+
 @dataclass(frozen=True, slots=True)
 class AuthContext:
     is_admin: bool
@@ -93,6 +98,7 @@ def create_app(
     chat_service: ProductChatService | None = None,
     application_registry: ApplicationRegistry | None = None,
     native_resolve_service: NativeResolveService | None = None,
+    format_callback: Callable[[str], dict[str, object]] | None = None,
     lifespan=None,
 ) -> FastAPI:
     if not api_key:
@@ -161,6 +167,19 @@ def create_app(
     @app.get(f"{API_PREFIX}/health")
     def health():
         return {"status": "ok", "product": "memoria.ia-enterprise", "maturity": "product-alpha"}
+
+    @app.post(f"{API_PREFIX}/admin/format", dependencies=[Depends(require_admin)])
+    def admin_format(request: FormatDatabaseRequest):
+        if request.confirm != "FORMATAR":
+            raise HTTPException(status_code=400, detail="type FORMATAR to confirm destructive format")
+        if format_callback is None:
+            raise HTTPException(status_code=501, detail="logical format is unavailable for this runtime")
+        try:
+            return format_callback(request.confirm)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.get(f"{API_PREFIX}/admin/status", dependencies=[Depends(require_admin)])
     def admin_status():
