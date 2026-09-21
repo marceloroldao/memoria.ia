@@ -80,7 +80,7 @@ class ContinuousStructuralAssociationField:
                 ]
             ],
         ] = defaultdict(deque)
-        self._latest_temporal: dict[tuple[str, str], float] = {}
+        self._latest_temporal: dict[tuple[str, str], _TemporalCoordinate] = {}
         self._seen_observations: set[str] = set()
         self._observation_count = 0
 
@@ -171,6 +171,18 @@ class ContinuousStructuralAssociationField:
             raise ValueError("structural observation temporal interval is inverted")
         return _TemporalCoordinate(clock_id=clock_id, t_start=t_start, t_end=t_end)
 
+    @staticmethod
+    def _physical_interval_distance(
+        left: _TemporalCoordinate,
+        right: _TemporalCoordinate,
+    ) -> float:
+        if left.t_end >= right.t_start and right.t_end >= left.t_start:
+            return 0.0
+        return min(
+            abs(right.t_start - left.t_end),
+            abs(left.t_start - right.t_end),
+        )
+
     def _validate_physical_temporal_input(
         self,
         hierarchy_id: str,
@@ -180,7 +192,7 @@ class ContinuousStructuralAssociationField:
             return
         key = (hierarchy_id, temporal.clock_id)
         latest = self._latest_temporal.get(key)
-        if latest is not None and temporal.center < latest:
+        if latest is not None and temporal.center < latest.center:
             raise ValueError(
                 "physical temporal observations must be non-decreasing within a clock"
             )
@@ -192,7 +204,7 @@ class ContinuousStructuralAssociationField:
             for _tick, _profile, previous in self._recent.get(hierarchy_id, ())
             if previous is not None
             and previous.clock_id == temporal.clock_id
-            and temporal.center - previous.center <= horizon
+            and self._physical_interval_distance(temporal, previous) <= horizon
         )
         if active_same_clock >= self.max_physical_history_events:
             raise RuntimeError(
@@ -208,17 +220,18 @@ class ContinuousStructuralAssociationField:
         current_temporal: _TemporalCoordinate | None,
         previous_temporal: _TemporalCoordinate | None,
     ) -> float:
-        if (
-            self.physical_time_decay is not None
-            and current_temporal is not None
-            and previous_temporal is not None
-            and current_temporal.clock_id == previous_temporal.clock_id
-        ):
-            delta = current_temporal.center - previous_temporal.center
-            if delta < 0.0:
-                raise ValueError(
-                    "physical temporal observations must be non-decreasing within a clock"
-                )
+        if self.physical_time_decay is not None:
+            if current_temporal is None and previous_temporal is None:
+                lag = current_tick - previous_tick
+                return exp(-self.temporal_decay * float(lag - 1))
+            if current_temporal is None or previous_temporal is None:
+                return 0.0
+            if current_temporal.clock_id != previous_temporal.clock_id:
+                return 0.0
+            delta = self._physical_interval_distance(
+                current_temporal,
+                previous_temporal,
+            )
             return exp(-self.physical_time_decay * delta)
 
         lag = current_tick - previous_tick
@@ -267,7 +280,10 @@ class ContinuousStructuralAssociationField:
             if physical_horizon is not None and temporal is not None:
                 latest = self._latest_temporal.get((hierarchy_id, temporal.clock_id))
                 if latest is not None:
-                    physical_alive = latest - temporal.center <= physical_horizon
+                    physical_alive = (
+                        self._physical_interval_distance(latest, temporal)
+                        <= physical_horizon
+                    )
             if causal_alive or physical_alive:
                 kept.append((tick, profile, temporal))
         self._recent[hierarchy_id] = kept
@@ -294,7 +310,7 @@ class ContinuousStructuralAssociationField:
         self._seen_observations.add(observation_id)
         self._observation_count += 1
         if temporal is not None and self.physical_time_decay is not None:
-            self._latest_temporal[(hierarchy_id, temporal.clock_id)] = temporal.center
+            self._latest_temporal[(hierarchy_id, temporal.clock_id)] = temporal
         self._trim_history(hierarchy_id)
 
         horizon = self.within_horizon

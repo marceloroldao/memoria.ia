@@ -304,6 +304,7 @@ def test_physical_time_can_bridge_many_unrelated_causal_events():
 
     weight = field.association("h1", 1, 2, channel="temporal")
     assert abs(weight - exp(-2.0 * 0.01)) < 1e-12
+    assert field.association("h1", 1, 1001, channel="temporal") == 0.0
 
 
 def test_physical_time_falls_back_to_causal_lag_without_explicit_clock():
@@ -392,3 +393,111 @@ def test_physical_history_expires_only_after_numerical_time_horizon():
     )
 
     assert field.association("h1", 1, 2, channel="temporal") == 0.0
+
+
+
+def test_explicit_different_clocks_never_fall_back_to_causal_lag():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.2,
+        within_decay=0.2,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    field.observe(
+        temporal_observation(0, [1], t_start=0.0, clock_id="clock:a")
+    )
+    field.observe(
+        temporal_observation(1, [2], t_start=0.01, clock_id="clock:b")
+    )
+
+    assert field.association("h1", 1, 2, channel="temporal") == 0.0
+
+
+def test_overlapping_physical_intervals_have_zero_temporal_distance():
+    field = ContinuousStructuralAssociationField(
+        physical_time_decay=3.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    field.observe(
+        temporal_observation(
+            0,
+            [1],
+            t_start=0.0,
+            t_end=2.0,
+            clock_id="shared",
+        )
+    )
+    field.observe(
+        temporal_observation(
+            1,
+            [2],
+            t_start=1.5,
+            t_end=2.5,
+            clock_id="shared",
+        )
+    )
+
+    assert field.association("h1", 1, 2, channel="temporal") == 1.0
+
+
+def test_physical_direct_weight_is_invariant_to_sampling_density():
+    sparse = ContinuousStructuralAssociationField(
+        physical_time_decay=0.7,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    sparse.observe(temporal_observation(0, [1], t_start=0.0, clock_id="shared"))
+    sparse.observe(temporal_observation(1, [2], t_start=1.0, clock_id="shared"))
+    sparse_weight = sparse.association("h1", 1, 2, channel="temporal")
+
+    dense = ContinuousStructuralAssociationField(
+        physical_time_decay=0.7,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    dense.observe(temporal_observation(0, [1], t_start=0.0, clock_id="shared"))
+    for sequence in range(1, 10):
+        dense.observe(
+            temporal_observation(
+                sequence,
+                [1000 + sequence],
+                t_start=sequence / 10.0,
+                clock_id="shared",
+            )
+        )
+    dense.observe(temporal_observation(10, [2], t_start=1.0, clock_id="shared"))
+    dense_weight = dense.association("h1", 1, 2, channel="temporal")
+
+    expected = exp(-0.7)
+    assert abs(sparse_weight - expected) < 1e-12
+    assert abs(dense_weight - expected) < 1e-12
+
+
+
+def test_physical_and_untimed_events_do_not_mix_temporal_domains():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.2,
+        within_decay=0.2,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    field.observe(
+        temporal_observation(0, [1], t_start=0.0, clock_id="sensor")
+    )
+    field.observe(observation(1, [2]))
+
+    assert field.association("h1", 1, 2, channel="temporal") == 0.0
+
+    causal = ContinuousStructuralAssociationField(
+        temporal_decay=0.2,
+        within_decay=0.2,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    causal.observe(observation(0, [1]))
+    causal.observe(observation(1, [2]))
+    assert causal.association("h1", 1, 2, channel="temporal") == 1.0
