@@ -178,3 +178,28 @@ def test_ten_thousand_event_recurrent_stream_keeps_active_history_bounded():
     # One-symbol events produce only temporal pairs; the recurring structural
     # universe bounds the possible directed pair identities.
     assert field.edge_count <= vocabulary * vocabulary
+
+
+def test_recurrent_near_relation_outranks_rotating_distractors():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.35,
+        within_decay=0.35,
+        forgetting_rate=0.03,
+        trace_floor=1e-8,
+    )
+
+    sequence = 0
+    distractors = list(range(3, 17))
+    for cycle in range(48):
+        noise = distractors[cycle % len(distractors)]
+        for trail in ([1], [2], [noise]):
+            field.observe(observation(sequence, trail))
+            sequence += 1
+
+    repeated = field.association("h1", 1, 2, channel="temporal")
+    incidental = [
+        field.association("h1", 1, distractor, channel="temporal")
+        for distractor in distractors
+    ]
+
+    assert repeated > max(incidental)
