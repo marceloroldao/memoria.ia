@@ -255,6 +255,7 @@ def build_app():
     chat_conversation_resolver = SemanticActivationConversationResolver(conversation_service)
     chat_service = _build_chat_service(service, configuration, conversation_resolver=chat_conversation_resolver)
     native_resolve_service = NativeResolveService(chat_conversation_resolver)
+    format_callback = conversation_backend.format_store if conversation_is_native and episodic_is_native else None
     app = create_app(
         service,
         api_key=api_key,
@@ -263,6 +264,7 @@ def build_app():
         chat_service=chat_service,
         application_registry=application_registry,
         native_resolve_service=native_resolve_service,
+        format_callback=format_callback,
         lifespan=lifespan,
     )
 
