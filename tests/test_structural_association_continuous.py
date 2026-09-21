@@ -473,3 +473,31 @@ def test_physical_direct_weight_is_invariant_to_sampling_density():
     expected = exp(-0.7)
     assert abs(sparse_weight - expected) < 1e-12
     assert abs(dense_weight - expected) < 1e-12
+
+
+
+def test_physical_and_untimed_events_do_not_mix_temporal_domains():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.2,
+        within_decay=0.2,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    field.observe(
+        temporal_observation(0, [1], t_start=0.0, clock_id="sensor")
+    )
+    field.observe(observation(1, [2]))
+
+    assert field.association("h1", 1, 2, channel="temporal") == 0.0
+
+    causal = ContinuousStructuralAssociationField(
+        temporal_decay=0.2,
+        within_decay=0.2,
+        physical_time_decay=1.0,
+        forgetting_rate=0,
+        trace_floor=1e-8,
+    )
+    causal.observe(observation(0, [1]))
+    causal.observe(observation(1, [2]))
+    assert causal.association("h1", 1, 2, channel="temporal") == 1.0
