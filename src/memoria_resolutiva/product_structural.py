@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .structural_association_runtime import StructuralAssociationRuntime
 from .structural_observation import StructuralObservationStore
+from .structural_text_recall import StructuralTextRecall
 
 
 class StructuralEventPayload(BaseModel):
@@ -33,6 +34,21 @@ class StructuralProvenancePayload(BaseModel):
 class StructuralObservationRequest(BaseModel):
     event: StructuralEventPayload
     provenance: StructuralProvenancePayload
+
+
+class StructuralTextObservationRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=20000)
+    hierarchy_id: str = Field(min_length=1, max_length=512)
+    source_id: str = Field(min_length=1, max_length=512)
+    sequence: int = Field(ge=0)
+    source_kind: str = Field(default="user", min_length=1, max_length=128)
+
+
+class StructuralTextResolveRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=4000)
+    hierarchy_id: str = Field(min_length=1, max_length=512)
+    limit: int = Field(default=3, ge=1, le=20)
+    max_scan: int = Field(default=2048, ge=1, le=100000)
 
 
 @dataclass(slots=True)
@@ -80,6 +96,8 @@ def attach_structural_observation_routes(
     api_key: str,
     service: ProductStructuralObservationService,
 ) -> None:
+    text_recall = StructuralTextRecall(service.store, service.associations)
+
     def require_admin(x_memoria_key: str | None = Header(default=None)) -> None:
         if x_memoria_key is None or not hmac.compare_digest(x_memoria_key, api_key):
             raise HTTPException(status_code=401, detail="invalid API credentials")
@@ -109,6 +127,46 @@ def attach_structural_observation_routes(
             "association_sync_observations": replayed,
             "semantic_projection": False,
             "backend": service.store.backend,
+        }
+
+    @app.post("/api/v1/structural/text/observe", status_code=201, dependencies=[Depends(require_admin)])
+    def observe_structural_text(request: StructuralTextObservationRequest):
+        try:
+            result = text_recall.observe(
+                request.text,
+                hierarchy_id=request.hierarchy_id,
+                source_id=request.source_id,
+                sequence=request.sequence,
+                source_kind=request.source_kind,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {
+            "stored": not result.duplicate,
+            "duplicate": result.duplicate,
+            "observation_id": result.observation_id,
+            "association_sync_observations": result.association_sync_observations,
+            "symbol_count": result.symbol_count,
+            "semantic_projection": False,
+        }
+
+    @app.post("/api/v1/structural/text/resolve", dependencies=[Depends(require_admin)])
+    def resolve_structural_text(request: StructuralTextResolveRequest):
+        try:
+            result = text_recall.resolve(
+                request.query,
+                hierarchy_id=request.hierarchy_id,
+                top_k=request.limit,
+                max_scan=request.max_scan,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {
+            "status": result.status,
+            "contexts": [asdict(row) for row in result.contexts],
+            "scanned_observations": result.scanned_observations,
+            "query_symbol_count": result.query_symbol_count,
+            "semantic_projection": result.semantic_projection,
         }
 
     @app.get("/api/v1/structural/observations/recent", dependencies=[Depends(require_admin)])

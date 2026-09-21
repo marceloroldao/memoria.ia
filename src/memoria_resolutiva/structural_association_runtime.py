@@ -240,6 +240,23 @@ class StructuralAssociationRuntime:
             self._checkpoint()
             return len(pending)
 
+    def association(
+        self,
+        hierarchy_id: str,
+        source: int,
+        target: int,
+        *,
+        channel: str | None = None,
+    ) -> float:
+        """Read one decayed association through the runtime lock."""
+        with self._lock:
+            return self.field.association(
+                hierarchy_id,
+                source,
+                target,
+                channel=channel,
+            )
+
     def strongest(
         self,
         hierarchy_id: str,
