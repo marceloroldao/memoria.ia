@@ -126,12 +126,12 @@ class StructuralAssociationField:
         observation_id = str(envelope.get("observation_id") or "").strip()
         if not observation_id:
             raise ValueError("structural observation observation_id is required")
+        hierarchy_id = self._hierarchy_id(envelope)
         if observation_id in self._seen_observations:
-            return self.tick
+            return self._ticks[hierarchy_id]
         event = envelope.get("event")
         if not isinstance(event, dict):
             raise ValueError("structural observation event must be an object")
-        hierarchy_id = self._hierarchy_id(envelope)
         trail = self._trail(event)
 
         self.tick += 1
