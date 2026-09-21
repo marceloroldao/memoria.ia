@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict, deque
 from dataclasses import dataclass
-from math import exp, floor, log
+from math import exp, floor, isfinite, log
 from typing import Any
 
 from .structural_association_field import StructuralAssociation
@@ -13,6 +13,17 @@ class _ContinuousEdge:
     weight: float = 0.0
     observations: int = 0
     last_tick: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class _TemporalCoordinate:
+    clock_id: str
+    t_start: float
+    t_end: float
+
+    @property
+    def center(self) -> float:
+        return (self.t_start + self.t_end) * 0.5
 
 
 class ContinuousStructuralAssociationField:
@@ -33,6 +44,8 @@ class ContinuousStructuralAssociationField:
         temporal_decay: float = 0.35,
         forgetting_rate: float = 0.01,
         trace_floor: float = 1e-6,
+        physical_time_decay: float | None = None,
+        max_physical_history_events: int = 4096,
     ) -> None:
         if within_decay <= 0.0:
             raise ValueError("within_decay must be > 0")
@@ -42,14 +55,32 @@ class ContinuousStructuralAssociationField:
             raise ValueError("forgetting_rate must be >= 0")
         if not 0.0 < trace_floor < 1.0:
             raise ValueError("trace_floor must be in (0, 1)")
+        if physical_time_decay is not None and physical_time_decay <= 0.0:
+            raise ValueError("physical_time_decay must be > 0 when enabled")
+        if max_physical_history_events < 1:
+            raise ValueError("max_physical_history_events must be >= 1")
         self.within_decay = float(within_decay)
         self.temporal_decay = float(temporal_decay)
         self.forgetting_rate = float(forgetting_rate)
         self.trace_floor = float(trace_floor)
+        self.physical_time_decay = (
+            None if physical_time_decay is None else float(physical_time_decay)
+        )
+        self.max_physical_history_events = int(max_physical_history_events)
         self.tick = 0
         self._ticks: dict[str, int] = defaultdict(int)
         self._edges: dict[tuple[str, int, int, str], _ContinuousEdge] = {}
-        self._recent: dict[str, deque[tuple[int, tuple[tuple[int, float], ...]]]] = defaultdict(deque)
+        self._recent: dict[
+            str,
+            deque[
+                tuple[
+                    int,
+                    tuple[tuple[int, float], ...],
+                    _TemporalCoordinate | None,
+                ]
+            ],
+        ] = defaultdict(deque)
+        self._latest_temporal: dict[tuple[str, str], float] = {}
         self._seen_observations: set[str] = set()
         self._observation_count = 0
 
@@ -64,6 +95,12 @@ class ContinuousStructuralAssociationField:
     @property
     def temporal_horizon(self) -> int:
         return self._numerical_horizon(self.temporal_decay, self.trace_floor)
+
+    @property
+    def physical_horizon_seconds(self) -> float | None:
+        if self.physical_time_decay is None:
+            return None
+        return -log(self.trace_floor) / self.physical_time_decay
 
     @property
     def edge_count(self) -> int:
@@ -104,6 +141,89 @@ class ContinuousStructuralAssociationField:
         total = float(len(trail))
         return tuple(sorted((symbol, count / total) for symbol, count in counts.items()))
 
+    @staticmethod
+    def _temporal_coordinate(envelope: dict[str, Any]) -> _TemporalCoordinate | None:
+        provenance = envelope.get("provenance")
+        if not isinstance(provenance, dict):
+            return None
+        raw = provenance.get("temporal")
+        if raw is None:
+            return None
+        if not isinstance(raw, dict):
+            raise ValueError("structural observation temporal provenance must be an object")
+        if str(raw.get("unit") or "") != "s":
+            raise ValueError("structural observation temporal unit must be 's'")
+        clock_id = str(raw.get("clock_id") or "").strip()
+        if not clock_id:
+            raise ValueError("structural observation temporal clock_id is required")
+        try:
+            t_start = float(raw["t_start"])
+            t_end = float(raw["t_end"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(
+                "structural observation temporal t_start/t_end must be finite seconds"
+            ) from exc
+        if not isfinite(t_start) or not isfinite(t_end):
+            raise ValueError(
+                "structural observation temporal t_start/t_end must be finite seconds"
+            )
+        if t_end < t_start:
+            raise ValueError("structural observation temporal interval is inverted")
+        return _TemporalCoordinate(clock_id=clock_id, t_start=t_start, t_end=t_end)
+
+    def _validate_physical_temporal_input(
+        self,
+        hierarchy_id: str,
+        temporal: _TemporalCoordinate | None,
+    ) -> None:
+        if temporal is None or self.physical_time_decay is None:
+            return
+        key = (hierarchy_id, temporal.clock_id)
+        latest = self._latest_temporal.get(key)
+        if latest is not None and temporal.center < latest:
+            raise ValueError(
+                "physical temporal observations must be non-decreasing within a clock"
+            )
+
+        horizon = self.physical_horizon_seconds
+        assert horizon is not None
+        active_same_clock = sum(
+            1
+            for _tick, _profile, previous in self._recent.get(hierarchy_id, ())
+            if previous is not None
+            and previous.clock_id == temporal.clock_id
+            and temporal.center - previous.center <= horizon
+        )
+        if active_same_clock >= self.max_physical_history_events:
+            raise RuntimeError(
+                "physical temporal history saturation: aggregate upstream into "
+                "RealitySlices or reduce temporal resolution"
+            )
+
+    def _temporal_kernel(
+        self,
+        *,
+        current_tick: int,
+        previous_tick: int,
+        current_temporal: _TemporalCoordinate | None,
+        previous_temporal: _TemporalCoordinate | None,
+    ) -> float:
+        if (
+            self.physical_time_decay is not None
+            and current_temporal is not None
+            and previous_temporal is not None
+            and current_temporal.clock_id == previous_temporal.clock_id
+        ):
+            delta = current_temporal.center - previous_temporal.center
+            if delta < 0.0:
+                raise ValueError(
+                    "physical temporal observations must be non-decreasing within a clock"
+                )
+            return exp(-self.physical_time_decay * delta)
+
+        lag = current_tick - previous_tick
+        return exp(-self.temporal_decay * float(lag - 1))
+
     def _edge_value(self, edge: _ContinuousEdge, tick: int) -> float:
         age = max(0, tick - edge.last_tick)
         if age == 0 or self.forgetting_rate == 0.0:
@@ -134,10 +254,23 @@ class ContinuousStructuralAssociationField:
 
     def _trim_history(self, hierarchy_id: str) -> None:
         now = self._ticks[hierarchy_id]
-        horizon = self.temporal_horizon
+        causal_horizon = self.temporal_horizon
+        physical_horizon = self.physical_horizon_seconds
         recent = self._recent[hierarchy_id]
-        while recent and now - recent[0][0] > horizon:
-            recent.popleft()
+        if not recent:
+            return
+
+        kept = deque()
+        for tick, profile, temporal in recent:
+            causal_alive = now - tick <= causal_horizon
+            physical_alive = False
+            if physical_horizon is not None and temporal is not None:
+                latest = self._latest_temporal.get((hierarchy_id, temporal.clock_id))
+                if latest is not None:
+                    physical_alive = latest - temporal.center <= physical_horizon
+            if causal_alive or physical_alive:
+                kept.append((tick, profile, temporal))
+        self._recent[hierarchy_id] = kept
 
     def observe(self, envelope: dict[str, Any]) -> int:
         if envelope.get("semantic_projection") not in {False, None}:
@@ -152,12 +285,16 @@ class ContinuousStructuralAssociationField:
         if not isinstance(event, dict):
             raise ValueError("structural observation event must be an object")
         trail = self._trail(event)
+        temporal = self._temporal_coordinate(envelope)
+        self._validate_physical_temporal_input(hierarchy_id, temporal)
 
         self.tick += 1
         self._ticks[hierarchy_id] += 1
         now = self._ticks[hierarchy_id]
         self._seen_observations.add(observation_id)
         self._observation_count += 1
+        if temporal is not None and self.physical_time_decay is not None:
+            self._latest_temporal[(hierarchy_id, temporal.clock_id)] = temporal.center
         self._trim_history(hierarchy_id)
 
         horizon = self.within_horizon
@@ -173,9 +310,13 @@ class ContinuousStructuralAssociationField:
         current_profile = self._profile(trail)
         if current_profile:
             recent = self._recent[hierarchy_id]
-            for previous_tick, previous_profile in recent:
-                lag = now - previous_tick
-                kernel = exp(-self.temporal_decay * float(lag - 1))
+            for previous_tick, previous_profile, previous_temporal in recent:
+                kernel = self._temporal_kernel(
+                    current_tick=now,
+                    previous_tick=previous_tick,
+                    current_temporal=temporal,
+                    previous_temporal=previous_temporal,
+                )
                 if kernel < self.trace_floor:
                     continue
                 for source, source_mass in previous_profile:
@@ -187,7 +328,7 @@ class ContinuousStructuralAssociationField:
                             "temporal",
                             kernel * source_mass * target_mass,
                         )
-            recent.append((now, current_profile))
+            recent.append((now, current_profile, temporal))
             self._trim_history(hierarchy_id)
 
         return now
@@ -266,6 +407,9 @@ class ContinuousStructuralAssociationField:
             "temporal_decay": self.temporal_decay,
             "forgetting_rate": self.forgetting_rate,
             "trace_floor": self.trace_floor,
+            "physical_time_decay": self.physical_time_decay,
+            "physical_horizon_seconds": self.physical_horizon_seconds,
+            "max_physical_history_events": self.max_physical_history_events,
             "within_horizon": self.within_horizon,
             "temporal_horizon": self.temporal_horizon,
             "observations": self._observation_count,
