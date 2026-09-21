@@ -228,6 +228,20 @@ class NativeConversationService:
             raise RuntimeError("native conversation runtime is closed")
         return apply_native_concept_catalog(self._runtime_lease, catalog)
 
+    def format_store(self, confirm: str) -> dict[str, object]:
+        if self._closed:
+            raise RuntimeError("native conversation runtime is closed")
+        if confirm != "FORMATAR":
+            raise ValueError("format confirmation must be FORMATAR")
+        if not self._runtime_lease.supports("memoria_mobile_format_json"):
+            raise RuntimeError("native runtime does not support logical format")
+        status, response = self._call("memoria_mobile_format_json", {"confirm": confirm})
+        if status == MEMORIA_MOBILE_INVALID_ARGUMENT:
+            raise ValueError(str(response.get("reason") or "native format rejected request"))
+        if status != MEMORIA_MOBILE_OK or response.get("status") != "OK":
+            raise RuntimeError(f"native format failed: status={status}")
+        return response
+
     def flush(self) -> None:
         if not self._closed:
             self._runtime_lease.flush()
