@@ -246,6 +246,118 @@ class StructuralAssociationField:
         )
         return tuple(rows[:top_k])
 
+
+    @property
+    def edge_count(self) -> int:
+        return len(self._edges)
+
+    def export_state(self) -> dict[str, Any]:
+        """Export exact derived state without applying additional decay."""
+        return {
+            "schema": "memoria.ia-structural-association-state-v1",
+            "tick": self.tick,
+            "hierarchy_ticks": dict(sorted(self._ticks.items())),
+            "max_within_distance": self.max_within_distance,
+            "max_event_lag": self.max_event_lag,
+            "forgetting_rate": self.forgetting_rate,
+            "edges": [
+                {
+                    "hierarchy_id": hierarchy_id,
+                    "source": source,
+                    "target": target,
+                    "channel": channel,
+                    "weight": edge.weight,
+                    "observations": edge.observations,
+                    "last_tick": edge.last_tick,
+                }
+                for (hierarchy_id, source, target, channel), edge
+                in sorted(self._edges.items())
+            ],
+            "recent": {
+                hierarchy_id: [
+                    {"tick": tick, "trail": list(trail)}
+                    for tick, trail in recent
+                ]
+                for hierarchy_id, recent in sorted(self._recent.items())
+                if recent
+            },
+        }
+
+    @classmethod
+    def from_state(cls, state: dict[str, Any]) -> "StructuralAssociationField":
+        if state.get("schema") != "memoria.ia-structural-association-state-v1":
+            raise ValueError("unsupported structural association state format")
+        field = cls(
+            max_within_distance=int(state["max_within_distance"]),
+            max_event_lag=int(state["max_event_lag"]),
+            forgetting_rate=float(state["forgetting_rate"]),
+        )
+        field.tick = int(state["tick"])
+        if field.tick < 0:
+            raise ValueError("structural association tick must be >= 0")
+
+        ticks = state.get("hierarchy_ticks")
+        if not isinstance(ticks, dict):
+            raise ValueError("structural association hierarchy_ticks must be an object")
+        for hierarchy_id, tick in ticks.items():
+            clean = str(hierarchy_id).strip()
+            if not clean:
+                raise ValueError("structural association hierarchy id must be non-empty")
+            value = int(tick)
+            if value < 0:
+                raise ValueError("structural association hierarchy tick must be >= 0")
+            field._ticks[clean] = value
+
+        edges = state.get("edges")
+        if not isinstance(edges, list):
+            raise ValueError("structural association edges must be a list")
+        for row in edges:
+            if not isinstance(row, dict):
+                raise ValueError("invalid structural association edge")
+            hierarchy_id = str(row["hierarchy_id"]).strip()
+            source = int(row["source"])
+            target = int(row["target"])
+            channel = str(row["channel"])
+            weight = float(row["weight"])
+            observations = int(row["observations"])
+            last_tick = int(row["last_tick"])
+            if not hierarchy_id or source < 0 or target < 0:
+                raise ValueError("invalid structural association edge identity")
+            if channel not in cls.CHANNELS:
+                raise ValueError("invalid structural association edge channel")
+            if weight < 0.0 or observations < 1 or last_tick < 0:
+                raise ValueError("invalid structural association edge state")
+            if last_tick > field._ticks[hierarchy_id]:
+                raise ValueError("structural association edge is ahead of hierarchy clock")
+            field._edges[(hierarchy_id, source, target, channel)] = _AssociationEdge(
+                weight=weight,
+                observations=observations,
+                last_tick=last_tick,
+            )
+
+        recent = state.get("recent", {})
+        if not isinstance(recent, dict):
+            raise ValueError("structural association recent state must be an object")
+        for hierarchy_id, rows in recent.items():
+            clean = str(hierarchy_id).strip()
+            if not clean or not isinstance(rows, list):
+                raise ValueError("invalid structural association recent lineage")
+            restored = field._recent[clean]
+            previous_tick = -1
+            for row in rows:
+                if not isinstance(row, dict):
+                    raise ValueError("invalid structural association recent row")
+                tick = int(row["tick"])
+                trail = tuple(int(item) for item in row["trail"])
+                if tick < previous_tick or tick > field._ticks[clean]:
+                    raise ValueError("invalid structural association recent tick")
+                if any(item < 0 for item in trail):
+                    raise ValueError("invalid structural association recent trail")
+                restored.append((tick, trail))
+                previous_tick = tick
+            field._trim_recent(clean)
+        return field
+
     def snapshot(self) -> dict[str, Any]:
         edges = []
         for (hierarchy_id, source, target, channel), edge in sorted(self._edges.items()):
