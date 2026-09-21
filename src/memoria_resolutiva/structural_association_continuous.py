@@ -220,11 +220,12 @@ class ContinuousStructuralAssociationField:
         current_temporal: _TemporalCoordinate | None,
         previous_temporal: _TemporalCoordinate | None,
     ) -> float:
-        if (
-            self.physical_time_decay is not None
-            and current_temporal is not None
-            and previous_temporal is not None
-        ):
+        if self.physical_time_decay is not None:
+            if current_temporal is None and previous_temporal is None:
+                lag = current_tick - previous_tick
+                return exp(-self.temporal_decay * float(lag - 1))
+            if current_temporal is None or previous_temporal is None:
+                return 0.0
             if current_temporal.clock_id != previous_temporal.clock_id:
                 return 0.0
             delta = self._physical_interval_distance(
