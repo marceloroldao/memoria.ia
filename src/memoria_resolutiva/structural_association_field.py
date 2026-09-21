@@ -32,7 +32,8 @@ class StructuralAssociationField:
 
     The within channel links earlier trail symbols to later nearby symbols.
     The temporal channel links symbols in earlier StructuralEvents to symbols in
-    later nearby events.
+    later nearby events. Here distance is causal event lag, not wall-clock time;
+    timestamp-aware multimodal layers can supply physical delta-t later.
 
     Repetition accumulates support. Distance attenuates each contribution.
     Forgetting is lazy exponential decay, evaluated only when an edge is updated
