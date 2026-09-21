@@ -13,6 +13,7 @@ class StructuralTemporalNeighbor:
     pattern_address: str
     relation_to_query: str
     hypothesis: StructuralTemporalHypothesis
+    active_for_resolution: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,11 +114,19 @@ def recall_structural_temporal_neighbors(
                 pattern_b=hypothesis.pattern_b,
                 orientation=hypothesis.orientation,
             )
+            active_for_resolution = (
+                resolution.ambiguous
+                or (
+                    resolution.resolved
+                    and resolution.supported_orientation == hypothesis.orientation
+                )
+            )
             neighbors.append(
                 StructuralTemporalNeighbor(
                     pattern_address=other,
                     relation_to_query=relation,
                     hypothesis=hypothesis,
+                    active_for_resolution=active_for_resolution,
                 )
             )
 
@@ -175,13 +184,14 @@ def resolve_temporal_world_candidates(
     matches: list[TemporalWorldCandidateMatch] = []
     for candidate in visible_candidates:
         remembered = tuple(by_pattern.get(candidate.pattern_address, ()))
+        active = tuple(item for item in remembered if item.active_for_resolution)
         supporting = tuple(
-            item for item in remembered if item.relation_to_query == "after_query"
+            item for item in active if item.relation_to_query == "after_query"
         )
         if not supporting:
             continue
         competing = tuple(
-            item for item in remembered if item.relation_to_query != "after_query"
+            item for item in active if item.relation_to_query != "after_query"
         )
         matches.append(
             TemporalWorldCandidateMatch(
