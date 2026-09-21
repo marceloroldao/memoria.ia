@@ -182,3 +182,55 @@ def test_structural_ingest_requires_hierarchy_namespace(tmp_path):
         },
     )
     assert response.status_code == 422
+
+
+
+def test_structural_observation_preserves_optional_physical_time(tmp_path):
+    _service, client = _client(tmp_path)
+    headers = {"X-Memoria-Key": "secret"}
+    payload = {
+        "event": _event(3, [10, 20]),
+        "provenance": {
+            "hierarchy_id": "hierarchy:test",
+            "capture_id": "sensor:capture",
+        },
+        "temporal": {
+            "clock_id": "sensor:clock",
+            "t_start": 12.25,
+            "t_end": 12.5,
+            "unit": "s",
+        },
+    }
+
+    stored = client.post(
+        "/api/v1/structural/observations",
+        headers=headers,
+        json=payload,
+    )
+    assert stored.status_code == 201
+
+    recent = client.get(
+        "/api/v1/structural/observations/recent",
+        headers=headers,
+    )
+    assert recent.status_code == 200
+    assert recent.json()["items"][0]["temporal"] == payload["temporal"]
+
+
+def test_structural_observation_rejects_invalid_physical_interval(tmp_path):
+    _service, client = _client(tmp_path)
+    response = client.post(
+        "/api/v1/structural/observations",
+        headers={"X-Memoria-Key": "secret"},
+        json={
+            "event": _event(),
+            "provenance": {"hierarchy_id": "hierarchy:test"},
+            "temporal": {
+                "clock_id": "sensor:clock",
+                "t_start": 2.0,
+                "t_end": 1.0,
+                "unit": "s",
+            },
+        },
+    )
+    assert response.status_code == 409
