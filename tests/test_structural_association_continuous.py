@@ -159,3 +159,21 @@ def test_replay_is_deterministic_and_non_semantic():
         "subject" not in row and "predicate" not in row and "object" not in row
         for row in snapshot["edges"]
     )
+
+
+def test_ten_thousand_event_recurrent_stream_keeps_active_history_bounded():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.6,
+        within_decay=0.6,
+        forgetting_rate=0.01,
+        trace_floor=1e-4,
+    )
+    vocabulary = 32
+    for sequence in range(10_000):
+        field.observe(observation(sequence, [sequence % vocabulary]))
+
+    assert field.observation_count == 10_000
+    assert field.active_history_size("h1") <= field.temporal_horizon
+    # One-symbol events produce only temporal pairs; the recurring structural
+    # universe bounds the possible directed pair identities.
+    assert field.edge_count <= vocabulary * vocabulary
