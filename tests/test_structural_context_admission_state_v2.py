@@ -184,3 +184,71 @@ def test_active_recall_keeps_only_current_candidate_when_history_has_competitor(
     assert tuple(x.consequence_pattern for x in active.neighbors) == (
         "temporal:pattern:Q",
     )
+
+
+def test_multiple_active_candidates_are_normalized_to_explicit_ambiguity():
+    memory = StructuralContextAdmissionStateMemory()
+
+    snapshot = memory.ingest_snapshot(
+        antecedent_patterns=ANTECEDENTS,
+        active_candidate_ids=("hoc_ax_p", "hoc_ax_q"),
+        source_epoch_id="transition",
+        supporting_slice_ids=("9", "10"),
+    )
+
+    assert snapshot.resolution_state == "ambiguous"
+    assert snapshot.active_candidate_ids == ()
+    assert snapshot.competing_candidate_ids == (
+        "hoc_ax_p",
+        "hoc_ax_q",
+    )
+
+
+def test_explicit_ambiguous_snapshot_requires_two_competitors_and_no_active_candidate():
+    memory = StructuralContextAdmissionStateMemory()
+
+    try:
+        memory.ingest_snapshot(
+            antecedent_patterns=ANTECEDENTS,
+            active_candidate_ids=(),
+            source_epoch_id="transition",
+            resolution_state="ambiguous",
+            competing_candidate_ids=("hoc_ax_p",),
+        )
+    except ValueError as exc:
+        assert "at least two" in str(exc)
+    else:
+        raise AssertionError("ambiguity must require at least two competing candidates")
+
+    try:
+        memory.ingest_snapshot(
+            antecedent_patterns=ANTECEDENTS,
+            active_candidate_ids=("hoc_ax_p",),
+            source_epoch_id="transition",
+            resolution_state="ambiguous",
+            competing_candidate_ids=("hoc_ax_q", "hoc_ax_r"),
+        )
+    except ValueError as exc:
+        assert "must not activate" in str(exc)
+    else:
+        raise AssertionError("ambiguous state must not activate a candidate")
+
+
+def test_explicit_resolution_state_survives_snapshot_restore():
+    memory = StructuralContextAdmissionStateMemory()
+    first = memory.ingest_snapshot(
+        antecedent_patterns=ANTECEDENTS,
+        active_candidate_ids=(),
+        source_epoch_id="transition",
+        resolution_state="ambiguous",
+        competing_candidate_ids=("hoc_ax_p", "hoc_ax_q"),
+        supporting_slice_ids=("9", "10"),
+    )
+
+    restored = StructuralContextAdmissionStateMemory.restore(memory.snapshot())
+
+    assert restored.snapshot() == (first,)
+    current = restored.current(ANTECEDENTS)
+    assert current is not None
+    assert current.resolution_state == "ambiguous"
+    assert current.competing_candidate_ids == ("hoc_ax_p", "hoc_ax_q")
