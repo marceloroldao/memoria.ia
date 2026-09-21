@@ -103,13 +103,17 @@ class StructuralContextAdmissionStateMemory:
         competing_ids = tuple(
             sorted(self._stable_unique(competing_candidate_ids))
         )
-        state = (
-            ("resolved" if len(candidate_ids) == 1 else
-             "ambiguous" if len(candidate_ids) > 1 else
-             "unsupported")
-            if resolution_state is None
-            else str(resolution_state)
-        )
+        if resolution_state is None:
+            if len(candidate_ids) == 1:
+                state = "resolved"
+            elif len(candidate_ids) > 1:
+                state = "ambiguous"
+                competing_ids = tuple(sorted(set(competing_ids) | set(candidate_ids)))
+                candidate_ids = ()
+            else:
+                state = "unsupported"
+        else:
+            state = str(resolution_state)
         if state not in {"resolved", "ambiguous", "unsupported"}:
             raise ValueError("resolution_state must be resolved, ambiguous, or unsupported")
         if state == "resolved" and len(candidate_ids) != 1:
