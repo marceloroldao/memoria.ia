@@ -1549,6 +1549,69 @@ done:
     return status;
 }
 
+memoria_mobile_status memoria_mobile_format_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+) {
+    char *json = NULL, *confirm = NULL;
+    size_t i, removed_turns, removed_episodes, removed_records = 0;
+    unsigned long long bdr_sequence = 0;
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !request_json.data || !request_json.size || !response_json)
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    response_json->data = NULL;
+    response_json->size = 0;
+
+    json = buffer_to_string(request_json);
+    if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    confirm = json_string(json, "confirm");
+    if (!confirm || strcmp(confirm, "FORMATAR") != 0) goto done;
+
+    removed_turns = h->turn_count;
+    removed_episodes = h->episode_count;
+    if (!memoria_persistence_reset(h->persistence, &removed_records, &bdr_sequence)) {
+        status = MEMORIA_MOBILE_PERSISTENCE_ERROR;
+        goto done;
+    }
+
+    for (i = 0; i < h->turn_count; ++i) free_turn(&h->turns[i]);
+    for (i = 0; i < h->episode_count; ++i) free_episode(&h->episodes[i]);
+    h->turn_count = 0;
+    h->episode_count = 0;
+    h->sequence = 0;
+
+    free(h->semantic_sources);
+    h->semantic_sources = NULL;
+    h->semantic_capacity = 0;
+    free(h->memory_index);
+    h->memory_index = NULL;
+    h->memory_index_capacity = 0;
+    h->memory_index_count = 0;
+
+    memoria_concept_runtime_close(h->concept_runtime);
+    h->concept_runtime = NULL;
+    if (!memoria_concept_runtime_open_shared(
+            memoria_persistence_bdr_handle(h->persistence),
+            h->organization_id,
+            &h->concept_runtime)) {
+        status = MEMORIA_MOBILE_PERSISTENCE_ERROR;
+        goto done;
+    }
+
+    status = set_responsef(
+        response_json,
+        MEMORIA_MOBILE_OK,
+        "{\"status\":\"OK\",\"removed_turns\":%zu,\"removed_episodes\":%zu,"
+        "\"removed_records\":%zu,\"bdr_sequence\":%llu,\"wal_preserved\":true}",
+        removed_turns, removed_episodes, removed_records, bdr_sequence
+    );
+done:
+    free(confirm);
+    free(json);
+    return status;
+}
+
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *h) {
     if (!h) return MEMORIA_MOBILE_INVALID_ARGUMENT;
     return memoria_persistence_sync(h->persistence) && memoria_concept_runtime_sync(h->concept_runtime)
