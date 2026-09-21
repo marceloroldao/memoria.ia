@@ -30,9 +30,17 @@ class StructuralProvenancePayload(BaseModel):
     hierarchy_id: str = Field(min_length=1, max_length=512)
 
 
+class StructuralTemporalPayload(BaseModel):
+    clock_id: str = Field(min_length=1, max_length=512)
+    t_start: float
+    t_end: float
+    unit: str = Field(default="s", pattern="^s$")
+
+
 class StructuralObservationRequest(BaseModel):
     event: StructuralEventPayload
     provenance: StructuralProvenancePayload
+    temporal: StructuralTemporalPayload | None = None
 
 
 @dataclass(slots=True)
@@ -66,6 +74,7 @@ class ProductStructuralObservationService:
         envelope, duplicate = self.store.append(
             request.event.model_dump(),
             provenance=request.provenance.model_dump(),
+            temporal=None if request.temporal is None else request.temporal.model_dump(),
         )
         try:
             replayed = self.associations.sync()
