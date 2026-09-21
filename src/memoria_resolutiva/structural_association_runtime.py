@@ -256,6 +256,24 @@ class StructuralAssociationRuntime:
                 top_k=top_k,
             )
 
+    def status(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "schema": RUNTIME_FORMAT,
+                "backend": self.persistence.last_backend or self.persistence.backend or "auto",
+                "cursor": {
+                    "count": self.cursor_count,
+                    "observation_id": self.cursor_observation_id,
+                },
+                "raw_observations": self.observations.count,
+                "pending_observations": self.observations.count - self.cursor_count,
+                "replayed_on_open": self.replayed_on_open,
+                "derived_observations": self.field.observation_count,
+                "derived_edges": self.field.edge_count,
+                "hierarchies": self.field.hierarchy_count,
+                "semantic_projection": False,
+            }
+
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             return {
