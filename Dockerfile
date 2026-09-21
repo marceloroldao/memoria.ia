@@ -1,6 +1,6 @@
 FROM debian:bookworm-slim AS native-builder
 
-ARG BDR_COMMIT=1f6b7ccbe16bdfed2f1b5dcebceb17887bf6916e
+ARG BDR_COMMIT=d09914b85646353d8fd004ccf99e96a94fab9eef
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
