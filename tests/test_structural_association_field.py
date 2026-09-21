@@ -118,3 +118,23 @@ def test_transport_replay_is_idempotent_but_distinct_self_recurrence_learns():
     field.observe(observation([9], sequence=1))
     assert field.snapshot()["observations"] == 2
     assert field.association("h1", 9, 9, channel="temporal") == 1.0
+
+
+def test_unrelated_hierarchy_does_not_age_existing_association():
+    field = StructuralAssociationField(max_event_lag=1, forgetting_rate=0.3)
+    field.observe(observation([1], hierarchy="h1", sequence=0))
+    field.observe(observation([2], hierarchy="h1", sequence=1))
+    initial = field.association("h1", 1, 2, channel="temporal")
+
+    for index in range(20):
+        field.observe(
+            observation(
+                [100 + index],
+                hierarchy="h2",
+                sequence=index,
+            )
+        )
+
+    assert field.association("h1", 1, 2, channel="temporal") == initial
+    assert field.snapshot()["hierarchy_ticks"]["h1"] == 2
+    assert field.snapshot()["hierarchy_ticks"]["h2"] == 20
