@@ -15,15 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Checkout frozen BDR v1.2.0-rc1
+      - name: Checkout pinned BDR with logical clear
         uses: actions/checkout@v4
         with:
           repository: marceloroldao/resolutive-DB
-          ref: eb77ad7286f234243ca1ed1a2af2d55df8c12238
+          ref: d09914b85646353d8fd004ccf99e96a94fab9eef
           path: resolutive-DB
-      - name: Verify frozen BDR candidate
+      - name: Verify pinned BDR logical-clear dependency
         run: |
-          test "$(git -C resolutive-DB rev-parse HEAD)" = "eb77ad7286f234243ca1ed1a2af2d55df8c12238"
+          test "$(git -C resolutive-DB rev-parse HEAD)" = "d09914b85646353d8fd004ccf99e96a94fab9eef"
       - name: Configure native runtime
         run: cmake -S native/mobile -B native-build -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/resolutive-DB"
       - name: Build native runtime
