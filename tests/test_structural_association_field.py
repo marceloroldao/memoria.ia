@@ -104,3 +104,17 @@ def test_replay_is_deterministic_and_snapshot_remains_non_semantic():
         and "object" not in edge
         for edge in snapshot["edges"]
     )
+
+
+def test_transport_replay_is_idempotent_but_distinct_self_recurrence_learns():
+    field = StructuralAssociationField(max_event_lag=1, forgetting_rate=0)
+    first = observation([9], sequence=0)
+    field.observe(first)
+    tick_after_first = field.tick
+    field.observe(first)
+    assert field.tick == tick_after_first
+    assert field.snapshot()["observations"] == 1
+
+    field.observe(observation([9], sequence=1))
+    assert field.snapshot()["observations"] == 2
+    assert field.association("h1", 9, 9, channel="temporal") == 1.0
