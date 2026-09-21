@@ -119,3 +119,24 @@ being excluded from current prediction after a regime change.
 
 The admission-state layer does not recalculate evidence thresholds. It only records
 the current opaque candidate IDs selected upstream by the structural evidence gate.
+
+
+## Explicit current ambiguity
+
+`StructuralContextAdmissionSnapshot` distinguishes three current structural states:
+
+- `resolved`: exactly one opaque candidate is active;
+- `ambiguous`: no candidate is active and at least two opaque candidate IDs compete;
+- `unsupported`: no candidate is currently active and there is no explicit multi-candidate competition.
+
+Ambiguity does not create a structural observation. `competing_candidate_ids` belongs only to
+the current admission-state audit trail; historical `StructuralContextObservationMemory`
+continues to contain only candidates that were actually admitted by upstream evidence.
+
+For compatibility, if an older caller supplies multiple active candidate IDs without an
+explicit resolution state, the admission memory normalizes that input to `ambiguous`, clears
+the active set and retains those IDs as competitors.
+
+`recall_active_structural_context()` continues to use only `active_candidate_ids`, so an
+ambiguous snapshot yields no active consequence while preserving the competing structure for
+inspection and later resolution.
