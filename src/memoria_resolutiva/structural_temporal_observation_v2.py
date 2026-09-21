@@ -338,14 +338,29 @@ class StructuralTemporalObservationMemory:
                 reason="insufficient-supported-orientation",
             )
         if len(supported) > 1:
+            max_support = max(item.independent_support for item in supported)
+            strongest = tuple(
+                item for item in supported
+                if item.independent_support == max_support
+            )
+            if len(strongest) > 1:
+                return StructuralTemporalResolution(
+                    pattern_a=a,
+                    pattern_b=b,
+                    hypotheses=tuple(hypotheses),
+                    supported_orientation=None,
+                    resolved=False,
+                    ambiguous=True,
+                    reason="competing-supported-orientations",
+                )
             return StructuralTemporalResolution(
                 pattern_a=a,
                 pattern_b=b,
                 hypotheses=tuple(hypotheses),
-                supported_orientation=None,
-                resolved=False,
-                ambiguous=True,
-                reason="competing-supported-orientations",
+                supported_orientation=strongest[0].orientation,
+                resolved=True,
+                ambiguous=False,
+                reason="reinforced-supported-orientation",
             )
 
         return StructuralTemporalResolution(
