@@ -265,3 +265,52 @@ def test_invalid_observation_does_not_create_semantic_or_causal_shortcuts():
         raise AssertionError("same-pattern temporal relation must be rejected")
 
     assert memory.snapshot() == ()
+
+
+def test_same_provenance_with_updated_metrics_is_preserved_without_support_inflation():
+    memory = StructuralTemporalObservationMemory()
+
+    first = memory.ingest_observation(
+        pattern_a="temporal:pattern:10",
+        pattern_b="temporal:pattern:20",
+        orientation="a_before_b",
+        source_candidate_id="tec_ab",
+        rho=0.45,
+        selectivity=1.2,
+        temporal_stability=0.97,
+        evidence_score=4.1,
+        orientation_confidence=0.96,
+        mean_dt=0.2,
+        variance_dt=0.001,
+        supporting_slice_ids=("1", "2", "3"),
+        supporting_frame_ids=("f1", "f2", "f3"),
+        provenance="live.infinita/bit.analyze",
+    )
+    second = memory.ingest_observation(
+        pattern_a="temporal:pattern:10",
+        pattern_b="temporal:pattern:20",
+        orientation="a_before_b",
+        source_candidate_id="tec_ab",
+        rho=0.51,
+        selectivity=1.2,
+        temporal_stability=0.95,
+        evidence_score=4.4,
+        orientation_confidence=0.96,
+        mean_dt=0.2,
+        variance_dt=0.002,
+        supporting_slice_ids=("1", "2", "3"),
+        supporting_frame_ids=("f1", "f2", "f3"),
+        provenance="live.infinita/bit.analyze",
+    )
+
+    assert first.observation_id != second.observation_id
+    assert len(memory.snapshot()) == 2
+
+    resolution = memory.resolve(
+        "temporal:pattern:10",
+        "temporal:pattern:20",
+        min_independent_slices=3,
+    )
+    hypothesis = resolution.hypotheses[0]
+    assert hypothesis.independent_support == 3
+    assert resolution.resolved is True
