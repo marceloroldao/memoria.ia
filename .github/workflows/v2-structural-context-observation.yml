@@ -1,0 +1,31 @@
+name: V2 structural context observation
+
+on:
+  pull_request:
+    paths:
+      - 'src/memoria_resolutiva/structural_context_observation_v2.py'
+      - 'src/memoria_resolutiva/structural_context_recall_v2.py'
+      - 'src/memoria_resolutiva/structural_context_admission_state_v2.py'
+      - 'tests/test_structural_context_observation_v2.py'
+      - 'tests/test_structural_context_recall_v2.py'
+      - 'tests/test_structural_context_admission_state_v2.py'
+      - 'docs/STRUCTURAL_CONTEXT_OBSERVATION_V2.md'
+      - '.github/workflows/v2-structural-context-observation.yml'
+  workflow_dispatch:
+
+jobs:
+  structural-context-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Run structural context V2 tests
+        run: >-
+          python -m pytest -q
+          tests/test_structural_context_observation_v2.py
+          tests/test_structural_context_recall_v2.py
+          tests/test_structural_context_admission_state_v2.py

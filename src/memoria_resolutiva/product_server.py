@@ -12,7 +12,9 @@ from .llm_adapter import MockLLMAdapter
 from .native_conversation import NativeConversationService
 from .native_concept_catalog import build_native_concept_catalog
 from .native_episodic import NativeEpisodicService
+from .native_resolve import NativeResolveService
 from .openai_adapter import OpenAIPricing, OpenAIResponsesAdapter
+from .persistent_address_trajectory_v2 import PersistentAddressTrajectoryStoreV2
 from .product_admin_config import attach_configuration_routes
 from .product_applications import ApplicationRegistry
 from .product_chat import ProductChatService
@@ -24,6 +26,7 @@ from .product_persistence import ProductSnapshotPersistence, PersistentEnterpris
 from .product_service import EnterpriseMemoryService
 from .semantic_activation_resolver import SemanticActivationConversationResolver
 from .semantic_concept_store import PersistentSemanticConceptStore
+from .v2_trajectory_http import attach_v2_trajectory_routes
 
 
 def _env(name: str, default: str | None = None, *, required: bool = False) -> str:
@@ -253,6 +256,19 @@ def build_app():
 
     chat_conversation_resolver = SemanticActivationConversationResolver(conversation_service)
     chat_service = _build_chat_service(service, configuration, conversation_resolver=chat_conversation_resolver)
+
+    v2_trajectory_enabled = _env_bool("MEMORIA_V2_TRAJECTORY_EXPERIMENT", False)
+    v2_trajectory_store = None
+    if v2_trajectory_enabled:
+        v2_trajectory_store = PersistentAddressTrajectoryStoreV2(
+            data_dir / "v2-address-trajectory",
+            backend=storage_backend,
+            allow_fallback=storage_allow_fallback,
+        )
+        native_resolve_service = NativeResolveService(v2_trajectory_store)
+    else:
+        native_resolve_service = NativeResolveService(chat_conversation_resolver)
+
     app = create_app(
         service,
         api_key=api_key,
@@ -260,6 +276,7 @@ def build_app():
         node_identity=node_identity,
         chat_service=chat_service,
         application_registry=application_registry,
+        native_resolve_service=native_resolve_service,
         lifespan=lifespan,
     )
 
@@ -285,6 +302,8 @@ def build_app():
             "native_concept_catalog_count": native_concept_catalog_count,
             "concept_namespace": concept_namespace,
             "concept_relation_traversal": concept_relation_service is not None,
+            "v2_trajectory_experiment": v2_trajectory_enabled,
+            "v2_trajectory_backend": None if v2_trajectory_store is None else v2_trajectory_store.backend,
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
@@ -294,6 +313,8 @@ def build_app():
         from .product_concept_relations import attach_concept_relation_routes
         attach_concept_relation_routes(app, api_key=api_key, service=concept_relation_service)
     attach_configuration_routes(app, api_key=api_key, store=configuration)
+    if v2_trajectory_store is not None:
+        attach_v2_trajectory_routes(app, api_key=api_key, store=v2_trajectory_store)
     return app
 
 

@@ -1,0 +1,33 @@
+name: v2 structural temporal observation
+
+on:
+  push:
+    branches:
+      - experiment/address-trajectory-v2
+    paths:
+      - 'src/memoria_resolutiva/structural_temporal_observation_v2.py'
+      - 'src/memoria_resolutiva/structural_temporal_recall_v2.py'
+      - 'tests/test_structural_temporal_observation_v2.py'
+      - 'tests/test_structural_temporal_recall_v2.py'
+      - '.github/workflows/v2-structural-temporal-observation.yml'
+  pull_request:
+    paths:
+      - 'src/memoria_resolutiva/structural_temporal_observation_v2.py'
+      - 'tests/test_structural_temporal_observation_v2.py'
+      - '.github/workflows/v2-structural-temporal-observation.yml'
+  workflow_dispatch:
+
+jobs:
+  structural-temporal-observation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Run V2 structural temporal observation gate
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+        run: python -m pytest -q tests/test_structural_temporal_observation_v2.py tests/test_structural_temporal_recall_v2.py

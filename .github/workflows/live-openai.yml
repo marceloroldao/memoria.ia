@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   live-openai:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'live(openai): validate')
+    if: "${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'live(openai): validate') }}"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
