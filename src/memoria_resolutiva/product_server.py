@@ -23,6 +23,7 @@ from .product_http import create_app
 from .product_identity import OrganizationIdentity, NodeIdentity, CertificateStatus, LicenseStatus, MemoryScope
 from .product_persistence import ProductSnapshotPersistence, PersistentEnterpriseMemoryService
 from .product_service import EnterpriseMemoryService
+from .product_structural import ProductStructuralObservationService, attach_structural_observation_routes
 from .semantic_activation_resolver import SemanticActivationConversationResolver
 from .semantic_concept_store import PersistentSemanticConceptStore
 
@@ -166,6 +167,11 @@ def build_app():
 
     concept_namespace = os.getenv("MEMORIA_CONCEPT_NAMESPACE", "semantic").strip() or None
     evidence_service = ProductEvidenceService.open(data_dir / "evidence", backend=storage_backend, allow_fallback=storage_allow_fallback)
+    structural_service = ProductStructuralObservationService.open(
+        data_dir / "structural-observations",
+        backend=storage_backend,
+        allow_fallback=storage_allow_fallback,
+    )
     native_shared_data_dir = _native_shared_data_dir(data_dir)
     conversation_backend = _build_conversation_service(
         evidence_service=evidence_service,
@@ -277,6 +283,9 @@ def build_app():
             "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
             "evidence_backend": evidence_service.backend,
             "evidence_persisted": evidence_service.receipt is not None,
+            "structural_observation_backend": structural_service.store.backend,
+            "structural_observations": structural_service.store.count,
+            "structural_semantic_projection": False,
             "conversation_runtime": "native" if conversation_is_native else "python",
             "episodic_runtime": "native" if episodic_is_native else "python",
             "automatic_episode_formation": automatic_episode_formation,
@@ -293,6 +302,7 @@ def build_app():
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
+    attach_structural_observation_routes(app, api_key=api_key, service=structural_service)
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_episodic_routes(app, api_key=api_key, service=episodic_service)
     if concept_relation_service is not None:
