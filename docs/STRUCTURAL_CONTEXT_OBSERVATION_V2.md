@@ -100,3 +100,22 @@ The higher-order gate must establish that:
 3. both lower-order antecedent-to-consequence relations remain insufficient.
 
 Memoria.ia receives only the admitted opaque structural candidate.
+
+
+## Historical versus active recall
+
+Structural context observations remain additive and auditable. A context that was
+supported in an earlier regime is not deleted when later evidence stops admitting it.
+
+`StructuralContextAdmissionStateMemory` stores successive current-admission snapshots
+for each exact two-pattern context. A snapshot may contain zero active candidate IDs.
+
+`recall_structural_context()` remains historical recall: it returns structurally
+supported observations from accumulated provenance.
+
+`recall_active_structural_context()` intersects historical support with the latest
+admission snapshot. This lets a formerly supported context remain auditable while
+being excluded from current prediction after a regime change.
+
+The admission-state layer does not recalculate evidence thresholds. It only records
+the current opaque candidate IDs selected upstream by the structural evidence gate.
