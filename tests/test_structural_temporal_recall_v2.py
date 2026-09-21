@@ -257,3 +257,84 @@ def test_duplicate_world_candidate_ids_are_rejected():
         assert "unique" in str(exc)
     else:
         raise AssertionError("duplicate world candidate IDs must be rejected")
+
+
+def test_reinforced_orientation_becomes_active_without_erasing_competitor():
+    memory = StructuralTemporalObservationMemory()
+    _observe(
+        memory,
+        orientation="a_before_b",
+        candidate_id="tec_forward_initial",
+        slices=("1", "2", "3"),
+    )
+    _observe(
+        memory,
+        orientation="b_before_a",
+        candidate_id="tec_backward",
+        slices=("4", "5", "6"),
+    )
+    _observe(
+        memory,
+        orientation="a_before_b",
+        candidate_id="tec_forward_reinforced",
+        slices=("7", "8"),
+    )
+
+    recall = recall_structural_temporal_neighbors(memory, "temporal:pattern:A")
+    assert len(recall.neighbors) == 2
+
+    by_relation = {item.relation_to_query: item for item in recall.neighbors}
+    assert by_relation["after_query"].hypothesis.independent_support == 5
+    assert by_relation["after_query"].active_for_resolution is True
+    assert by_relation["before_query"].hypothesis.independent_support == 3
+    assert by_relation["before_query"].active_for_resolution is False
+
+    resolution = resolve_temporal_world_candidates(
+        memory,
+        "temporal:pattern:A",
+        (TemporalWorldCandidate("world_b", "temporal:pattern:B"),),
+    )
+    assert resolution.resolved is True
+    assert resolution.ambiguous is False
+    assert resolution.resolved_candidate == TemporalWorldCandidate(
+        "world_b",
+        "temporal:pattern:B",
+    )
+    assert resolution.matches[0].contested is False
+
+
+def test_reinforced_reverse_orientation_blocks_future_without_erasing_forward_history():
+    memory = StructuralTemporalObservationMemory()
+    _observe(
+        memory,
+        orientation="a_before_b",
+        candidate_id="tec_forward",
+        slices=("1", "2", "3"),
+    )
+    _observe(
+        memory,
+        orientation="b_before_a",
+        candidate_id="tec_backward_initial",
+        slices=("4", "5", "6"),
+    )
+    _observe(
+        memory,
+        orientation="b_before_a",
+        candidate_id="tec_backward_reinforced",
+        slices=("7", "8"),
+    )
+
+    recall = recall_structural_temporal_neighbors(memory, "temporal:pattern:A")
+    by_relation = {item.relation_to_query: item for item in recall.neighbors}
+    assert by_relation["after_query"].active_for_resolution is False
+    assert by_relation["before_query"].active_for_resolution is True
+
+    resolution = resolve_temporal_world_candidates(
+        memory,
+        "temporal:pattern:A",
+        (TemporalWorldCandidate("world_b", "temporal:pattern:B"),),
+    )
+    assert resolution.resolved is False
+    assert resolution.ambiguous is False
+    assert resolution.matches == ()
+    assert resolution.reason == "no-supported-world-continuation"
