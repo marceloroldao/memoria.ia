@@ -118,6 +118,14 @@ class StructuralTemporalObservationMemory:
         source_candidate_id: str,
         supporting_slice_ids: tuple[str, ...],
         supporting_frame_ids: tuple[str, ...],
+        rho: float,
+        selectivity: float,
+        temporal_stability: float,
+        evidence_score: float,
+        orientation_confidence: float,
+        mean_dt: float,
+        variance_dt: float,
+        provenance: str,
     ) -> str:
         raw = "|".join(
             (
@@ -127,6 +135,14 @@ class StructuralTemporalObservationMemory:
                 source_candidate_id,
                 ",".join(supporting_slice_ids),
                 ",".join(supporting_frame_ids),
+                repr(rho),
+                repr(selectivity),
+                repr(temporal_stability),
+                repr(evidence_score),
+                repr(orientation_confidence),
+                repr(mean_dt),
+                repr(variance_dt),
+                provenance,
             )
         )
         return sha256(raw.encode("utf-8")).hexdigest()
@@ -181,6 +197,14 @@ class StructuralTemporalObservationMemory:
             source_candidate_id=source_candidate_id,
             supporting_slice_ids=slices,
             supporting_frame_ids=frames,
+            rho=metrics["rho"],
+            selectivity=metrics["selectivity"],
+            temporal_stability=metrics["temporal_stability"],
+            evidence_score=metrics["evidence_score"],
+            orientation_confidence=metrics["orientation_confidence"],
+            mean_dt=float(mean_dt),
+            variance_dt=metrics["variance_dt"],
+            provenance=str(provenance),
         )
         existing = self._fingerprints.get(fingerprint)
         if existing is not None:
