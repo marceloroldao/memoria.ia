@@ -129,6 +129,9 @@ class StructuralContextAdmissionStateMemory:
             _canonical_antecedents(antecedent_patterns)
         )
 
+    def current_contexts(self) -> tuple[tuple[str, str], ...]:
+        return tuple(sorted(self._latest))
+
     def snapshot(self) -> tuple[StructuralContextAdmissionSnapshot, ...]:
         return tuple(self._snapshots)
 
