@@ -1,0 +1,44 @@
+{
+  "schema": "memoria.ia-structural-text-parity-v1",
+  "parameters": {
+    "max_within_distance": 8,
+    "max_event_lag": 4,
+    "forgetting_rate": 0.0
+  },
+  "symbols": {
+    "meu": 7126544648815283343,
+    "gato": 13761269655978280478,
+    "se": 2079710249054350336,
+    "chama": 15732214716224006551,
+    "alt": 4806113438364846566,
+    "dorme": 5595433603985460719,
+    "no": 3863351646779520600,
+    "sofa": 1075567289731155742,
+    "qual": 17186453383476100204,
+    "nome": 13407524865874431819,
+    "do": 7919684844612316212,
+    "ação": 13416273930548103510
+  },
+  "observations": [
+    ["meu", "gato", "se", "chama", "alt"],
+    ["meu", "gato", "se", "chama", "alt"],
+    ["meu", "gato", "dorme", "no", "sofa"]
+  ],
+  "query": ["qual", "nome", "do", "meu", "gato"],
+  "candidates": {
+    "recurrent": ["meu", "gato", "se", "chama", "alt"],
+    "single": ["meu", "gato", "dorme", "no", "sofa"]
+  },
+  "expected": {
+    "tick": 3,
+    "edge_count": 59,
+    "gato_se_within": 2.0,
+    "gato_dorme_within": 1.0,
+    "recurrent_score": 0.8909333333333334,
+    "recurrent_exact_overlap": 2,
+    "recurrent_association_mass": 0.49093333333333333,
+    "single_score": 0.7790666666666667,
+    "single_exact_overlap": 2,
+    "single_association_mass": 0.37906666666666666
+  }
+}
