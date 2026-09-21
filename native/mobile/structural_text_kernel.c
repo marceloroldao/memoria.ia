@@ -306,6 +306,167 @@ static size_t unique_copy(const uint64_t *values, size_t count, uint64_t **out) 
     return n;
 }
 
+static int utf8_decode_one(
+    const unsigned char *input,
+    size_t available,
+    uint32_t *out_codepoint,
+    size_t *out_consumed
+) {
+    unsigned char a;
+    if (!input || available == 0u || !out_codepoint || !out_consumed) return 0;
+    a = input[0];
+    if (a < 0x80u) {
+        *out_codepoint = a;
+        *out_consumed = 1u;
+        return 1;
+    }
+    if ((a & 0xe0u) == 0xc0u) {
+        unsigned char b;
+        uint32_t cp;
+        if (available < 2u) return 0;
+        b = input[1];
+        if ((b & 0xc0u) != 0x80u) return 0;
+        cp = ((uint32_t)(a & 0x1fu) << 6u) | (uint32_t)(b & 0x3fu);
+        if (cp < 0x80u) return 0;
+        *out_codepoint = cp;
+        *out_consumed = 2u;
+        return 1;
+    }
+    if ((a & 0xf0u) == 0xe0u) {
+        unsigned char b;
+        unsigned char d;
+        uint32_t cp;
+        if (available < 3u) return 0;
+        b = input[1];
+        d = input[2];
+        if ((b & 0xc0u) != 0x80u || (d & 0xc0u) != 0x80u) return 0;
+        cp = ((uint32_t)(a & 0x0fu) << 12u)
+            | ((uint32_t)(b & 0x3fu) << 6u)
+            | (uint32_t)(d & 0x3fu);
+        if (cp < 0x800u || (cp >= 0xd800u && cp <= 0xdfffu)) return 0;
+        *out_codepoint = cp;
+        *out_consumed = 3u;
+        return 1;
+    }
+    if ((a & 0xf8u) == 0xf0u) {
+        unsigned char b;
+        unsigned char d;
+        unsigned char e;
+        uint32_t cp;
+        if (available < 4u) return 0;
+        b = input[1];
+        d = input[2];
+        e = input[3];
+        if ((b & 0xc0u) != 0x80u || (d & 0xc0u) != 0x80u || (e & 0xc0u) != 0x80u) return 0;
+        cp = ((uint32_t)(a & 0x07u) << 18u)
+            | ((uint32_t)(b & 0x3fu) << 12u)
+            | ((uint32_t)(d & 0x3fu) << 6u)
+            | (uint32_t)(e & 0x3fu);
+        if (cp < 0x10000u || cp > 0x10ffffu) return 0;
+        *out_codepoint = cp;
+        *out_consumed = 4u;
+        return 1;
+    }
+    return 0;
+}
+
+static size_t utf8_encode_one(uint32_t cp, unsigned char out[4]) {
+    if (cp <= 0x7fu) {
+        out[0] = (unsigned char)cp;
+        return 1u;
+    }
+    if (cp <= 0x7ffu) {
+        out[0] = (unsigned char)(0xc0u | (cp >> 6u));
+        out[1] = (unsigned char)(0x80u | (cp & 0x3fu));
+        return 2u;
+    }
+    if (cp <= 0xffffu) {
+        out[0] = (unsigned char)(0xe0u | (cp >> 12u));
+        out[1] = (unsigned char)(0x80u | ((cp >> 6u) & 0x3fu));
+        out[2] = (unsigned char)(0x80u | (cp & 0x3fu));
+        return 3u;
+    }
+    if (cp <= 0x10ffffu) {
+        out[0] = (unsigned char)(0xf0u | (cp >> 18u));
+        out[1] = (unsigned char)(0x80u | ((cp >> 12u) & 0x3fu));
+        out[2] = (unsigned char)(0x80u | ((cp >> 6u) & 0x3fu));
+        out[3] = (unsigned char)(0x80u | (cp & 0x3fu));
+        return 4u;
+    }
+    return 0u;
+}
+
+static int casefold_token(
+    const char *token,
+    size_t token_len,
+    unsigned char **out_bytes,
+    size_t *out_len
+) {
+    unsigned char *normalized;
+    size_t pos = 0u;
+    size_t written = 0u;
+    size_t capacity;
+    if (!token || token_len == 0u || !out_bytes || !out_len) return 0;
+    capacity = token_len * 2u + 8u;
+    normalized = (unsigned char *)malloc(capacity);
+    if (!normalized) return 0;
+
+    while (pos < token_len) {
+        uint32_t cp;
+        size_t consumed;
+        unsigned char encoded[4];
+        size_t encoded_len;
+        if (!utf8_decode_one(
+            (const unsigned char *)token + pos,
+            token_len - pos,
+            &cp,
+            &consumed
+        )) {
+            free(normalized);
+            return 0;
+        }
+        pos += consumed;
+
+        if (cp >= (uint32_t)'A' && cp <= (uint32_t)'Z') {
+            cp += (uint32_t)('a' - 'A');
+        } else if ((cp >= 0x00c0u && cp <= 0x00d6u) ||
+                   (cp >= 0x00d8u && cp <= 0x00deu)) {
+            cp += 0x20u;
+        } else if (cp == 0x00dfu) {
+            if (written + 2u > capacity) {
+                free(normalized);
+                return 0;
+            }
+            normalized[written++] = (unsigned char)'s';
+            normalized[written++] = (unsigned char)'s';
+            continue;
+        } else if (cp == 0x00b5u) {
+            /* Python casefold: MICRO SIGN -> GREEK SMALL LETTER MU. */
+            cp = 0x03bcu;
+        }
+
+        encoded_len = utf8_encode_one(cp, encoded);
+        if (encoded_len == 0u || written + encoded_len > capacity) {
+            free(normalized);
+            return 0;
+        }
+        memcpy(normalized + written, encoded, encoded_len);
+        written += encoded_len;
+    }
+
+    *out_bytes = normalized;
+    *out_len = written;
+    return 1;
+}
+
+static int token_codepoint(uint32_t cp) {
+    if ((cp >= (uint32_t)'a' && cp <= (uint32_t)'z') ||
+        (cp >= (uint32_t)'A' && cp <= (uint32_t)'Z') ||
+        (cp >= (uint32_t)'0' && cp <= (uint32_t)'9') ||
+        cp == (uint32_t)'_') return 1;
+    return cp >= 0x00c0u && cp <= 0x00ffu;
+}
+
 int memoria_structural_text_symbol(
     const char *token,
     size_t token_len,
@@ -314,24 +475,78 @@ int memoria_structural_text_symbol(
     static const unsigned char prefix[] = "memoria.ia:text-token:v1";
     blake2b_ctx ctx;
     unsigned char digest[8];
-    unsigned char *normalized;
+    unsigned char *normalized = NULL;
+    size_t normalized_len = 0u;
     size_t i;
     uint64_t value = 0;
     if (!token || token_len == 0u || !out_symbol) return 0;
-    normalized = (unsigned char *)malloc(token_len);
-    if (!normalized) return 0;
-    for (i = 0; i < token_len; ++i) {
-        unsigned char ch = (unsigned char)token[i];
-        if (ch >= (unsigned char)'A' && ch <= (unsigned char)'Z') ch = (unsigned char)(ch + ('a' - 'A'));
-        normalized[i] = ch;
-    }
+    if (!casefold_token(token, token_len, &normalized, &normalized_len)) return 0;
     blake2b_init8(&ctx);
     blake2b_update(&ctx, prefix, sizeof(prefix));
-    blake2b_update(&ctx, normalized, token_len);
+    blake2b_update(&ctx, normalized, normalized_len);
     blake2b_final8(&ctx, digest);
     free(normalized);
     for (i = 0; i < 8; ++i) value = (value << 8u) | (uint64_t)digest[i];
     *out_symbol = value;
+    return 1;
+}
+
+int memoria_structural_text_tokenize(
+    const char *text,
+    size_t text_len,
+    uint64_t *out_symbols,
+    size_t out_capacity,
+    size_t *out_count
+) {
+    size_t pos = 0u;
+    size_t token_start = SIZE_MAX;
+    size_t count = 0u;
+    if (!text || !out_count) return 0;
+
+    while (pos < text_len) {
+        uint32_t cp;
+        size_t consumed;
+        const size_t cp_start = pos;
+        if (!utf8_decode_one(
+            (const unsigned char *)text + pos,
+            text_len - pos,
+            &cp,
+            &consumed
+        )) return 0;
+        pos += consumed;
+
+        if (token_codepoint(cp)) {
+            if (token_start == SIZE_MAX) token_start = cp_start;
+            continue;
+        }
+
+        if (token_start != SIZE_MAX) {
+            if (out_symbols) {
+                if (count >= out_capacity ||
+                    !memoria_structural_text_symbol(
+                        text + token_start,
+                        cp_start - token_start,
+                        &out_symbols[count]
+                    )) return 0;
+            }
+            ++count;
+            token_start = SIZE_MAX;
+        }
+    }
+
+    if (token_start != SIZE_MAX) {
+        if (out_symbols) {
+            if (count >= out_capacity ||
+                !memoria_structural_text_symbol(
+                    text + token_start,
+                    text_len - token_start,
+                    &out_symbols[count]
+                )) return 0;
+        }
+        ++count;
+    }
+
+    *out_count = count;
     return 1;
 }
 

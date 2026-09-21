@@ -24,14 +24,31 @@ typedef struct memoria_structural_text_score {
  * Deterministic token -> opaque 64-bit symbol.
  *
  * This is the native counterpart of Python structural_text_symbol(). The caller
- * supplies one token, not a sentence. ASCII letters are case-folded to lower
- * case before hashing. Non-ASCII UTF-8 bytes are preserved; full Unicode
- * tokenization/case-folding is intentionally outside this first parity kernel.
+ * supplies one token, not a sentence. ASCII and Latin-1 uppercase letters are
+ * case-folded compatibly with Python for the OFF.IA Portuguese text contract.
+ * UTF-8 outside that parity subset is preserved by the symbol function.
  */
 int memoria_structural_text_symbol(
     const char *token,
     size_t token_len,
     uint64_t *out_symbol
+);
+
+/*
+ * Sentence -> opaque symbols for the first native OFF.IA text contract.
+ *
+ * Token membership matches the Python adapter for ASCII word characters plus
+ * the explicit U+00C0..U+00FF Latin-1 range used by textual.py. Other Unicode
+ * code points are treated as separators in this v1 tokenizer rather than being
+ * assigned invented semantics. Passing out_symbols=NULL performs a count-only
+ * pass and writes the required token count to out_count.
+ */
+int memoria_structural_text_tokenize(
+    const char *text,
+    size_t text_len,
+    uint64_t *out_symbols,
+    size_t out_capacity,
+    size_t *out_count
 );
 
 memoria_structural_text_field *memoria_structural_text_field_create(

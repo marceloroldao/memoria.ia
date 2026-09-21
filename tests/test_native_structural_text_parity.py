@@ -9,6 +9,7 @@ import pytest
 
 from memoria_resolutiva.structural_association_field import StructuralAssociationField
 from memoria_resolutiva.structural_text_recall import structural_text_symbol
+from memoria_resolutiva.textual import tokenize
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,6 +50,12 @@ def test_python_structural_text_behavior_matches_frozen_golden_vector() -> None:
     golden = _golden()
     symbols = {token: structural_text_symbol(token) for token in golden["symbols"]}
     assert symbols == golden["symbols"]
+    for raw, expected in golden["casefold_vectors"].items():
+        assert structural_text_symbol(raw) == expected
+    for vector in golden["tokenizer_vectors"]:
+        tokens = tokenize(vector["text"])
+        assert tokens == vector["tokens"]
+        assert [structural_text_symbol(token) for token in tokens] == vector["symbols"]
 
     params = golden["parameters"]
     field = StructuralAssociationField(
@@ -115,6 +122,10 @@ def test_native_structural_text_kernel_matches_same_golden_vector(tmp_path: Path
     expected = golden["expected"]
 
     assert native["symbols"] == golden["symbols"]
+    assert native["casefold"] == golden["casefold_vectors"]
+    assert native["tokenizer"] == [
+        vector["symbols"] for vector in golden["tokenizer_vectors"]
+    ]
     assert native["tick"] == expected["tick"]
     assert native["edge_count"] == expected["edge_count"]
     assert native["gato_se_within"] == pytest.approx(expected["gato_se_within"], abs=1e-12)
