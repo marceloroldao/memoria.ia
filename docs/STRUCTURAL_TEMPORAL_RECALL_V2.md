@@ -51,6 +51,12 @@ query B -> A is before_query
 
 Only hypotheses with the required independent RealitySlice support are returned.
 
+Supported hypotheses remain visible for audit. The recall object also marks whether a
+hypothesis is currently `active_for_resolution`. When supported orientations are tied,
+all tied orientations remain active. When one orientation accumulates strictly greater
+independent RealitySlice support, only that orientation is active for the current
+decision; the weaker supported orientation remains preserved and inspectable.
+
 Recall is read-only.
 
 ## World candidate intersection
@@ -84,10 +90,12 @@ A remembered:
 
 ## Multiple futures
 
-If two concrete world candidates are independently supported as future continuations,
+If two concrete world candidates are independently active as future continuations,
 the resolver returns ambiguity.
 
-It does not compare rho, evidence_score or another metric to choose a winner.
+It does not compare rho, evidence_score or another continuous metric to choose a
+winner. The only reinforcement used to break an orientation tie is additional
+independent RealitySlice support already recorded by the temporal observation memory.
 
 ## Contested relation
 
@@ -133,7 +141,9 @@ The gate validates:
 - no invention when remembered continuation is absent from world candidates;
 - ambiguity for multiple supported concrete futures;
 - reverse-only relation not treated as future;
-- contested orientation ambiguity;
+- contested orientation ambiguity on equal independent support;
+- reinforcement can activate one orientation without erasing the competitor;
+- reverse reinforcement can withdraw future support without deleting history;
 - simultaneous recall not treated as future;
 - read-only resolution;
 - duplicate world candidate rejection.
