@@ -170,21 +170,26 @@ def test_native_episodic_service_refuses_to_drop_parent_lineage(tmp_path: Path):
 
 def test_native_structural_observation_keeps_nonsemantic_provenance(tmp_path: Path):
     service = _native_service(tmp_path, _native_library())
+    request = EpisodeStoreRequest(
+        episode_id="structural:test",
+        role="assistant",
+        text='{"schema":"memoria-structural-observation/v1","signature":"abc"}',
+        session_id="structural:session",
+        order=7,
+        timestamp="2026-09-21T20:00:00Z",
+        event_type="structural_observation",
+        topics=[],
+    )
     try:
-        edge, receipt = service.store_structural(EpisodeStoreRequest(
-            episode_id="structural:test",
-            role="assistant",
-            text='{"schema":"memoria-structural-observation/v1","signature":"abc"}',
-            session_id="structural:session",
-            order=7,
-            timestamp="2026-09-21T20:00:00Z",
-            event_type="structural_observation",
-            topics=[],
-        ))
+        edge, receipt = service.store_structural(request)
         assert edge.evidence_id == "structural:test"
         assert receipt.durable is True
+        with pytest.raises(ValueError, match="episode_id already exists"):
+            service.store_structural(request)
         rows = service.history(event_type="structural_observation", limit=10)
-        row = next(item for item in rows if item["episode_id"] == "structural:test")
+        matching = [item for item in rows if item["episode_id"] == "structural:test"]
+        assert len(matching) == 1
+        row = matching[0]
         assert row["source_type"] == "structural_observation"
         assert row["source_authority"] == 0.0
         assert row["ultimate_source_memory_id"] == "structural:test"
