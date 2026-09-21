@@ -388,6 +388,15 @@ bdr_atomic_c_handle *memoria_persistence_bdr_handle(memoria_persistence *p) {
     return p ? p->db : NULL;
 }
 
+int memoria_persistence_reset(memoria_persistence *p, size_t *removed_records, unsigned long long *bdr_sequence) {
+    bdr_atomic_c_batch_result result = {0};
+    if (!p || !p->db) return 0;
+    if (bdr_atomic_c_clear(p->db, &result) != BDR_ATOMIC_C_OK || result.durable != 1) return 0;
+    if (removed_records) *removed_records = result.operations;
+    if (bdr_sequence) *bdr_sequence = (unsigned long long)result.sequence;
+    return 1;
+}
+
 int memoria_persistence_sync(memoria_persistence *p) {
     return p && bdr_atomic_c_sync(p->db) == BDR_ATOMIC_C_OK;
 }
