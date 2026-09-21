@@ -17,6 +17,16 @@ int main(void) {
     uint64_t recurrent[5];
     uint64_t single[5];
     uint64_t query[5];
+    uint64_t tokenized[3][16];
+    size_t tokenized_count[3] = {0u, 0u, 0u};
+    uint64_t folded_gato = 0u;
+    uint64_t folded_acao = 0u;
+    uint64_t folded_e = 0u;
+    const char *sentences[3] = {
+        "Meu gato se chama Alt.",
+        "Qual é o NOME do meu GATO?",
+        "Hoje acordei com AÇÃO e coração."
+    };
     memoria_structural_text_score recurrent_score;
     memoria_structural_text_score single_score;
     memoria_structural_text_field *field;
@@ -24,6 +34,18 @@ int main(void) {
 
     for (i = 0; i < 12u; ++i) {
         if (!symbol(names[i], &ids[i])) return 2;
+    }
+    if (!symbol("GATO", &folded_gato)) return 9;
+    if (!symbol("AÇÃO", &folded_acao)) return 10;
+    if (!symbol("É", &folded_e)) return 11;
+    for (i = 0; i < 3u; ++i) {
+        if (!memoria_structural_text_tokenize(
+            sentences[i],
+            strlen(sentences[i]),
+            tokenized[i],
+            16u,
+            &tokenized_count[i]
+        )) return 12;
     }
 
     recurrent[0] = ids[0];
@@ -59,6 +81,23 @@ int main(void) {
         printf("\"%s\":%" PRIu64, names[i], ids[i]);
     }
     printf("},");
+    printf("\"casefold\":{");
+    printf("\"GATO\":%" PRIu64 ",", folded_gato);
+    printf("\"AÇÃO\":%" PRIu64 ",", folded_acao);
+    printf("\"É\":%" PRIu64, folded_e);
+    printf("},");
+    printf("\"tokenizer\":[");
+    for (i = 0; i < 3u; ++i) {
+        size_t j;
+        if (i) printf(",");
+        printf("[");
+        for (j = 0; j < tokenized_count[i]; ++j) {
+            if (j) printf(",");
+            printf("%" PRIu64, tokenized[i][j]);
+        }
+        printf("]");
+    }
+    printf("],");
     printf("\"tick\":%" PRIu64 ",", memoria_structural_text_field_tick(field));
     printf("\"edge_count\":%zu,", memoria_structural_text_field_edge_count(field));
     printf("\"gato_se_within\":%.17g,",
