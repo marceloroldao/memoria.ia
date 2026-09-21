@@ -178,3 +178,53 @@ def test_ten_thousand_event_recurrent_stream_keeps_active_history_bounded():
     # One-symbol events produce only temporal pairs; the recurring structural
     # universe bounds the possible directed pair identities.
     assert field.edge_count <= vocabulary * vocabulary
+
+
+def test_recurrent_near_relation_outranks_rotating_distractors():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.35,
+        within_decay=0.35,
+        forgetting_rate=0.03,
+        trace_floor=1e-8,
+    )
+
+    sequence = 0
+    distractors = list(range(3, 17))
+    for cycle in range(48):
+        noise = distractors[cycle % len(distractors)]
+        for trail in ([1], [2], [noise]):
+            field.observe(observation(sequence, trail))
+            sequence += 1
+
+    repeated = field.association("h1", 1, 2, channel="temporal")
+    incidental = [
+        field.association("h1", 1, distractor, channel="temporal")
+        for distractor in distractors
+    ]
+
+    assert repeated > max(incidental)
+
+
+def test_unique_stream_forms_causal_band_not_all_to_all_graph():
+    field = ContinuousStructuralAssociationField(
+        temporal_decay=0.6,
+        within_decay=0.6,
+        forgetting_rate=0,
+        trace_floor=1e-4,
+    )
+    observations = 2_000
+    for sequence in range(observations):
+        field.observe(observation(sequence, [sequence + 1]))
+
+    horizon = field.temporal_horizon
+    assert horizon < observations
+
+    # With one never-repeated opaque symbol per event, every edge identity is
+    # unique. The field may connect only the causal numerical band still above
+    # trace precision, so the exact edge count is linear in stream length,
+    # rather than the quadratic all-to-all count.
+    expected_edges = (
+        observations * horizon
+        - (horizon * (horizon + 1)) // 2
+    )
+    assert field.edge_count == expected_edges
