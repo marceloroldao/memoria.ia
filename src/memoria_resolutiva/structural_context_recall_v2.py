@@ -8,6 +8,9 @@ from .structural_context_observation_v2 import (
     StructuralContextObservationMemory,
     _canonical_context,
 )
+from .structural_context_admission_state_v2 import (
+    StructuralContextAdmissionStateMemory,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,4 +72,37 @@ def recall_structural_context(
     return StructuralContextRecall(
         antecedent_patterns=canonical,
         neighbors=tuple(neighbors),
+    )
+
+
+
+def recall_active_structural_context(
+    memory: StructuralContextObservationMemory,
+    admission_state: StructuralContextAdmissionStateMemory,
+    antecedent_patterns: Iterable[str],
+    *,
+    min_independent_slices: int = 3,
+) -> StructuralContextRecall:
+    """Recall only historically supported consequences still admitted in current state."""
+    historical = recall_structural_context(
+        memory,
+        antecedent_patterns,
+        min_independent_slices=min_independent_slices,
+    )
+    current = admission_state.current(historical.antecedent_patterns)
+    if current is None:
+        return StructuralContextRecall(
+            antecedent_patterns=historical.antecedent_patterns,
+            neighbors=(),
+        )
+
+    active = set(current.active_candidate_ids)
+    neighbors = tuple(
+        item
+        for item in historical.neighbors
+        if active.intersection(item.hypothesis.source_candidate_ids)
+    )
+    return StructuralContextRecall(
+        antecedent_patterns=historical.antecedent_patterns,
+        neighbors=neighbors,
     )
