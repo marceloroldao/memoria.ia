@@ -253,6 +253,14 @@ class StructuralAssociationField:
     def edge_count(self) -> int:
         return len(self._edges)
 
+    @property
+    def observation_count(self) -> int:
+        return self._observation_count
+
+    @property
+    def hierarchy_count(self) -> int:
+        return len(self._ticks)
+
     def export_state(self) -> dict[str, Any]:
         """Export exact derived state without applying additional decay."""
         return {
