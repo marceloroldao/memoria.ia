@@ -60,6 +60,7 @@ int memoria_persistence_load_turn(memoria_persistence *p, size_t slot, memoria_p
 int memoria_persistence_save_episode(memoria_persistence *p, size_t slot, unsigned long sequence, const memoria_persist_episode *episode);
 int memoria_persistence_load_episode(memoria_persistence *p, size_t slot, memoria_persist_episode *out);
 bdr_atomic_c_handle *memoria_persistence_bdr_handle(memoria_persistence *p);
+int memoria_persistence_reset(memoria_persistence *p, size_t *removed_records, unsigned long long *bdr_sequence);
 int memoria_persistence_sync(memoria_persistence *p);
 void memoria_persistence_free_turn(memoria_persist_turn *turn);
 void memoria_persistence_free_episode(memoria_persist_episode *episode);
