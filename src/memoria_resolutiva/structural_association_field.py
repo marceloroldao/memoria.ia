@@ -60,6 +60,7 @@ class StructuralAssociationField:
         self.tick = 0
         self._edges: dict[tuple[str, int, int, str], _AssociationEdge] = {}
         self._recent: dict[str, deque[tuple[int, tuple[int, ...]]]] = defaultdict(deque)
+        self._seen_observations: set[str] = set()
 
     @staticmethod
     def _trail(event: dict[str, Any]) -> tuple[int, ...]:
@@ -97,7 +98,7 @@ class StructuralAssociationField:
     ) -> None:
         if channel not in self.CHANNELS:
             raise ValueError("unknown association channel")
-        if source == target or amount <= 0.0:
+        if amount <= 0.0:
             return
         key = (hierarchy_id, int(source), int(target), channel)
         edge = self._edges.get(key)
@@ -119,6 +120,11 @@ class StructuralAssociationField:
         """Observe one persisted structural envelope and advance causal time once."""
         if envelope.get("semantic_projection") not in {False, None}:
             raise ValueError("StructuralAssociationField accepts raw structural observations only")
+        observation_id = str(envelope.get("observation_id") or "").strip()
+        if not observation_id:
+            raise ValueError("structural observation observation_id is required")
+        if observation_id in self._seen_observations:
+            return self.tick
         event = envelope.get("event")
         if not isinstance(event, dict):
             raise ValueError("structural observation event must be an object")
@@ -126,6 +132,7 @@ class StructuralAssociationField:
         trail = self._trail(event)
 
         self.tick += 1
+        self._seen_observations.add(observation_id)
         self._trim_recent(hierarchy_id)
 
         for i, source in enumerate(trail):
@@ -251,5 +258,6 @@ class StructuralAssociationField:
             "max_event_lag": self.max_event_lag,
             "forgetting_rate": self.forgetting_rate,
             "semantic_projection": False,
+            "observations": len(self._seen_observations),
             "edges": edges,
         }
