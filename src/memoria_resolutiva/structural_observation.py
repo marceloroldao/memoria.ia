@@ -142,15 +142,14 @@ class StructuralObservationPersistence:
             store.close()
         return StructuralObservationReceipt(backend_name, state_id, digest)
 
-    def load(self, receipt: StructuralObservationReceipt | dict[str, str]) -> bytes:
+    @staticmethod
+    def _receipt_parts(receipt: StructuralObservationReceipt | dict[str, str]) -> tuple[str, str, str]:
         if isinstance(receipt, StructuralObservationReceipt):
-            backend = receipt.backend
-            state_id = receipt.state_id
-            expected = receipt.sha256
-        else:
-            backend = str(receipt["backend"])
-            state_id = str(receipt["state_id"])
-            expected = str(receipt["sha256"])
+            return receipt.backend, receipt.state_id, receipt.sha256
+        return str(receipt["backend"]), str(receipt["state_id"]), str(receipt["sha256"])
+
+    def load(self, receipt: StructuralObservationReceipt | dict[str, str]) -> bytes:
+        backend, state_id, expected = self._receipt_parts(receipt)
         store = self._open(backend=backend, allow_fallback=False)
         try:
             payload = store.reconstruct(state_id)
@@ -160,6 +159,30 @@ class StructuralObservationPersistence:
         if actual != expected:
             raise ValueError("structural observation persistence checksum mismatch")
         return payload
+
+    def load_many(
+        self,
+        receipts: list[StructuralObservationReceipt | dict[str, str]]
+        | tuple[StructuralObservationReceipt | dict[str, str], ...],
+    ) -> tuple[bytes, ...]:
+        stores: dict[str, object] = {}
+        payloads: list[bytes] = []
+        try:
+            for receipt in receipts:
+                backend, state_id, expected = self._receipt_parts(receipt)
+                store = stores.get(backend)
+                if store is None:
+                    store = self._open(backend=backend, allow_fallback=False)
+                    stores[backend] = store
+                payload = store.reconstruct(state_id)
+                actual = hashlib.sha256(payload).hexdigest()
+                if actual != expected:
+                    raise ValueError("structural observation persistence checksum mismatch")
+                payloads.append(payload)
+            return tuple(payloads)
+        finally:
+            for store in stores.values():
+                store.close()
 
 
 class StructuralObservationStore:
@@ -279,8 +302,29 @@ class StructuralObservationStore:
             raise ValueError("structural observation identity mismatch")
         return envelope
 
+    def observation_id_at(self, index: int) -> str:
+        with self._lock:
+            return self._order[index]
+
+    def ordered_from(self, offset: int = 0) -> tuple[dict[str, Any], ...]:
+        if offset < 0:
+            raise ValueError("offset must be >= 0")
+        with self._lock:
+            ids = tuple(self._order[offset:])
+            receipts = tuple(self._entries[observation_id]["receipt"] for observation_id in ids)
+            payloads = self.persistence.load_many(receipts)
+        out: list[dict[str, Any]] = []
+        for observation_id, payload in zip(ids, payloads):
+            envelope = json.loads(payload.decode("utf-8"))
+            if envelope.get("format") != STRUCTURAL_OBSERVATION_FORMAT:
+                raise ValueError("unsupported structural observation format")
+            if envelope.get("observation_id") != observation_id:
+                raise ValueError("structural observation identity mismatch")
+            out.append(envelope)
+        return tuple(out)
+
     def recent(self, limit: int = 20) -> tuple[dict[str, Any], ...]:
         if limit < 1:
             raise ValueError("limit must be >= 1")
-        ids = tuple(self._order[-limit:])
-        return tuple(self.get(observation_id) for observation_id in ids)
+        start = max(0, self.count - limit)
+        return self.ordered_from(start)

@@ -277,6 +277,7 @@ def build_app():
     @app.get("/api/v1/storage/health")
     def storage_health():
         stats = service.statistics
+        structural_status = structural_service.associations.status()
         return {
             "status": "ok",
             "backend": stats.get("persistence_backend", "unknown"),
@@ -285,6 +286,11 @@ def build_app():
             "evidence_persisted": evidence_service.receipt is not None,
             "structural_observation_backend": structural_service.store.backend,
             "structural_observations": structural_service.store.count,
+            "structural_association_backend": structural_status["backend"],
+            "structural_association_observations": structural_status["derived_observations"],
+            "structural_association_edges": structural_status["derived_edges"],
+            "structural_association_pending": structural_status["pending_observations"],
+            "structural_association_hierarchies": structural_status["hierarchies"],
             "structural_semantic_projection": False,
             "conversation_runtime": "native" if conversation_is_native else "python",
             "episodic_runtime": "native" if episodic_is_native else "python",
