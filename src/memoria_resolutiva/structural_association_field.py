@@ -58,6 +58,7 @@ class StructuralAssociationField:
         self.max_event_lag = int(max_event_lag)
         self.forgetting_rate = float(forgetting_rate)
         self.tick = 0
+        self._ticks: dict[str, int] = defaultdict(int)
         self._edges: dict[tuple[str, int, int, str], _AssociationEdge] = {}
         self._recent: dict[str, deque[tuple[int, tuple[int, ...]]]] = defaultdict(deque)
         self._seen_observations: set[str] = set()
@@ -101,19 +102,21 @@ class StructuralAssociationField:
         if amount <= 0.0:
             return
         key = (hierarchy_id, int(source), int(target), channel)
+        current_tick = self._ticks[hierarchy_id]
         edge = self._edges.get(key)
         if edge is None:
-            edge = _AssociationEdge(last_tick=self.tick)
+            edge = _AssociationEdge(last_tick=current_tick)
             self._edges[key] = edge
         else:
-            edge.weight = self._decayed(edge, self.tick)
-            edge.last_tick = self.tick
+            edge.weight = self._decayed(edge, current_tick)
+            edge.last_tick = current_tick
         edge.weight += float(amount)
         edge.observations += 1
 
     def _trim_recent(self, hierarchy_id: str) -> None:
         recent = self._recent[hierarchy_id]
-        while recent and self.tick - recent[0][0] > self.max_event_lag:
+        current_tick = self._ticks[hierarchy_id]
+        while recent and current_tick - recent[0][0] > self.max_event_lag:
             recent.popleft()
 
     def observe(self, envelope: dict[str, Any]) -> int:
@@ -132,6 +135,8 @@ class StructuralAssociationField:
         trail = self._trail(event)
 
         self.tick += 1
+        self._ticks[hierarchy_id] += 1
+        current_tick = self._ticks[hierarchy_id]
         self._seen_observations.add(observation_id)
         self._trim_recent(hierarchy_id)
 
@@ -152,7 +157,7 @@ class StructuralAssociationField:
             for previous_tick, previous_trail in recent:
                 if not previous_trail:
                     continue
-                lag = self.tick - previous_tick
+                lag = current_tick - previous_tick
                 if lag < 1 or lag > self.max_event_lag:
                     continue
                 mass = 1.0 / (
@@ -167,17 +172,20 @@ class StructuralAssociationField:
                             "temporal",
                             mass,
                         )
-            recent.append((self.tick, trail))
+            recent.append((current_tick, trail))
 
-        return self.tick
+        return current_tick
 
-    def advance(self, steps: int = 1) -> int:
+    def advance(self, steps: int = 1, *, hierarchy_id: str | None = None) -> int:
         """Advance causal time without inventing observations."""
         if steps < 0:
             raise ValueError("steps must be >= 0")
-        self.tick += int(steps)
-        for hierarchy_id in tuple(self._recent):
-            self._trim_recent(hierarchy_id)
+        amount = int(steps)
+        self.tick += amount
+        targets = (hierarchy_id,) if hierarchy_id is not None else tuple(self._ticks)
+        for target in targets:
+            self._ticks[target] += amount
+            self._trim_recent(target)
         return self.tick
 
     def association(
@@ -195,7 +203,7 @@ class StructuralAssociationField:
         for name in channels:
             edge = self._edges.get((hierarchy_id, int(source), int(target), name))
             if edge is not None:
-                total += self._decayed(edge, self.tick)
+                total += self._decayed(edge, self._ticks[hierarchy_id])
         return total
 
     def strongest(
@@ -222,7 +230,7 @@ class StructuralAssociationField:
                     src,
                     target,
                     name,
-                    self._decayed(edge, self.tick),
+                    self._decayed(edge, self._ticks[hierarchy_id]),
                     edge.observations,
                     edge.last_tick,
                 )
@@ -246,7 +254,7 @@ class StructuralAssociationField:
                     "source": source,
                     "target": target,
                     "channel": channel,
-                    "weight": self._decayed(edge, self.tick),
+                    "weight": self._decayed(edge, self._ticks[hierarchy_id]),
                     "observations": edge.observations,
                     "last_tick": edge.last_tick,
                 }
@@ -254,6 +262,7 @@ class StructuralAssociationField:
         return {
             "schema": "memoria.ia-structural-association-field-v1",
             "tick": self.tick,
+            "hierarchy_ticks": dict(sorted(self._ticks.items())),
             "max_within_distance": self.max_within_distance,
             "max_event_lag": self.max_event_lag,
             "forgetting_rate": self.forgetting_rate,
