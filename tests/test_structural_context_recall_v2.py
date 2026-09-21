@@ -2,6 +2,7 @@ from memoria_resolutiva.structural_context_observation_v2 import (
     StructuralContextObservationMemory,
 )
 from memoria_resolutiva.structural_context_recall_v2 import (
+    recall_active_structural_context,
     recall_structural_context,
 )
 
