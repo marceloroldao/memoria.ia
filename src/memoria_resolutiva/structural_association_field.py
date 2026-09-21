@@ -63,6 +63,7 @@ class StructuralAssociationField:
         self._edges: dict[tuple[str, int, int, str], _AssociationEdge] = {}
         self._recent: dict[str, deque[tuple[int, tuple[int, ...]]]] = defaultdict(deque)
         self._seen_observations: set[str] = set()
+        self._observation_count = 0
 
     @staticmethod
     def _trail(event: dict[str, Any]) -> tuple[int, ...]:
@@ -139,6 +140,7 @@ class StructuralAssociationField:
         self._ticks[hierarchy_id] += 1
         current_tick = self._ticks[hierarchy_id]
         self._seen_observations.add(observation_id)
+        self._observation_count += 1
         self._trim_recent(hierarchy_id)
 
         for i, source in enumerate(trail):
@@ -260,6 +262,7 @@ class StructuralAssociationField:
             "max_within_distance": self.max_within_distance,
             "max_event_lag": self.max_event_lag,
             "forgetting_rate": self.forgetting_rate,
+            "observation_count": self._observation_count,
             "edges": [
                 {
                     "hierarchy_id": hierarchy_id,
@@ -295,6 +298,9 @@ class StructuralAssociationField:
         field.tick = int(state["tick"])
         if field.tick < 0:
             raise ValueError("structural association tick must be >= 0")
+        field._observation_count = int(state.get("observation_count", field.tick))
+        if field._observation_count < 0:
+            raise ValueError("structural association observation_count must be >= 0")
 
         ticks = state.get("hierarchy_ticks")
         if not isinstance(ticks, dict):
@@ -380,6 +386,6 @@ class StructuralAssociationField:
             "max_event_lag": self.max_event_lag,
             "forgetting_rate": self.forgetting_rate,
             "semantic_projection": False,
-            "observations": len(self._seen_observations),
+            "observations": self._observation_count,
             "edges": edges,
         }
