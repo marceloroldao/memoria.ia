@@ -249,6 +249,12 @@ if(NOT ANDROID)
   set_target_properties(memoria_relation_extractor_test PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
   add_test(NAME memoria_relation_extractor_test COMMAND memoria_relation_extractor_test)
 
+  add_executable(memoria_mobile_structural_text tests/structural_text_mobile.c)
+  target_link_libraries(memoria_mobile_structural_text PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_structural_text PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  set_target_properties(memoria_mobile_structural_text PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  add_test(NAME memoria_mobile_structural_text COMMAND memoria_mobile_structural_text)
+
   add_executable(memoria_structural_text_runtime_restart_test tests/structural_text_runtime_restart.c)
   target_link_libraries(memoria_structural_text_runtime_restart_test PRIVATE memoria_structural_internal)
   target_include_directories(memoria_structural_text_runtime_restart_test PRIVATE ${CMAKE_CURRENT_LIST_DIR})
