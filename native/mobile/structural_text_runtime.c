@@ -694,10 +694,14 @@ int memoria_structural_text_runtime_observe(
 }
 
 static void free_context(memoria_structural_text_context *context) {
+    size_t i;
     if (!context) return;
     free(context->source_text);
     free(context->source_id);
     free(context->source_kind);
+    for (i = 0; i < context->source_id_count; ++i)
+        free(context->source_ids[i]);
+    free(context->source_ids);
     memset(context, 0, sizeof(*context));
 }
 
@@ -709,6 +713,31 @@ void memoria_structural_text_contexts_free(
     if (!contexts) return;
     for (i = 0; i < count; ++i) free_context(&contexts[i]);
     free(contexts);
+}
+
+static int context_add_source_id(
+    memoria_structural_text_context *context,
+    const char *source_id
+) {
+    char **grown;
+    char *copy;
+    size_t i;
+    if (!context || !source_id || !*source_id) return 0;
+    for (i = 0; i < context->source_id_count; ++i)
+        if (strcmp(context->source_ids[i], source_id) == 0) return 1;
+    copy = dup_text(source_id);
+    if (!copy) return 0;
+    grown = (char **)realloc(
+        context->source_ids,
+        (context->source_id_count + 1u) * sizeof(*grown)
+    );
+    if (!grown) {
+        free(copy);
+        return 0;
+    }
+    context->source_ids = grown;
+    context->source_ids[context->source_id_count++] = copy;
+    return 1;
 }
 
 static int context_set_source(
@@ -834,7 +863,8 @@ int memoria_structural_text_runtime_resolve(
                 context_capacity = capacity;
             }
             context = &contexts[context_count++];
-            if (!context_set_source(context, observation)) {
+            if (!context_set_source(context, observation) ||
+                !context_add_source_id(context, observation->source_id)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
                 free(query_symbols);
                 return 0;
@@ -844,6 +874,11 @@ int memoria_structural_text_runtime_resolve(
             context->association_mass = score.association_mass;
             context->repetitions = 1u;
         } else {
+            if (!context_add_source_id(context, observation->source_id)) {
+                memoria_structural_text_contexts_free(contexts, context_count);
+                free(query_symbols);
+                return 0;
+            }
             ++context->repetitions;
             if (score.score > context->score ||
                 (score.score == context->score &&
