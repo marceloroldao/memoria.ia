@@ -31,46 +31,57 @@ int main(void) {
 
     for (i = 0; i < sizeof(vectors) / sizeof(vectors[0]); ++i) {
         uint64_t got = 0;
-        CHECK(memoria_structural_text_symbol(
-            (const unsigned char *)vectors[i].token,
-            strlen(vectors[i].token),
-            &got
-        ));
+        CHECK(memoria_structural_text_symbol(vectors[i].token, strlen(vectors[i].token), &got));
         CHECK(got == vectors[i].expected);
     }
 
     {
-        const uint64_t query[] = {
-            UINT64_C(13761269655978280478),
-            UINT64_C(13407524865874431819),
-            UINT64_C(13761269655978280478)
-        };
-        const uint64_t candidate[] = {
-            UINT64_C(7126544648815283343),
-            UINT64_C(13761269655978280478),
-            UINT64_C(2079710249054350336),
-            UINT64_C(15732214716224006551),
-            UINT64_C(4806113438364846566),
-            UINT64_C(13761269655978280478)
-        };
-        const memoria_structural_edge edges[] = {
-            {UINT64_C(13761269655978280478), UINT64_C(15732214716224006551), 2.0},
-            {UINT64_C(15732214716224006551), UINT64_C(13761269655978280478), 0.5},
-            {UINT64_C(13407524865874431819), UINT64_C(4806113438364846566), 0.8},
-            {UINT64_C(4806113438364846566), UINT64_C(13407524865874431819), 0.2},
-            {UINT64_C(13761269655978280478), UINT64_C(4806113438364846566), 0.6},
-            {UINT64_C(13407524865874431819), UINT64_C(15732214716224006551), 0.4}
-        };
-        memoria_structural_text_score out;
-        CHECK(memoria_structural_text_score_candidate(
-            query, sizeof(query) / sizeof(query[0]),
-            candidate, sizeof(candidate) / sizeof(candidate[0]),
-            edges, sizeof(edges) / sizeof(edges[0]),
-            &out
+        const uint64_t gato = UINT64_C(13761269655978280478);
+        const uint64_t se = UINT64_C(2079710249054350336);
+        const uint64_t chama = UINT64_C(15732214716224006551);
+        const uint64_t alt = UINT64_C(4806113438364846566);
+        const uint64_t meu = UINT64_C(7126544648815283343);
+        const uint64_t trail[] = {meu, gato, se, chama, alt};
+        const uint64_t query[] = {gato, chama, gato};
+        memoria_structural_text_score score;
+        memoria_structural_text_field *field = memoria_structural_text_field_create(8u, 4u, 0.0);
+
+        CHECK(field != NULL);
+        CHECK(memoria_structural_text_field_observe(field, trail, 5u));
+        CHECK(memoria_structural_text_field_observe(field, trail, 5u));
+        CHECK(memoria_structural_text_field_tick(field) == 2u);
+        CHECK(memoria_structural_text_field_edge_count(field) > 0u);
+
+        CHECK(close_enough(
+            memoria_structural_text_field_association(
+                field, gato, se, MEMORIA_STRUCTURAL_CHANNEL_WITHIN
+            ),
+            2.0
         ));
-        CHECK(out.exact_overlap == 1u);
-        CHECK(close_enough(out.association_mass, 0.38));
-        CHECK(close_enough(out.score, 0.88));
+        CHECK(close_enough(
+            memoria_structural_text_field_association(
+                field, gato, chama, MEMORIA_STRUCTURAL_CHANNEL_WITHIN
+            ),
+            1.0
+        ));
+        CHECK(close_enough(
+            memoria_structural_text_field_association(
+                field, gato, gato, MEMORIA_STRUCTURAL_CHANNEL_TEMPORAL
+            ),
+            1.0 / 25.0
+        ));
+
+        CHECK(memoria_structural_text_score_candidate(
+            field,
+            query, 3u,
+            trail, 5u,
+            &score
+        ));
+        CHECK(score.exact_overlap == 2u);
+        CHECK(score.score > 1.0);
+        CHECK(score.association_mass > 0.0);
+
+        memoria_structural_text_field_destroy(field);
     }
 
     return 0;
