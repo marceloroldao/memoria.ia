@@ -16,6 +16,8 @@ typedef struct memoria_structural_text_context {
     char *source_text;
     char *source_id;
     char *source_kind;
+    char **source_ids;
+    size_t source_id_count;
     unsigned long sequence;
     double score;
     size_t exact_overlap;
