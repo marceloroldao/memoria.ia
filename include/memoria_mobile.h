@@ -62,6 +62,25 @@ memoria_mobile_status memoria_mobile_activate_relations_json(
     memoria_mobile_buffer *response_json
 );
 
+/*
+ * Additive ABI-v1 structural text path for OFF.IA V2.
+ *
+ * observe persists a raw text observation into the shared BDR structural runtime.
+ * resolve is read-only: query symbols are never observed and cannot reinforce
+ * their own result. Both remain optional symbols for older ABI-v1 libraries.
+ */
+memoria_mobile_status memoria_mobile_observe_structural_text_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+memoria_mobile_status memoria_mobile_resolve_structural_text_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_store_episode_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
