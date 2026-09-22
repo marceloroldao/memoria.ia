@@ -62,6 +62,40 @@ memoria_mobile_status memoria_mobile_activate_relations_json(
     memoria_mobile_buffer *response_json
 );
 
+/*
+ * Additive ABI-v1 non-semantic structural text surface.
+ *
+ * observe request:
+ * {
+ *   "hierarchy_id":"conversation:<id>",
+ *   "source_id":"...",
+ *   "source_kind":"user_assertion|sensor|...",
+ *   "sequence":1,
+ *   "text":"..."
+ * }
+ *
+ * resolve request:
+ * {
+ *   "hierarchy_id":"conversation:<id>",
+ *   "query":"...",
+ *   "top_k":3
+ * }
+ *
+ * These calls never create facts, predicates, grammar labels or ontology.
+ * Resolution is read-only and does not reinforce the query.
+ */
+memoria_mobile_status memoria_mobile_observe_structural_text_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+memoria_mobile_status memoria_mobile_resolve_structural_text_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_store_episode_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
