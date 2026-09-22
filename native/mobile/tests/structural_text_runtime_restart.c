@@ -20,6 +20,23 @@ static int has_text(
     return 0;
 }
 
+static int context_has_source_id(
+    const memoria_structural_text_context *contexts,
+    size_t count,
+    const char *text,
+    const char *source_id
+) {
+    size_t i;
+    for (i = 0; i < count; ++i) {
+        size_t j;
+        if (!contexts[i].source_text || strcmp(contexts[i].source_text, text) != 0)
+            continue;
+        for (j = 0; j < contexts[i].source_id_count; ++j)
+            if (strcmp(contexts[i].source_ids[j], source_id) == 0) return 1;
+    }
+    return 0;
+}
+
 static size_t find_repetitions(
     const memoria_structural_text_context *contexts,
     size_t count,
@@ -94,6 +111,12 @@ int main(void) {
     CHECK(find_repetitions(
         contexts, context_count, "Meu gato se chama Alt."
     ) == 2u);
+    CHECK(context_has_source_id(
+        contexts, context_count, "Meu gato se chama Alt.", "m1"
+    ));
+    CHECK(context_has_source_id(
+        contexts, context_count, "Meu gato se chama Alt.", "m2"
+    ));
     memoria_structural_text_contexts_free(contexts, context_count);
     contexts = NULL;
     context_count = 0u;
