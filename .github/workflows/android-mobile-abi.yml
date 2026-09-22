@@ -103,6 +103,8 @@ jobs:
           grep -q "memoria_mobile_open" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_learn_turn_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_resolve_context_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_observe_structural_text_json" memoria-mobile-symbols.txt
+          grep -q "memoria_mobile_resolve_structural_text_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_store_episode_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_recall_episode_json" memoria-mobile-symbols.txt
           grep -q "memoria_mobile_export_snapshot_json" memoria-mobile-symbols.txt
