@@ -3,6 +3,7 @@
 #include "concept_relation_adapter.h"
 #include "concept_runtime_state.h"
 #include "mobile_persistence.h"
+#include "structural_text_runtime.h"
 #include "semantic_kernel.h"
 
 #include <stdint.h>
@@ -28,6 +29,7 @@ struct memoria_mobile_handle {
     char *organization_id;
     memoria_persistence *persistence;
     memoria_concept_runtime *concept_runtime;
+    memoria_structural_text_runtime *structural_text_runtime;
     memoria_persist_turn *turns;
     size_t turn_count;
     size_t turn_capacity;
@@ -36,8 +38,9 @@ struct memoria_mobile_handle {
     activation_memory_index_slot *memory_index;
     size_t memory_index_capacity;
     size_t memory_index_count;
-    memoria_persist_episode episodes[ACTIVATION_MAX_EPISODES];
+    memoria_persist_episode *episodes;
     size_t episode_count;
+    size_t episode_capacity;
     unsigned long sequence;
 };
 
