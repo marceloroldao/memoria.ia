@@ -1559,6 +1559,235 @@ done:
     return status;
 }
 
+
+memoria_mobile_status memoria_mobile_observe_structural_text_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *json = NULL;
+    char *hierarchy_id = NULL;
+    char *source_id = NULL;
+    char *source_kind = NULL;
+    char *text = NULL;
+    long sequence;
+    int duplicate = 0;
+    memoria_mobile_status status;
+
+    if (!h || !req.data || !req.size || !out || !h->structural_text_runtime)
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+
+    json = buffer_to_string(req);
+    if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    hierarchy_id = json_string(json, "hierarchy_id");
+    source_id = json_string(json, "source_id");
+    source_kind = json_string(json, "source_kind");
+    text = json_string(json, "text");
+    sequence = json_long(json, "sequence", -1);
+    if (!source_kind) source_kind = dup_string("user");
+
+    if (!hierarchy_id || !*hierarchy_id ||
+        !source_id || !*source_id ||
+        !source_kind || !*source_kind ||
+        !text || !*text ||
+        sequence < 0) {
+        status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+        goto done;
+    }
+
+    if (!memoria_structural_text_runtime_observe(
+            h->structural_text_runtime,
+            hierarchy_id,
+            source_id,
+            source_kind,
+            (unsigned long)sequence,
+            text,
+            &duplicate)) {
+        status = MEMORIA_MOBILE_PERSISTENCE_ERROR;
+        goto done;
+    }
+
+    status = set_responsef(
+        out,
+        MEMORIA_MOBILE_OK,
+        "{\"status\":\"OK\",\"duplicate\":%s,"
+        "\"observation_count\":%zu,\"semantic_projection\":false}",
+        duplicate ? "true" : "false",
+        memoria_structural_text_runtime_observation_count(
+            h->structural_text_runtime
+        )
+    );
+
+done:
+    free(json);
+    free(hierarchy_id);
+    free(source_id);
+    free(source_kind);
+    free(text);
+    return status;
+}
+
+memoria_mobile_status memoria_mobile_resolve_structural_text_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *json = NULL;
+    char *hierarchy_id = NULL;
+    char *query = NULL;
+    long top_k_long;
+    size_t top_k;
+    memoria_structural_text_context *contexts = NULL;
+    size_t count = 0u;
+    size_t i;
+    size_t cap = 256u;
+    size_t used = 0u;
+    char *payload = NULL;
+    memoria_mobile_status status = MEMORIA_MOBILE_INTERNAL_ERROR;
+
+    if (!h || !req.data || !req.size || !out || !h->structural_text_runtime)
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+
+    json = buffer_to_string(req);
+    if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    hierarchy_id = json_string(json, "hierarchy_id");
+    query = json_string(json, "query");
+    top_k_long = json_long(json, "limit", 3);
+    if (!hierarchy_id || !*hierarchy_id ||
+        !query || !*query ||
+        top_k_long < 1 || top_k_long > 20) {
+        status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+        goto done;
+    }
+    top_k = (size_t)top_k_long;
+
+    if (!memoria_structural_text_runtime_resolve(
+            h->structural_text_runtime,
+            hierarchy_id,
+            query,
+            top_k,
+            &contexts,
+            &count)) {
+        status = MEMORIA_MOBILE_INTERNAL_ERROR;
+        goto done;
+    }
+
+    if (count == 0u) {
+        status = set_responsef(
+            out,
+            MEMORIA_MOBILE_UNRESOLVED,
+            "{\"status\":\"UNRESOLVED\",\"contexts\":[],"
+            "\"semantic_projection\":false,"
+            "\"observation_count\":%zu}",
+            memoria_structural_text_runtime_observation_count(
+                h->structural_text_runtime
+            )
+        );
+        goto done;
+    }
+
+    for (i = 0; i < count; ++i) {
+        char *text_escaped = json_escape(contexts[i].source_text);
+        char *source_escaped = json_escape(contexts[i].source_id);
+        char *kind_escaped = json_escape(contexts[i].source_kind);
+        if (!text_escaped || !source_escaped || !kind_escaped) {
+            free(text_escaped);
+            free(source_escaped);
+            free(kind_escaped);
+            status = MEMORIA_MOBILE_INTERNAL_ERROR;
+            goto done;
+        }
+        cap += strlen(text_escaped) + strlen(source_escaped) +
+               strlen(kind_escaped) + 320u;
+        free(text_escaped);
+        free(source_escaped);
+        free(kind_escaped);
+    }
+
+    payload = (char *)malloc(cap);
+    if (!payload) {
+        status = MEMORIA_MOBILE_INTERNAL_ERROR;
+        goto done;
+    }
+    {
+        int written = snprintf(
+            payload,
+            cap,
+            "{\"status\":\"HIT\",\"contexts\":["
+        );
+        if (written < 0 || (size_t)written >= cap) {
+            status = MEMORIA_MOBILE_INTERNAL_ERROR;
+            goto done;
+        }
+        used = (size_t)written;
+    }
+
+    for (i = 0; i < count; ++i) {
+        char *text_escaped = json_escape(contexts[i].source_text);
+        char *source_escaped = json_escape(contexts[i].source_id);
+        char *kind_escaped = json_escape(contexts[i].source_kind);
+        int written;
+        if (!text_escaped || !source_escaped || !kind_escaped) {
+            free(text_escaped);
+            free(source_escaped);
+            free(kind_escaped);
+            status = MEMORIA_MOBILE_INTERNAL_ERROR;
+            goto done;
+        }
+        written = snprintf(
+            payload + used,
+            cap - used,
+            "%s{\"source_text\":\"%s\",\"source_id\":\"%s\","
+            "\"source_kind\":\"%s\",\"sequence\":%lu,"
+            "\"score\":%.17g,\"exact_overlap\":%zu,"
+            "\"association_mass\":%.17g,\"repetitions\":%zu}",
+            i ? "," : "",
+            text_escaped,
+            source_escaped,
+            kind_escaped,
+            contexts[i].sequence,
+            contexts[i].score,
+            contexts[i].exact_overlap,
+            contexts[i].association_mass,
+            contexts[i].repetitions
+        );
+        free(text_escaped);
+        free(source_escaped);
+        free(kind_escaped);
+        if (written < 0 || (size_t)written >= cap - used) {
+            status = MEMORIA_MOBILE_INTERNAL_ERROR;
+            goto done;
+        }
+        used += (size_t)written;
+    }
+
+    {
+        int written = snprintf(
+            payload + used,
+            cap - used,
+            "],\"semantic_projection\":false,"
+            "\"observation_count\":%zu}",
+            memoria_structural_text_runtime_observation_count(
+                h->structural_text_runtime
+            )
+        );
+        if (written < 0 || (size_t)written >= cap - used) {
+            status = MEMORIA_MOBILE_INTERNAL_ERROR;
+            goto done;
+        }
+    }
+
+    status = set_response(out, payload, MEMORIA_MOBILE_OK);
+
+done:
+    free(payload);
+    memoria_structural_text_contexts_free(contexts, count);
+    free(json);
+    free(hierarchy_id);
+    free(query);
+    return status;
+}
+
 memoria_mobile_status memoria_mobile_format_json(
     memoria_mobile_handle *h,
     memoria_mobile_buffer request_json,
