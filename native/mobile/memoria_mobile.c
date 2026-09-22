@@ -13,6 +13,7 @@
 #include "semantic_consolidation_request.h"
 #include "concept_runtime_state.h"
 #include "concept_query_rewrite.h"
+#include "structural_text_runtime.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -26,6 +27,9 @@
 #define INITIAL_EPISODE_CAPACITY 256u
 #define INITIAL_MEMORY_INDEX_CAPACITY 1024u
 #define MAX_RELATIONS_PER_TURN MEMORIA_PERSIST_MAX_RELATIONS
+#define STRUCTURAL_MAX_WITHIN_DISTANCE 8u
+#define STRUCTURAL_MAX_EVENT_LAG 4u
+#define STRUCTURAL_FORGETTING_RATE 0.01
 
 typedef memoria_persist_turn turn_row;
 typedef memoria_persist_episode episode_row;
@@ -42,6 +46,7 @@ struct memoria_mobile_handle {
     char *organization_id;
     memoria_persistence *persistence;
     memoria_concept_runtime *concept_runtime;
+    memoria_structural_text_runtime *structural_text_runtime;
     turn_row *turns;
     size_t turn_count;
     size_t turn_capacity;
@@ -853,6 +858,14 @@ memoria_mobile_status memoria_mobile_open(const char *data_dir, const char *orga
             memoria_persistence_bdr_handle(h->persistence),
             organization_id,
             &h->concept_runtime
+        ) ||
+        !memoria_structural_text_runtime_open_shared(
+            memoria_persistence_bdr_handle(h->persistence),
+            organization_id,
+            STRUCTURAL_MAX_WITHIN_DISTANCE,
+            STRUCTURAL_MAX_EVENT_LAG,
+            STRUCTURAL_FORGETTING_RATE,
+            &h->structural_text_runtime
         )) {
         memoria_mobile_close(h);
         return MEMORIA_MOBILE_PERSISTENCE_ERROR;
@@ -1591,10 +1604,19 @@ memoria_mobile_status memoria_mobile_format_json(
 
     memoria_concept_runtime_close(h->concept_runtime);
     h->concept_runtime = NULL;
+    memoria_structural_text_runtime_close(h->structural_text_runtime);
+    h->structural_text_runtime = NULL;
     if (!memoria_concept_runtime_open_shared(
             memoria_persistence_bdr_handle(h->persistence),
             h->organization_id,
-            &h->concept_runtime)) {
+            &h->concept_runtime) ||
+        !memoria_structural_text_runtime_open_shared(
+            memoria_persistence_bdr_handle(h->persistence),
+            h->organization_id,
+            STRUCTURAL_MAX_WITHIN_DISTANCE,
+            STRUCTURAL_MAX_EVENT_LAG,
+            STRUCTURAL_FORGETTING_RATE,
+            &h->structural_text_runtime)) {
         status = MEMORIA_MOBILE_PERSISTENCE_ERROR;
         goto done;
     }
@@ -1614,7 +1636,9 @@ done:
 
 memoria_mobile_status memoria_mobile_flush(memoria_mobile_handle *h) {
     if (!h) return MEMORIA_MOBILE_INVALID_ARGUMENT;
-    return memoria_persistence_sync(h->persistence) && memoria_concept_runtime_sync(h->concept_runtime)
+    return memoria_persistence_sync(h->persistence) &&
+           memoria_concept_runtime_sync(h->concept_runtime) &&
+           memoria_structural_text_runtime_sync(h->structural_text_runtime)
         ? MEMORIA_MOBILE_OK : MEMORIA_MOBILE_PERSISTENCE_ERROR;
 }
 
@@ -1626,6 +1650,7 @@ void memoria_mobile_close(memoria_mobile_handle *h) {
     for (i = 0; i < h->turn_count; ++i) free_turn(&h->turns[i]);
     for (i = 0; i < h->episode_count; ++i) free_episode(&h->episodes[i]);
     memoria_concept_runtime_close(h->concept_runtime);
+    memoria_structural_text_runtime_close(h->structural_text_runtime);
     memoria_persistence_close(h->persistence);
     free(h->turns);
     free(h->episodes);
