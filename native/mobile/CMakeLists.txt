@@ -84,6 +84,11 @@ if(NOT ANDROID)
   target_include_directories(memoria_mobile_restart PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
   add_test(NAME memoria_mobile_restart COMMAND memoria_mobile_restart)
 
+  add_executable(memoria_mobile_structural_text tests/structural_text_mobile.c)
+  target_link_libraries(memoria_mobile_structural_text PRIVATE memoria_mobile)
+  target_include_directories(memoria_mobile_structural_text PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+  add_test(NAME memoria_mobile_structural_text COMMAND memoria_mobile_structural_text)
+
   add_executable(memoria_mobile_format tests/format_mobile.c)
   target_link_libraries(memoria_mobile_format PRIVATE memoria_mobile)
   target_include_directories(memoria_mobile_format PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
