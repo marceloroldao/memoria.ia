@@ -18,9 +18,9 @@ V2 RC1 functional freeze commit: **`bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9`**.
 
 Validated companion Resolutive-DB/BDR pin for the current native/mobile structural runtime: **`d09914b85646353d8fd004ccf99e96a94fab9eef`**.
 
-Previous archived release RC7 DOI: **[10.5281/zenodo.22654141](https://doi.org/10.5281/zenodo.22654141)**.
+V2 RC1 archived release DOI: **[10.5281/zenodo.22908785](https://doi.org/10.5281/zenodo.22908785)**.
 
-The V2 RC1 DOI is intentionally not pre-assigned. It must be inserted only after the archival record exists.
+Previous archived release RC7 DOI: **[10.5281/zenodo.22654141](https://doi.org/10.5281/zenodo.22654141)**.
 
 The architecture remains:
 
@@ -82,7 +82,7 @@ The repository contains security and isolation mechanisms, but no independent pr
 
 ## Previous releases
 
-- **v2.0.0-rc1** — structural V2 baseline; archival DOI pending publication.
+- **v2.0.0-rc1** — structural V2 baseline; DOI `10.5281/zenodo.22908785`.
 - **v1.0.0-rc7** — stabilization and consistency candidate; DOI `10.5281/zenodo.22654141`.
 - **v1.0.0-rc6** — semantic relational context candidate; DOI `10.5281/zenodo.22648409`.
 - **v1.0.0-rc5** — native relational memory candidate; DOI `10.5281/zenodo.22439650`.

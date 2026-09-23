@@ -19,6 +19,9 @@ permissions:
 jobs:
   publish-v2-rc1:
     runs-on: ubuntu-latest
+    env:
+      V2_RC1_TAG: v2.0.0-rc1
+      V2_RC1_PUBLICATION_COMMIT: e239a40ce54f2030cfe25a97f1647143f9b9061c
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,28 +44,31 @@ jobs:
       - name: Verify release notes
         run: test -s RELEASE_NOTES_v2.0.0-rc1.md
 
-      - name: Create tag and GitHub pre-release at exact merge commit
+      - name: Create tag and GitHub pre-release once
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if gh release view v2.0.0-rc1 >/dev/null 2>&1; then
-            echo 'v2.0.0-rc1 release already exists; refusing to republish.'
-            exit 0
+          if gh release view "$V2_RC1_TAG" >/dev/null 2>&1; then
+            echo "$V2_RC1_TAG already exists; updating release notes without moving the tag."
+            gh release edit "$V2_RC1_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --notes-file RELEASE_NOTES_v2.0.0-rc1.md
+          else
+            gh release create "$V2_RC1_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title 'Memoria.ia v2.0.0-rc1 — Structural Memory Baseline' \
+              --notes-file RELEASE_NOTES_v2.0.0-rc1.md \
+              --prerelease
           fi
-          gh release create v2.0.0-rc1 \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title 'Memoria.ia v2.0.0-rc1 — Structural Memory Baseline' \
-            --notes-file RELEASE_NOTES_v2.0.0-rc1.md \
-            --prerelease
 
-      - name: Verify tag target
+      - name: Verify immutable publication tag
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git fetch --tags --force
-          TAG_SHA="$(git rev-list -n 1 v2.0.0-rc1)"
-          test "$TAG_SHA" = "$GITHUB_SHA"
-          echo "v2.0.0-rc1 -> $TAG_SHA"
+          TAG_SHA="$(git rev-list -n 1 "$V2_RC1_TAG")"
+          test "$TAG_SHA" = "$V2_RC1_PUBLICATION_COMMIT"
+          echo "$V2_RC1_TAG remains frozen at $TAG_SHA"

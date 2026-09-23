@@ -12,6 +12,10 @@
   "language": "eng",
   "related_identifiers": [
     {
+      "identifier": "https://doi.org/10.5281/zenodo.22908785",
+      "relation": "isIdenticalTo"
+    },
+    {
       "identifier": "https://doi.org/10.5281/zenodo.22654141",
       "relation": "isNewVersionOf"
     },
@@ -38,5 +42,6 @@
     "PC server",
     "local-first AI",
     "mobile AI memory"
-  ]
+  ],
+  "doi": "10.5281/zenodo.22908785"
 }
