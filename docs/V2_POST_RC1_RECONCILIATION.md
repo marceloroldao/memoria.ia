@@ -218,6 +218,42 @@ Recover the strongest trajectory mechanics from the old V2 lab:
 - fresh-region recovery;
 - hard gate: zero cross-occurrence stitching violations.
 
+### R4 implementation slice
+
+The first R4 implementation recovers forward frontier, branching, bounded rollout,
+dynamic branch narrowing, exhaustion and fresh structural recovery.
+
+Added mechanisms:
+
+- occurrence-local rollout from the structurally strongest atomic candidates;
+- multiscale support carried as secondary evidence without overriding atomic support;
+- explicit rollout witnesses `trajectory_id + anchor_index`;
+- common-prefix exposure before real branch divergence;
+- terminal occurrences remain explicit outcomes when equally supported continuing occurrences also exist;
+- frontier aggregation when independent occurrences predict the same next address;
+- dynamic branch narrowing by new observations;
+- adjacent duplicate observations do not consume an extra transition;
+- eliminated hypotheses never mutate or delete stored trajectories;
+- fresh recovery only after the active branch set is exhausted;
+- recovery searches the new observed configuration from longest suffix to shorter
+  suffixes only when the longer suffix is absent from memory;
+- recovery preserves a terminal outcome beside continuing outcomes when both are
+  witnessed by the same longest observed suffix;
+- repeated copies of the same recovery suffix inside one stored occurrence use one
+  canonical rightmost witness, preventing one trajectory ID from representing two
+  contradictory cursor positions at once;
+- fail-closed candidate/branch limits so operational bounds cannot silently select
+  a subset of structurally tied futures.
+
+Critical anti-stitching change from the historical V2 laboratory:
+
+If the longest observed recovery suffix **exists** in memory but every matching
+occurrence is terminal, recovery stops with `recovery-matched-terminal`. It does
+not shorten the suffix and jump into another occurrence through a shared hub.
+
+R4 branch state remains ephemeral and read-only. Persistent memory contains the
+observations/trajectories; active hypotheses are a temporary inference view.
+
 ## Phase R5 — Attractor dynamics
 
 Combine the modern RC1 continuous association field with trajectory evidence.
