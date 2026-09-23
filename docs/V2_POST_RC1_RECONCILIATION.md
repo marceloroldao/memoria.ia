@@ -174,6 +174,38 @@ Mechanisms:
 - false-consensus adversarial gates;
 - density/hub diagnostics.
 
+### R3 implementation slice
+
+The first R3 implementation recovers hierarchical composition and multiscale
+resolution over the reconciled opaque trajectory substrate.
+
+Added mechanisms:
+
+- deterministic recurrent compositions over opaque structural addresses;
+- promotion only when a contiguous pattern is supported by multiple distinct
+  trajectory occurrences;
+- recursive composition of compositions;
+- derived views only: atomic trajectories are never rewritten;
+- hierarchy isolation;
+- deterministic longest-first collapse;
+- multiscale query/candidate views across depth 0 + derived depths;
+- atomic structural evidence always dominates hierarchical reinforcement;
+- zero-atomic-overlap candidates are rejected even if derived structures exist;
+- structural density/hub profiles are exposed as diagnostics only.
+
+R3 deliberately does **not** turn dense addresses into stopwords, delete hubs, or
+assign density a truth weight. Density may inform later attractor diagnostics, but
+does not participate in the R3 ranking key.
+
+False-consensus gates include:
+
+- recurrence repeated within one trajectory cannot promote a composition when
+  independent-trajectory support is required;
+- identical patterns observed once in separate hierarchy IDs do not combine;
+- a derived scale cannot outrank stronger atomic evidence;
+- unrelated queries remain unresolved despite recurrent compositions;
+- hierarchy rebuild after cold reopen is deterministic.
+
 ## Phase R4 — Branching, rollout and recovery
 
 Recover the strongest trajectory mechanics from the old V2 lab:
