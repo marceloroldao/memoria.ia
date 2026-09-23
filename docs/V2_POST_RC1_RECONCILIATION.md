@@ -239,6 +239,9 @@ Added mechanisms:
   suffixes only when the longer suffix is absent from memory;
 - recovery preserves a terminal outcome beside continuing outcomes when both are
   witnessed by the same longest observed suffix;
+- repeated copies of the same recovery suffix inside one stored occurrence use one
+  canonical rightmost witness, preventing one trajectory ID from representing two
+  contradictory cursor positions at once;
 - fail-closed candidate/branch limits so operational bounds cannot silently select
   a subset of structurally tied futures.
 
