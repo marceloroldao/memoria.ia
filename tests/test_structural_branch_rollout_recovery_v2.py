@@ -234,6 +234,21 @@ def test_terminal_full_suffix_blocks_shorter_hub_stitching():
     assert index.snapshot() == before
 
 
+def test_recovery_uses_rightmost_witness_inside_one_occurrence():
+    index = _index([
+        [9, 10, 11, 9, 10],
+    ])
+    dynamic = DynamicStructuralBranchResolverV2(index)
+    exhausted = dynamic.begin_addresses([500], hierarchy_id="h")
+
+    recovery = dynamic.recover_addresses(exhausted, [9, 10])
+
+    assert recovery.recovered_any is False
+    assert recovery.matched_suffix == (9, 10)
+    assert recovery.recovered.terminal is True
+    assert recovery.recovered.reason == "recovery-matched-terminal"
+
+
 def test_recovery_fails_closed_when_branch_limit_would_hide_equivalent_futures():
     index = _index([
         [9, 10, 11],
