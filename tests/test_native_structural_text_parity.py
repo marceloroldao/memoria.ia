@@ -115,7 +115,15 @@ def test_native_structural_text_kernel_matches_same_golden_vector(tmp_path: Path
     compiled = subprocess.run(command, text=True, capture_output=True, check=False)
     assert compiled.returncode == 0, compiled.stderr
 
-    # The native parity CLI emits UTF-8 JSON. Decode explicitly so Windows\n    # does not reinterpret non-ASCII token keys through the active code page.\n    executed = subprocess.run(\n        [str(binary)],\n        text=True,\n        encoding="utf-8",\n        capture_output=True,\n        check=False,\n    )
+    # The native parity CLI emits UTF-8 JSON. Decode explicitly so Windows
+    # does not reinterpret non-ASCII token keys through the active code page.
+    executed = subprocess.run(
+        [str(binary)],
+        text=True,
+        encoding="utf-8",
+        capture_output=True,
+        check=False,
+    )
     assert executed.returncode == 0, executed.stderr
     native = json.loads(executed.stdout)
     golden = _golden()
