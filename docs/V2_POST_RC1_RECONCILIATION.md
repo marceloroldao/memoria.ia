@@ -274,6 +274,57 @@ No domain-specific semantic weight table is allowed.
 
 The attractor layer must expose its evidence components for diagnostics.
 
+### R5 implementation slice
+
+The first R5 implementation adds a conservative structural attractor layer over
+the R4 frontier.
+
+The attractor does **not** collapse heterogeneous evidence into a weighted scalar.
+There is no formula such as:
+
+```
+0.4 * recurrence + 0.3 * temporal + 0.3 * similarity
+```
+
+Instead every candidate exposes independent evidence dimensions:
+
+- supporting trajectory occurrences;
+- atomic matched-address count;
+- number of supporting hierarchy depths;
+- within-event association support count and accumulated field mass;
+- temporal association support count and accumulated field mass.
+
+The current continuous structural association field already owns its recurrence,
+distance, forgetting and optional physical-time dynamics. R5 reads those decayed
+channel masses without learning from the query.
+
+Candidate A dominates candidate B only when A is no worse on every active evidence
+dimension and strictly better on at least one. If evidence crosses — for example,
+more recurrent trajectories for A but stronger decayed association mass for B —
+both remain on the Pareto frontier and the result is ambiguous.
+
+Topological density remains diagnostic only and is deliberately excluded from the
+dominance relation.
+
+Terminal outcomes are not assigned artificial zero/negative scores. When an
+equally supported terminal occurrence competes with a concrete next-address
+candidate, R5 remains ambiguous. A terminal-only region is reported explicitly
+without inventing a next address.
+
+R5 gates include:
+
+- recurrence-only attractor formation;
+- equal evidence remains ambiguous;
+- current continuous field can resolve an otherwise structural tie;
+- crossed recurrence/decay evidence remains ambiguous;
+- density cannot choose the attractor;
+- terminal-vs-forward competition remains unresolved;
+- terminal-only region is explicit;
+- hierarchy isolation;
+- unrelated query remains unresolved;
+- bounded candidate set fails closed;
+- query leaves both trajectory memory and association field unchanged.
+
 ## Phase R6 — Structural equivalence and reformulation
 
 Recover the old equivalence experiment, but make it consume the reconciled trajectory/state substrate.
