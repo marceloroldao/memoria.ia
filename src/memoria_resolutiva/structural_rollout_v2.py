@@ -54,6 +54,7 @@ class StructuralFrontierHypothesisV2:
 class StructuralFrontierResolutionV2:
     query_addresses: tuple[int, ...]
     hypotheses: tuple[StructuralFrontierHypothesisV2, ...]
+    terminal_trajectory_ids: tuple[str, ...]
     resolved_address: int | None
     resolved: bool
     ambiguous: bool
@@ -268,7 +269,7 @@ class StructuralRolloutResolverV2:
             )
 
         paths.sort(key=lambda item: item.structural_key, reverse=True)
-        if len(paths) > branch_limit:
+        if len(paths) + (1 if terminal_ids else 0) > branch_limit:
             return StructuralRolloutResolutionV2(
                 query,
                 (),
@@ -284,6 +285,7 @@ class StructuralRolloutResolverV2:
         visible = tuple(paths)
         prefix = self._common_prefix(visible)
         if visible:
+            outcome_count = len(visible) + (1 if terminal_ids else 0)
             return StructuralRolloutResolutionV2(
                 query_addresses=query,
                 shared_prefix_addresses=prefix,
@@ -291,9 +293,13 @@ class StructuralRolloutResolverV2:
                 divergence_index=(len(prefix) if len(visible) > 1 else None),
                 terminal_trajectory_ids=tuple(sorted(terminal_ids)),
                 exhausted=False,
-                ambiguous=len(visible) > 1,
+                ambiguous=outcome_count > 1,
                 bounded_out=False,
-                reason="branching" if len(visible) > 1 else "single-forward-path",
+                reason=(
+                    "competing-forward-outcomes"
+                    if outcome_count > 1
+                    else "single-forward-path"
+                ),
             )
         if terminal_ids:
             return StructuralRolloutResolutionV2(
@@ -330,6 +336,7 @@ class StructuralRolloutResolverV2:
             return StructuralFrontierResolutionV2(
                 rollout.query_addresses,
                 (),
+                rollout.terminal_trajectory_ids,
                 None,
                 False,
                 True,
@@ -361,29 +368,39 @@ class StructuralRolloutResolverV2:
             )
         hypotheses.sort(key=lambda item: item.address)
         visible = tuple(hypotheses)
-        if len(visible) == 1:
+        terminals = rollout.terminal_trajectory_ids
+        outcome_count = len(visible) + (1 if terminals else 0)
+
+        if len(visible) == 1 and not terminals:
             return StructuralFrontierResolutionV2(
                 rollout.query_addresses,
                 visible,
+                (),
                 visible[0].address,
                 True,
                 False,
                 False,
                 "single-frontier",
             )
-        if len(visible) > 1:
+        if outcome_count > 1:
             return StructuralFrontierResolutionV2(
                 rollout.query_addresses,
                 visible,
+                terminals,
                 None,
                 False,
                 True,
                 False,
-                "competing-frontiers",
+                (
+                    "frontier-competes-with-terminal"
+                    if terminals
+                    else "competing-frontiers"
+                ),
             )
         return StructuralFrontierResolutionV2(
             rollout.query_addresses,
-            (),
+            visible,
+            terminals,
             None,
             False,
             False,
