@@ -329,6 +329,117 @@ Track LLM responsibility explicitly:
 4. Memoria inference + LLM verbalization;
 5. supported tasks with no LLM.
 
+## Recovered research backlog (do not lose)
+
+The following historical modules are explicitly preserved as future work. They are
+not prerequisites for the first inference freeze, but their concepts/tests remain
+part of the project lineage.
+
+### Context/window dynamics — ADAPT after R4/R5
+
+- `structural_context_observation_v2`
+- `structural_context_recall_v2`
+- `structural_context_admission_state_v2`
+- `address_trajectory_conversation_v2`
+
+Recover the idea of a context/window as an addressable, evolving state with its own
+payload and trajectory. Do not restore it as a special text-only conversation object.
+
+### Density, portals and structural attention — ADAPT after R3
+
+- `topological_density_v2`
+- `address_portal_resolution_v2`
+- `structural_attention_v2`
+
+Dense hubs remain observable topology, not stopwords or semantic classes. Attention
+may prioritize bounded exploration but must not manufacture evidence.
+
+### Structural abstraction and transfer — DEFER until R6 is stable
+
+- `structural_configuration_signature_v2`
+- `structural_witness_discovery_v2`
+- `structural_relation_abstraction_v2`
+- `structural_role_abstraction_v2`
+- `composed_convergence_v2`
+- `address_convergence_v2`
+- `address_composition_v2`
+- `structural_equivalence_resolver_v2`
+- `structural_transfer_forecast_v2`
+- `structural_intervention_transfer_v2`
+
+These modules explore recurring structural roles, cross-trajectory convergence and
+transfer without fixed semantic labels. Their tests should be revisited only after
+the reconciled trajectory/equivalence substrate exists.
+
+### Temporal regimes and passive causal structure — DEFER until R7
+
+- `temporal_regime_v2`
+- `temporal_regime_state_v2`
+- `adaptive_temporal_regime_benchmark_v2`
+- `contextual_temporal_regime_v2`
+- `continuous_temporal_causal_buffer_v2`
+- `temporal_causal_window_v2`
+- `causal_configuration_signature_v2`
+
+Recover as experiments over persistent temporal state, not as universal causal laws.
+
+### Prediction, surprise and active information — DEFER until R8
+
+- `prediction_error_v2`
+- `active_information_v2`
+- `branch_evolution_v2`
+- `world_state_candidate_resolution_v2`
+
+These become useful once the inference engine can produce explicit competing
+predictions. Prediction error must update evidence only through a separate
+observation/learning policy.
+
+### Active causal experimentation — DEFER until passive inference is proven
+
+- `active_causal_experiment_v2`
+- `active_causal_loop_v2`
+- `interventional_evidence_v2`
+- `intervention_consequence_v2`
+- `interventional_causal_pipeline_v2`
+- `continuous_causal_pipeline_v2`
+
+The valuable invariant is separation between hypotheses, intervention selection and
+world observation. Memoria.ia must never invent a successful intervention outcome.
+
+### Multiagent / situated cognition / Live.infinita adapters — DEFER to integration layer
+
+- `interagent_causality_v2`
+- `interagent_contrast_v2`
+- `multiagent_live_gym_v2`
+- `causal_multiagent_live_gym_v2`
+- `situated_live_gym_v2`
+- `situated_contextual_regime_v2`
+- `contextual_live_gym_v2`
+- `regime_aware_live_gym_v2`
+- `live_cognitive_gym_v2`
+- `live_infinita_adapter_v2`
+- `adaptive_live_gym_benchmark_v2`
+- `multi_regime_stress_v2`
+
+The cognitive mechanisms belong in Memoria.ia; product/world-specific adapters stay
+outside the core and must not introduce domain laws.
+
+### Curiosity — ADAPT as server capability after uncertainty is explicit
+
+- `structural_curiosity_v2`
+
+Recover only after R8 can expose genuine unresolved/ambiguous attractors. Curiosity
+should select information gaps from those diagnostics. Source acquisition/crawling
+remains a server responsibility; it must not be embedded in the offline core.
+
+### End-to-end historical resolvers — TEST-ONLY
+
+- `end_to_end_resolver_v2`
+- `end_to_end_structural_resolver_v2`
+
+Preserve their scenarios and observability goals, but rebuild them on the reconciled
+engine instead of carrying old fallback policy forward.
+
 ## Freeze policy for the next candidate
 
 Do not create the next cognitive freeze until:
