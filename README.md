@@ -8,23 +8,21 @@
 
 # memoria.ia
 
-Experimental implementation of **Resolutive Memory**, a local-first memory architecture built around persistent state, reusable knowledge nodes, multiple trajectories, provenance, online lifecycle dynamics and conservative resolution.
+Experimental implementation of **Resolutive Memory**, a local-first memory architecture for persistent state, reusable structural nodes, provenance, recurrence, temporal dynamics and conservative resolution.
 
-## v1.0 release candidate
+## v2.0 release candidate
 
-Current publication candidate: **v1.0.0-rc7** (`1.0.0rc7` package version).
+Current publication candidate: **v2.0.0-rc1** (`2.0.0rc1` package version).
 
-RC7 cumulative functional freeze: **`ca4089cad0369da3a13c484c93cc4c97ee54cfaf`**.
+V2 RC1 functional freeze commit: **`bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9`**.
 
-RC7 last runtime-changing stabilization commit: **`3f72f7e46c976245818e8878e36f6d906d6ba0ba`**.
+Validated companion Resolutive-DB/BDR pin for the current native/mobile structural runtime: **`d09914b85646353d8fd004ccf99e96a94fab9eef`**.
 
-RC7 archived release DOI: **[10.5281/zenodo.22654141](https://doi.org/10.5281/zenodo.22654141)**.
+Previous archived release RC7 DOI: **[10.5281/zenodo.22654141](https://doi.org/10.5281/zenodo.22654141)**.
 
-Previous archived release RC6: **[10.5281/zenodo.22648409](https://doi.org/10.5281/zenodo.22648409)**.
+The V2 RC1 DOI is intentionally not pre-assigned. It must be inserted only after the archival record exists.
 
-Previous archived release RC5: **[10.5281/zenodo.22439650](https://doi.org/10.5281/zenodo.22439650)**.
-
-This release candidate consolidates the validated research core and deployable PC/server/mobile runtime boundary while preserving the architecture:
+The architecture remains:
 
 ```text
 application / OFF.IA / agent
@@ -34,34 +32,41 @@ application / OFF.IA / agent
    Resolutive-DB / BDR
 ```
 
-Memoria.ia owns memory semantics, state, relations, provenance, trajectories, abstraction, recomputation policy and context selection. BDR owns durable persistence. LLMs remain optional consumers and do not become the authoritative memory store.
+Memoria.ia owns memory structure, state, relations, provenance, temporal/recurrence dynamics and context selection. BDR owns durable persistence. LLMs are optional consumers and are not the authoritative memory store.
 
-RC7 is intentionally a **stabilization-only** release over the RC6 semantic-relational baseline. It adds no new runtime capability. The RC7 line hardens:
+## What V2 RC1 freezes
 
-- direct-resolution precedence and bounded semantic fallback;
-- provenance and factual/generative contamination barriers;
-- same-user/session/profile isolation and fail-closed cross-scope behavior;
-- Python/native/server runtime parity contracts;
-- deterministic context ranking and atomic context-budget rendering;
-- exact confidence and hop-decay threshold behavior, including floating-point boundary stability;
-- SQLite restart equivalence and portable snapshot recovery behavior;
-- semantic activation read-only/non-amplifying behavior across repeated calls;
-- recurring product, credentials, semantic and layered-performance gates;
-- release metadata consistency and DOI lineage validation.
+V2 RC1 freezes the structural-memory baseline before the next inference-oriented development line. The frozen runtime includes:
 
-The RC7 candidate is frozen from feature expansion. Changes on this release line are restricted to release metadata, packaging and regression fixes required to publish the candidate coherently.
+- structural text observation;
+- read-only structural resolution;
+- deterministic structural token identity and native/Python integration;
+- recurrence-sensitive association/ranking behavior;
+- coexistence of competing observations instead of forced destructive correction;
+- physical/continuous decay and bounded selectivity mechanisms developed in the V2 structural line;
+- persistence and cold reopen through the shared BDR runtime;
+- source/provenance preservation;
+- native/mobile structural ABI for OFF.IA;
+- structural server endpoints already present in the V2 line;
+- negative behavior in which unrelated queries remain unresolved instead of leaking unrelated remembered context.
 
-## Validation status
+This candidate does **not** claim that general inference over trajectories is complete. Explicit addressed evolving state, trajectory traversal, attractor dynamics, a no-LLM Resolutive Inference Engine and the future Context Compiler belong to the post-RC1 V2 roadmap.
 
-The RC7 stabilization lineage passed the recurring release-blocking gates during phases A–F:
+## Validation boundary
 
-- v0.96 semantic validation;
-- product-alpha validation;
-- product application credentials;
-- Android/mobile ABI compatibility inherited from the validated RC6/native lineage and preserved by RC7 runtime scope;
-- layered performance baseline;
-- release metadata validation;
-- Automatic Context where runtime-changing paths require it.
+The structural V2 lineage used as the functional freeze has been exercised through repository/native integration gates covering:
+
+- structural observation and resolution;
+- recurrence-sensitive competing observations;
+- coexistence of old and newer evidence;
+- unrelated-query selectivity;
+- persistence/cold reopen;
+- native/mobile ABI exposure;
+- OFF.IA-facing structural integration.
+
+Queries must remain read-only: asking a question must not reinforce its own candidate answer.
+
+No benchmark result should be represented as resolutive inference if the result is actually produced by an LLM or by a domain-specific hard-coded semantic rule.
 
 Release-candidate metadata is checked by:
 
@@ -69,16 +74,15 @@ Release-candidate metadata is checked by:
 python scripts/validate_release_metadata.py
 ```
 
-The final v1.0 release will only be promoted after the release-candidate gates remain reproducible and the Resolutive Science compatibility boundary is re-audited against a stable RSMS specification.
-
 ## Security status
 
-**v1.0.0-rc7 is not represented as production-security certified.**
+**v2.0.0-rc1 is not represented as production-security certified.**
 
-The repository includes authentication boundaries, application isolation, integrity-checked backup/restore and negative security tests, but no independent production security audit is claimed.
+The repository contains security and isolation mechanisms, but no independent production security audit is claimed.
 
 ## Previous releases
 
+- **v2.0.0-rc1** — structural V2 baseline; archival DOI pending publication.
 - **v1.0.0-rc7** — stabilization and consistency candidate; DOI `10.5281/zenodo.22654141`.
 - **v1.0.0-rc6** — semantic relational context candidate; DOI `10.5281/zenodo.22648409`.
 - **v1.0.0-rc5** — native relational memory candidate; DOI `10.5281/zenodo.22439650`.
@@ -94,9 +98,9 @@ Archived v0.95 DOI: **10.5281/zenodo.21973472**.
 
 ## Research lineage
 
-The v0.95 research line established controlled experimental stages covering hierarchical and temporal memory layers, continual online support/contradiction updates, consolidation/deconsolidation/reactivation, polysemy, multinodal and multimodal trajectories, distributed consensus, atomic persistent snapshots and scaling experiments.
+The research line established controlled experimental stages covering hierarchical and temporal memory layers, continual support/contradiction updates, consolidation/deconsolidation/reactivation, polysemy, multinodal and multimodal trajectories, distributed consensus, persistent snapshots and scaling experiments.
 
-The validated temporal research rule remains:
+The validated historical temporal research rule remains:
 
 `r_L = 2^-L`
 
@@ -105,11 +109,26 @@ with the v0.95 research default configuration:
 - levels = 5
 - max_strength = 1.25
 
+## Post-RC1 direction
+
+The next V2 development line is intentionally separated from this freeze. Its planned sequence is:
+
+1. preserve the RC1 empirical baseline;
+2. introduce stable addresses with evolving state/payload;
+3. represent explicit forward/reverse trajectories;
+4. evolve attractor dynamics from recurrence, time, density and provenance;
+5. implement resolutive inference over persisted memory state before any LLM;
+6. benchmark with LLM calls disabled;
+7. compare against a conventional RAG control;
+8. introduce a compact cognitive package/Context Compiler;
+9. connect modality-neutral StructuralEvent/RealitySlice input;
+10. evolve local/server distributed memory with explicit provenance.
+
+The roadmap is developed separately so that this RC1 remains a reproducible historical baseline.
+
 ## MA2A boundary
 
-The repository retains historical experimental MA2A material, but the network protocol is now treated as a separate architectural boundary/project.
-
-The local v1.0.0-rc7 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default, and future federation must preserve explicit scope and provenance boundaries.
+Network federation remains a separate architectural boundary/project. The local V2 RC1 runtime does not require production MA2A federation or PKI. Personal/private memory must remain local by default unless an explicit synchronization policy authorizes otherwise.
 
 See:
 
@@ -137,13 +156,13 @@ Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.exampl
 
 ## Public interfaces
 
-The original stable research facade exposes `remember`, `reinforce`, `challenge`, `recall`, `route_status`, `compare`, `save` and `load`. The product layer wraps stable memory behavior behind a versioned HTTP/service boundary. The native/mobile path adds a C ABI with conservative resolution, learning, restart persistence and provenance-aware state behavior.
+The project contains research, product/server and native/mobile boundaries. The V2 RC1 structural path adds observation and read-only resolution of structural text through the server/native layers while retaining provenance and BDR persistence.
 
 ## Research and claims status
 
-Memoria.ia remains an experimental architecture. v1.0.0-rc7 is a reproducible stabilization release candidate, not a claim of artificial general intelligence, biological equivalence or replacement of general-purpose LLMs.
+Memoria.ia remains an experimental architecture. v2.0.0-rc1 is a reproducible structural-memory release candidate, not a claim of AGI, unrestricted general reasoning, biological equivalence or replacement of general-purpose LLMs.
 
-Important limitations include semantic consolidation remaining experimental, no claim of general language understanding, environment-specific performance measurements, federation outside the stable local runtime boundary, no independent production security certification, and external/public learning remaining a separate development track.
+The central post-RC1 research question is whether useful inference can increasingly occur over Memoria.ia's own persistent state and trajectories before language generation.
 
 ## License
 
@@ -153,10 +172,8 @@ Source is publicly visible under the **Resolutive Research and Non-Commercial Li
 
 - Resolutive Science published baseline: **v0.2.0**
 - Project governance baseline: **RSPS 1.0-draft**
-- RSMS compatibility for this candidate: **RSMS 1.0-rc.1**
-
-v1.0.0-rc7 intentionally remains a release candidate while RSMS itself is still at release-candidate compatibility. Before promoting Memoria.ia to final v1.0, this compatibility declaration must be re-audited against the stable RSMS specification.
+- RSMS compatibility declaration remains experimental and must be re-audited before any stable V2 promotion.
 
 ## Release notes
 
-See `RELEASE_NOTES_v1.0.0-rc7.md` for the publication scope, validation evidence and known boundaries of this candidate.
+See `RELEASE_NOTES_v2.0.0-rc1.md` for the publication scope, validation evidence and known boundaries of this candidate.
