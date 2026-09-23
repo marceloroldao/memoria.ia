@@ -74,7 +74,7 @@ class StructuralTrajectoryMatch:
     query_coverage_den: int
 
     @property
-    def structural_key(self) -> tuple[int, int, int, int, int, int, str]:
+    def structural_key(self) -> tuple[int, int, int, int, int, str]:
         """Lexicographic structural ranking with no learned scalar weights."""
         return (
             self.query_coverage_num,
@@ -82,7 +82,6 @@ class StructuralTrajectoryMatch:
             self.ordered_overlap,
             self.adjacency_overlap,
             self.overlap,
-            -self.sequence,
             self.trajectory_id,
         )
 
