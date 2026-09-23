@@ -8,7 +8,7 @@ from .structural_rollout_v2 import (
     StructuralRolloutResolverV2,
     StructuralRolloutWitnessV2,
 )
-from .structural_trajectory_v2 import StructuralTrajectoryIndex
+from .structural_trajectory_v2 import StructuralTrajectory, StructuralTrajectoryIndex
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +31,7 @@ class StructuralBranchStateV2:
     seed_addresses: tuple[int, ...]
     observed_addresses: tuple[int, ...]
     active: tuple[ActiveStructuralBranchV2, ...]
+    terminal_trajectory_ids: tuple[str, ...]
     eliminated_trajectory_ids: tuple[str, ...]
     exhausted: bool
     ambiguous: bool
@@ -53,7 +54,8 @@ class DynamicStructuralBranchResolverV2:
 
     Branch state is ephemeral. Eliminating a branch never deletes or weakens the
     underlying stored occurrence. Repeated adjacent observations do not consume
-    multiple expected steps.
+    multiple expected steps. Terminal occurrences remain explicit competing
+    hypotheses until a later observation rules them out.
     """
 
     def __init__(
@@ -111,15 +113,18 @@ class DynamicStructuralBranchResolverV2:
             branch_limit=branch_limit,
         )
         active = tuple(self._from_path(path) for path in rollout.branches)
+        terminals = rollout.terminal_trajectory_ids
+        outcome_count = len(active) + (1 if terminals else 0)
         return StructuralBranchStateV2(
             hierarchy_id=hierarchy_id,
             seed_addresses=seed,
             observed_addresses=(),
             active=active,
+            terminal_trajectory_ids=terminals,
             eliminated_trajectory_ids=(),
             exhausted=rollout.exhausted,
-            ambiguous=len(active) > 1,
-            terminal=bool(active) and all(item.terminal for item in active),
+            ambiguous=outcome_count > 1,
+            terminal=bool(terminals) and not active,
             bounded_out=rollout.bounded_out,
             reason=rollout.reason,
         )
@@ -139,6 +144,8 @@ class DynamicStructuralBranchResolverV2:
 
         survivors: list[ActiveStructuralBranchV2] = []
         eliminated: set[str] = set(state.eliminated_trajectory_ids)
+        # Any new observed address rules out hypotheses that had already ended.
+        eliminated.update(state.terminal_trajectory_ids)
 
         for branch in state.active:
             if not branch.remaining_addresses:
@@ -165,6 +172,7 @@ class DynamicStructuralBranchResolverV2:
             seed_addresses=state.seed_addresses,
             observed_addresses=state.observed_addresses + (value,),
             active=active,
+            terminal_trajectory_ids=(),
             eliminated_trajectory_ids=tuple(sorted(eliminated)),
             exhausted=exhausted,
             ambiguous=len(active) > 1,
@@ -212,6 +220,30 @@ class DynamicStructuralBranchResolverV2:
             if candidate[start : start + width] == suffix
         )
 
+    @staticmethod
+    def _empty_state(
+        hierarchy_id: str,
+        seed: tuple[int, ...],
+        *,
+        reason: str,
+        bounded_out: bool = False,
+        terminal_trajectory_ids: tuple[str, ...] = (),
+        terminal: bool = False,
+    ) -> StructuralBranchStateV2:
+        return StructuralBranchStateV2(
+            hierarchy_id=hierarchy_id,
+            seed_addresses=seed,
+            observed_addresses=(),
+            active=(),
+            terminal_trajectory_ids=terminal_trajectory_ids,
+            eliminated_trajectory_ids=(),
+            exhausted=True,
+            ambiguous=False,
+            terminal=terminal,
+            bounded_out=bounded_out,
+            reason=reason,
+        )
+
     def _recover_suffix(
         self,
         observation: tuple[int, ...],
@@ -223,17 +255,10 @@ class DynamicStructuralBranchResolverV2:
     ) -> tuple[StructuralBranchStateV2, tuple[int, ...]]:
         if not observation:
             return (
-                StructuralBranchStateV2(
+                self._empty_state(
                     hierarchy_id,
                     (),
-                    (),
-                    (),
-                    (),
-                    True,
-                    False,
-                    False,
-                    False,
-                    "empty-recovery-observation",
+                    reason="empty-recovery-observation",
                 ),
                 (),
             )
@@ -246,7 +271,7 @@ class DynamicStructuralBranchResolverV2:
 
         for start_suffix in range(len(observation)):
             suffix = observation[start_suffix:]
-            exact_witnesses: list[tuple[object, int]] = []
+            exact_witnesses: list[tuple[StructuralTrajectory, int]] = []
             for trajectory in snapshot:
                 for start in self._exact_occurrences(trajectory.addresses, suffix):
                     exact_witnesses.append((trajectory, start))
@@ -254,19 +279,28 @@ class DynamicStructuralBranchResolverV2:
             if not exact_witnesses:
                 continue
 
-            # If the longest observed suffix exists but all such occurrences are
-            # terminal, stop here. Falling back to a shorter hub-like suffix would
-            # stitch a new occurrence onto a known terminal one.
+            if len(exact_witnesses) > candidate_limit:
+                return (
+                    self._empty_state(
+                        hierarchy_id,
+                        suffix,
+                        reason="recovery-limit-exceeded",
+                        bounded_out=True,
+                    ),
+                    suffix,
+                )
+
             grouped: dict[
                 tuple[int, ...],
                 list[StructuralRolloutWitnessV2],
             ] = defaultdict(list)
-            terminals = 0
+            terminal_ids: set[str] = set()
+
             for trajectory, start in exact_witnesses:
                 cursor = start + len(suffix)
                 continuation = trajectory.addresses[cursor : cursor + max_steps]
                 if not continuation:
-                    terminals += 1
+                    terminal_ids.add(trajectory.trajectory_id)
                     continue
                 grouped[continuation].append(
                     StructuralRolloutWitnessV2(
@@ -275,37 +309,29 @@ class DynamicStructuralBranchResolverV2:
                     )
                 )
 
-            if not grouped:
+            outcome_count = len(grouped) + (1 if terminal_ids else 0)
+            if outcome_count > branch_limit:
                 return (
-                    StructuralBranchStateV2(
+                    self._empty_state(
                         hierarchy_id,
                         suffix,
-                        (),
-                        (),
-                        tuple(sorted({t.trajectory_id for t, _ in exact_witnesses})),
-                        True,
-                        False,
-                        True,
-                        False,
-                        "recovery-matched-terminal",
+                        reason="recovery-limit-exceeded",
+                        bounded_out=True,
                     ),
                     suffix,
                 )
 
-            witness_count = sum(len(items) for items in grouped.values())
-            if witness_count > candidate_limit or len(grouped) > branch_limit:
+            # A known full suffix that only reaches terminal occurrences must stop.
+            # Do not shorten it and stitch through a hub in another occurrence.
+            if not grouped:
+                terminals = tuple(sorted(terminal_ids))
                 return (
-                    StructuralBranchStateV2(
+                    self._empty_state(
                         hierarchy_id,
                         suffix,
-                        (),
-                        (),
-                        (),
-                        True,
-                        True,
-                        False,
-                        True,
-                        "recovery-limit-exceeded",
+                        reason="recovery-matched-terminal",
+                        terminal_trajectory_ids=terminals,
+                        terminal=True,
                     ),
                     suffix,
                 )
@@ -328,22 +354,26 @@ class DynamicStructuralBranchResolverV2:
                         consumed_steps=0,
                     )
                 )
+
             active.sort(key=lambda item: (item.remaining_addresses, item.trajectory_ids))
             visible = tuple(active)
+            terminals = tuple(sorted(terminal_ids))
+            ambiguous = len(visible) + (1 if terminals else 0) > 1
             return (
                 StructuralBranchStateV2(
                     hierarchy_id=hierarchy_id,
                     seed_addresses=suffix,
                     observed_addresses=(),
                     active=visible,
+                    terminal_trajectory_ids=terminals,
                     eliminated_trajectory_ids=(),
                     exhausted=False,
-                    ambiguous=len(visible) > 1,
+                    ambiguous=ambiguous,
                     terminal=False,
                     bounded_out=False,
                     reason=(
-                        "recovered-competing-branches"
-                        if len(visible) > 1
+                        "recovered-competing-outcomes"
+                        if ambiguous
                         else "recovered-single-branch"
                     ),
                 ),
@@ -351,17 +381,10 @@ class DynamicStructuralBranchResolverV2:
             )
 
         return (
-            StructuralBranchStateV2(
+            self._empty_state(
                 hierarchy_id,
                 observation,
-                (),
-                (),
-                (),
-                True,
-                False,
-                False,
-                False,
-                "recovery-no-occurrence",
+                reason="recovery-no-occurrence",
             ),
             (),
         )
