@@ -138,10 +138,23 @@ class EvolvingAddressStateJournalV2:
         if sequence < 0:
             raise ValueError("sequence must be >= 0")
         history = self._history.setdefault(key, [])
-        predecessor = None if not history else history[-1].revision_id
         payload = _opaque_addresses(payload_addresses)
         trajectories = _stable_unique_strings(trajectory_ids)
         provenance = _stable_unique_strings(provenance_ids)
+
+        if history and sequence < history[-1].sequence:
+            raise ValueError("address revision sequence cannot move backward")
+        if history and sequence == history[-1].sequence:
+            current = history[-1]
+            if (
+                current.payload_addresses == payload
+                and current.trajectory_ids == trajectories
+                and current.provenance_ids == provenance
+            ):
+                return current
+            raise ValueError("same address sequence cannot contain conflicting revisions")
+
+        predecessor = None if not history else history[-1].revision_id
         revision_id = _revision_id(
             hierarchy_id=key[0],
             address=key[1],
@@ -161,13 +174,6 @@ class EvolvingAddressStateJournalV2:
             provenance_ids=provenance,
             predecessor_revision_id=predecessor,
         )
-
-        if history and sequence < history[-1].sequence:
-            raise ValueError("address revision sequence cannot move backward")
-        if history and sequence == history[-1].sequence:
-            if candidate == history[-1]:
-                return history[-1]
-            raise ValueError("same address sequence cannot contain conflicting revisions")
 
         existing = self._by_id.get(revision_id)
         if existing is not None:
