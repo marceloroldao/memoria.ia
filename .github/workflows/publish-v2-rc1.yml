@@ -50,15 +50,18 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$V2_RC1_TAG" >/dev/null 2>&1; then
-            echo "$V2_RC1_TAG already exists; preserving the published tag."
-            exit 0
+            echo "$V2_RC1_TAG already exists; updating release notes without moving the tag."
+            gh release edit "$V2_RC1_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --notes-file RELEASE_NOTES_v2.0.0-rc1.md
+          else
+            gh release create "$V2_RC1_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title 'Memoria.ia v2.0.0-rc1 — Structural Memory Baseline' \
+              --notes-file RELEASE_NOTES_v2.0.0-rc1.md \
+              --prerelease
           fi
-          gh release create "$V2_RC1_TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title 'Memoria.ia v2.0.0-rc1 — Structural Memory Baseline' \
-            --notes-file RELEASE_NOTES_v2.0.0-rc1.md \
-            --prerelease
 
       - name: Verify immutable publication tag
         env:
