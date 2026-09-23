@@ -5,23 +5,18 @@
       "orcid": "0009-0003-6075-4680"
     }
   ],
-  "title": "memoria.ia: Resolutive Memory — v1.0.0 Release Candidate 7",
-  "version": "1.0.0-rc7",
+  "title": "memoria.ia: Resolutive Memory — v2.0.0 Release Candidate 1",
+  "version": "2.0.0-rc1",
   "upload_type": "software",
   "access_right": "open",
   "language": "eng",
-  "doi": "10.5281/zenodo.22654141",
   "related_identifiers": [
     {
       "identifier": "https://doi.org/10.5281/zenodo.22654141",
-      "relation": "isIdenticalTo"
-    },
-    {
-      "identifier": "https://doi.org/10.5281/zenodo.22648409",
       "relation": "isNewVersionOf"
     },
     {
-      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v1.0.0-rc7",
+      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc1",
       "relation": "isSupplementTo"
     },
     {
@@ -31,14 +26,14 @@
   ],
   "keywords": [
     "resolutive memory",
+    "structural memory",
     "continual memory",
-    "deterministic memory",
-    "relational memory",
-    "semantic activation",
+    "persistent state",
+    "recurrence",
+    "temporal memory",
     "provenance",
-    "context selection",
-    "persistence",
-    "regression testing",
+    "structural retrieval",
+    "BDR",
     "AI memory",
     "PC server",
     "local-first AI",
