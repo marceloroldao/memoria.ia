@@ -126,6 +126,24 @@ class StructuralTrajectoryIndex:
     def snapshot(self) -> tuple[StructuralTrajectory, ...]:
         return tuple(self._trajectories)
 
+    @classmethod
+    def restore(
+        cls,
+        trajectories: Iterable[StructuralTrajectory],
+    ) -> "StructuralTrajectoryIndex":
+        index = cls()
+        for item in trajectories:
+            restored = index.ingest_addresses(
+                item.addresses,
+                hierarchy_id=item.hierarchy_id,
+                source_id=item.source_id,
+                sequence=item.sequence,
+                observation_id=item.observation_id,
+            )
+            if restored != item:
+                raise ValueError("structural trajectory snapshot is not canonical")
+        return index
+
     def ingest_addresses(
         self,
         addresses: Iterable[int],

@@ -135,6 +135,32 @@ Requirements:
 - forward/reverse transition traversal;
 - crash/replay idempotency.
 
+### R2 implementation slice
+
+The first R2 implementation introduces:
+
+- `ContentAddressedStatePersistence` as a small BDR/SQLite durability primitive;
+- `PersistentStructuralTrajectoryRuntimeV2`, with a checkpoint cursor into the
+  canonical StructuralObservation sequence;
+- deterministic cold reopen and suffix replay when raw observations advance beyond
+  the last trajectory checkpoint;
+- `EvolvingAddressStateJournalV2`, where one stable opaque address can accumulate
+  immutable revisions without deleting prior payloads;
+- `PersistentEvolvingAddressStateJournalV2`, where each acknowledged revision is
+  content-addressed in BDR/SQLite and referenced by an fsynced append-only index;
+- previous/next/history traversal over revisions;
+- hierarchy isolation;
+- exact replay idempotency and rejection of conflicting same-sequence revisions.
+
+Important semantic boundary:
+
+`current_revision` is an operational navigation pointer to the latest admitted
+revision. It is **not** a truth verdict and does not delete or invalidate competing
+historical evidence. Truth/attractor resolution remains a later phase.
+
+R2 gates include SQLite cold reopen on every CI platform and optional native-BDR
+cold reopen when the native extension is available.
+
 ## Phase R3 — Hierarchical composition and multiscale convergence
 
 Recover recurrent composition without linguistic labels.
