@@ -90,6 +90,43 @@ def test_weaker_hub_match_cannot_hitchhike_into_rollout():
     assert result.branches[0].trajectory_ids == (index.snapshot()[0].trajectory_id,)
 
 
+def test_terminal_and_continuing_outcomes_remain_competing_until_new_observation():
+    index = _index([
+        [1, 2],
+        [1, 2, 3],
+    ])
+    rollout = StructuralRolloutResolverV2(index).resolve_addresses(
+        [1, 2],
+        hierarchy_id="h",
+    )
+
+    assert rollout.exhausted is False
+    assert rollout.ambiguous is True
+    assert len(rollout.branches) == 1
+    assert rollout.branches[0].continuation_addresses == (3,)
+    assert len(rollout.terminal_trajectory_ids) == 1
+
+    frontier = StructuralRolloutResolverV2(index).frontier_addresses(
+        [1, 2],
+        hierarchy_id="h",
+    )
+    assert frontier.resolved is False
+    assert frontier.ambiguous is True
+    assert frontier.reason == "frontier-competes-with-terminal"
+    assert len(frontier.terminal_trajectory_ids) == 1
+
+    dynamic = DynamicStructuralBranchResolverV2(index)
+    state = dynamic.begin_addresses([1, 2], hierarchy_id="h")
+    assert state.ambiguous is True
+    assert len(state.terminal_trajectory_ids) == 1
+
+    advanced = dynamic.observe_address(state, 3)
+    assert advanced.ambiguous is False
+    assert advanced.terminal is True
+    assert advanced.terminal_trajectory_ids == ()
+    assert set(advanced.eliminated_trajectory_ids) == set(state.terminal_trajectory_ids)
+
+
 def test_dynamic_observation_narrows_branches_without_mutating_memory():
     index = _index([
         [1, 2, 3, 4],
