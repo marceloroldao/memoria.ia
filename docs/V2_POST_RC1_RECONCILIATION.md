@@ -229,6 +229,7 @@ Added mechanisms:
 - multiscale support carried as secondary evidence without overriding atomic support;
 - explicit rollout witnesses `trajectory_id + anchor_index`;
 - common-prefix exposure before real branch divergence;
+- terminal occurrences remain explicit outcomes when equally supported continuing occurrences also exist;
 - frontier aggregation when independent occurrences predict the same next address;
 - dynamic branch narrowing by new observations;
 - adjacent duplicate observations do not consume an extra transition;
@@ -236,6 +237,8 @@ Added mechanisms:
 - fresh recovery only after the active branch set is exhausted;
 - recovery searches the new observed configuration from longest suffix to shorter
   suffixes only when the longer suffix is absent from memory;
+- recovery preserves a terminal outcome beside continuing outcomes when both are
+  witnessed by the same longest observed suffix;
 - fail-closed candidate/branch limits so operational bounds cannot silently select
   a subset of structurally tied futures.
 
