@@ -273,8 +273,12 @@ class DynamicStructuralBranchResolverV2:
             suffix = observation[start_suffix:]
             exact_witnesses: list[tuple[StructuralTrajectory, int]] = []
             for trajectory in snapshot:
-                for start in self._exact_occurrences(trajectory.addresses, suffix):
-                    exact_witnesses.append((trajectory, start))
+                starts = self._exact_occurrences(trajectory.addresses, suffix)
+                if starts:
+                    # Keep one canonical witness per stored occurrence. The rightmost
+                    # exact anchor is the most recent compatible point inside that
+                    # occurrence and matches the forward-rollout anchoring policy.
+                    exact_witnesses.append((trajectory, max(starts)))
 
             if not exact_witnesses:
                 continue
