@@ -137,6 +137,15 @@ class EvidenceCore:
             rows = [e for e in rows if e.epoch <= epoch]
         return tuple(rows)
 
+    def iter_evidence(self) -> tuple[EvidenceEdge, ...]:
+        """Return the complete evidence catalog across namespaces in insertion order.
+
+        This does not project current state and does not change namespace-scoped
+        ``evidence_history`` semantics. It exists for cross-namespace audit/restart
+        validation where evidence ids must be resolved independently of namespace.
+        """
+        return tuple(self._edges)
+
     def evidence_history(self, *, namespace: str | None = None, epoch: int | None = None) -> tuple[EvidenceEdge, ...]:
         """Return preserved evidence rows without collapsing them to current state.
 
