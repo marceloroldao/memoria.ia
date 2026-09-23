@@ -37,11 +37,14 @@ class StructuralAttractorEvidenceV2:
     temporal: AssociationChannelEvidenceV2
 
     @property
-    def discrete_dimensions(self) -> tuple[int, int, int, int, int]:
+    def discrete_dimensions(self) -> tuple[int, int, int, int]:
+        # Hierarchy depth is diagnostic only. A strongly recurrent pattern may
+        # collapse into a higher composition and therefore appear at fewer derived
+        # depths. Treating depth count as attractor strength would let the derived
+        # representation contradict the atomic evidence it was built from.
         return (
             self.trajectory_support,
             self.matched_address_count,
-            self.supporting_depth_count,
             self.within.supported_query_addresses,
             self.temporal.supported_query_addresses,
         )
