@@ -111,7 +111,9 @@ Previous archived Memoria.ia release:
 
 Current V2 RC1 archival identifier:
 
-- **DOI pending**. It must be inserted only after the archival record is created. No DOI is pre-assigned in the release commit.
+- DOI `10.5281/zenodo.22908785`.
+
+The V2 RC1 DOI was registered after the GitHub pre-release was published; this metadata-only update does not move the release tag or change the frozen runtime.
 
 ## Claims boundary
 
