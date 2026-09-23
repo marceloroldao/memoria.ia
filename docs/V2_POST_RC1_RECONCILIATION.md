@@ -344,6 +344,43 @@ Rules:
 
 This is the main path toward paraphrase/generalization without requiring embeddings or an LLM.
 
+### R6 implementation slice
+
+The first R6 implementation recovers structural equivalence as a **direct,
+revocable relation between observed structural signatures**.
+
+Mechanism:
+
+- a signature is the opaque address prefix that reaches a local bridge;
+- a witness requires two different signatures to enter the same bridge through
+  different lineages;
+- if both reach the same terminal region, the witness supports equivalence;
+- if they traverse the same bridge but reach different terminal regions, the
+  witness is contradiction evidence;
+- repeated observations from the same lineage do not count as independent support;
+- at least two independent lineage pairs are required for `supported` by default;
+- if independent divergence catches up with or exceeds convergence, the relation
+  becomes `contradicted`;
+- hyperdense bridge buckets fail closed instead of manufacturing many equivalences;
+- hierarchy IDs remain isolated.
+
+The engine exposes only **direct** supported reformulations:
+
+```
+A ~ B
+B ~ C
+```
+
+does not create `A ~ C`.
+
+Reformulation is read-only, and the original query signature is always returned
+first. R6 does not yet feed reformulations into the attractor resolver; R8 will own
+that composition so direct structural evidence can explicitly retain precedence.
+
+The equivalence state is derived deterministically from persisted trajectories, so
+it does not require a second authoritative mutable database. Cold reopen must
+reproduce the same signatures, witnesses and candidate states.
+
 ## Phase R7 — Temporal state inference
 
 Rebuild current/previous/change/history over stable evolving addresses.
