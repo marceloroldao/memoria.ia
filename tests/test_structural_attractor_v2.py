@@ -59,9 +59,14 @@ def test_recurrence_can_form_a_unique_attractor_without_weighted_score():
     assert result.resolved is True
     assert result.resolved_address == 4
     assert result.pareto_frontier == (4,)
-    assert _candidate(result, 4).evidence.trajectory_support == 2
-    assert _candidate(result, 3).evidence.trajectory_support == 1
-    assert 4 in _candidate(result, 3).dominated_by
+    c4 = _candidate(result, 4)
+    c3 = _candidate(result, 3)
+    assert c4.evidence.trajectory_support == 2
+    assert c3.evidence.trajectory_support == 1
+    # Extra hierarchical compression can make the stronger recurrent candidate
+    # visible at fewer derived depths. Depth is therefore diagnostic, not strength.
+    assert c3.evidence.supporting_depth_count > c4.evidence.supporting_depth_count
+    assert 4 in c3.dominated_by
 
 
 def test_equal_structural_evidence_stays_ambiguous():
