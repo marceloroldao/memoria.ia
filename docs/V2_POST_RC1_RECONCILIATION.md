@@ -290,9 +290,13 @@ Instead every candidate exposes independent evidence dimensions:
 
 - supporting trajectory occurrences;
 - atomic matched-address count;
-- number of supporting hierarchy depths;
 - within-event association support count and accumulated field mass;
 - temporal association support count and accumulated field mass.
+
+Supporting hierarchy depths are still exposed diagnostically, but are excluded from
+attractor dominance. A stronger recurrent pattern can collapse into a higher
+composition and therefore remain visible at fewer derived depths; depth count is
+not monotonic evidence.
 
 The current continuous structural association field already owns its recurrence,
 distance, forgetting and optional physical-time dynamics. R5 reads those decayed
