@@ -203,41 +203,29 @@ def test_equivalence_query_is_read_only():
     assert index.snapshot() == before
 
 
-def test_discovery_is_deterministic_under_input_order():
+def test_discovery_is_deterministic_under_ingest_order():
     rows = [
-        ("L1", [1, 10, 11, 99]),
-        ("L2", [2, 10, 11, 99]),
-        ("L3", [1, 10, 11, 99]),
-        ("L4", [2, 10, 11, 99]),
+        (0, "L1", [1, 10, 11, 99]),
+        (1, "L2", [2, 10, 11, 99]),
+        (2, "L3", [1, 10, 11, 99]),
+        (3, "L4", [2, 10, 11, 99]),
     ]
-    forward = StructuralEquivalenceEngineV2(_index(rows)).snapshot(hierarchy_id="h")
-    reverse = StructuralEquivalenceEngineV2(_index(tuple(reversed(rows)))).snapshot(hierarchy_id="h")
 
-    assert forward.signatures == reverse.signatures
-    assert forward.candidates == reverse.candidates
-    assert {
-        (
-            witness.left_signature_id,
-            witness.right_signature_id,
-            witness.bridge_addresses,
-            witness.left_terminal_address,
-            witness.right_terminal_address,
-            witness.left_lineage_id,
-            witness.right_lineage_id,
-        )
-        for witness in forward.witnesses
-    } == {
-        (
-            witness.left_signature_id,
-            witness.right_signature_id,
-            witness.bridge_addresses,
-            witness.left_terminal_address,
-            witness.right_terminal_address,
-            witness.left_lineage_id,
-            witness.right_lineage_id,
-        )
-        for witness in reverse.witnesses
-    }
+    def build(items):
+        index = StructuralTrajectoryIndex()
+        for sequence, source_id, addresses in items:
+            index.ingest_addresses(
+                addresses,
+                hierarchy_id="h",
+                source_id=source_id,
+                sequence=sequence,
+            )
+        return StructuralEquivalenceEngineV2(index).snapshot(hierarchy_id="h")
+
+    forward = build(rows)
+    reverse = build(tuple(reversed(rows)))
+
+    assert forward == reverse
 
 
 def test_equivalence_rebuild_is_deterministic_after_cold_reopen(tmp_path: Path):
