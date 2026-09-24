@@ -710,6 +710,74 @@ No modality-specific cognitive law belongs in Memoria.ia.
 
 ## Phase R14 — RAG control and progressive LLM reduction
 
+### R14 implementation slice
+
+The first R14 benchmark intentionally separates two controls instead of presenting
+an unfair single-number RAG comparison.
+
+1. The existing `memoria.ia-product-context-v1` benchmark remains the product-side
+   context/token control. It uses a mock language adapter and explicitly supplied
+   memory keys, so it measures context selection/instrumentation rather than
+   semantic discovery or real-provider reasoning.
+2. The new `memoria.ia-r14-progressive-llm-reduction-v1` benchmark measures the
+   reconciled structural engine before language generation. It records resolved,
+   ambiguous and negative structural cases plus CURRENT/CHANGE temporal state,
+   raw retrieval-context bytes, compiled cognitive-context bytes, wall-clock
+   inference latency and explicit external/LLM call counters.
+
+The structural retrieval comparison is deliberately labelled a retrieval-only
+control, **not a full RAG system**. R14 therefore records what is measured without
+claiming a general RAG victory.
+
+The first gate asks a narrower question: can state resolution, conflict preservation,
+negative abstention and temporal change complete correctly before language
+generation? These cases must report `external_calls=0`, `llm_calls=0` and
+`semantic_projection=false`.
+
+Natural-language paraphrase remains outside this address-level benchmark. The
+existing R6 witnessed structural reformulation is not relabelled as lexical
+paraphrase.
+
+The product-alpha workflow publishes the machine-readable R14 report as a CI
+artifact on every pull request to main.
+
+### R14 measured CI result — run 36049344106
+
+The first CI execution of the combined R14 report completed all five cognitive
+cases correctly before language generation: resolved structural state, competing
+structural evidence, negative/unresolved input, CURRENT temporal state and CHANGE
+temporal state. Aggregate counters were `external_calls=0`, `llm_calls=0` and
+`semantic_projection_cases=0`.
+
+Observed structural context sizes in this run:
+
+- resolved: raw retrieval control 667 bytes -> compiled cognitive packet 409 bytes;
+- ambiguous: raw retrieval control 333 bytes -> compiled cognitive packet 379 bytes;
+- negative/unresolved: empty retrieval control serialized as 2 bytes -> compiled
+  diagnostic packet 202 bytes.
+
+The latter two are an important negative result: Context Compiler is not a universal
+byte compressor. Explicit ambiguity, provenance/diagnostics and abstention can cost
+more bytes than a minimal retrieval payload. Its purpose is cognitive state
+resolution and explicit uncertainty, not unconditional size reduction.
+
+Observed temporal context sizes were 311 bytes of full revision history versus
+229 bytes for CURRENT and 237 bytes for CHANGE. These are controlled fixture sizes,
+not general compression ratios.
+
+The separate product context control reported 908 estimated baseline input tokens
+versus 65 in Memoria mode across three explicitly keyed cases, a deterministic
+estimated reduction of 92.8414%. This remains a mock-adapter/context-selection
+measurement; it is not a provider-tokenizer result and does not measure semantic
+discovery.
+
+One CI sample measured structural inference at approximately 0.813 ms (resolved),
+0.535 ms (ambiguous) and 0.329 ms (negative), with temporal reads around 0.027 ms
+(CURRENT) and 0.039 ms (CHANGE). These wall-clock values are observational only and
+are not release gates.
+
+
+
 Compare controlled RAG retrieval against the reconciled engine on:
 
 - retrieval;
