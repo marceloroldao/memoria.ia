@@ -41,13 +41,19 @@ class TemporalStateChangeV2:
     provenance_ids_after: tuple[str, ...]
 
     @property
-    def changed(self) -> bool:
+    def state_changed(self) -> bool:
+        return bool(self.removed_addresses) or bool(self.added_addresses)
+
+    @property
+    def evidence_changed(self) -> bool:
         return (
-            bool(self.removed_addresses)
-            or bool(self.added_addresses)
-            or self.trajectory_ids_before != self.trajectory_ids_after
+            self.trajectory_ids_before != self.trajectory_ids_after
             or self.provenance_ids_before != self.provenance_ids_after
         )
+
+    @property
+    def changed(self) -> bool:
+        return self.state_changed
 
 
 @dataclass(frozen=True, slots=True)
@@ -275,7 +281,7 @@ class TemporalStateResolverV2:
             return TemporalStateResolutionV2(
                 hierarchy, stable_address, op, anchor.revision_id, anchor,
                 (previous, anchor), change, True, False,
-                "observed-state-change" if change.changed else "observed-state-stable",
+                "observed-state-change" if change.state_changed else "observed-state-stable",
             )
 
         raise AssertionError("unreachable temporal operation")
