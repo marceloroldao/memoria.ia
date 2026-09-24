@@ -511,6 +511,26 @@ Disable external/model calls and gate:
 Historical Lotus/Vibe, shirt-color and similar device regressions return here as
 **tests**, not as sources of special grammar rules.
 
+### R9 execution note
+
+R9 is implemented as a structural, zero-LLM gate first. The benchmark covers
+recurrence versus preserved competing evidence, distractors and similar contexts,
+negative/no-answer behavior, query immutability/repeatability, explicit
+current/previous/change operations, forward/reverse traversal and cold reopen.
+
+The historical "paraphrase with reduced lexical overlap" requirement is **not**
+claimed as solved by the address-level engine. At this layer the measurable proxy
+is witnessed structural reformulation/equivalence from R6/R8. Lexical or
+natural-language paraphrase belongs at the interpretation boundary and must not be
+smuggled into the core through stopword lists, grammar tables or hand-authored
+semantic rules.
+
+PR #317 is therefore treated as historical test input rather than merged policy:
+its word splitting/stopword fallback would reintroduce language-specific rules into
+the native resolver. Its useful invariant — a real no-external-call end-to-end
+resolution and a negative unresolved case — is retained for later OFF.IA/ABI
+integration on top of the structural engine.
+
 ## Phase R10 — Context Compiler v2
 
 Recover the Context Compiler principle with a new schema.
