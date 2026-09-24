@@ -1,0 +1,175 @@
+name: BDR v1.0.0 direct native comparison
+
+on:
+  push:
+    branches: [experiment/bdr-v100-backend-comparison]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bdr-v100-backend-comparison-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-direct-heavy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: medium
+            memories: 512
+            payload_bytes: 512
+            random_reads: 100000
+            mutate_count: 50000
+          - name: heavy
+            memories: 1024
+            payload_bytes: 1024
+            random_reads: 250000
+            mutate_count: 100000
+          - name: very-heavy
+            memories: 2048
+            payload_bytes: 1024
+            random_reads: 500000
+            mutate_count: 200000
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev zlib1g-dev
+      - name: Checkout exact frozen Resolutive-DB v1.0.0
+        run: |
+          git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
+          test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
+      - name: Build BDR v1.0.0 and direct native benchmark
+        run: |
+          cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build bdr-v100-build --config Release --target bdr_v1_candidate -j2
+          BDR_LIB="$(find bdr-v100-build -name 'libbdr.a' -print -quit)"
+          test -n "$BDR_LIB"
+          c++ -std=c++17 -O3 -DNDEBUG benchmarks/bdr_v100_native_direct.cpp \
+            -I bdr-v100-src/experimental/api_v86/include "$BDR_LIB" \
+            -lsqlite3 -lz -pthread -o bdr_v100_native_direct
+      - name: Run direct native workload
+        run: |
+          mkdir -p benchmark-results
+          /usr/bin/time -v ./bdr_v100_native_direct \
+            benchmark-native-${{ matrix.name }} \
+            ${{ matrix.memories }} ${{ matrix.payload_bytes }} \
+            ${{ matrix.random_reads }} ${{ matrix.mutate_count }} \
+            > benchmark-results/${{ matrix.name }}.json \
+            2> benchmark-results/${{ matrix.name }}.time.txt
+          cat benchmark-results/${{ matrix.name }}.json
+          cat benchmark-results/${{ matrix.name }}.time.txt
+      - name: Summarize direct result
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          name='${{ matrix.name }}'
+          r=json.loads(pathlib.Path(f'benchmark-results/{name}.json').read_text())
+          s=r['sqlite_direct']; b=r['bdr_direct']
+          def ratio(a,bv): return a/bv if bv else float('inf')
+          print(f"## Native direct — {name}")
+          print(f"Records: **{r['logical_records']:,}**; random reads: **{r['random_reads']:,}**; mutations: **{r['mutate_count']:,}**")
+          print('| Metric | SQLite direct | BDR v1.0.0 direct | SQLite/BDR |')
+          print('|---|---:|---:|---:|')
+          for key,label in [('write_ms','write'),('read_ms','sequential read'),('random_read_ms','random read'),('update_ms','update'),('delete_ms','delete'),('checkpoint_ms','checkpoint'),('reopen_verify_ms','reopen+verify')]:
+              print(f"| {label} ms | {s[key]:.3f} | {b[key]:.3f} | {ratio(s[key],b[key]):.2f}x |")
+          print(f"| disk bytes | {s['disk_bytes']} | {b['disk_bytes']} | {ratio(s['disk_bytes'],b['disk_bytes']):.2f}x |")
+          print('\nMeasured database operations call sqlite3 and bdr::Database directly. No Python workload generator, subprocess DB driver, or serialized workload is in the measured path.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bdr-v100-native-direct-${{ matrix.name }}
+          path: benchmark-results/
+
+  resilience-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev zlib1g-dev
+      - name: Checkout exact frozen Resolutive-DB v1.0.0
+        run: |
+          git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
+          test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
+      - name: Build direct resilience executable
+        run: |
+          cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build bdr-v100-build --config Release --target bdr_v1_candidate -j2
+          BDR_LIB="$(find bdr-v100-build -name 'libbdr.a' -print -quit)"
+          test -n "$BDR_LIB"
+          c++ -std=c++17 -O3 -DNDEBUG benchmarks/bdr_v100_resilience.cpp \
+            -I bdr-v100-src/experimental/api_v86/include "$BDR_LIB" \
+            -lsqlite3 -lz -pthread -o bdr_v100_resilience
+      - name: Per-operation fsync gate
+        run: |
+          mkdir -p resilience-results
+          ./bdr_v100_resilience fsync resilience-fsync 5000 256 | tee resilience-results/fsync.json
+      - name: Checkpoint churn gate
+        run: |
+          ./bdr_v100_resilience churn resilience-churn 40 5000 20000 | tee resilience-results/checkpoint-churn.json
+      - name: Forced crash recovery - BDR
+        shell: bash
+        run: |
+          set +e
+          ./bdr_v100_resilience crash-write bdr resilience-crash-bdr 20000 10000
+          rc=$?
+          set -e
+          test "$rc" -eq 99
+          ./bdr_v100_resilience crash-verify bdr resilience-crash-bdr 20000 10000 | tee resilience-results/crash-bdr.json
+      - name: Forced crash recovery - SQLite control
+        shell: bash
+        run: |
+          set +e
+          ./bdr_v100_resilience crash-write sqlite resilience-crash-sqlite 20000 10000
+          rc=$?
+          set -e
+          test "$rc" -eq 99
+          ./bdr_v100_resilience crash-verify sqlite resilience-crash-sqlite 20000 10000 | tee resilience-results/crash-sqlite.json
+      - name: Summarize resilience gates
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib
+          print('## BDR v1.0.0 resilience gates')
+          for p in sorted(pathlib.Path('resilience-results').glob('*.json')):
+              d=json.loads(p.read_text())
+              print(f"- **{p.stem}**: {d.get('status')} — {d}")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bdr-v100-resilience-linux
+          path: resilience-results/
+
+  frozen-v1-cross-platform:
+    name: frozen-v1-contract-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout frozen Resolutive-DB v1.0.0
+        shell: bash
+        run: |
+          git clone --depth 1 --branch v1.0.0 https://github.com/marceloroldao/resolutive-DB.git bdr-v100-src
+          test "$(git -C bdr-v100-src describe --tags --exact-match)" = "v1.0.0"
+      - name: Install ZLIB on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: vcpkg install zlib:x64-windows
+      - name: Configure frozen BDR on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+      - name: Configure frozen BDR on Unix
+        if: runner.os != 'Windows'
+        run: cmake -S bdr-v100-src -B bdr-v100-build -DCMAKE_BUILD_TYPE=Release
+      - name: Build frozen v1 contract
+        run: cmake --build bdr-v100-build --config Release --target v1_candidate_contract
+      - name: Run frozen v1 contract
+        run: ctest --test-dir bdr-v100-build -C Release -R v1_candidate_contract --output-on-failure
