@@ -545,6 +545,26 @@ New target:
 
 Raw text remains optional provenance/debug material, not the cognitive representation.
 
+### R10 implementation note
+
+The first R10 slice compiles the reconciled structural inference result into a
+deterministic packet containing addresses, resolved/competing state, supporting
+trajectories, provenance, equivalence witnesses, conflicts, source tier and explicit
+uncertainty. The same compiler now projects R7 temporal reads into structured
+current/previous/change packets without natural-language interpretation.
+
+Context/window dynamics are recovered at the storage boundary by assigning a stable
+opaque address to the context and evolving only its payload through the existing
+append-only address-revision journal. This is intentionally a role over the generic
+state substrate, not a second conversation-memory database and not a text-specific
+rule system. Parallel context addresses remain isolated; prior revisions remain
+immutable and linked through predecessor revision IDs.
+
+The first temporal R10 Actions attempt exposed a patching error where escaped
+newline characters were committed literally in Python imports. This was a test/code
+serialization defect rather than an inference failure; the imports were repaired
+before continuing the gate.
+
 ## Phase R11 — Epistemic response boundary
 
 Recover useful parts of Response Validator and Learning Gate:
@@ -619,7 +639,7 @@ The following historical modules are explicitly preserved as future work. They a
 not prerequisites for the first inference freeze, but their concepts/tests remain
 part of the project lineage.
 
-### Context/window dynamics — ADAPT after R4/R5
+### Context/window dynamics — PARTIALLY RECOVERED in R10
 
 - `structural_context_observation_v2`
 - `structural_context_recall_v2`
