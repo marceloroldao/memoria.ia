@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from memoria_resolutiva.evolving_address_state_v2 import EvolvingAddressStateJournalV2
+from memoria_resolutiva.persistent_structural_trajectory_v2 import PersistentStructuralTrajectoryRuntimeV2
+from memoria_resolutiva.structural_observation import StructuralObservationStore
 from memoria_resolutiva.resolutive_inference_v2 import ResolutiveInferenceEngineV2
 from memoria_resolutiva.structural_trajectory_v2 import StructuralTrajectoryIndex
 
@@ -150,3 +152,56 @@ def test_r9_forward_and_reverse_traversal_are_consistent():
 
     assert forward.resolved_address == 33
     assert reverse.resolved_address == 32
+
+
+def test_r9_cold_reopen_preserves_decision_surface(tmp_path):
+    observations = StructuralObservationStore(
+        tmp_path / "observations",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    for sequence, trail in enumerate(([41, 42, 43], [41, 42, 43], [41, 42, 44])):
+        observations.append(
+            {
+                "version": 1,
+                "source_id": f"r9:{sequence}",
+                "sequence": sequence,
+                "byte_offset": sequence * 16,
+                "byte_length": 16,
+                "trail": list(trail),
+                "relation_ids": [],
+                "signature": f"{sequence + 1:016x}",
+                "resolution": 2,
+            },
+            provenance={"hierarchy_id": "r9", "source_kind": "r9-benchmark"},
+        )
+
+    first = PersistentStructuralTrajectoryRuntimeV2(
+        observations,
+        tmp_path / "trajectory",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    before = first.snapshot_bytes()
+    first_result = ResolutiveInferenceEngineV2(first.index).infer_structural(
+        [41, 42],
+        hierarchy_id="r9",
+    )
+
+    reopened = PersistentStructuralTrajectoryRuntimeV2(
+        observations,
+        tmp_path / "trajectory",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    second_result = ResolutiveInferenceEngineV2(reopened.index).infer_structural(
+        [41, 42],
+        hierarchy_id="r9",
+    )
+
+    assert reopened.replayed_on_open == 0
+    assert reopened.snapshot_bytes() == before
+    assert first_result.status == second_result.status == "resolved"
+    assert first_result.resolved_address == second_result.resolved_address == 43
+    _assert_zero_llm(first_result)
+    _assert_zero_llm(second_result)
