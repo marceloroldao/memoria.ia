@@ -398,6 +398,37 @@ Required no-LLM operations:
 
 The implementation must not require a domain predicate such as `pet.name` to pass.
 
+### R7 implementation slice
+
+The first R7 implementation makes temporal state a read-only operation over the
+stable evolving-address journal.
+
+Explicit core operations:
+
+- CURRENT — latest admitted revision of one stable opaque address;
+- PREVIOUS — predecessor of the latest admitted revision;
+- HISTORY — complete admitted revision chain;
+- CHANGE — structural delta from the predecessor to an anchor/current revision;
+- FORWARD — next already-observed revision from an explicit historical anchor;
+- REVERSE — previous already-observed revision from an explicit historical anchor.
+
+Important boundaries:
+
+- CURRENT means latest admitted operational revision, not an epistemic truth verdict;
+- the temporal core contains no natural-language mapping for words such as before,
+  now, previous or changed;
+- CHANGE compares opaque payload structure only. New provenance or trajectory
+  support can change evidence without falsely becoming a world-state change;
+- observed revision history and R4 possible futures remain separate;
+- branch futures can be exposed as single, competing or terminal possibilities,
+  but are never inserted into the observed journal merely because they are possible;
+- terminal and continuing futures may remain simultaneously visible;
+- missing history and temporal boundaries return explicit no-answer states;
+- all temporal reads are query-read-only.
+
+R7 is derived from the persistent R2 journal and R4 branch state. It does not
+introduce a second authoritative temporal database.
+
 ## Phase R8 — Resolutive Inference Engine v0
 
 Create one read-only inference surface over:
