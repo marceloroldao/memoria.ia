@@ -446,6 +446,53 @@ query/event
 A result should contain addresses, trajectory IDs, candidate states, conflicts,
 provenance and diagnostics before any text generation.
 
+### R8 implementation slice
+
+The first R8 implementation introduces one read-only inference surface,
+`ResolutiveInferenceEngineV2`, over the reconciled post-RC1 components.
+
+Structural inference flow:
+
+```
+opaque query addresses
+  -> direct R5 attractor
+  -> direct status: resolved / ambiguous / terminal / bounded / unresolved
+  -> R6 direct equivalence reformulations as secondary evidence
+  -> equivalence fallback only when direct evidence is truly unresolved
+  -> final internal result + provenance + conflicts + diagnostics
+```
+
+Precedence is deliberately conservative:
+
+- a directly resolved attractor is not overridden by an equivalent path;
+- direct ambiguity is preserved;
+- a direct terminal observation is preserved;
+- operational bounds fail closed;
+- equivalent paths may resolve only after direct evidence is unresolved;
+- multiple equivalent outcomes remain ambiguous;
+- terminal versus forward equivalent outcomes remain ambiguous.
+
+Every result exposes:
+
+- query addresses;
+- resolved or competing addresses;
+- supporting trajectory IDs;
+- observation provenance IDs when present;
+- supporting structural-equivalence witness IDs;
+- direct attractor evidence;
+- equivalent-attractor attempts;
+- conflict diagnostics;
+- explicit `external_calls = 0` and `llm_calls = 0`.
+
+The same engine exposes explicit R7 temporal-state traversal and R4 temporal
+possibilities. Observed temporal history and inferred possible futures remain
+separate result types.
+
+R8 is still address-level inference. It does not interpret natural language and
+does not claim that R6 can generalize an unseen structural signature. R6 currently
+links directly observed signatures; broader unseen reformulation remains a later
+research problem and must be measured rather than assumed.
+
 ## Phase R9 — Decisive no-LLM benchmark
 
 Disable external/model calls and gate:
