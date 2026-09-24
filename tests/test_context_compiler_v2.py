@@ -1,5 +1,5 @@
 from memoria_resolutiva.context_compiler_v2 import ContextCompilerV2
-from memoria_resolutiva.resolutive_inference_v2 import ResolutiveInferenceEngineV2
+from memoria_resolutiva.resolutive_inference_v2 import ResolutiveInferenceEngineV2\nfrom memoria_resolutiva.evolving_address_state_v2 import EvolvingAddressStateJournalV2
 from memoria_resolutiva.structural_trajectory_v2 import StructuralTrajectoryIndex
 
 
@@ -59,3 +59,38 @@ def test_context_compiler_v2_keeps_negative_case_explicit():
     assert packet.resolved_state == ()
     assert packet.competing_states == ()
     assert packet.uncertainty == "insufficient-evidence"
+
+
+
+def test_context_compiler_v2_compiles_current_previous_change_without_language_rules():
+    index = _index([("trajectory", [1, 2, 3])])
+    journal = EvolvingAddressStateJournalV2()
+    journal.append(
+        77, hierarchy_id="r10", sequence=1, payload_addresses=[700],
+        trajectory_ids=["t:old"], provenance_ids=["p:old"],
+    )
+    journal.append(
+        77, hierarchy_id="r10", sequence=2, payload_addresses=[800],
+        trajectory_ids=["t:new"], provenance_ids=["p:new"],
+    )
+    engine = ResolutiveInferenceEngineV2(index, state_reader=journal)
+
+    current = ContextCompilerV2.compile_temporal(
+        engine.infer_temporal_state(77, hierarchy_id="r10", operation="current")
+    )
+    previous = ContextCompilerV2.compile_temporal(
+        engine.infer_temporal_state(77, hierarchy_id="r10", operation="previous")
+    )
+    change = ContextCompilerV2.compile_temporal(
+        engine.infer_temporal_state(77, hierarchy_id="r10", operation="change")
+    )
+
+    assert current.payload_addresses == (800,)
+    assert previous.payload_addresses == (700,)
+    assert change.previous_payload_addresses == (700,)
+    assert change.payload_addresses == (800,)
+    assert change.removed_addresses == (700,)
+    assert change.added_addresses == (800,)
+    assert current.external_calls == previous.external_calls == change.external_calls == 0
+    assert current.llm_calls == previous.llm_calls == change.llm_calls == 0
+    assert current.semantic_projection is previous.semantic_projection is change.semantic_projection is False
