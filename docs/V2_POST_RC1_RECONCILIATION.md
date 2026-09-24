@@ -581,6 +581,29 @@ Change from the historical policy:
 - competing evidence may coexist;
 - reinforcement, independence, temporal trajectory and later observations influence resolution.
 
+### R11 implementation slice
+
+The response boundary now represents every externally generated/model claim as an
+immutable `EpistemicClaimCandidateV2` with a deterministic claim ID. The core
+receives already-addressed assertions; it does not parse natural language at this
+boundary and does not treat model provenance as authority.
+
+`EpistemicResponseValidatorV2` compares those asserted addresses with a compiled
+R10 cognitive packet and returns only structural consistency states:
+`consistent`, `competing`, `unsupported` or `unresolved`. Its result explicitly
+states that no truth assessment was performed and that memory was not mutated.
+
+Explicit accept/reject/defer decisions live in a separate append-only
+`EpistemicDecisionLedgerV2`. Decisions reference the immutable candidate rather
+than rewriting it. Decision IDs are deterministic, duplicate submissions are
+idempotent, the ledger is fsync-backed JSONL, and restart reconstructs the audit
+history without promoting any claim into authoritative trajectory/state memory.
+
+This slice deliberately stops before a learning/promotion adapter. A later adapter
+may translate an explicitly admitted decision into new observed evidence, but that
+must be a separate operation with provenance and must never erase the original
+candidate or competing evidence.
+
 ## Phase R12 — Native/mobile/server cognitive ABI
 
 Only after the new packet/result contracts are stable:
