@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .resolutive_inference_v2 import (\n    ResolutiveInferenceResultV2,\n    ResolutiveTemporalStateResultV2,\n)
+from .resolutive_inference_v2 import (
+    ResolutiveInferenceResultV2,
+    ResolutiveTemporalStateResultV2,
+)
 
 
 @dataclass(frozen=True, slots=True)
