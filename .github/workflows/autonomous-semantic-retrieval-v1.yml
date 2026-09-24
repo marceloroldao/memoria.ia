@@ -1,0 +1,39 @@
+name: autonomous semantic retrieval v1
+
+on:
+  push:
+    branches:
+      - experiment/live-context-scale-v1
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[product]'
+      - name: Run autonomous semantic retrieval benchmark
+        run: |
+          mkdir -p benchmark-results
+          python experiments/autonomous_semantic_retrieval_v1.py | tee benchmark-results/autonomous-semantic-retrieval-v1.json
+      - name: Upload benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: autonomous-semantic-retrieval-v1
+          path: benchmark-results/autonomous-semantic-retrieval-v1.json
+          if-no-files-found: error
+          retention-days: 30
