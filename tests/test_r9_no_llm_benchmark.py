@@ -62,8 +62,9 @@ def test_r9_multiple_similar_contexts_and_distractors_do_not_cross_stitch():
 
     assert (left.status, left.resolved_address) == ("resolved", 100)
     assert (right.status, right.resolved_address) == ("resolved", 200)
-    assert unknown.status in {"unresolved", "terminal"}
+    assert unknown.status == "ambiguous"
     assert unknown.resolved_address is None
+    assert "direct-structural-ambiguity" in unknown.conflicts
     _assert_zero_llm(left)
     _assert_zero_llm(right)
     _assert_zero_llm(unknown)
@@ -130,10 +131,10 @@ def test_r9_current_previous_and_change_are_explicit_zero_llm_operations():
     previous = engine.infer_temporal_state(77, hierarchy_id="r9", operation="previous")
     change = engine.infer_temporal_state(77, hierarchy_id="r9", operation="change")
 
-    assert current.temporal.current is not None
-    assert current.temporal.current.payload_addresses == (800,)
-    assert previous.temporal.previous is not None
-    assert previous.temporal.previous.payload_addresses == (700,)
+    assert current.temporal.revision is not None
+    assert current.temporal.revision.payload_addresses == (800,)
+    assert previous.temporal.revision is not None
+    assert previous.temporal.revision.payload_addresses == (700,)
     assert change.temporal.change is not None
     assert change.temporal.change.removed_addresses == (700,)
     assert change.temporal.change.added_addresses == (800,)
