@@ -619,6 +619,35 @@ No model output is admitted merely because the validator called it consistent.
 
 ## Phase R12 — Native/mobile/server cognitive ABI
 
+### R12 implementation slice
+
+The first R12 slice defines `memoria.ia-cognitive-abi-v2` as a deterministic JSON
+envelope that can cross Python/server, C ABI/JNI and OFF.IA boundaries without
+exposing internal objects.
+
+The payload separates three planes explicitly:
+
+- `execution_plane`: where this cognitive operation ran (`local` or `server`);
+- `memory_plane`: which memory substrate supplied the cognitive state;
+- `language_plane`: where optional language generation ran
+  (`none`, `local`, `server` or `external`).
+
+A derived `response_origin` gives the client a directly inspectable diagnostic such
+as `local-memory`, `server-memory`,
+`hybrid-local-memory+server-model`, `server-model` or `unresolved`.
+This is provenance/observability metadata, not an epistemic quality score.
+
+The envelope carries the R10 cognitive packet (addresses, resolved/competing state,
+trajectories, provenance, equivalence witnesses, conflicts, source tier and
+uncertainty) plus R11 epistemic references (claim, validation status, decision and
+admission IDs). Raw text remains outside the cognitive ABI.
+
+The existing Android opaque-handle + UTF-8 JSON C ABI can carry this versioned
+payload without changing JNI function signatures. R12 therefore evolves the
+cognitive payload while preserving the transport boundary.
+
+
+
 Only after the new packet/result contracts are stable:
 
 - compile cognitive result;

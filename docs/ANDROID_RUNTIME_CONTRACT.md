@@ -32,6 +32,8 @@ The public C ABI is declared in `include/memoria_mobile.h` and starts at ABI ver
 
 The ABI intentionally uses opaque handles plus UTF-8 JSON request/response buffers. This keeps Kotlin/JNI bindings small while allowing the semantic payload to remain aligned with the Product API without exposing internal Python/C++ structures as ABI.
 
+Post-RC1 R12 keeps those function signatures stable and versions the cognitive JSON payload separately as `memoria.ia-cognitive-abi-v2`. OFF.IA can therefore inspect `execution_plane`, `memory_plane`, `language_plane` and `response_origin` to distinguish local memory, server memory and optional model generation without inferring origin from display text.
+
 The ABI surface is:
 
 - `memoria_mobile_open`;
