@@ -661,6 +661,38 @@ Do not resurrect the historical C implementation byte-for-byte.
 
 ## Phase R13 — bit.analyze multimodal convergence
 
+### R13 implementation slice
+
+Compatibility baseline: `marceloroldao/bit.analyze` main commit
+`95e487928b729618a0efdb21b99320b04b012f35`.
+
+R13 keeps the two upstream carriers distinct:
+
+- byte-oriented `StructuralEvent` retains byte offset/length, relation IDs,
+  structural trail and its existing Memoria.ia StructuralObservation envelope;
+- temporal multimodal `bit-analyze-reality-slice-structural/v1` retains its
+  physical clock interval, relative occurrence timing, multiplicity, source and
+  provenance IDs, without inventing byte coordinates or modality semantics.
+
+They converge only after durable admission, when each opaque structural trail is
+projected into the same `StructuralTrajectoryIndex`. The same R5/R8
+attractor/inference substrate can therefore operate over byte-stream and
+RealitySlice-derived occurrences without knowing whether an address originated
+from text, audio, video, image, sensor or another stream identity.
+
+RealitySlice signatures are recomputed before admission. Tampered temporal or
+occurrence payloads are rejected. The complete slice envelope remains durably
+stored for later temporal reasoning, while trajectory projection is idempotent
+and cold-replayable.
+
+Current limitation: the first convergence slice uses the canonical ordered
+RealitySlice trail for trajectory inference. Exact intra-slice timing and
+simultaneity are preserved in durable provenance but are not yet consumed by the
+R8 attractor. R13 must not claim that temporal multimodal association itself has
+already moved into the core.
+
+
+
 Feed StructuralEvent / RealitySlice streams into the same trajectory and attractor substrate.
 
 Target:
