@@ -599,10 +599,23 @@ than rewriting it. Decision IDs are deterministic, duplicate submissions are
 idempotent, the ledger is fsync-backed JSONL, and restart reconstructs the audit
 history without promoting any claim into authoritative trajectory/state memory.
 
-This slice deliberately stops before a learning/promotion adapter. A later adapter
-may translate an explicitly admitted decision into new observed evidence, but that
-must be a separate operation with provenance and must never erase the original
-candidate or competing evidence.
+### R11 learning-admission slice
+
+The next R11 slice adds an explicit `LearningAdmissionJournalV2` and
+`LearningAdmissionAdapterV2` between an epistemic decision and structural trajectory
+evidence. Admission requires an `accept` decision plus at least one explicit
+`evidence_id`; validator status is diagnostic and is not a truth gate.
+
+This means a claim marked `competing` may still be admitted as new evidence when an
+explicit decision supplies provenance. The new occurrence coexists with older
+competing trajectories and can influence later attractor reinforcement naturally;
+nothing is overwritten or promoted by provenance class alone.
+
+Admissions are deterministic, append-only, idempotent and replayable after restart.
+The trajectory keeps the admission ID as its observation reference and the decision
+ID as its source lineage. The original claim and decision remain immutable.
+
+No model output is admitted merely because the validator called it consistent.
 
 ## Phase R12 — Native/mobile/server cognitive ABI
 
