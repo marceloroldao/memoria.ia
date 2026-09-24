@@ -710,6 +710,39 @@ No modality-specific cognitive law belongs in Memoria.ia.
 
 ## Phase R14 — RAG control and progressive LLM reduction
 
+### R14 implementation slice
+
+The first R14 benchmark intentionally separates two controls instead of presenting
+an unfair single-number RAG comparison.
+
+1. The existing `memoria.ia-product-context-v1` benchmark remains the product-side
+   context/token control. It uses a mock language adapter and explicitly supplied
+   memory keys, so it measures context selection/instrumentation rather than
+   semantic discovery or real-provider reasoning.
+2. The new `memoria.ia-r14-progressive-llm-reduction-v1` benchmark measures the
+   reconciled structural engine before language generation. It records resolved,
+   ambiguous and negative structural cases plus CURRENT/CHANGE temporal state,
+   raw retrieval-context bytes, compiled cognitive-context bytes, wall-clock
+   inference latency and explicit external/LLM call counters.
+
+The structural retrieval comparison is deliberately labelled a retrieval-only
+control, **not a full RAG system**. R14 therefore records what is measured without
+claiming a general RAG victory.
+
+The first gate asks a narrower question: can state resolution, conflict preservation,
+negative abstention and temporal change complete correctly before language
+generation? These cases must report `external_calls=0`, `llm_calls=0` and
+`semantic_projection=false`.
+
+Natural-language paraphrase remains outside this address-level benchmark. The
+existing R6 witnessed structural reformulation is not relabelled as lexical
+paraphrase.
+
+The product-alpha workflow publishes the machine-readable R14 report as a CI
+artifact on every pull request to main.
+
+
+
 Compare controlled RAG retrieval against the reconciled engine on:
 
 - retrieval;
