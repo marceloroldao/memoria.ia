@@ -46,6 +46,14 @@ jobs:
           name: product-context-benchmark
           path: benchmark-results/product-context-v1.json
           if-no-files-found: error
+      - name: R14 progressive LLM reduction benchmark
+        run: python experiments/r14_progressive_llm_reduction.py --output benchmark-results/r14-progressive-llm-reduction-v1.json
+      - name: Upload R14 benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: r14-progressive-llm-reduction
+          path: benchmark-results/r14-progressive-llm-reduction-v1.json
+          if-no-files-found: error
       - name: Build container
         run: docker build -t memoria-enterprise-alpha .
       - name: Container smoke test with persistent restart
