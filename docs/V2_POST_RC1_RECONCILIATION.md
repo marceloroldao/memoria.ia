@@ -604,6 +604,30 @@ may translate an explicitly admitted decision into new observed evidence, but th
 must be a separate operation with provenance and must never erase the original
 candidate or competing evidence.
 
+### R11 explicit evidence-admission slice
+
+The next R11 slice adds a two-stage admission boundary rather than allowing an
+`accept` decision to manufacture a memory fact. `EpistemicEvidenceAdmissionV2`
+records that a claim was explicitly admitted for consideration, preserving the
+claim ID, decision ID, validator status, asserted structural addresses and decision
+evidence IDs. Creating an admission does not create a `StructuralObservation` and
+does not modify trajectories or state.
+
+A second explicit operation may bind that admission to an independently persisted
+`StructuralObservation` only when its opaque structural trail exactly matches the
+admitted addresses. The binding is append-only and deterministic. Mismatched
+observations fail closed; reject/defer decisions cannot be admitted. This keeps the
+planes distinct:
+
+`model/external claim -> validation -> decision -> admission`
+
+and separately:
+
+`world/source -> StructuralObservation`
+
+Only an explicit binding can connect the two. The admission and binding ledgers
+survive cold restart and never rewrite the original claim, decision or observation.
+
 ## Phase R12 — Native/mobile/server cognitive ABI
 
 Only after the new packet/result contracts are stable:
