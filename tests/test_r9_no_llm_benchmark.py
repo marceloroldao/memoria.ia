@@ -138,3 +138,15 @@ def test_r9_current_previous_and_change_are_explicit_zero_llm_operations():
     _assert_zero_llm(current)
     _assert_zero_llm(previous)
     _assert_zero_llm(change)
+
+
+def test_r9_forward_and_reverse_traversal_are_consistent():
+    index = _index([
+        ("a", [31, 32, 33]),
+        ("b", [31, 32, 33]),
+    ])
+    forward = index.frontier([31, 32], hierarchy_id="r9", direction="forward")
+    reverse = index.frontier([33], hierarchy_id="r9", direction="reverse")
+
+    assert forward.resolved_address == 33
+    assert reverse.resolved_address == 32
