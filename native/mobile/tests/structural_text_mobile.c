@@ -75,6 +75,12 @@ static int check_window_group(memoria_mobile_handle *h) {
     CHECK(contains(out, "\"window_revision\":6"));
     CHECK(contains(out, "\"source_ids\":[\"region-q1\",\"region-q2\",\"region-q3\"]"));
     CHECK(!contains(out, "\"source_ids\":[\"region-q1\",\"region-q2\",\"region-q3\",\"region-assistant\"]"));
+    CHECK(contains(out,
+        "\"source_id\":\"region-q2\",\"source_text\":\"qual nome do meu pai?\","
+        "\"source_kind\":\"user_turn\""));
+    CHECK(contains(out,
+        "\"source_id\":\"region-assistant\",\"source_text\":\"qual nome do meu pai?\","
+        "\"source_kind\":\"assistant_generated\""));
     CHECK(contains(out, "\"trajectory_used\":false"));
     CHECK(!contains(out, "Meu carro é vermelho."));
     clear(&out);
