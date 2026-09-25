@@ -45,8 +45,9 @@ on its published commit. The R1–R14 scope and limitations are detailed in
    passed all steps. Public tag `v2.0.0-rc2` points to
    `e38f27b639bec1cfcb83694c1418a4d01f250ffd`, with a GitHub pre-release
    at https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc2.
-5. Zenodo has not assigned an RC2 DOI. If archived there, add the assigned DOI
-   after registration without moving the published tag.
+5. Zenodo archived RC2 with DOI `10.5281/zenodo.22949633` at
+   https://zenodo.org/records/22949633. The published tag remains at the
+   validated commit. Companion BDR RC4 DOI: `10.5281/zenodo.22948288`.
 
 No full natural-language understanding, unseen lexical paraphrase, universal
 RAG superiority, complete OFF.IA end-to-end behavior or production security

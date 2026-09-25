@@ -12,11 +12,11 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 ## v2.0 release candidates
 
-Published structural baseline: **v2.0.0-rc1** (archived package version `2.0.0rc1`). The cognitive-core candidate **[v2.0.0-rc2](https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc2)** is published as a GitHub pre-release with package version `2.0.0rc2` on commit `e38f27b639bec1cfcb83694c1418a4d01f250ffd`; its DOI is not assigned yet. Its functional freeze is `e240bf2197000f955d65edec5dba47045d9f237e`. See `docs/V2_RC2_FREEZE_RECORD.md` and `RELEASE_NOTES_v2.0.0-rc2.md`.
+Published structural baseline: **v2.0.0-rc1** (archived package version `2.0.0rc1`). The cognitive-core candidate **[v2.0.0-rc2](https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc2)** is published as a GitHub pre-release with package version `2.0.0rc2` on commit `e38f27b639bec1cfcb83694c1418a4d01f250ffd`; its software DOI is **[10.5281/zenodo.22949633](https://doi.org/10.5281/zenodo.22949633)**. Its functional freeze is `e240bf2197000f955d65edec5dba47045d9f237e`. See `docs/V2_RC2_FREEZE_RECORD.md` and `RELEASE_NOTES_v2.0.0-rc2.md`.
 
 V2 RC1 functional freeze commit: **`bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9`**.
 
-Published companion Resolutive-DB/BDR candidate for the current native/mobile structural runtime: **`v1.2.0-rc4`** at **`317882a00f041fc1568ff986af8016b09453f21a`**. Memoria.ia cross-repository validation against this pin passed on PR #361; see `docs/V2_RC2_FREEZE_RECORD.md` for the exact runs.
+Published companion Resolutive-DB/BDR candidate for the current native/mobile structural runtime: **`v1.2.0-rc4`** at **`317882a00f041fc1568ff986af8016b09453f21a`**, DOI **[10.5281/zenodo.22948288](https://doi.org/10.5281/zenodo.22948288)**. Memoria.ia cross-repository validation against this pin passed on PR #361; see `docs/V2_RC2_FREEZE_RECORD.md` for the exact runs.
 
 The V2 RC1 historical validation used BDR commit `d09914b85646353d8fd004ccf99e96a94fab9eef`; its archived release notes and DOI remain unchanged.
 
