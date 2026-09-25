@@ -12,12 +12,21 @@ extern "C" {
 typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_structural_text_runtime memoria_structural_text_runtime;
 
+typedef struct memoria_structural_text_occurrence {
+    char *source_id;
+    char *source_text;
+    char *source_kind;
+    unsigned long sequence;
+} memoria_structural_text_occurrence;
+
 typedef struct memoria_structural_text_context {
     char *source_text;
     char *source_id;
     char *source_kind;
     char **source_ids;
     size_t source_id_count;
+    memoria_structural_text_occurrence *occurrences;
+    size_t occurrence_count;
     unsigned long sequence;
     double score;
     size_t exact_overlap;
