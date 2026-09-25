@@ -831,26 +831,6 @@ static int same_symbol_trail(
     return same;
 }
 
-typedef struct personal_symbol_frequency {
-    uint64_t symbol;
-    size_t count;
-} personal_symbol_frequency;
-
-static int personal_symbol_compare(const void *a, const void *b) {
-    const personal_symbol_frequency *left = (const personal_symbol_frequency *)a;
-    const personal_symbol_frequency *right = (const personal_symbol_frequency *)b;
-    return left->symbol < right->symbol ? -1 : left->symbol > right->symbol ? 1 : 0;
-}
-
-static size_t personal_symbol_count(
-    const personal_symbol_frequency *symbols, size_t count, uint64_t target
-) {
-    personal_symbol_frequency key = {target, 0u};
-    const personal_symbol_frequency *found = (const personal_symbol_frequency *)
-        bsearch(&key, symbols, count, sizeof(*symbols), personal_symbol_compare);
-    return found ? found->count : 0u;
-}
-
 static int resolve_text_impl(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,
@@ -864,10 +844,7 @@ static int resolve_text_impl(
     const runtime_hierarchy *hierarchy;
     uint64_t *query_symbols = NULL;
     size_t *query_frequency = NULL;
-    personal_symbol_frequency *personal_symbols = NULL;
-    size_t personal_symbol_count_used = 0u, personal_symbol_capacity = 0u;
     double query_weight_total = 0.0;
-    size_t rarest_query_frequency = (size_t)-1;
     size_t query_count = 0u;
     memoria_structural_text_context *contexts = NULL;
     size_t context_count = 0u;
@@ -893,55 +870,17 @@ static int resolve_text_impl(
                 (strcmp(item->source_kind, "user_turn") != 0 &&
                  strcmp(item->source_kind, "user_assertion") != 0)) continue;
             if (!tokenize_alloc(item->text, &symbols, &count)) {
-                free(personal_symbols); free(query_frequency); free(query_symbols); return 0;
+                free(query_frequency); free(query_symbols); return 0;
             }
             for (q = 0; q < query_count; ++q)
                 for (s = 0; s < count; ++s)
                     if (query_symbols[q] == symbols[s]) {
                         ++query_frequency[q]; break;
                     }
-            for (s = 0; s < count; ++s) {
-                size_t previous;
-                for (previous = 0; previous < s; ++previous)
-                    if (symbols[previous] == symbols[s]) break;
-                if (previous < s) continue;
-                if (personal_symbol_count_used == personal_symbol_capacity) {
-                    size_t next = personal_symbol_capacity ?
-                        personal_symbol_capacity * 2u : 64u;
-                    personal_symbol_frequency *grown =
-                        (personal_symbol_frequency *)realloc(
-                            personal_symbols, next * sizeof(*grown));
-                    if (!grown) {
-                        free(symbols);
-                        free(personal_symbols); free(query_frequency); free(query_symbols); return 0;
-                    }
-                    personal_symbols = grown;
-                    personal_symbol_capacity = next;
-                }
-                personal_symbols[personal_symbol_count_used++] =
-                    (personal_symbol_frequency){symbols[s], 1u};
-            }
             free(symbols);
         }
-        qsort(personal_symbols, personal_symbol_count_used,
-              sizeof(*personal_symbols), personal_symbol_compare);
-        {
-            size_t read, write = 0u;
-            for (read = 0; read < personal_symbol_count_used; ++read) {
-                if (write && personal_symbols[write - 1u].symbol ==
-                             personal_symbols[read].symbol) {
-                    ++personal_symbols[write - 1u].count;
-                } else {
-                    personal_symbols[write++] = personal_symbols[read];
-                }
-            }
-            personal_symbol_count_used = write;
-        }
-        for (i = 0; i < query_count; ++i) {
+        for (i = 0; i < query_count; ++i)
             query_weight_total += 1.0 / (1.0 + (double)query_frequency[i]);
-            if (query_frequency[i] < rarest_query_frequency)
-                rarest_query_frequency = query_frequency[i];
-        }
     }
 
     for (i = 0; i < runtime->observation_count; ++i) {
@@ -963,7 +902,7 @@ static int resolve_text_impl(
             observation->text, &candidate_symbols, &candidate_count
         )) {
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(personal_symbols); free(query_frequency); free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         if (!memoria_structural_text_score_candidate(
@@ -978,7 +917,7 @@ static int resolve_text_impl(
         )) {
             free(candidate_symbols);
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(personal_symbols); free(query_frequency); free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         if (!memoria_structural_text_surface_overlap(
@@ -986,37 +925,22 @@ static int resolve_text_impl(
         )) {
             free(candidate_symbols);
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(personal_symbols); free(query_frequency); free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         score.score += 0.4 * (double)score.surface_overlap / (double)query_count;
         if (personal_evidence) {
-            size_t k, novel = 0u, regional_anchor = 0u;
+            size_t k, novel = 0u;
             double shared_weight = 0.0;
-            double novel_support = 0.0;
             for (k = 0; k < candidate_count; ++k) {
                 size_t q;
                 for (q = 0; q < query_count; ++q)
                     if (candidate_symbols[k] == query_symbols[q]) break;
-                if (q == query_count) {
-                    size_t previous;
-                    for (previous = 0; previous < k; ++previous)
-                        if (candidate_symbols[previous] == candidate_symbols[k])
-                            break;
-                    if (previous == k) {
-                        ++novel;
-                        novel_support += (double)personal_symbol_count(
-                            personal_symbols, personal_symbol_count_used,
-                            candidate_symbols[k]);
-                    }
-                } else if (query_frequency[q] <=
-                           rarest_query_frequency + rarest_query_frequency / 4u)
-                    ++regional_anchor;
+                if (q == query_count) ++novel;
             }
             /* A repeated question supplies no new evidence. For old records
              * tagged user_assertion, the tag alone cannot establish truth. */
-            if (novel < 2u || !regional_anchor ||
-                (score.exact_overlap < 2u &&
+            if (!novel || (score.exact_overlap < 2u &&
                            score.surface_overlap < 2u)) {
                 free(candidate_symbols);
                 continue;
@@ -1031,8 +955,8 @@ static int resolve_text_impl(
             }
             /* Rare shared symbols carry more regional evidence than common
              * query scaffolding. Associations only break close ties. */
-            score.score = novel_support +
-                shared_weight / query_weight_total;
+            score.score = shared_weight / query_weight_total +
+                0.05 * score.association_mass;
         }
         if (score.score <= 0.0) {
             free(candidate_symbols);
@@ -1056,7 +980,7 @@ static int resolve_text_impl(
             if (same < 0) {
                 free(candidate_symbols);
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(personal_symbols); free(query_frequency); free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             if (same) {
@@ -1076,7 +1000,7 @@ static int resolve_text_impl(
                     memoria_structural_text_contexts_free(
                         contexts, context_count
                     );
-                    free(personal_symbols); free(query_frequency); free(query_symbols);
+                    free(query_frequency); free(query_symbols);
                     return 0;
                 }
                 contexts = grown;
@@ -1091,7 +1015,7 @@ static int resolve_text_impl(
             if (!context_set_source(context, observation) ||
                 !context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(personal_symbols); free(query_frequency); free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             context->score = score.score;
@@ -1102,7 +1026,7 @@ static int resolve_text_impl(
         } else {
             if (!context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(personal_symbols); free(query_frequency); free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             ++context->repetitions;
@@ -1116,7 +1040,7 @@ static int resolve_text_impl(
                     memoria_structural_text_contexts_free(
                         contexts, context_count
                     );
-                    free(personal_symbols); free(query_frequency); free(query_symbols);
+                    free(query_frequency); free(query_symbols);
                     return 0;
                 }
                 context->score = score.score;
@@ -1126,7 +1050,7 @@ static int resolve_text_impl(
             }
         }
     }
-    free(personal_symbols); free(query_frequency); free(query_symbols);
+    free(query_frequency); free(query_symbols);
 
     qsort(
         contexts,
