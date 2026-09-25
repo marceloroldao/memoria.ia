@@ -907,6 +907,36 @@ int memoria_structural_text_runtime_resolve(
         sizeof(*contexts),
         context_compare
     );
+    /*
+     * When a query has a candidate with two distinct directly shared
+     * symbols, other candidates supported by only one shared symbol (or
+     * indirect temporal association alone) are weak distractors. Keep the
+     * association-only path when no candidate has that direct support.
+     * This is an evidence threshold, independent of particular words.
+     */
+    {
+        size_t strongest_exact = 0u;
+        size_t kept = 0u;
+        for (i = 0; i < context_count; ++i) {
+            if (contexts[i].exact_overlap > strongest_exact)
+                strongest_exact = contexts[i].exact_overlap;
+        }
+        if (strongest_exact >= 2u) {
+            for (i = 0; i < context_count; ++i) {
+                if (contexts[i].exact_overlap < 2u) {
+                    free_context(&contexts[i]);
+                    memset(&contexts[i], 0, sizeof(contexts[i]));
+                    continue;
+                }
+                if (kept != i) {
+                    contexts[kept] = contexts[i];
+                    memset(&contexts[i], 0, sizeof(contexts[i]));
+                }
+                ++kept;
+            }
+            context_count = kept;
+        }
+    }
     if (context_count > top_k) {
         for (i = top_k; i < context_count; ++i)
             free_context(&contexts[i]);
