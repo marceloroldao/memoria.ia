@@ -7,7 +7,7 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_RELEASE_VERSION = "2.0.0-rc1"
-EXPECTED_PACKAGE_VERSION = "2.0.0rc1"
+EXPECTED_PACKAGE_VERSION = "2.0.0rc2"
 EXPECTED_RELEASE_DATE = "2026-09-23"
 EXPECTED_TITLE = "memoria.ia: Resolutive Memory — v2.0.0 Release Candidate 1"
 EXPECTED_CFF_TITLE = "memoria.ia: Resolutive Memory — v2.0 Release Candidate 1"
@@ -32,6 +32,11 @@ def main() -> int:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))
     package_version = pyproject["project"]["version"]
     require(package_version == EXPECTED_PACKAGE_VERSION, f"pyproject version is {package_version!r}")
+    rc2_notes = (ROOT / "RELEASE_NOTES_v2.0.0-rc2.md").read_text("utf-8")
+    rc2_freeze = (ROOT / "docs/V2_RC2_FREEZE_RECORD.md").read_text("utf-8")
+    require("Status: **staging draft; not published**." in rc2_notes, "RC2 notes must identify staging state")
+    require("e240bf2197000f955d65edec5dba47045d9f237e" in rc2_notes and "e240bf2197000f955d65edec5dba47045d9f237e" in rc2_freeze, "RC2 freeze identity missing")
+    require("317882a00f041fc1568ff986af8016b09453f21a" in rc2_notes and "317882a00f041fc1568ff986af8016b09453f21a" in (ROOT / "Dockerfile").read_text("utf-8"), "RC2 BDR pin mismatch")
 
     zenodo = json.loads((ROOT / ".zenodo.json").read_text("utf-8"))
     require(zenodo.get("upload_type") == "software", "Zenodo upload_type must be software")
