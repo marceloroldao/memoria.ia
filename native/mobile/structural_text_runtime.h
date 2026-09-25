@@ -12,6 +12,14 @@ extern "C" {
 typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_structural_text_runtime memoria_structural_text_runtime;
 
+typedef struct memoria_structural_text_observation_view {
+    const char *hierarchy_id;
+    const char *source_id;
+    const char *source_kind;
+    const char *text;
+    unsigned long sequence;
+} memoria_structural_text_observation_view;
+
 typedef struct memoria_structural_text_occurrence {
     char *source_id;
     char *source_text;
@@ -99,6 +107,13 @@ void memoria_structural_text_contexts_free(
 
 size_t memoria_structural_text_runtime_observation_count(
     const memoria_structural_text_runtime *runtime
+);
+
+/* Borrowed read-only view, valid until the next mutation or close. */
+int memoria_structural_text_runtime_observation_at(
+    const memoria_structural_text_runtime *runtime,
+    size_t index,
+    memoria_structural_text_observation_view *out
 );
 
 size_t memoria_structural_text_runtime_hierarchy_count(
