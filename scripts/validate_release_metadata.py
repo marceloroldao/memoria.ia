@@ -12,6 +12,8 @@ CANDIDATE_TAG = "v2.0.0-rc2"
 CANDIDATE_TITLE = "memoria.ia: Resolutive Memory — v2.0.0 Release Candidate 2"
 CFF_TITLE = "memoria.ia: Resolutive Memory — v2.0 Release Candidate 2"
 RC1_DOI = "10.5281/zenodo.22908785"
+RC2_DOI = "10.5281/zenodo.22949633"
+BDR_RC4_DOI = "10.5281/zenodo.22948288"
 RC1_FREEZE = "bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9"
 RC1_BDR = "d09914b85646353d8fd004ccf99e96a94fab9eef"
 RC2_FREEZE = "e240bf2197000f955d65edec5dba47045d9f237e"
@@ -34,7 +36,7 @@ def main() -> int:
     require(zenodo.get("title") == CANDIDATE_TITLE, "Zenodo RC2 title mismatch")
     require(zenodo.get("access_right") == "open", "Zenodo access_right mismatch")
     require(zenodo.get("language") == "eng", "Zenodo language mismatch")
-    require("doi" not in zenodo, "unassigned RC2 DOI must not be claimed")
+    require(zenodo.get("doi") == RC2_DOI, "Zenodo RC2 DOI mismatch")
     require("license" not in zenodo, "custom RRNCL must not be sent as a Zenodo license identifier")
     creators = zenodo.get("creators")
     require(isinstance(creators, list) and len(creators) == 1, "Zenodo creator count mismatch")
@@ -51,11 +53,12 @@ def main() -> int:
     require('version: "2.0.0-rc.2"' in cff, "CITATION RC2 version mismatch")
     require('date-released: "2026-09-25"' in cff, "CITATION date mismatch")
     require(f"https://orcid.org/{ORCID}" in cff, "CITATION ORCID mismatch")
-    require("doi:" not in cff, "CITATION must not claim unassigned RC2 DOI")
+    require(f'doi: "{RC2_DOI}"' in cff, "CITATION RC2 DOI mismatch")
 
     readme = (ROOT / "README.md").read_text("utf-8")
     require(CANDIDATE_TAG in readme and PACKAGE_VERSION in readme, "README RC2 identity missing")
     require(RC2_FREEZE in readme and RC2_BDR in readme, "README RC2 freeze/BDR missing")
+    require(RC2_DOI in readme and BDR_RC4_DOI in readme, "README RC2/BDR DOI missing")
     require(RC1_FREEZE in readme and RC1_DOI in readme and RC1_BDR in readme, "README RC1 history missing")
     require(RC2_BDR in (ROOT / "Dockerfile").read_text("utf-8"), "Dockerfile BDR pin mismatch")
     for workflow in ("android-mobile-abi.yml", "native-shared-bdr-reopen.yml"):
@@ -69,6 +72,8 @@ def main() -> int:
     require("e38f27b639bec1cfcb83694c1418a4d01f250ffd" in notes and "e38f27b639bec1cfcb83694c1418a4d01f250ffd" in record, "RC2 published commit missing")
     require(RC2_FREEZE in notes and RC2_FREEZE in record, "RC2 functional freeze missing")
     require(RC2_BDR in notes and RC2_BDR in record, "RC2 BDR provenance missing")
+    require(RC2_DOI in notes and RC2_DOI in record, "RC2 DOI evidence missing")
+    require(BDR_RC4_DOI in notes and BDR_RC4_DOI in record, "BDR RC4 DOI evidence missing")
     require("36077501782" in record and "36077501751" in record, "cross-repository CI evidence missing")
 
     print("metadata gate: PASS")
@@ -77,7 +82,7 @@ def main() -> int:
     print(f"functional_freeze={RC2_FREEZE}")
     print(f"bdr_pin={RC2_BDR}")
     print(f"previous_doi={RC1_DOI}")
-    print("rc2_doi=unassigned")
+    print(f"rc2_doi={RC2_DOI}")
     return 0
 
 
