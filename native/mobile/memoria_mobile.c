@@ -1789,6 +1789,65 @@ memoria_mobile_status memoria_mobile_export_snapshot_json(
     return status;
 }
 
+memoria_mobile_status memoria_mobile_export_structural_text_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *request;
+    long requested_offset, requested_limit;
+    size_t offset, limit, count, end, i;
+    mobile_response_builder builder = {0};
+    memoria_mobile_status status;
+    if (!h || !h->structural_text_runtime || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
+    request = req.data && req.size ? buffer_to_string(req) : dup_string("{}");
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    requested_offset = json_long(request, "offset", 0);
+    requested_limit = json_long(request, "limit", 32);
+    free(request);
+    if (requested_offset < 0 || requested_limit < 1 || requested_limit > 64)
+        return MEMORIA_MOBILE_INVALID_ARGUMENT;
+
+    count = memoria_structural_text_runtime_observation_count(h->structural_text_runtime);
+    offset = (size_t)requested_offset < count ? (size_t)requested_offset : count;
+    limit = (size_t)requested_limit;
+    end = count - offset < limit ? count : offset + limit;
+    if (!mobile_response_appendf(&builder,
+            "{\"status\":\"OK\",\"format\":\"memoria.mobile.structural-text.v1\","
+            "\"count\":%zu,\"page\":{\"offset\":%zu,\"limit\":%zu,"
+            "\"returned\":%zu,\"next_offset\":",
+            count, offset, limit, end - offset)) goto fail;
+    if (end < count) {
+        if (!mobile_response_appendf(&builder, "%zu", end)) goto fail;
+    } else if (!mobile_response_appendf(&builder, "null")) goto fail;
+    if (!mobile_response_appendf(&builder, "},\"observations\":[")) goto fail;
+    for (i = offset; i < end; ++i) {
+        memoria_structural_text_observation_view observation = {0};
+        char *hierarchy, *id, *kind, *text;
+        int written;
+        if (!memoria_structural_text_runtime_observation_at(
+                h->structural_text_runtime, i, &observation)) goto fail;
+        hierarchy = json_escape(observation.hierarchy_id);
+        id = json_escape(observation.source_id);
+        kind = json_escape(observation.source_kind);
+        text = json_escape(observation.text);
+        written = hierarchy && id && kind && text && mobile_response_appendf(
+            &builder,
+            "%s{\"hierarchy_id\":\"%s\",\"source_id\":\"%s\","
+            "\"source_kind\":\"%s\",\"sequence\":%lu,\"text\":\"%s\"}",
+            i == offset ? "" : ",", hierarchy, id, kind, observation.sequence, text);
+        free(hierarchy); free(id); free(kind); free(text);
+        if (!written) goto fail;
+    }
+    if (!mobile_response_appendf(&builder, "]}")) goto fail;
+    status = set_response(out, builder.data, MEMORIA_MOBILE_OK);
+    free(builder.data);
+    return status;
+fail:
+    free(builder.data);
+    return MEMORIA_MOBILE_INTERNAL_ERROR;
+}
+
 static int concept_catalog_parse_number(const char **cursor, size_t *remaining, size_t *value) {
     size_t v = 0, digits = 0;
     const char *p;
