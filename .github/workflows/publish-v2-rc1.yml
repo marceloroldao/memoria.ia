@@ -1,17 +1,7 @@
 name: publish Memoria.ia v2.0.0-rc1
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'RELEASE_NOTES_v2.0.0-rc1.md'
-      - 'pyproject.toml'
-      - 'CITATION.cff'
-      - '.zenodo.json'
-      - 'README.md'
-      - 'scripts/validate_release_metadata.py'
-      - '.github/workflows/publish-v2-rc1.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

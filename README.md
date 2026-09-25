@@ -10,13 +10,13 @@
 
 Experimental implementation of **Resolutive Memory**, a local-first memory architecture for persistent state, reusable structural nodes, provenance, recurrence, temporal dynamics and conservative resolution.
 
-## v2.0 release candidate
+## v2.0 release candidates
 
-Current publication candidate: **v2.0.0-rc1** (`2.0.0rc1` package version).
+Published structural baseline: **v2.0.0-rc1** (archived package version `2.0.0rc1`). The next cognitive-core candidate **v2.0.0-rc2** is staged with package version `2.0.0rc2`; it has no public tag or DOI yet. Its functional freeze is `e240bf2197000f955d65edec5dba47045d9f237e`. See `docs/V2_RC2_FREEZE_RECORD.md` and `RELEASE_NOTES_v2.0.0-rc2.md`.
 
 V2 RC1 functional freeze commit: **`bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9`**.
 
-Published companion Resolutive-DB/BDR candidate for the current native/mobile structural runtime: **`v1.2.0-rc4`** at **`317882a00f041fc1568ff986af8016b09453f21a`**. Memoria.ia cross-repository validation against this pin is in progress.
+Published companion Resolutive-DB/BDR candidate for the current native/mobile structural runtime: **`v1.2.0-rc4`** at **`317882a00f041fc1568ff986af8016b09453f21a`**. Memoria.ia cross-repository validation against this pin passed on PR #361; see `docs/V2_RC2_FREEZE_RECORD.md` for the exact runs.
 
 The V2 RC1 historical validation used BDR commit `d09914b85646353d8fd004ccf99e96a94fab9eef`; its archived release notes and DOI remain unchanged.
 
