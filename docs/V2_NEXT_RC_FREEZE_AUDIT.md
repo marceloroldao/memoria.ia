@@ -1,6 +1,20 @@
 # Memoria.ia V2 — Next RC Freeze Readiness Audit
 
-Status: **BLOCKED ON EXTERNAL BDR PUBLICATION IDENTITY**
+Status: **BDR RC4 PUBLISHED; MEMORIA.IA CROSS-REPOSITORY REGRESSION PENDING**
+
+## 2026-09-25 dependency resolution
+
+BDR `v1.2.0-rc4` is published as a GitHub pre-release at
+`317882a00f041fc1568ff986af8016b09453f21a`. Its tag points to that
+commit. BDR CI run 36062508821 and the RC4-specific validation run
+36062508908 passed on that exact commit. Resolutive-DB issue #39 is closed.
+The current Memoria.ia Docker/native/mobile workflows now pin that commit.
+
+The checklist and blocker analysis below record the state at the original
+post-R14 audit; the external publication condition is now satisfied. The next
+Memoria.ia freeze still requires native, Android, product/server and cognitive
+regressions against the published RC4 pin. GitHub publication does not imply a
+Zenodo DOI for this BDR candidate.
 
 Audit baseline (post-R14 main):
 
