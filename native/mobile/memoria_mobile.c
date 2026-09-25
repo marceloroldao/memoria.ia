@@ -1459,11 +1459,16 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
     if (!hierarchy_id || !hierarchy_id[0] ||
         !query || !query[0] ||
         top_k_value < 1 || top_k_value > 16 ||
-        (mode && strcmp(mode, "window_group") != 0))
+        (mode && strcmp(mode, "window_group") != 0 &&
+         strcmp(mode, "personal_evidence") != 0))
         goto done;
     top_k = (size_t)top_k_value;
 
-    if (!(mode ? memoria_structural_text_runtime_resolve_window_group(
+    if (!(mode && strcmp(mode, "personal_evidence") == 0 ?
+        memoria_structural_text_runtime_resolve_personal_evidence(
+            h->structural_text_runtime, hierarchy_id, query, top_k,
+            &contexts, &context_count
+        ) : mode ? memoria_structural_text_runtime_resolve_window_group(
             h->structural_text_runtime, hierarchy_id, query, top_k,
             &contexts, &context_count
         ) : memoria_structural_text_runtime_resolve(
@@ -1481,7 +1486,7 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
     }
 
     if (context_count == 0u) {
-        if (mode) {
+        if (mode && strcmp(mode, "window_group") == 0) {
             status = set_responsef(
                 response_json, MEMORIA_MOBILE_UNRESOLVED,
                 "{\"status\":\"UNRESOLVED\",\"semantic_projection\":false,"
@@ -1521,14 +1526,17 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
         char *source_text = json_escape(context->source_text);
         char *source_id = json_escape(context->source_id);
         char *source_kind = json_escape(context->source_kind);
+        char *source_hierarchy = json_escape(context->source_hierarchy_id);
         size_t j;
-        if (!source_text || !source_id || !source_kind) {
+        if (!source_text || !source_id || !source_kind || !source_hierarchy) {
             free(source_text); free(source_id); free(source_kind);
+            free(source_hierarchy);
             goto internal_error;
         }
         if (!mobile_response_appendf(
                 &builder,
                 "%s{\"source_text\":\"%s\",\"source_id\":\"%s\","
+                "\"source_hierarchy_id\":\"%s\","
                 "\"source_kind\":\"%s\",\"sequence\":%lu,"
                 "\"score\":%.17g,\"exact_overlap\":%zu,\"surface_overlap\":%zu,"
                 "\"association_mass\":%.17g,\"repetitions\":%zu,"
@@ -1536,6 +1544,7 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
                 i ? "," : "",
                 source_text,
                 source_id,
+                source_hierarchy,
                 source_kind,
                 context->sequence,
                 context->score,
@@ -1544,9 +1553,11 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
                 context->association_mass,
                 context->repetitions)) {
             free(source_text); free(source_id); free(source_kind);
+            free(source_hierarchy);
             goto internal_error;
         }
         free(source_text); free(source_id); free(source_kind);
+        free(source_hierarchy);
 
         for (j = 0; j < context->source_id_count; ++j) {
             char *evidence_id = json_escape(context->source_ids[j]);
@@ -1561,7 +1572,7 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
             }
             free(evidence_id);
         }
-        if (mode) {
+        if (mode && strcmp(mode, "window_group") == 0) {
             if (!mobile_response_appendf(&builder, "],\"occurrences\":["))
                 goto internal_error;
             for (j = 0; j < context->occurrence_count; ++j) {
@@ -1584,7 +1595,7 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
             goto internal_error;
     }
 
-    if (mode) {
+    if (mode && strcmp(mode, "window_group") == 0) {
         if (!mobile_response_appendf(
                 &builder,
                 "],\"window_id\":\"%s\",\"window_revision\":%zu,"
