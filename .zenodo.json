@@ -5,22 +5,18 @@
       "orcid": "0009-0003-6075-4680"
     }
   ],
-  "title": "memoria.ia: Resolutive Memory — v2.0.0 Release Candidate 1",
-  "version": "2.0.0-rc1",
+  "title": "memoria.ia: Resolutive Memory — v2.0.0 Release Candidate 2",
+  "version": "2.0.0-rc2",
   "upload_type": "software",
   "access_right": "open",
   "language": "eng",
   "related_identifiers": [
     {
       "identifier": "https://doi.org/10.5281/zenodo.22908785",
-      "relation": "isIdenticalTo"
-    },
-    {
-      "identifier": "https://doi.org/10.5281/zenodo.22654141",
       "relation": "isNewVersionOf"
     },
     {
-      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc1",
+      "identifier": "https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc2",
       "relation": "isSupplementTo"
     },
     {
@@ -41,7 +37,9 @@
     "AI memory",
     "PC server",
     "local-first AI",
-    "mobile AI memory"
-  ],
-  "doi": "10.5281/zenodo.22908785"
+    "mobile AI memory",
+    "resolutive inference",
+    "cognitive state",
+    "structural trajectories"
+  ]
 }
