@@ -1,6 +1,6 @@
 # Memoria.ia V2 — Next RC Freeze Readiness Audit
 
-Status: **BDR RC4 PUBLISHED; MEMORIA.IA CROSS-REPOSITORY REGRESSION PENDING**
+Status: **BDR RC4 PUBLISHED; MEMORIA.IA INTEGRATION GATES GREEN ON PR #361**
 
 ## 2026-09-25 dependency resolution
 
@@ -10,11 +10,23 @@ commit. BDR CI run 36062508821 and the RC4-specific validation run
 36062508908 passed on that exact commit. Resolutive-DB issue #39 is closed.
 The current Memoria.ia Docker/native/mobile workflows now pin that commit.
 
+Integration evidence on PR #361, head `5a8967c73fcfa25a74f500ed05f7c8c72e1c4971`:
+
+- Android mobile ABI run 36077298157: host and arm64 jobs passed.
+- Minimal shared BDR cold reopen run 36077298167: passed.
+- Product-alpha run 36077298169: full pytest, R14 benchmark, Docker build,
+  container persistent restart, backup/restore and acceptance gate passed.
+- Release metadata run 36077298171: passed against the unchanged RC1 archive.
+- Product application, v0.96 semantic and layered-performance gates passed.
+- Experimental PR regression was skipped by its configured branch condition;
+  this is not evidence for that historical experimental gate.
+
 The checklist and blocker analysis below record the state at the original
-post-R14 audit; the external publication condition is now satisfied. The next
-Memoria.ia freeze still requires native, Android, product/server and cognitive
-regressions against the published RC4 pin. GitHub publication does not imply a
-Zenodo DOI for this BDR candidate.
+post-R14 audit. The external publication condition and the cross-repository
+integration gates above are now satisfied on the PR candidate. The next
+Memoria.ia freeze still requires an integrated-main commit, release metadata
+for that new candidate and its final release audit. GitHub publication does not
+imply a Zenodo DOI for this BDR candidate.
 
 Audit baseline (post-R14 main):
 
