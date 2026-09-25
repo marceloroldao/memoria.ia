@@ -120,6 +120,15 @@ memoria_mobile_status memoria_mobile_export_snapshot_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Read-only V2 structural observation page. Request accepts offset and limit
+ * (1..64); response preserves source kind, conversation and raw provenance.
+ * Observations are not promoted to assertions by this export. */
+memoria_mobile_status memoria_mobile_export_structural_text_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
