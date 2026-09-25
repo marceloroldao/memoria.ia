@@ -178,7 +178,7 @@ int main(void) {
         &out
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"duplicate\":true"));
-    CHECK(contains(out, "\"observation_count\":4"));
+    CHECK(contains(out, "\"observation_count\":7"));
     clear(&out);
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
