@@ -702,6 +702,12 @@ static void free_context(memoria_structural_text_context *context) {
     for (i = 0; i < context->source_id_count; ++i)
         free(context->source_ids[i]);
     free(context->source_ids);
+    for (i = 0; i < context->occurrence_count; ++i) {
+        free(context->occurrences[i].source_id);
+        free(context->occurrences[i].source_text);
+        free(context->occurrences[i].source_kind);
+    }
+    free(context->occurrences);
     memset(context, 0, sizeof(*context));
 }
 
@@ -717,27 +723,53 @@ void memoria_structural_text_contexts_free(
 
 static int context_add_source_id(
     memoria_structural_text_context *context,
-    const char *source_id
+    const runtime_observation *observation,
+    int include_occurrence
 ) {
     char **grown;
     char *copy;
+    memoria_structural_text_occurrence occurrence = {0};
+    memoria_structural_text_occurrence *grown_occurrences;
     size_t i;
-    if (!context || !source_id || !*source_id) return 0;
+    const char *source_id;
+    if (!context || !observation || !observation->source_id ||
+        !*observation->source_id) return 0;
+    source_id = observation->source_id;
     for (i = 0; i < context->source_id_count; ++i)
         if (strcmp(context->source_ids[i], source_id) == 0) return 1;
     copy = dup_text(source_id);
     if (!copy) return 0;
+    if (include_occurrence) {
+        occurrence.source_id = dup_text(source_id);
+        occurrence.source_text = dup_text(observation->text);
+        occurrence.source_kind = dup_text(observation->source_kind);
+        occurrence.sequence = observation->sequence;
+        if (!occurrence.source_id || !occurrence.source_text ||
+            !occurrence.source_kind) goto fail;
+    }
     grown = (char **)realloc(
         context->source_ids,
         (context->source_id_count + 1u) * sizeof(*grown)
     );
-    if (!grown) {
-        free(copy);
-        return 0;
-    }
+    if (!grown) goto fail;
     context->source_ids = grown;
+    if (include_occurrence) {
+        grown_occurrences = (memoria_structural_text_occurrence *)realloc(
+            context->occurrences,
+            (context->occurrence_count + 1u) * sizeof(*grown_occurrences)
+        );
+        if (!grown_occurrences) goto fail;
+        context->occurrences = grown_occurrences;
+        context->occurrences[context->occurrence_count++] = occurrence;
+    }
     context->source_ids[context->source_id_count++] = copy;
     return 1;
+fail:
+    free(copy);
+    free(occurrence.source_id);
+    free(occurrence.source_text);
+    free(occurrence.source_kind);
+    return 0;
 }
 
 static int context_set_source(
@@ -898,7 +930,7 @@ static int resolve_text_impl(
             }
             context = &contexts[context_count++];
             if (!context_set_source(context, observation) ||
-                !context_add_source_id(context, observation->source_id)) {
+                !context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
                 free(query_symbols);
                 return 0;
@@ -908,7 +940,7 @@ static int resolve_text_impl(
             context->association_mass = score.association_mass;
             context->repetitions = 1u;
         } else {
-            if (!context_add_source_id(context, observation->source_id)) {
+            if (!context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
                 free(query_symbols);
                 return 0;
