@@ -130,6 +130,39 @@ static int check_window_group(memoria_mobile_handle *h) {
     return 0;
 }
 
+static int check_personal_evidence(memoria_mobile_handle *h) {
+    memoria_mobile_buffer out = {0};
+    const char *facts[] = {
+        "{\"hierarchy_id\":\"conversation:family-a\",\"source_id\":\"mother\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha mãe se chama Leci.\"}",
+        "{\"hierarchy_id\":\"conversation:family-b\",\"source_id\":\"question\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"Qual nome da minha mãe?\"}",
+        "{\"hierarchy_id\":\"conversation:family-c\",\"source_id\":\"sister\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha irmã se chama Silvia.\"}",
+        "{\"hierarchy_id\":\"conversation:family-a\",\"source_id\":\"assistant\",\"source_kind\":\"assistant_generated\",\"sequence\":2,\"text\":\"Minha mãe se chama Falsa.\"}",
+        "{\"hierarchy_id\":\"conversation:family-d\",\"source_id\":\"vehicle\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Meu carro é azul.\"}"
+    };
+    size_t i;
+    for (i = 0; i < sizeof(facts) / sizeof(*facts); ++i) {
+        CHECK(call_json(memoria_mobile_observe_structural_text_json,
+                        h, facts[i], &out) == MEMORIA_MOBILE_OK);
+        clear(&out);
+    }
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:new\",\"query\":\"Qual nome da minha mãe?\",\"top_k\":3,\"mode\":\"personal_evidence\"}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "Minha mãe se chama Leci."));
+    CHECK(contains(out, "\"source_hierarchy_id\":\"conversation:family-a\""));
+    CHECK(!contains(out, "Falsa"));
+    CHECK(!contains(out, "\"source_id\":\"question\""));
+    CHECK(!contains(out, "Meu carro é azul."));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:new\",\"query\":\"Qual nome da minha irmã?\",\"top_k\":3,\"mode\":\"personal_evidence\"}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "Minha irmã se chama Silvia."));
+    CHECK(!contains(out, "Minha mãe se chama Leci."));
+    clear(&out);
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -236,6 +269,7 @@ int main(void) {
     clear(&out);
     CHECK(check_context_scope(h) == 0);
     CHECK(check_surface_collection(h) == 0);
+    CHECK(check_personal_evidence(h) == 0);
 
     CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-fact\","
