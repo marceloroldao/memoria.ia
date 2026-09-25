@@ -26,6 +26,16 @@ static memoria_mobile_status call_export(memoria_mobile_handle *h, const char *j
     return memoria_mobile_export_snapshot_json(h, in, out);
 }
 
+static memoria_mobile_status call_structural_export(memoria_mobile_handle *h, const char *json, memoria_mobile_buffer *out) {
+    memoria_mobile_buffer in = {(const uint8_t *)json, strlen(json)};
+    return memoria_mobile_export_structural_text_json(h, in, out);
+}
+
+static memoria_mobile_status call_structural_observe(memoria_mobile_handle *h, const char *json, memoria_mobile_buffer *out) {
+    memoria_mobile_buffer in = {(const uint8_t *)json, strlen(json)};
+    return memoria_mobile_observe_structural_text_json(h, in, out);
+}
+
 static int contains(memoria_mobile_buffer b, const char *needle) {
     return b.data && strstr((const char *)b.data, needle) != NULL;
 }
@@ -36,6 +46,31 @@ int main(void) {
     (void)system("rm -rf ./tmp-mobile-diagnostic-export");
 
     CHECK(memoria_mobile_open("./tmp-mobile-diagnostic-export", "org-diagnostic", &h) == MEMORIA_MOBILE_OK);
+
+    CHECK(call_structural_observe(h,
+        "{\"hierarchy_id\":\"conversation:one\",\"source_id\":\"user-1\","
+        "\"source_kind\":\"user_turn\",\"sequence\":11,\"text\":\"Meu gato se chama Alt.\"}", &out)
+        == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call_structural_observe(h,
+        "{\"hierarchy_id\":\"conversation:one\",\"source_id\":\"user-2\","
+        "\"source_kind\":\"user_turn\",\"sequence\":12,\"text\":\"Também conheço Nino.\"}", &out)
+        == MEMORIA_MOBILE_OK);
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call_structural_export(h, "{\"offset\":0,\"limit\":1}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"count\":2"));
+    CHECK(contains(out, "\"next_offset\":1"));
+    CHECK(contains(out, "\"source_id\":\"user-1\""));
+    CHECK(contains(out, "\"source_kind\":\"user_turn\""));
+    CHECK(contains(out, "\"sequence\":11"));
+    CHECK(!contains(out, "user-2"));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call_structural_export(h, "{\"offset\":1,\"limit\":1}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"next_offset\":null"));
+    CHECK(contains(out, "\"source_id\":\"user-2\""));
+    CHECK(!contains(out, "user-1"));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
+    CHECK(call_structural_export(h, "{\"limit\":65}", &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
 
     CHECK(call_learn(h,
         "{\"role\":\"user\",\"text\":\"sensor alpha mode is standby\",\"order\":1}", &out) == MEMORIA_MOBILE_OK);
@@ -84,6 +119,11 @@ int main(void) {
     memoria_mobile_close(h); h = NULL;
 
     CHECK(memoria_mobile_open("./tmp-mobile-diagnostic-export", "org-diagnostic", &h) == MEMORIA_MOBILE_OK);
+    CHECK(call_structural_export(h, "{}", &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"count\":2"));
+    CHECK(contains(out, "\"source_id\":\"user-1\""));
+    CHECK(contains(out, "\"source_id\":\"user-2\""));
+    memoria_mobile_free_buffer(out); out=(memoria_mobile_buffer){0};
     CHECK(call_export(h, "{}", &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"counts\":{\"turns\":2,\"episodes\":1}"));
     CHECK(contains(out, "\"memory_id\":\"mobile:1\""));
