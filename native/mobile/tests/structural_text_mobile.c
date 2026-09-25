@@ -46,6 +46,22 @@ static int resolve_alt(memoria_mobile_handle *h) {
     return 0;
 }
 
+static int check_context_scope(memoria_mobile_handle *h) {
+    memoria_mobile_buffer out = {0};
+    CHECK(call_json(
+        memoria_mobile_resolve_structural_text_json,
+        h,
+        "{\"hierarchy_id\":\"conversation:scope\","
+        "\"query\":\"Como se chama meu gato?\",\"top_k\":3}",
+        &out
+    ) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"source_text\":\"Meu gato se chama Alt.\""));
+    CHECK(!contains(out, "Meu carro é um Jetta azul."));
+    CHECK(!contains(out, "Minha bancada tem um osciloscópio."));
+    clear(&out);
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -123,6 +139,35 @@ int main(void) {
 
     CHECK(resolve_alt(h) == 0);
 
+    CHECK(call_json(
+        memoria_mobile_observe_structural_text_json,
+        h,
+        "{\"hierarchy_id\":\"conversation:scope\",\"source_id\":\"scope-1\","
+        "\"source_kind\":\"user_assertion\",\"sequence\":1,"
+        "\"text\":\"Meu gato se chama Alt.\"}",
+        &out
+    ) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(
+        memoria_mobile_observe_structural_text_json,
+        h,
+        "{\"hierarchy_id\":\"conversation:scope\",\"source_id\":\"scope-2\","
+        "\"source_kind\":\"user_assertion\",\"sequence\":2,"
+        "\"text\":\"Meu carro é um Jetta azul.\"}",
+        &out
+    ) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(
+        memoria_mobile_observe_structural_text_json,
+        h,
+        "{\"hierarchy_id\":\"conversation:scope\",\"source_id\":\"scope-3\","
+        "\"source_kind\":\"user_assertion\",\"sequence\":3,"
+        "\"text\":\"Minha bancada tem um osciloscópio.\"}",
+        &out
+    ) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(check_context_scope(h) == 0);
+
     /* Exact retry is idempotent. */
     CHECK(call_json(
         memoria_mobile_observe_structural_text_json,
@@ -143,6 +188,8 @@ int main(void) {
     /* Full mobile-handle reopen reconstructs the derived field from shared BDR. */
     CHECK(memoria_mobile_open(dir, "org-structural-mobile", &h) == MEMORIA_MOBILE_OK);
     CHECK(resolve_alt(h) == 0);
+
+    CHECK(check_context_scope(h) == 0);
 
     /* Logical format clears raw observations and therefore derived recall too. */
     CHECK(call_json(
