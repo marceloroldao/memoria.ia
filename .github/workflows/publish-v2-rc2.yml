@@ -18,7 +18,8 @@ jobs:
           python scripts/validate_release_metadata.py
           test -s RELEASE_NOTES_v2.0.0-rc2.md
           git merge-base --is-ancestor e240bf2197000f955d65edec5dba47045d9f237e HEAD
-          git fetch origin refs/heads/freeze/v2.0.0-rc2-cognitive-core\n          test "$(git rev-parse FETCH_HEAD)" = "e240bf2197000f955d65edec5dba47045d9f237e"
+          git fetch origin refs/heads/freeze/v2.0.0-rc2-cognitive-core
+          test "$(git rev-parse FETCH_HEAD)" = "e240bf2197000f955d65edec5dba47045d9f237e"
       - name: Create immutable tag and pre-release once
         env:
           GH_TOKEN: ${{ github.token }}
