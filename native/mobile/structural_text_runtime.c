@@ -804,6 +804,8 @@ static int context_compare(const void *a, const void *b) {
     if (left->score > right->score) return -1;
     if (left->exact_overlap < right->exact_overlap) return 1;
     if (left->exact_overlap > right->exact_overlap) return -1;
+    if (left->surface_overlap < right->surface_overlap) return 1;
+    if (left->surface_overlap > right->surface_overlap) return -1;
     if (left->association_mass < right->association_mass) return 1;
     if (left->association_mass > right->association_mass) return -1;
     return strcmp(left->source_text, right->source_text);
@@ -879,6 +881,15 @@ static int resolve_text_impl(
             free(query_symbols);
             return 0;
         }
+        if (!memoria_structural_text_surface_overlap(
+            query, observation->text, &score.surface_overlap
+        )) {
+            free(candidate_symbols);
+            memoria_structural_text_contexts_free(contexts, context_count);
+            free(query_symbols);
+            return 0;
+        }
+        score.score += 0.4 * (double)score.surface_overlap / (double)query_count;
         if (score.score <= 0.0) {
             free(candidate_symbols);
             continue;
@@ -937,6 +948,7 @@ static int resolve_text_impl(
             }
             context->score = score.score;
             context->exact_overlap = score.exact_overlap;
+            context->surface_overlap = score.surface_overlap;
             context->association_mass = score.association_mass;
             context->repetitions = 1u;
         } else {
@@ -961,6 +973,7 @@ static int resolve_text_impl(
                 }
                 context->score = score.score;
                 context->exact_overlap = score.exact_overlap;
+                context->surface_overlap = score.surface_overlap;
                 context->association_mass = score.association_mass;
             }
         }
@@ -983,13 +996,19 @@ static int resolve_text_impl(
     {
         size_t strongest_exact = 0u;
         size_t kept = 0u;
+        size_t strongest_surface = 0u;
         for (i = 0; i < context_count; ++i) {
             if (contexts[i].exact_overlap > strongest_exact)
                 strongest_exact = contexts[i].exact_overlap;
+            if (contexts[i].surface_overlap > strongest_surface)
+                strongest_surface = contexts[i].surface_overlap;
         }
-        if (strongest_exact >= 2u) {
+        if (strongest_exact >= 2u ||
+            (strongest_exact == 0u && strongest_surface > 0u)) {
             for (i = 0; i < context_count; ++i) {
-                if (contexts[i].exact_overlap < 2u) {
+                if ((strongest_exact >= 2u && contexts[i].exact_overlap < 2u) ||
+                    (strongest_exact == 0u && strongest_surface > 0u &&
+                     contexts[i].surface_overlap == 0u)) {
                     free_context(&contexts[i]);
                     memset(&contexts[i], 0, sizeof(contexts[i]));
                     continue;
