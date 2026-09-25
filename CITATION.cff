@@ -10,6 +10,7 @@ abstract: "Second v2.0 release candidate of memoria.ia. It adds persistent struc
 repository-code: "https://github.com/marceloroldao/memoria.ia"
 version: "2.0.0-rc.2"
 date-released: "2026-09-25"
+doi: "10.5281/zenodo.22949633"
 license-url: "https://github.com/marceloroldao/memoria.ia/blob/main/LICENSE"
 keywords:
   - resolutive memory
