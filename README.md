@@ -16,7 +16,9 @@ Current publication candidate: **v2.0.0-rc1** (`2.0.0rc1` package version).
 
 V2 RC1 functional freeze commit: **`bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9`**.
 
-Validated companion Resolutive-DB/BDR pin for the current native/mobile structural runtime: **`d09914b85646353d8fd004ccf99e96a94fab9eef`**.
+Published companion Resolutive-DB/BDR candidate for the current native/mobile structural runtime: **`v1.2.0-rc4`** at **`317882a00f041fc1568ff986af8016b09453f21a`**. Memoria.ia cross-repository validation against this pin is in progress.
+
+The V2 RC1 historical validation used BDR commit `d09914b85646353d8fd004ccf99e96a94fab9eef`; its archived release notes and DOI remain unchanged.
 
 V2 RC1 archived release DOI: **[10.5281/zenodo.22908785](https://doi.org/10.5281/zenodo.22908785)**.
 
