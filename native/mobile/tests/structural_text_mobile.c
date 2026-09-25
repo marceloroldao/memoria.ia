@@ -72,8 +72,9 @@ static int check_window_group(memoria_mobile_handle *h) {
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "Meu pai se chama PessoaA."));
     CHECK(contains(out, "\"window_id\":\"conversation:region\""));
-    CHECK(contains(out, "\"window_revision\":5"));
+    CHECK(contains(out, "\"window_revision\":6"));
     CHECK(contains(out, "\"source_ids\":[\"region-q1\",\"region-q2\",\"region-q3\"]"));
+    CHECK(!contains(out, "\"source_ids\":[\"region-q1\",\"region-q2\",\"region-q3\",\"region-assistant\"]"));
     CHECK(contains(out, "\"trajectory_used\":false"));
     CHECK(!contains(out, "Meu carro é vermelho."));
     clear(&out);
@@ -211,6 +212,12 @@ int main(void) {
         "\"source_kind\":\"user_turn\",\"sequence\":5,"
         "\"text\":\"Meu carro é vermelho.\"}", &out) == MEMORIA_MOBILE_OK);
     clear(&out);
+    /* Explicit assistant content must not be grouped with user evidence. */
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-assistant\","
+        "\"source_kind\":\"assistant_generated\",\"sequence\":6,"
+        "\"text\":\"qual nome do meu pai?\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
     CHECK(check_window_group(h) == 0);
 
     /* Exact retry is idempotent. */
@@ -223,7 +230,7 @@ int main(void) {
         &out
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"duplicate\":true"));
-    CHECK(contains(out, "\"observation_count\":12"));
+    CHECK(contains(out, "\"observation_count\":13"));
     clear(&out);
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
