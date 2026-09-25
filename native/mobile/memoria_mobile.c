@@ -1560,6 +1560,25 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
             }
             free(evidence_id);
         }
+        if (mode) {
+            if (!mobile_response_appendf(&builder, "],\"occurrences\":["))
+                goto internal_error;
+            for (j = 0; j < context->occurrence_count; ++j) {
+                const memoria_structural_text_occurrence *item =
+                    &context->occurrences[j];
+                char *id = json_escape(item->source_id);
+                char *text = json_escape(item->source_text);
+                char *kind = json_escape(item->source_kind);
+                int written = id && text && kind && mobile_response_appendf(
+                    &builder,
+                    "%s{\"source_id\":\"%s\",\"source_text\":\"%s\","
+                    "\"source_kind\":\"%s\",\"sequence\":%lu}",
+                    j ? "," : "", id, text, kind, item->sequence
+                );
+                free(id); free(text); free(kind);
+                if (!written) goto internal_error;
+            }
+        }
         if (!mobile_response_appendf(&builder, "]}"))
             goto internal_error;
     }
