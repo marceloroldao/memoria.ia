@@ -314,7 +314,7 @@ int main(void) {
         &out
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"duplicate\":true"));
-    CHECK(contains(out, "\"observation_count\":16"));
+    CHECK(contains(out, "\"observation_count\":21"));
     clear(&out);
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
@@ -327,6 +327,7 @@ int main(void) {
 
     CHECK(check_context_scope(h) == 0);
     CHECK(check_window_group(h) == 0);
+    CHECK(check_personal_evidence(h) == 0);
     CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:collection\","
         "\"query\":\"Quais gatos eu mencionei?\",\"top_k\":3}", &out)
