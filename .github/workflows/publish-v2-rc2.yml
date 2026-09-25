@@ -1,0 +1,47 @@
+name: publish Memoria.ia v2.0.0-rc2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-v2-rc2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate exact publication candidate
+        run: |
+          python scripts/validate_release_metadata.py
+          test -s RELEASE_NOTES_v2.0.0-rc2.md
+          git merge-base --is-ancestor e240bf2197000f955d65edec5dba47045d9f237e HEAD
+          test "$(git rev-parse freeze/v2.0.0-rc2-cognitive-core 2>/dev/null || git rev-parse refs/remotes/origin/freeze/v2.0.0-rc2-cognitive-core)" = "e240bf2197000f955d65edec5dba47045d9f237e"
+      - name: Create immutable tag and pre-release once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG=v2.0.0-rc2
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q .; then
+            git fetch --tags origin
+            test "$(git rev-list -n 1 "$TAG")" = "$GITHUB_SHA"
+            gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+            echo "Existing release matches the publication commit; no mutation."
+          else
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title 'Memoria.ia v2.0.0-rc2 — Cognitive Core Candidate' \
+              --notes-file RELEASE_NOTES_v2.0.0-rc2.md \
+              --prerelease
+          fi
+      - name: Verify published identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --tags origin
+          test "$(git rev-list -n 1 v2.0.0-rc2)" = "$GITHUB_SHA"
+          gh release view v2.0.0-rc2 --repo "$GITHUB_REPOSITORY" --json isPrerelease --jq '.isPrerelease' | grep -qx true
