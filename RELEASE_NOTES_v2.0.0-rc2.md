@@ -1,6 +1,8 @@
 # Memoria.ia v2.0.0-rc2 — Cognitive Core Candidate
 
-Status: **GitHub publication candidate; DOI not yet assigned**.
+Status: **GitHub pre-release published on 2026-09-25; RC2 DOI not yet assigned**.
+Tag `v2.0.0-rc2` points to publication commit
+`e38f27b639bec1cfcb83694c1418a4d01f250ffd`.
 
 Functional freeze: `e240bf2197000f955d65edec5dba47045d9f237e`.
 Dependency: published BDR `v1.2.0-rc4` at
@@ -42,6 +44,5 @@ the skipped experimental gate and publication conditions.
 - OFF.IA natural-language end-to-end integration remains a separate gate.
 - No production security certification or general replacement of LLMs is claimed.
 
-The functional freeze and release scope are fixed above. The public tag must
-point to the validated publication commit. The RC2 DOI may be added only after
+The functional freeze and release scope are fixed above. The public tag points to the validated publication commit. The RC2 DOI may be added only after
 Zenodo assigns it, without moving the tag.

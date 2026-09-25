@@ -12,7 +12,7 @@ Experimental implementation of **Resolutive Memory**, a local-first memory archi
 
 ## v2.0 release candidates
 
-Published structural baseline: **v2.0.0-rc1** (archived package version `2.0.0rc1`). The next cognitive-core candidate **v2.0.0-rc2** is staged with package version `2.0.0rc2`; its GitHub pre-release is being prepared and its DOI is not assigned yet. Its functional freeze is `e240bf2197000f955d65edec5dba47045d9f237e`. See `docs/V2_RC2_FREEZE_RECORD.md` and `RELEASE_NOTES_v2.0.0-rc2.md`.
+Published structural baseline: **v2.0.0-rc1** (archived package version `2.0.0rc1`). The cognitive-core candidate **[v2.0.0-rc2](https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc2)** is published as a GitHub pre-release with package version `2.0.0rc2` on commit `e38f27b639bec1cfcb83694c1418a4d01f250ffd`; its DOI is not assigned yet. Its functional freeze is `e240bf2197000f955d65edec5dba47045d9f237e`. See `docs/V2_RC2_FREEZE_RECORD.md` and `RELEASE_NOTES_v2.0.0-rc2.md`.
 
 V2 RC1 functional freeze commit: **`bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9`**.
 

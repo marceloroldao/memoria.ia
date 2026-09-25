@@ -1,6 +1,6 @@
 # Memoria.ia v2.0.0-rc2 — cognitive-core freeze record
 
-Status: functional freeze qualified; release publication pending.
+Status: functional freeze qualified; GitHub pre-release published 2026-09-25.
 
 ## Immutable functional baseline
 
@@ -31,16 +31,22 @@ BDR itself passed CI run 36062508821 and RC4 validation run 36062508908
 on its published commit. The R1–R14 scope and limitations are detailed in
 `docs/V2_NEXT_RC_FREEZE_AUDIT.md` and `docs/V2_POST_RC1_RECONCILIATION.md`.
 
-## Publication gates still pending
+## Publication result
 
-1. Stage package version `2.0.0rc2` and a candidate-specific metadata gate
-   without rewriting the RC1 citation, DOI or archived release notes.
-2. Ensure the historical RC1 publisher cannot run on RC2 metadata changes.
-3. Run the full release candidate CI on the final publication commit.
-4. Create the GitHub pre-release tag on that exact green commit, then verify
-   the tag, release notes and source archive.
-5. If archiving on Zenodo, add the assigned RC2 DOI after registration without
-   moving the tag. No RC2 DOI is claimed in this staging record.
+1. Package version `2.0.0rc2` and candidate-specific metadata passed on
+   PR #363 without rewriting the RC1 citation, DOI or archived notes.
+2. Historical RC1 publication no longer triggers on main push; the RC2
+   publisher runs only by manual dispatch.
+3. Publisher correction PR #364 passed its checks. The first publication run
+   [36078715495](https://github.com/marceloroldao/memoria.ia/actions/runs/36078715495)
+   failed before tag creation due to a literal newline escape in its freeze check.
+4. The corrected publisher run
+   [36079016388](https://github.com/marceloroldao/memoria.ia/actions/runs/36079016388)
+   passed all steps. Public tag `v2.0.0-rc2` points to
+   `e38f27b639bec1cfcb83694c1418a4d01f250ffd`, with a GitHub pre-release
+   at https://github.com/marceloroldao/memoria.ia/releases/tag/v2.0.0-rc2.
+5. Zenodo has not assigned an RC2 DOI. If archived there, add the assigned DOI
+   after registration without moving the published tag.
 
 No full natural-language understanding, unseen lexical paraphrase, universal
 RAG superiority, complete OFF.IA end-to-end behavior or production security
