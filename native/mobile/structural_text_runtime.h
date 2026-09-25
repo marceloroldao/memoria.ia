@@ -12,12 +12,21 @@ extern "C" {
 typedef struct bdr_atomic_c_handle bdr_atomic_c_handle;
 typedef struct memoria_structural_text_runtime memoria_structural_text_runtime;
 
+typedef struct memoria_structural_text_occurrence {
+    char *source_id;
+    char *source_text;
+    char *source_kind;
+    unsigned long sequence;
+} memoria_structural_text_occurrence;
+
 typedef struct memoria_structural_text_context {
     char *source_text;
     char *source_id;
     char *source_kind;
     char **source_ids;
     size_t source_id_count;
+    memoria_structural_text_occurrence *occurrences;
+    size_t occurrence_count;
     unsigned long sequence;
     double score;
     size_t exact_overlap;
@@ -63,6 +72,23 @@ int memoria_structural_text_runtime_resolve(
     size_t top_k,
     memoria_structural_text_context **out_contexts,
     size_t *out_count
+);
+
+/* Read-only grouping inside a conversation window. Repeated surface forms
+ * with the same opaque symbol trail and source kind share one context slot,
+ * retaining every source ID. This does not infer semantic facts. */
+int memoria_structural_text_runtime_resolve_window_group(
+    memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+);
+
+size_t memoria_structural_text_runtime_window_revision(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
 );
 
 void memoria_structural_text_contexts_free(

@@ -702,6 +702,12 @@ static void free_context(memoria_structural_text_context *context) {
     for (i = 0; i < context->source_id_count; ++i)
         free(context->source_ids[i]);
     free(context->source_ids);
+    for (i = 0; i < context->occurrence_count; ++i) {
+        free(context->occurrences[i].source_id);
+        free(context->occurrences[i].source_text);
+        free(context->occurrences[i].source_kind);
+    }
+    free(context->occurrences);
     memset(context, 0, sizeof(*context));
 }
 
@@ -717,27 +723,53 @@ void memoria_structural_text_contexts_free(
 
 static int context_add_source_id(
     memoria_structural_text_context *context,
-    const char *source_id
+    const runtime_observation *observation,
+    int include_occurrence
 ) {
     char **grown;
     char *copy;
+    memoria_structural_text_occurrence occurrence = {0};
+    memoria_structural_text_occurrence *grown_occurrences;
     size_t i;
-    if (!context || !source_id || !*source_id) return 0;
+    const char *source_id;
+    if (!context || !observation || !observation->source_id ||
+        !*observation->source_id) return 0;
+    source_id = observation->source_id;
     for (i = 0; i < context->source_id_count; ++i)
         if (strcmp(context->source_ids[i], source_id) == 0) return 1;
     copy = dup_text(source_id);
     if (!copy) return 0;
+    if (include_occurrence) {
+        occurrence.source_id = dup_text(source_id);
+        occurrence.source_text = dup_text(observation->text);
+        occurrence.source_kind = dup_text(observation->source_kind);
+        occurrence.sequence = observation->sequence;
+        if (!occurrence.source_id || !occurrence.source_text ||
+            !occurrence.source_kind) goto fail;
+    }
     grown = (char **)realloc(
         context->source_ids,
         (context->source_id_count + 1u) * sizeof(*grown)
     );
-    if (!grown) {
-        free(copy);
-        return 0;
-    }
+    if (!grown) goto fail;
     context->source_ids = grown;
+    if (include_occurrence) {
+        grown_occurrences = (memoria_structural_text_occurrence *)realloc(
+            context->occurrences,
+            (context->occurrence_count + 1u) * sizeof(*grown_occurrences)
+        );
+        if (!grown_occurrences) goto fail;
+        context->occurrences = grown_occurrences;
+        context->occurrences[context->occurrence_count++] = occurrence;
+    }
     context->source_ids[context->source_id_count++] = copy;
     return 1;
+fail:
+    free(copy);
+    free(occurrence.source_id);
+    free(occurrence.source_text);
+    free(occurrence.source_kind);
+    return 0;
 }
 
 static int context_set_source(
@@ -777,13 +809,29 @@ static int context_compare(const void *a, const void *b) {
     return strcmp(left->source_text, right->source_text);
 }
 
-int memoria_structural_text_runtime_resolve(
+static int same_symbol_trail(
+    const char *text,
+    const uint64_t *symbols,
+    size_t symbol_count
+) {
+    uint64_t *previous = NULL;
+    size_t previous_count = 0u;
+    int same;
+    if (!tokenize_alloc(text, &previous, &previous_count)) return -1;
+    same = previous_count == symbol_count &&
+        memcmp(previous, symbols, symbol_count * sizeof(*symbols)) == 0;
+    free(previous);
+    return same;
+}
+
+static int resolve_text_impl(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,
     const char *query,
     size_t top_k,
     memoria_structural_text_context **out_contexts,
-    size_t *out_count
+    size_t *out_count,
+    int window_group
 ) {
     const runtime_hierarchy *hierarchy;
     uint64_t *query_symbols = NULL;
@@ -831,15 +879,33 @@ int memoria_structural_text_runtime_resolve(
             free(query_symbols);
             return 0;
         }
-        free(candidate_symbols);
-        if (score.score <= 0.0) continue;
+        if (score.score <= 0.0) {
+            free(candidate_symbols);
+            continue;
+        }
 
         for (j = 0; j < context_count; ++j) {
-            if (strcmp(contexts[j].source_text, observation->text) == 0) {
+            int same = strcmp(contexts[j].source_text, observation->text) == 0;
+            if (window_group &&
+                strcmp(contexts[j].source_kind, observation->source_kind) != 0)
+                same = 0;
+            if (!same && window_group &&
+                strcmp(contexts[j].source_kind, observation->source_kind) == 0)
+                same = same_symbol_trail(
+                    contexts[j].source_text, candidate_symbols, candidate_count
+                );
+            if (same < 0) {
+                free(candidate_symbols);
+                memoria_structural_text_contexts_free(contexts, context_count);
+                free(query_symbols);
+                return 0;
+            }
+            if (same) {
                 context = &contexts[j];
                 break;
             }
         }
+        free(candidate_symbols);
         if (!context) {
             if (context_count == context_capacity) {
                 size_t capacity = context_capacity ? context_capacity * 2u : 8u;
@@ -864,7 +930,7 @@ int memoria_structural_text_runtime_resolve(
             }
             context = &contexts[context_count++];
             if (!context_set_source(context, observation) ||
-                !context_add_source_id(context, observation->source_id)) {
+                !context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
                 free(query_symbols);
                 return 0;
@@ -874,7 +940,7 @@ int memoria_structural_text_runtime_resolve(
             context->association_mass = score.association_mass;
             context->repetitions = 1u;
         } else {
-            if (!context_add_source_id(context, observation->source_id)) {
+            if (!context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
                 free(query_symbols);
                 return 0;
@@ -945,6 +1011,44 @@ int memoria_structural_text_runtime_resolve(
     *out_contexts = contexts;
     *out_count = context_count;
     return 1;
+}
+
+int memoria_structural_text_runtime_resolve(
+    memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+) {
+    return resolve_text_impl(
+        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 0
+    );
+}
+
+int memoria_structural_text_runtime_resolve_window_group(
+    memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+) {
+    return resolve_text_impl(
+        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 1
+    );
+}
+
+size_t memoria_structural_text_runtime_window_revision(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+) {
+    size_t i, count = 0u;
+    if (!runtime || !hierarchy_id) return 0u;
+    for (i = 0u; i < runtime->observation_count; ++i)
+        if (strcmp(runtime->observations[i].hierarchy_id, hierarchy_id) == 0)
+            ++count;
+    return count;
 }
 
 size_t memoria_structural_text_runtime_observation_count(
