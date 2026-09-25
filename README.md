@@ -16,7 +16,7 @@ Published structural baseline: **v2.0.0-rc1** (archived package version `2.0.0rc
 
 V2 RC1 functional freeze commit: **`bd33b9cfcfa78f0e3850fb5e298cbf4cbdc360b9`**.
 
-Published companion Resolutive-DB/BDR candidate for the current native/mobile structural runtime: **`v1.2.0-rc4`** at **`317882a00f041fc1568ff986af8016b09453f21a`**. Memoria.ia cross-repository validation against this pin is in progress.
+Published companion Resolutive-DB/BDR candidate for the current native/mobile structural runtime: **`v1.2.0-rc4`** at **`317882a00f041fc1568ff986af8016b09453f21a`**. Memoria.ia cross-repository validation against this pin passed on PR #361; see `docs/V2_RC2_FREEZE_RECORD.md` for the exact runs.
 
 The V2 RC1 historical validation used BDR commit `d09914b85646353d8fd004ccf99e96a94fab9eef`; its archived release notes and DOI remain unchanged.
 
