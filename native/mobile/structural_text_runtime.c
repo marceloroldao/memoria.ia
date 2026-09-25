@@ -1076,6 +1076,22 @@ size_t memoria_structural_text_runtime_observation_count(
     return runtime ? runtime->observation_count : 0u;
 }
 
+int memoria_structural_text_runtime_observation_at(
+    const memoria_structural_text_runtime *runtime,
+    size_t index,
+    memoria_structural_text_observation_view *out
+) {
+    const runtime_observation *observation;
+    if (!runtime || !out || index >= runtime->observation_count) return 0;
+    observation = &runtime->observations[index];
+    out->hierarchy_id = observation->hierarchy_id;
+    out->source_id = observation->source_id;
+    out->source_kind = observation->source_kind;
+    out->text = observation->text;
+    out->sequence = observation->sequence;
+    return 1;
+}
+
 size_t memoria_structural_text_runtime_hierarchy_count(
     const memoria_structural_text_runtime *runtime
 ) {
