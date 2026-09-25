@@ -854,7 +854,11 @@ static int resolve_text_impl(
 
         for (j = 0; j < context_count; ++j) {
             int same = strcmp(contexts[j].source_text, observation->text) == 0;
-            if (!same && window_group)
+            if (window_group &&
+                strcmp(contexts[j].source_kind, observation->source_kind) != 0)
+                same = 0;
+            if (!same && window_group &&
+                strcmp(contexts[j].source_kind, observation->source_kind) == 0)
                 same = same_symbol_trail(
                     contexts[j].source_text, candidate_symbols, candidate_count
                 );
