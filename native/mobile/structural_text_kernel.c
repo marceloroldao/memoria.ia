@@ -550,6 +550,80 @@ int memoria_structural_text_tokenize(
     return 1;
 }
 
+/* Reuse the tokenizer's Unicode boundaries and casefolding. This bridge only
+ * contributes query evidence; observation addresses remain unchanged. */
+static int next_surface_token(
+    const char *text,
+    size_t length,
+    size_t *position,
+    unsigned char **out,
+    size_t *out_length
+) {
+    size_t start = SIZE_MAX;
+    *out = NULL;
+    *out_length = 0u;
+    while (*position < length) {
+        uint32_t cp;
+        size_t consumed;
+        size_t current = *position;
+        if (!utf8_decode_one((const unsigned char *)text + current,
+                length - current, &cp, &consumed)) return -1;
+        *position += consumed;
+        if (token_codepoint(cp)) {
+            if (start == SIZE_MAX) start = current;
+        } else if (start != SIZE_MAX) {
+            return casefold_token(text + start, current - start, out, out_length) ? 1 : -1;
+        }
+    }
+    if (start != SIZE_MAX)
+        return casefold_token(text + start, length - start, out, out_length) ? 1 : -1;
+    return 0;
+}
+
+int memoria_structural_text_surface_overlap(
+    const char *query,
+    const char *candidate,
+    size_t *out_count
+) {
+    size_t query_position = 0u;
+    size_t count = 0u;
+    int found;
+    if (!query || !candidate || !out_count) return 0;
+    while (1) {
+        unsigned char *q = NULL;
+        size_t qlen = 0u;
+        size_t candidate_position = 0u;
+        found = next_surface_token(query, strlen(query), &query_position, &q, &qlen);
+        if (found < 0) return 0;
+        if (!found) break;
+        while (1) {
+            unsigned char *c = NULL;
+            size_t clen = 0u;
+            size_t common = 0u;
+            size_t longest;
+            found = next_surface_token(candidate, strlen(candidate),
+                &candidate_position, &c, &clen);
+            if (found < 0) { free(q); return 0; }
+            if (!found) break;
+            longest = qlen > clen ? qlen : clen;
+            while (common < qlen && common < clen && q[common] == c[common])
+                ++common;
+            /* At least four shared bytes covering four fifths of the longer
+             * surface. Exact equality is already counted by the symbol path. */
+            if (common >= 4u && common < longest &&
+                common * 5u >= longest * 4u) {
+                ++count;
+                free(c);
+                break;
+            }
+            free(c);
+        }
+        free(q);
+    }
+    *out_count = count;
+    return 1;
+}
+
 memoria_structural_text_field *memoria_structural_text_field_create(
     size_t max_within_distance,
     size_t max_event_lag,
@@ -713,6 +787,7 @@ int memoria_structural_text_score_candidate(
     }
 
     out_score->exact_overlap = exact;
+    out_score->surface_overlap = 0u;
     out_score->association_mass = mass / ((double)qn * (double)cn);
     out_score->score = ((double)exact / (double)qn) + out_score->association_mass;
     free(q);
