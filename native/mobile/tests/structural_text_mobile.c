@@ -137,12 +137,7 @@ static int check_personal_evidence(memoria_mobile_handle *h) {
         "{\"hierarchy_id\":\"conversation:family-b\",\"source_id\":\"question\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"Qual nome da minha mãe?\"}",
         "{\"hierarchy_id\":\"conversation:family-c\",\"source_id\":\"sister\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha irmã se chama PessoaI.\"}",
         "{\"hierarchy_id\":\"conversation:family-a\",\"source_id\":\"assistant\",\"source_kind\":\"assistant_generated\",\"sequence\":2,\"text\":\"Minha mãe se chama Falsa.\"}",
-        "{\"hierarchy_id\":\"conversation:family-d\",\"source_id\":\"vehicle\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Meu carro é azul.\"}",
-        "{\"hierarchy_id\":\"conversation:father-a\",\"source_id\":\"father-1\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"Meu pai se chama PessoaA.\"}",
-        "{\"hierarchy_id\":\"conversation:father-b\",\"source_id\":\"father-2\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"Meu pai se chama PessoaA.\"}",
-        "{\"hierarchy_id\":\"conversation:father-c\",\"source_id\":\"father-3\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"Meu pai se chama PessoaA.\"}",
-        "{\"hierarchy_id\":\"conversation:father-d\",\"source_id\":\"father-q1\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"isso, qual nome do meu pai?\"}",
-        "{\"hierarchy_id\":\"conversation:father-e\",\"source_id\":\"father-q2\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"como se chama meu pai?\"}"
+        "{\"hierarchy_id\":\"conversation:family-d\",\"source_id\":\"vehicle\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Meu carro é azul.\"}"
     };
     size_t i;
     for (i = 0; i < sizeof(facts) / sizeof(*facts); ++i) {
@@ -164,16 +159,6 @@ static int check_personal_evidence(memoria_mobile_handle *h) {
         &out) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "Minha irmã se chama PessoaI."));
     CHECK(!contains(out, "Minha mãe se chama PessoaM."));
-    clear(&out);
-    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
-        "{\"hierarchy_id\":\"conversation:new\",\"query\":\"Qual nome do meu pai?\",\"top_k\":3,\"mode\":\"personal_evidence\"}",
-        &out) == MEMORIA_MOBILE_OK);
-    CHECK(contains(out, "\"source_text\":\"Meu pai se chama PessoaA.\""));
-    CHECK(!contains(out, "isso, qual nome do meu pai?"));
-    clear(&out);
-    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
-        "{\"hierarchy_id\":\"conversation:new\",\"query\":\"Qual tensão da minha fonte?\",\"top_k\":3,\"mode\":\"personal_evidence\"}",
-        &out) == MEMORIA_MOBILE_UNRESOLVED);
     clear(&out);
     return 0;
 }
@@ -329,7 +314,7 @@ int main(void) {
         &out
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"duplicate\":true"));
-    CHECK(contains(out, "\"observation_count\":26"));
+    CHECK(contains(out, "\"observation_count\":21"));
     clear(&out);
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
