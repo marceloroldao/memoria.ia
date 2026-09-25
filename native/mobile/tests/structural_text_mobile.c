@@ -62,6 +62,24 @@ static int check_context_scope(memoria_mobile_handle *h) {
     return 0;
 }
 
+static int check_window_group(memoria_mobile_handle *h) {
+    memoria_mobile_buffer out = {0};
+    CHECK(call_json(
+        memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:region\","
+        "\"query\":\"meu pai\",\"top_k\":3,"
+        "\"mode\":\"window_group\"}", &out
+    ) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "Meu pai se chama PessoaA."));
+    CHECK(contains(out, "\"window_id\":\"conversation:region\""));
+    CHECK(contains(out, "\"window_revision\":5"));
+    CHECK(contains(out, "\"source_ids\":[\"region-q1\",\"region-q2\",\"region-q3\"]"));
+    CHECK(contains(out, "\"trajectory_used\":false"));
+    CHECK(!contains(out, "Meu carro é vermelho."));
+    clear(&out);
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -168,6 +186,33 @@ int main(void) {
     clear(&out);
     CHECK(check_context_scope(h) == 0);
 
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-fact\","
+        "\"source_kind\":\"user_turn\",\"sequence\":1,"
+        "\"text\":\"Meu pai se chama PessoaA.\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-q1\","
+        "\"source_kind\":\"user_turn\",\"sequence\":2,"
+        "\"text\":\"qual nome do meu pai\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-q2\","
+        "\"source_kind\":\"user_turn\",\"sequence\":3,"
+        "\"text\":\"qual nome do meu pai?\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-q3\","
+        "\"source_kind\":\"user_turn\",\"sequence\":4,"
+        "\"text\":\"qual nome do meu pai \"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-other\","
+        "\"source_kind\":\"user_turn\",\"sequence\":5,"
+        "\"text\":\"Meu carro é vermelho.\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(check_window_group(h) == 0);
+
     /* Exact retry is idempotent. */
     CHECK(call_json(
         memoria_mobile_observe_structural_text_json,
@@ -178,7 +223,7 @@ int main(void) {
         &out
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"duplicate\":true"));
-    CHECK(contains(out, "\"observation_count\":7"));
+    CHECK(contains(out, "\"observation_count\":12"));
     clear(&out);
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
@@ -190,6 +235,7 @@ int main(void) {
     CHECK(resolve_alt(h) == 0);
 
     CHECK(check_context_scope(h) == 0);
+    CHECK(check_window_group(h) == 0);
 
     /* Logical format clears raw observations and therefore derived recall too. */
     CHECK(call_json(
