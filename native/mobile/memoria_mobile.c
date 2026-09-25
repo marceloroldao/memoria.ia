@@ -1530,7 +1530,7 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
                 &builder,
                 "%s{\"source_text\":\"%s\",\"source_id\":\"%s\","
                 "\"source_kind\":\"%s\",\"sequence\":%lu,"
-                "\"score\":%.17g,\"exact_overlap\":%zu,"
+                "\"score\":%.17g,\"exact_overlap\":%zu,\"surface_overlap\":%zu,"
                 "\"association_mass\":%.17g,\"repetitions\":%zu,"
                 "\"source_ids\":[",
                 i ? "," : "",
@@ -1540,6 +1540,7 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
                 context->sequence,
                 context->score,
                 context->exact_overlap,
+                context->surface_overlap,
                 context->association_mass,
                 context->repetitions)) {
             free(source_text); free(source_id); free(source_kind);

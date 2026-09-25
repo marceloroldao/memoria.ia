@@ -30,6 +30,7 @@ typedef struct memoria_structural_text_context {
     unsigned long sequence;
     double score;
     size_t exact_overlap;
+    size_t surface_overlap;
     double association_mass;
     size_t repetitions;
 } memoria_structural_text_context;

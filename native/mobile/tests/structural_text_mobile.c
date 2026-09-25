@@ -62,6 +62,49 @@ static int check_context_scope(memoria_mobile_handle *h) {
     return 0;
 }
 
+static int check_surface_collection(memoria_mobile_handle *h) {
+    memoria_mobile_buffer out = {0};
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:collection\",\"source_id\":\"cat-1\","
+        "\"source_kind\":\"user_turn\",\"sequence\":1,"
+        "\"text\":\"Tenho um gato chamado Alt.\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:collection\",\"source_id\":\"cat-2\","
+        "\"source_kind\":\"user_turn\",\"sequence\":2,"
+        "\"text\":\"Também conheço um gato chamado Nino.\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:collection\",\"source_id\":\"car-1\","
+        "\"source_kind\":\"user_turn\",\"sequence\":3,"
+        "\"text\":\"Meu carro é um Jetta azul.\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:collection\","
+        "\"query\":\"Quais gatos eu mencionei?\",\"top_k\":3}", &out)
+        == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"status\":\"HIT\""));
+    CHECK(contains(out, "Tenho um gato chamado Alt."));
+    CHECK(contains(out, "Também conheço um gato chamado Nino."));
+    CHECK(!contains(out, "Jetta"));
+    CHECK(contains(out, "\"surface_overlap\":1"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:collection\","
+        "\"query\":\"Quais carros eu mencionei?\",\"top_k\":3}", &out)
+        == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "Meu carro é um Jetta azul."));
+    CHECK(!contains(out, "chamado Alt"));
+    CHECK(!contains(out, "chamado Nino"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:collection\","
+        "\"query\":\"Qual tensão há na fonte da bancada?\",\"top_k\":3}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    clear(&out);
+    return 0;
+}
+
 static int check_window_group(memoria_mobile_handle *h) {
     memoria_mobile_buffer out = {0};
     CHECK(call_json(
@@ -192,6 +235,7 @@ int main(void) {
     ) == MEMORIA_MOBILE_OK);
     clear(&out);
     CHECK(check_context_scope(h) == 0);
+    CHECK(check_surface_collection(h) == 0);
 
     CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-fact\","
@@ -236,7 +280,7 @@ int main(void) {
         &out
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"duplicate\":true"));
-    CHECK(contains(out, "\"observation_count\":13"));
+    CHECK(contains(out, "\"observation_count\":16"));
     clear(&out);
 
     CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
@@ -249,6 +293,13 @@ int main(void) {
 
     CHECK(check_context_scope(h) == 0);
     CHECK(check_window_group(h) == 0);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:collection\","
+        "\"query\":\"Quais gatos eu mencionei?\",\"top_k\":3}", &out)
+        == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "Tenho um gato chamado Alt."));
+    CHECK(contains(out, "Também conheço um gato chamado Nino."));
+    clear(&out);
 
     /* Logical format clears raw observations and therefore derived recall too. */
     CHECK(call_json(

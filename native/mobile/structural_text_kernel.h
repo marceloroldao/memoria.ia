@@ -17,6 +17,7 @@ typedef struct memoria_structural_text_field memoria_structural_text_field;
 typedef struct memoria_structural_text_score {
     double score;
     size_t exact_overlap;
+    size_t surface_overlap;
     double association_mass;
 } memoria_structural_text_score;
 
@@ -87,6 +88,14 @@ int memoria_structural_text_score_candidate(
     const uint64_t *candidate,
     size_t candidate_count,
     memoria_structural_text_score *out_score
+);
+
+/* A read-only bridge between similarly shaped observed/query tokens. It does
+ * not mutate the symbol trail or assign a lexical meaning to either token. */
+int memoria_structural_text_surface_overlap(
+    const char *query,
+    const char *candidate,
+    size_t *out_count
 );
 
 #ifdef __cplusplus
