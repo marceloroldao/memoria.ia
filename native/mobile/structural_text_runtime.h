@@ -65,6 +65,23 @@ int memoria_structural_text_runtime_resolve(
     size_t *out_count
 );
 
+/* Read-only conversation region. Repeated surface forms with the same opaque
+ * symbol trail share a single context slot while retaining every source ID.
+ * The hierarchy is the window connector; this does not infer semantic facts. */
+int memoria_structural_text_runtime_resolve_window_group(
+    memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+);
+
+size_t memoria_structural_text_runtime_window_revision(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+);
+
 void memoria_structural_text_contexts_free(
     memoria_structural_text_context *contexts,
     size_t count
