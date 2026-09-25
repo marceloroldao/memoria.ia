@@ -1435,6 +1435,7 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
     char *json = NULL;
     char *hierarchy_id = NULL;
     char *query = NULL;
+    char *mode = NULL;
     char *escaped_hierarchy = NULL;
     memoria_structural_text_context *contexts = NULL;
     size_t context_count = 0u;
@@ -1453,20 +1454,22 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
     if (!json) return MEMORIA_MOBILE_INTERNAL_ERROR;
     hierarchy_id = json_string(json, "hierarchy_id");
     query = json_string(json, "query");
+    mode = json_string(json, "mode");
     top_k_value = json_long(json, "top_k", 3);
     if (!hierarchy_id || !hierarchy_id[0] ||
         !query || !query[0] ||
-        top_k_value < 1 || top_k_value > 16)
+        top_k_value < 1 || top_k_value > 16 ||
+        (mode && strcmp(mode, "window_group") != 0))
         goto done;
     top_k = (size_t)top_k_value;
 
-    if (!memoria_structural_text_runtime_resolve(
-            h->structural_text_runtime,
-            hierarchy_id,
-            query,
-            top_k,
-            &contexts,
-            &context_count)) {
+    if (!(mode ? memoria_structural_text_runtime_resolve_window_group(
+            h->structural_text_runtime, hierarchy_id, query, top_k,
+            &contexts, &context_count
+        ) : memoria_structural_text_runtime_resolve(
+            h->structural_text_runtime, hierarchy_id, query, top_k,
+            &contexts, &context_count
+        ))) {
         status = MEMORIA_MOBILE_INTERNAL_ERROR;
         goto done;
     }
@@ -1478,16 +1481,31 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
     }
 
     if (context_count == 0u) {
-        status = set_responsef(
-            response_json,
-            MEMORIA_MOBILE_UNRESOLVED,
-            "{\"status\":\"UNRESOLVED\",\"semantic_projection\":false,"
-            "\"hierarchy_id\":\"%s\",\"contexts\":[],"
-            "\"observation_count\":%zu,\"edge_count\":%zu}",
-            escaped_hierarchy,
-            memoria_structural_text_runtime_observation_count(h->structural_text_runtime),
-            memoria_structural_text_runtime_edge_count(h->structural_text_runtime, hierarchy_id)
-        );
+        if (mode) {
+            status = set_responsef(
+                response_json, MEMORIA_MOBILE_UNRESOLVED,
+                "{\"status\":\"UNRESOLVED\",\"semantic_projection\":false,"
+                "\"hierarchy_id\":\"%s\",\"contexts\":[],"
+                "\"window_id\":\"%s\",\"window_revision\":%zu,"
+                "\"trajectory_used\":false,"
+                "\"observation_count\":%zu,\"edge_count\":%zu}",
+                escaped_hierarchy, escaped_hierarchy,
+                memoria_structural_text_runtime_window_revision(
+                    h->structural_text_runtime, hierarchy_id),
+                memoria_structural_text_runtime_observation_count(h->structural_text_runtime),
+                memoria_structural_text_runtime_edge_count(h->structural_text_runtime, hierarchy_id)
+            );
+        } else {
+            status = set_responsef(
+                response_json, MEMORIA_MOBILE_UNRESOLVED,
+                "{\"status\":\"UNRESOLVED\",\"semantic_projection\":false,"
+                "\"hierarchy_id\":\"%s\",\"contexts\":[],"
+                "\"observation_count\":%zu,\"edge_count\":%zu}",
+                escaped_hierarchy,
+                memoria_structural_text_runtime_observation_count(h->structural_text_runtime),
+                memoria_structural_text_runtime_edge_count(h->structural_text_runtime, hierarchy_id)
+            );
+        }
         goto done;
     }
 
@@ -1546,7 +1564,19 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
             goto internal_error;
     }
 
-    if (!mobile_response_appendf(
+    if (mode) {
+        if (!mobile_response_appendf(
+                &builder,
+                "],\"window_id\":\"%s\",\"window_revision\":%zu,"
+                "\"trajectory_used\":false,"
+                "\"observation_count\":%zu,\"edge_count\":%zu}",
+                escaped_hierarchy,
+                memoria_structural_text_runtime_window_revision(
+                    h->structural_text_runtime, hierarchy_id),
+                memoria_structural_text_runtime_observation_count(h->structural_text_runtime),
+                memoria_structural_text_runtime_edge_count(h->structural_text_runtime, hierarchy_id)))
+            goto internal_error;
+    } else if (!mobile_response_appendf(
             &builder,
             "],\"observation_count\":%zu,\"edge_count\":%zu}",
             memoria_structural_text_runtime_observation_count(h->structural_text_runtime),
@@ -1565,6 +1595,7 @@ done:
     free(escaped_hierarchy);
     free(hierarchy_id);
     free(query);
+    free(mode);
     free(json);
     return status;
 }
