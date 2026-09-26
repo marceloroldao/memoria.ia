@@ -1848,6 +1848,135 @@ fail:
     return MEMORIA_MOBILE_INTERNAL_ERROR;
 }
 
+static int window_observation_compare(const void *a, const void *b) {
+    const memoria_structural_text_observation_view *left = a;
+    const memoria_structural_text_observation_view *right = b;
+    if (left->sequence < right->sequence) return -1;
+    if (left->sequence > right->sequence) return 1;
+    return strcmp(left->source_id, right->source_id);
+}
+
+static unsigned long long window_token_bytes(
+    unsigned long long value, const char *text
+) {
+    const unsigned char *bytes = (const unsigned char *)text;
+    while (*bytes) {
+        value ^= *bytes++;
+        value *= 1099511628211ULL;
+    }
+    value ^= 0xffu;
+    return value * 1099511628211ULL;
+}
+
+memoria_mobile_status memoria_mobile_read_structural_window_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *request = NULL, *hierarchy = NULL, *expected = NULL, *escaped = NULL;
+    memoria_structural_text_observation_view *records = NULL;
+    mobile_response_builder builder = {0};
+    size_t count, total, offset, end, i, filled = 0u;
+    long requested_offset, requested_limit;
+    unsigned long long fingerprint = 14695981039346656037ULL;
+    char token[17];
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
+        return status;
+    out->data = NULL;
+    out->size = 0u;
+    request = buffer_to_string(req);
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    hierarchy = json_string(request, "hierarchy_id");
+    expected = json_string(request, "expected_token");
+    requested_offset = json_long(request, "offset", 0);
+    requested_limit = json_long(request, "limit", 32);
+    if (!hierarchy || !hierarchy[0] || requested_offset < 0 ||
+        requested_limit < 1 || requested_limit > 64) goto done;
+    count = memoria_structural_text_runtime_window_revision(
+        h->structural_text_runtime, hierarchy);
+    total = memoria_structural_text_runtime_observation_count(
+        h->structural_text_runtime);
+    if (count) {
+        records = malloc(count * sizeof(*records));
+        if (!records) { status = MEMORIA_MOBILE_INTERNAL_ERROR; goto done; }
+    }
+    for (i = 0u; i < total; ++i) {
+        memoria_structural_text_observation_view item = {0};
+        if (!memoria_structural_text_runtime_observation_at(
+                h->structural_text_runtime, i, &item)) goto internal_error_window;
+        if (strcmp(item.hierarchy_id, hierarchy) == 0) {
+            if (filled == count) goto internal_error_window;
+            records[filled++] = item;
+        }
+    }
+    if (filled != count) goto internal_error_window;
+    if (count > 1u)
+        qsort(records, count, sizeof(*records), window_observation_compare);
+    fingerprint = window_token_bytes(fingerprint, hierarchy);
+    for (i = 0u; i < count; ++i) {
+        char sequence[32];
+        snprintf(sequence, sizeof(sequence), "%lu", records[i].sequence);
+        fingerprint = window_token_bytes(fingerprint, sequence);
+        fingerprint = window_token_bytes(fingerprint, records[i].source_id);
+        fingerprint = window_token_bytes(fingerprint, records[i].source_kind);
+        fingerprint = window_token_bytes(fingerprint, records[i].text);
+    }
+    snprintf(token, sizeof(token), "%016llx", fingerprint);
+    escaped = json_escape(hierarchy);
+    if (!escaped) goto internal_error_window;
+    if (expected && strcmp(expected, token) != 0) {
+        status = set_responsef(out, MEMORIA_MOBILE_UNRESOLVED,
+            "{\"status\":\"STALE_WINDOW\",\"window_id\":\"%s\","
+            "\"window_revision\":%zu,\"window_token\":\"%s\","
+            "\"observations\":[]}", escaped, count, token);
+        goto done;
+    }
+    offset = (size_t)requested_offset < count ? (size_t)requested_offset : count;
+    end = count - offset < (size_t)requested_limit ?
+        count : offset + (size_t)requested_limit;
+    if (!mobile_response_appendf(&builder,
+            "{\"status\":\"OK\",\"window_id\":\"%s\","
+            "\"window_revision\":%zu,\"window_token\":\"%s\","
+            "\"page\":{\"offset\":%zu,\"returned\":%zu,\"next_offset\":",
+            escaped, count, token, offset, end - offset)) goto internal_error_window;
+    if (end < count) {
+        if (!mobile_response_appendf(&builder, "%zu", end)) goto internal_error_window;
+    } else if (!mobile_response_appendf(&builder, "null")) goto internal_error_window;
+    if (!mobile_response_appendf(&builder, "},\"observations\":["))
+        goto internal_error_window;
+    for (i = offset; i < end; ++i) {
+        const memoria_structural_text_observation_view *item = &records[i];
+        char *id = json_escape(item->source_id);
+        char *kind = json_escape(item->source_kind);
+        char *text = json_escape(item->text);
+        char *prev = i ? json_escape(records[i - 1u].source_id) : NULL;
+        char *next = i + 1u < count ? json_escape(records[i + 1u].source_id) : NULL;
+        int written = id && kind && text && (i == 0u || prev) &&
+            (i + 1u == count || next) && mobile_response_appendf(&builder,
+                "%s{\"source_id\":\"%s\",\"source_kind\":\"%s\","
+                "\"sequence\":%lu,\"text\":\"%s\",\"prev_source_id\":",
+                i == offset ? "" : ",", id, kind, item->sequence, text);
+        if (written) written = prev ?
+            mobile_response_appendf(&builder, "\"%s\"", prev) :
+            mobile_response_appendf(&builder, "null");
+        if (written) written = next ?
+            mobile_response_appendf(&builder, ",\"next_source_id\":\"%s\"}", next) :
+            mobile_response_appendf(&builder, ",\"next_source_id\":null}");
+        free(id); free(kind); free(text); free(prev); free(next);
+        if (!written) goto internal_error_window;
+    }
+    if (!mobile_response_appendf(&builder, "]}")) goto internal_error_window;
+    status = set_response(out, builder.data, MEMORIA_MOBILE_OK);
+    goto done;
+internal_error_window:
+    status = MEMORIA_MOBILE_INTERNAL_ERROR;
+done:
+    free(request); free(hierarchy); free(expected); free(escaped);
+    free(records); free(builder.data);
+    return status;
+}
+
 static int concept_catalog_parse_number(const char **cursor, size_t *remaining, size_t *value) {
     size_t v = 0, digits = 0;
     const char *p;
