@@ -85,6 +85,15 @@ conversations or decide that either payload is a fact. On the private export,
 probes still returned `UNRESOLVED`, and all 64 displayed witnesses resolved
 after cold reopen. The clock now counts distinct structural trails, not raw
 events; elapsed-time forgetting needs its own later policy.
+The host Python adapter gate exposed the expected ranking change: in a local
+synthetic history, a repeated cat-name record no longer outranks an unrelated
+cat observation merely because it was copied twice. Both raw sources and the
+other observation remain addressable before and after restart, but the legacy
+default local resolver may still label this ambiguous candidate list `HIT`.
+That label is not a qualified personal fact; the local selection ambiguity is
+an open integration gate alongside the cross-conversation failures. The
+adapter test now checks provenance and recurrence without requiring the old
+duplicate-driven first position.
 
 The region preview now exposes `max_ordered_span`: the longest contiguous
 symbol path shared by the query and any **distinct** observation in a region.
