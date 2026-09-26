@@ -23,6 +23,15 @@ retained. The probe no longer returns `HIT` for them; this is a contract safety
 change, not a retrieval fix. A successful 8/8 isolated native diagnostic does
 not cover this cross-conversation gate.
 
+The opt-in `probe_structural_regions` preview now groups direct symbol matches
+by conversation. It reports the count of exact query-trail echoes separately
+from other matching observations, the region's sequence span and its origin ID.
+It returns `UNRESOLVED` with `qualified:false` even when candidate regions
+exist. An observation with extra symbols is merely *distinct*; it is not
+classified as an assertion. The preview does not traverse cognitive
+trajectories and performs a scan of observations per region, so runtime cost
+and the private replay remain open gates.
+
 ## Required before app integration
 
 1. Preserve the whole conversation window as an addressable region, retaining

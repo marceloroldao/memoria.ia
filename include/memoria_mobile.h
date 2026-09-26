@@ -139,6 +139,15 @@ memoria_mobile_status memoria_mobile_read_structural_window_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Read-only activation preview across conversation regions. Request: query,
+ * optional limit (1..16). Returns unqualified region statistics, never a
+ * factual HIT. An exact symbol trail matching the query is counted as an echo. */
+memoria_mobile_status memoria_mobile_probe_structural_regions_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,

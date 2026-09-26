@@ -831,6 +831,101 @@ static int same_symbol_trail(
     return same;
 }
 
+void memoria_structural_text_region_activations_free(
+    memoria_structural_region_activation *regions, size_t count
+) {
+    size_t i;
+    if (!regions) return;
+    for (i = 0u; i < count; ++i) free(regions[i].hierarchy_id);
+    free(regions);
+}
+
+static int region_activation_compare(const void *a, const void *b) {
+    const memoria_structural_region_activation *left = a, *right = b;
+    if (left->max_exact_overlap != right->max_exact_overlap)
+        return left->max_exact_overlap < right->max_exact_overlap ? 1 : -1;
+    if (left->distinct_count != right->distinct_count)
+        return left->distinct_count < right->distinct_count ? 1 : -1;
+    if (left->query_echo_count != right->query_echo_count)
+        return left->query_echo_count > right->query_echo_count ? 1 : -1;
+    return strcmp(left->hierarchy_id, right->hierarchy_id);
+}
+
+int memoria_structural_text_runtime_activate_regions(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_region_activation **out_regions,
+    size_t *out_count
+) {
+    uint64_t *query_symbols = NULL;
+    size_t query_count = 0u, count = 0u, i;
+    memoria_structural_region_activation *regions = NULL;
+    if (!runtime || !query || !*query || !out_regions || !out_count)
+        return 0;
+    *out_regions = NULL;
+    *out_count = 0u;
+    if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    regions = calloc(runtime->hierarchy_count ? runtime->hierarchy_count : 1u,
+                     sizeof(*regions));
+    if (!regions) { free(query_symbols); return 0; }
+    for (i = 0u; i < runtime->hierarchy_count; ++i) {
+        const char *id = runtime->hierarchies[i].hierarchy_id;
+        memoria_structural_region_activation *region;
+        size_t j;
+        if (strncmp(id, "conversation:", 13) != 0) continue;
+        region = &regions[count];
+        region->hierarchy_id = dup_text(id);
+        if (!region->hierarchy_id) goto fail;
+        for (j = 0u; j < runtime->observation_count; ++j) {
+            const runtime_observation *item = &runtime->observations[j];
+            uint64_t *symbols = NULL;
+            size_t symbol_count = 0u, q, s, overlap = 0u;
+            if (strcmp(item->hierarchy_id, id) != 0) continue;
+            if (!region->observation_count || item->sequence < region->first_sequence)
+                region->first_sequence = item->sequence;
+            if (!region->observation_count || item->sequence > region->last_sequence)
+                region->last_sequence = item->sequence;
+            ++region->observation_count;
+            if (strcmp(item->source_kind, "user_turn") != 0 &&
+                strcmp(item->source_kind, "user_assertion") != 0) continue;
+            if (!tokenize_alloc(item->text, &symbols, &symbol_count)) goto fail;
+            for (q = 0u; q < query_count; ++q) {
+                for (s = 0u; s < symbol_count; ++s)
+                    if (query_symbols[q] == symbols[s]) break;
+                if (s < symbol_count) ++overlap;
+            }
+            if (overlap) {
+                ++region->matching_count;
+                if (symbol_count == query_count &&
+                    memcmp(symbols, query_symbols,
+                           query_count * sizeof(*symbols)) == 0) {
+                    ++region->query_echo_count;
+                } else {
+                    ++region->distinct_count;
+                    if (overlap > region->max_exact_overlap)
+                        region->max_exact_overlap = overlap;
+                }
+            }
+            free(symbols);
+        }
+        if (!region->matching_count) {
+            free(region->hierarchy_id);
+            memset(region, 0, sizeof(*region));
+            continue;
+        }
+        ++count;
+    }
+    free(query_symbols);
+    qsort(regions, count, sizeof(*regions), region_activation_compare);
+    *out_regions = regions;
+    *out_count = count;
+    return 1;
+fail:
+    free(query_symbols);
+    memoria_structural_text_region_activations_free(regions, count + 1u);
+    return 0;
+}
+
 static int resolve_text_impl(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,

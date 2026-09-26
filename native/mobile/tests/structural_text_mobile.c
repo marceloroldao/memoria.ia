@@ -216,6 +216,41 @@ static int check_personal_evidence(memoria_mobile_handle *h) {
     return 0;
 }
 
+static int check_region_probe(memoria_mobile_handle *h) {
+    memoria_mobile_buffer out = {0};
+    const char *fact_region, *echo_region;
+    CHECK(call_json(memoria_mobile_probe_structural_regions_json, h,
+        "{\"query\":\"Qual nome da minha mãe?\",\"limit\":16}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"status\":\"CANDIDATES\""));
+    CHECK(contains(out, "\"qualified\":false"));
+    CHECK(contains(out, "\"trajectory_used\":false"));
+    fact_region = strstr((const char *)out.data,
+        "\"hierarchy_id\":\"conversation:family-a\"");
+    echo_region = strstr((const char *)out.data,
+        "\"hierarchy_id\":\"conversation:family-b\"");
+    CHECK(fact_region != NULL && echo_region != NULL && fact_region < echo_region);
+    CHECK(strncmp(fact_region,
+        "\"hierarchy_id\":\"conversation:family-a\",\"observation_count\":2,"
+        "\"matching_count\":1,\"query_echo_count\":0,\"distinct_count\":1",
+        strlen("\"hierarchy_id\":\"conversation:family-a\",\"observation_count\":2,"
+               "\"matching_count\":1,\"query_echo_count\":0,\"distinct_count\":1")) == 0);
+    CHECK(strncmp(echo_region,
+        "\"hierarchy_id\":\"conversation:family-b\",\"observation_count\":1,"
+        "\"matching_count\":1,\"query_echo_count\":1,\"distinct_count\":0",
+        strlen("\"hierarchy_id\":\"conversation:family-b\",\"observation_count\":1,"
+               "\"matching_count\":1,\"query_echo_count\":1,\"distinct_count\":0")) == 0);
+    CHECK(!contains(out, "Falsa"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_probe_structural_regions_json, h,
+        "{\"query\":\"transformador indutância\"}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"status\":\"UNRESOLVED\""));
+    CHECK(contains(out, "\"region_count\":0"));
+    clear(&out);
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -323,6 +358,7 @@ int main(void) {
     CHECK(check_context_scope(h) == 0);
     CHECK(check_surface_collection(h) == 0);
     CHECK(check_personal_evidence(h) == 0);
+    CHECK(check_region_probe(h) == 0);
 
     CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:region\",\"source_id\":\"region-fact\","
@@ -383,6 +419,7 @@ int main(void) {
     CHECK(check_window_group(h) == 0);
     CHECK(check_window_region(h) == 0);
     CHECK(check_personal_evidence(h) == 0);
+    CHECK(check_region_probe(h) == 0);
     CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:collection\","
         "\"query\":\"Quais gatos eu mencionei?\",\"top_k\":3}", &out)

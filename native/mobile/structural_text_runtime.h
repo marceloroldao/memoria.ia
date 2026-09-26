@@ -44,6 +44,17 @@ typedef struct memoria_structural_text_context {
     size_t repetitions;
 } memoria_structural_text_context;
 
+typedef struct memoria_structural_region_activation {
+    char *hierarchy_id;
+    size_t observation_count;
+    size_t matching_count;
+    size_t query_echo_count;
+    size_t distinct_count;
+    size_t max_exact_overlap;
+    unsigned long first_sequence;
+    unsigned long last_sequence;
+} memoria_structural_region_activation;
+
 /*
  * Open the structural text runtime over the SAME BDR handle already owned by
  * Memoria.ia mobile persistence. The runtime borrows db and never closes it.
@@ -105,6 +116,21 @@ int memoria_structural_text_runtime_resolve_personal_evidence(
     size_t top_k,
     memoria_structural_text_context **out_contexts,
     size_t *out_count
+);
+
+/* Read-only region comparison. An exact query trail is counted as an echo,
+ * while other matching observations remain unqualified candidates. This API
+ * does not decide whether a region contains an answer or a fact. */
+int memoria_structural_text_runtime_activate_regions(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_region_activation **out_regions,
+    size_t *out_count
+);
+
+void memoria_structural_text_region_activations_free(
+    memoria_structural_region_activation *regions,
+    size_t count
 );
 
 size_t memoria_structural_text_runtime_window_revision(

@@ -1992,6 +1992,66 @@ done:
     return status;
 }
 
+memoria_mobile_status memoria_mobile_probe_structural_regions_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *request = NULL, *query = NULL;
+    memoria_structural_region_activation *regions = NULL;
+    mobile_response_builder builder = {0};
+    size_t count = 0u, i, returned;
+    long limit;
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
+        return status;
+    out->data = NULL;
+    out->size = 0u;
+    request = buffer_to_string(req);
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    query = json_string(request, "query");
+    limit = json_long(request, "limit", 8);
+    if (!query || !query[0] || limit < 1 || limit > 16) goto done;
+    if (!memoria_structural_text_runtime_activate_regions(
+            h->structural_text_runtime, query, &regions, &count)) {
+        status = MEMORIA_MOBILE_INTERNAL_ERROR;
+        goto done;
+    }
+    returned = count < (size_t)limit ? count : (size_t)limit;
+    if (!mobile_response_appendf(&builder,
+            "{\"status\":\"%s\",\"qualified\":false,"
+            "\"trajectory_used\":false,\"region_count\":%zu,"
+            "\"returned\":%zu,\"regions\":[",
+            count ? "CANDIDATES" : "UNRESOLVED", count, returned))
+        goto internal_error_regions;
+    for (i = 0u; i < returned; ++i) {
+        const memoria_structural_region_activation *region = &regions[i];
+        char *id = json_escape(region->hierarchy_id);
+        int written = id && mobile_response_appendf(&builder,
+            "%s{\"hierarchy_id\":\"%s\",\"observation_count\":%zu,"
+            "\"matching_count\":%zu,\"query_echo_count\":%zu,"
+            "\"distinct_count\":%zu,\"max_exact_overlap\":%zu,"
+            "\"first_sequence\":%lu,\"last_sequence\":%lu}",
+            i ? "," : "", id, region->observation_count,
+            region->matching_count, region->query_echo_count,
+            region->distinct_count, region->max_exact_overlap,
+            region->first_sequence, region->last_sequence);
+        free(id);
+        if (!written) goto internal_error_regions;
+    }
+    if (!mobile_response_appendf(&builder, "]}")) goto internal_error_regions;
+    status = set_response(out, builder.data, MEMORIA_MOBILE_UNRESOLVED);
+    goto done;
+internal_error_regions:
+    status = MEMORIA_MOBILE_INTERNAL_ERROR;
+done:
+    free(builder.data);
+    memoria_structural_text_region_activations_free(regions, count);
+    free(query);
+    free(request);
+    return status;
+}
+
 static int concept_catalog_parse_number(const char **cursor, size_t *remaining, size_t *value) {
     size_t v = 0, digits = 0;
     const char *p;
