@@ -75,12 +75,34 @@ and sequence remains an idempotent duplicate and creates no second raw record.
 `observe_structural_text` reports `duplicate` for that source identity,
 `new_trail` for a field update and `distinct_trail_count` for the conversation.
 
-A different payload containing a known trail remains a new field observation.
-It adds contextual associations across the boundary and currently updates
-associations *inside* the reused span too. The change does not yet persist a
-shared phrase nodule, compress the BDR raw record, deduplicate across
-conversations or decide that either payload is a fact. On the private export,
-83 raw observations across 25 conversations yielded 75 distinct region trails:
+A different payload containing a previously observed complete symbol trail
+remains a new field observation. The longest contained trail is treated as a
+reused nodule. Its internal within-trail links receive **zero** additional
+weight; new links from/to the surrounding symbols receive the existing
+`1 / token_distance` contribution. Temporal links to an earlier trail skip
+the reused span on both sides when it also appears there; the surrounding
+context can still form temporal associations. A repeat of the
+whole normalized trail does not advance the field clock or add any edge.
+Occurrences are kept for provenance, never converted into factual strength.
+
+BDR structural-text schema 2 stores the first raw occurrence inline. An exact
+byte copy stores source metadata plus a reference to that earlier occurrence.
+A new text with a **byte-identical and token-aligned** contained payload stores
+its prefix, earlier occurrence reference and suffix. The longest available
+payload wins; a later composition can itself be referenced. Reconstruction
+reads earlier occurrences in order, preserving exact UTF-8 text, source IDs,
+source kinds and sequences across a cold reopen. References can cross
+conversation fields within the same organization. Existing schema 1 inline
+rows remain readable and acquire references on later writes without rewriting
+history. A case or punctuation variation that shares normalized symbols but
+does not contain the prior raw bytes still stores its own surface text inline;
+the field still recognizes the normalized nodule and avoids internal weight.
+The current implementation chooses one longest reused span per new trail and
+does not yet optimize the duplicate text reconstructed in process memory.
+These are structural storage and association weights, not factual confidence.
+
+On the private export, 83 raw observations across 25 conversations yielded
+75 distinct region trails:
 8 repeat occurrences did not update their local field. The four cross-region
 probes still returned `UNRESOLVED`, and all 64 displayed witnesses resolved
 after cold reopen. The clock now counts distinct structural trails, not raw

@@ -104,7 +104,7 @@ static int check_identical_payload_is_occurrence_only(void) {
     context_weight = memoria_structural_text_runtime_association(runtime,
         region, qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN);
     context_edges = memoria_structural_text_runtime_edge_count(runtime, region);
-    CHECK(context_weight > base_weight && context_edges > base_edges);
+    CHECK(context_weight == base_weight && context_edges > base_edges);
 
     CHECK(memoria_structural_text_runtime_observe(runtime, region, "context-copy",
         "user_turn", 4ul, "PODERIA ME DIZER QUAL NOME DO MEU PAI?", &duplicate));
@@ -141,6 +141,181 @@ static int check_identical_payload_is_occurrence_only(void) {
     return 0;
 }
 
+static int read_stored_row(
+    bdr_atomic_c_handle *db, const char *org, size_t index,
+    char **out, size_t *out_size
+) {
+    char key[256];
+    bdr_atomic_c_buffer value = {0};
+    int written = snprintf(key, sizeof(key),
+        "memoria-mobile/v1/%s/structural-text/observation/%012zu", org, index);
+    if (written <= 0 || (size_t)written >= sizeof(key) ||
+        bdr_atomic_c_get(db, key, strlen(key), &value) != BDR_ATOMIC_C_OK)
+        return 0;
+    *out = (char *)malloc(value.size + 1u);
+    if (!*out) {
+        bdr_atomic_c_free_buffer(value);
+        return 0;
+    }
+    memcpy(*out, value.data, value.size);
+    (*out)[value.size] = 0;
+    *out_size = value.size;
+    bdr_atomic_c_free_buffer(value);
+    return 1;
+}
+
+static int check_durable_payload_references(void) {
+    const char *dir = "./tmp-structural-text-reference";
+    const char *org = "org-reference";
+    const char *region = "conversation:reference";
+    const char *base = "qual nome do meu pai?";
+    const char *context = "Poderia me dizer qual nome do meu pai?";
+    const char *nested = "Hoje, Poderia me dizer qual nome do meu pai?";
+    bdr_atomic_c_handle *db = NULL;
+    memoria_structural_text_runtime *runtime = NULL;
+    memoria_structural_text_observation_view raw = {0};
+    char *row = NULL;
+    size_t row_size = 0u;
+    uint64_t qual = 0u, nome = 0u, dizer = 0u;
+    double base_weight;
+    int duplicate = 0;
+    (void)system("rm -rf ./tmp-structural-text-reference");
+    CHECK(memoria_structural_text_symbol("qual", 4u, &qual));
+    CHECK(memoria_structural_text_symbol("nome", 4u, &nome));
+    CHECK(memoria_structural_text_symbol("dizer", 5u, &dizer));
+    CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);
+    CHECK(memoria_structural_text_runtime_open_shared(
+        db, org, 8u, 4u, 0.0, &runtime));
+    CHECK(memoria_structural_text_runtime_observe(runtime, region,
+        "base", "user_turn", 1ul, base, &duplicate));
+    base_weight = memoria_structural_text_runtime_association(runtime, region,
+        qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN);
+    CHECK(base_weight == 1.0);
+    CHECK(memoria_structural_text_runtime_observe(runtime, region,
+        "repeat", "user_turn", 2ul, base, &duplicate));
+    CHECK(memoria_structural_text_runtime_observe(runtime, region,
+        "context", "user_turn", 3ul, context, &duplicate));
+    CHECK(memoria_structural_text_runtime_observe(runtime, region,
+        "nested", "user_turn", 4ul, nested, &duplicate));
+    CHECK(memoria_structural_text_runtime_observe(runtime,
+        "conversation:other", "cross-region", "user_turn", 5ul,
+        base, &duplicate));
+    CHECK(memoria_structural_text_runtime_observe(runtime, region,
+        "case-variant", "user_turn", 6ul,
+        "QUAL NOME DO MEU PAI?", &duplicate));
+    CHECK(memoria_structural_text_runtime_observation_count(runtime) == 6u);
+    CHECK(memoria_structural_text_runtime_distinct_trail_count(runtime, region) == 3u);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) == base_weight);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        dizer, qual, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) == 1.0);
+    CHECK(read_stored_row(db, org, 1u, &row, &row_size));
+    CHECK(strstr(row, base) != NULL);
+    free(row);
+    CHECK(read_stored_row(db, org, 2u, &row, &row_size));
+    CHECK(strncmp(row, "R2:", 3u) == 0 && strstr(row, base) == NULL);
+    free(row);
+    CHECK(read_stored_row(db, org, 3u, &row, &row_size));
+    CHECK(strncmp(row, "R2:", 3u) == 0 && strstr(row, base) == NULL);
+    CHECK(strstr(row, "Poderia me dizer ") != NULL);
+    free(row);
+    CHECK(read_stored_row(db, org, 4u, &row, &row_size));
+    CHECK(strncmp(row, "R2:", 3u) == 0 && strstr(row, context) == NULL);
+    free(row);
+    CHECK(read_stored_row(db, org, 5u, &row, &row_size));
+    CHECK(strncmp(row, "R2:", 3u) == 0 && strstr(row, base) == NULL);
+    free(row);
+    CHECK(read_stored_row(db, org, 6u, &row, &row_size));
+    CHECK(strncmp(row, "R2:", 3u) != 0 &&
+        strstr(row, "QUAL NOME DO MEU PAI?") != NULL);
+    free(row);
+    CHECK(memoria_structural_text_runtime_sync(runtime));
+    memoria_structural_text_runtime_close(runtime);
+    bdr_atomic_c_close(db);
+
+    CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);
+    CHECK(memoria_structural_text_runtime_open_shared(
+        db, org, 8u, 4u, 0.0, &runtime));
+    CHECK(memoria_structural_text_runtime_observation_count(runtime) == 6u);
+    CHECK(memoria_structural_text_runtime_distinct_trail_count(runtime, region) == 3u);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) == base_weight);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        dizer, qual, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) == 1.0);
+    CHECK(memoria_structural_text_runtime_observation_at(runtime, 1u, &raw));
+    CHECK(strcmp(raw.source_id, "repeat") == 0 && strcmp(raw.text, base) == 0);
+    CHECK(memoria_structural_text_runtime_observation_at(runtime, 2u, &raw));
+    CHECK(strcmp(raw.source_id, "context") == 0 && strcmp(raw.text, context) == 0);
+    CHECK(memoria_structural_text_runtime_observation_at(runtime, 3u, &raw));
+    CHECK(strcmp(raw.source_id, "nested") == 0 && strcmp(raw.text, nested) == 0);
+    CHECK(memoria_structural_text_runtime_observation_at(runtime, 4u, &raw));
+    CHECK(strcmp(raw.source_id, "cross-region") == 0 && strcmp(raw.text, base) == 0);
+    memoria_structural_text_runtime_close(runtime);
+    bdr_atomic_c_close(db);
+    (void)system("rm -rf ./tmp-structural-text-reference");
+    return 0;
+}
+
+static int check_legacy_schema_upgrade(void) {
+    const char *dir = "./tmp-structural-text-v1-upgrade";
+    const char *org = "org-legacy-upgrade";
+    const char *base = "qual nome do meu pai?";
+    const char *schema_key =
+        "memoria-mobile/v1/org-legacy-upgrade/structural-text/meta/schema";
+    bdr_atomic_c_handle *db = NULL;
+    memoria_structural_text_runtime *runtime = NULL;
+    memoria_structural_text_observation_view raw = {0};
+    bdr_atomic_c_operation op = {0};
+    bdr_atomic_c_batch_result result = {0};
+    bdr_atomic_c_buffer schema = {0};
+    char *row = NULL;
+    size_t row_size = 0u;
+    int duplicate = 0;
+    (void)system("rm -rf ./tmp-structural-text-v1-upgrade");
+    CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);
+    CHECK(memoria_structural_text_runtime_open_shared(db, org,
+        8u, 4u, 0.0, &runtime));
+    CHECK(memoria_structural_text_runtime_observe(runtime,
+        "conversation:legacy", "old", "user_turn", 1ul, base, &duplicate));
+    memoria_structural_text_runtime_close(runtime);
+    CHECK(read_stored_row(db, org, 1u, &row, &row_size));
+    CHECK(strncmp(row, "R2:", 3u) != 0);
+    free(row);
+    /* Row one uses the unchanged v1 inline encoding. Mark this fixture as
+     * an existing v1 database, then append a v2 reference atomically. */
+    op.type = BDR_ATOMIC_C_PUT;
+    op.key = schema_key; op.key_size = strlen(schema_key);
+    op.value = "1"; op.value_size = 1u;
+    CHECK(bdr_atomic_c_write_batch(db, &op, 1u, &result) == BDR_ATOMIC_C_OK);
+    bdr_atomic_c_close(db);
+
+    CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);
+    CHECK(memoria_structural_text_runtime_open_shared(db, org,
+        8u, 4u, 0.0, &runtime));
+    CHECK(memoria_structural_text_runtime_observe(runtime,
+        "conversation:legacy", "new", "user_turn", 2ul, base, &duplicate));
+    CHECK(bdr_atomic_c_get(db, schema_key, strlen(schema_key), &schema)
+        == BDR_ATOMIC_C_OK);
+    CHECK(schema.size == 1u && schema.data[0] == '2');
+    bdr_atomic_c_free_buffer(schema);
+    CHECK(read_stored_row(db, org, 2u, &row, &row_size));
+    CHECK(strncmp(row, "R2:", 3u) == 0 && strstr(row, base) == NULL);
+    free(row);
+    memoria_structural_text_runtime_close(runtime);
+    bdr_atomic_c_close(db);
+
+    CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);
+    CHECK(memoria_structural_text_runtime_open_shared(db, org,
+        8u, 4u, 0.0, &runtime));
+    CHECK(memoria_structural_text_runtime_observation_count(runtime) == 2u);
+    CHECK(memoria_structural_text_runtime_observation_at(runtime, 1u, &raw));
+    CHECK(strcmp(raw.source_id, "new") == 0 && strcmp(raw.text, base) == 0);
+    memoria_structural_text_runtime_close(runtime);
+    bdr_atomic_c_close(db);
+    (void)system("rm -rf ./tmp-structural-text-v1-upgrade");
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-structural-text-runtime-restart";
     bdr_atomic_c_handle *db = NULL;
@@ -152,6 +327,8 @@ int main(void) {
     int duplicate = 0;
 
     CHECK(check_identical_payload_is_occurrence_only() == 0);
+    CHECK(check_durable_payload_references() == 0);
+    CHECK(check_legacy_schema_upgrade() == 0);
 
     (void)system("rm -rf ./tmp-structural-text-runtime-restart");
     CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);

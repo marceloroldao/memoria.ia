@@ -66,6 +66,16 @@ int memoria_structural_text_field_observe(
     size_t trail_count
 );
 
+/* A previously observed contiguous span is reused inside a new trail.
+ * Preserve its internal edges while learning the new surrounding context. */
+int memoria_structural_text_field_observe_reusing(
+    memoria_structural_text_field *field,
+    const uint64_t *trail,
+    size_t trail_count,
+    size_t reuse_start,
+    size_t reuse_count
+);
+
 double memoria_structural_text_field_association(
     const memoria_structural_text_field *field,
     uint64_t source,

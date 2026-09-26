@@ -79,8 +79,8 @@ typedef struct memoria_structural_trail_recurrence {
     size_t exact_overlap;
     int query_echo;
     int contains_query_trail;
-    /* A read-only decomposition, populated only when the exact query trail
-     * was also observed as a user source. No composed payload is persisted. */
+    /* A read-only query decomposition, populated only when the exact query
+     * trail was also observed as a user source. This result writes nothing. */
     char composed_base_address[17];
     size_t embedded_start;
     size_t embedded_length;
@@ -99,9 +99,9 @@ typedef struct memoria_structural_trail_recurrence {
  * Open the structural text runtime over the SAME BDR handle already owned by
  * Memoria.ia mobile persistence. The runtime borrows db and never closes it.
  *
- * Raw observations are authoritative. Association fields are reconstructed by
- * replaying those observations on every cold open; no derived edge is promoted
- * into persisted fact state.
+ * Source occurrences are authoritative. Their payloads can be stored inline
+ * or as references to earlier occurrences and reconstructed on cold open.
+ * Association fields replay those occurrences; no derived edge becomes fact.
  */
 int memoria_structural_text_runtime_open_shared(
     bdr_atomic_c_handle *db,

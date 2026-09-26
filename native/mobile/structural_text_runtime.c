@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define STRUCTURAL_TEXT_RUNTIME_SCHEMA 1u
+#define STRUCTURAL_TEXT_RUNTIME_SCHEMA 2u
 #define KEY_CAP 512u
 
 typedef struct runtime_observation {
@@ -137,33 +137,62 @@ static int dynbuf_append(dynbuf *buffer, const char *data, size_t size) {
     return 1;
 }
 
-static int dynbuf_append_field(dynbuf *buffer, const char *value) {
+static int dynbuf_append_field_n(dynbuf *buffer, const char *value, size_t n) {
     char length[64];
-    size_t n = strlen(value ? value : "");
     int written = snprintf(length, sizeof(length), "%zu:", n);
     if (written <= 0 || (size_t)written >= sizeof(length)) return 0;
     return dynbuf_append(buffer, length, (size_t)written) &&
-           dynbuf_append(buffer, value ? value : "", n);
+        dynbuf_append(buffer, value ? value : "", n);
+}
+
+static int dynbuf_append_field(dynbuf *buffer, const char *value) {
+    return dynbuf_append_field_n(buffer, value, strlen(value ? value : ""));
 }
 
 static int serialize_observation(
     const runtime_observation *observation,
+    size_t anchor,
+    size_t prefix_length,
+    size_t suffix_offset,
     char **out,
     size_t *out_size
 ) {
     dynbuf buffer = {0};
     char sequence[64];
+    char reference[64];
     int written;
     if (!observation || !out || !out_size) return 0;
     *out = NULL;
     *out_size = 0u;
     written = snprintf(sequence, sizeof(sequence), "%lu:", observation->sequence);
+    if (anchor && !dynbuf_append(&buffer, "R2:", 3u)) {
+        free(buffer.data);
+        return 0;
+    }
     if (written <= 0 || (size_t)written >= sizeof(sequence) ||
         !dynbuf_append(&buffer, sequence, (size_t)written) ||
         !dynbuf_append_field(&buffer, observation->hierarchy_id) ||
         !dynbuf_append_field(&buffer, observation->source_id) ||
-        !dynbuf_append_field(&buffer, observation->source_kind) ||
-        !dynbuf_append_field(&buffer, observation->text)) {
+        !dynbuf_append_field(&buffer, observation->source_kind)) {
+        free(buffer.data);
+        return 0;
+    }
+    if (anchor) {
+        size_t text_length = strlen(observation->text);
+        if (prefix_length > suffix_offset || suffix_offset > text_length) {
+            free(buffer.data);
+            return 0;
+        }
+        written = snprintf(reference, sizeof(reference), "%zu:", anchor);
+        if (written <= 0 || (size_t)written >= sizeof(reference) ||
+            !dynbuf_append(&buffer, reference, (size_t)written) ||
+            !dynbuf_append_field_n(&buffer, observation->text, prefix_length) ||
+            !dynbuf_append_field_n(&buffer, observation->text + suffix_offset,
+                text_length - suffix_offset)) {
+            free(buffer.data);
+            return 0;
+        }
+    } else if (!dynbuf_append_field(&buffer, observation->text)) {
         free(buffer.data);
         return 0;
     }
@@ -232,7 +261,8 @@ static int parse_alloc_field(
     size_t n;
     char *value;
     if (!cursor || !remaining || !out ||
-        !parse_size_token(cursor, remaining, &n) || n > *remaining) return 0;
+        !parse_size_token(cursor, remaining, &n) || n > *remaining ||
+        n == (size_t)-1 || memchr(*cursor, 0, n)) return 0;
     value = (char *)malloc(n + 1u);
     if (!value) return 0;
     if (n) memcpy(value, *cursor, n);
@@ -253,6 +283,8 @@ static void free_observation(runtime_observation *observation) {
 }
 
 static int deserialize_observation(
+    const memoria_structural_text_runtime *runtime,
+    int allow_references,
     const char *value,
     size_t value_size,
     runtime_observation *out
@@ -260,17 +292,57 @@ static int deserialize_observation(
     const char *cursor = value;
     size_t remaining = value_size;
     runtime_observation parsed = {0};
-    if (!value || !out ||
+    int reference = value && value_size >= 3u &&
+        memcmp(value, "R2:", 3u) == 0;
+    if (reference) { cursor += 3u; remaining -= 3u; }
+    if (!runtime || !value || !out || (reference && !allow_references) ||
         !parse_ulong_token(&cursor, &remaining, &parsed.sequence) ||
         !parse_alloc_field(&cursor, &remaining, &parsed.hierarchy_id) ||
         !parse_alloc_field(&cursor, &remaining, &parsed.source_id) ||
-        !parse_alloc_field(&cursor, &remaining, &parsed.source_kind) ||
-        !parse_alloc_field(&cursor, &remaining, &parsed.text) ||
-        remaining != 0u ||
+        !parse_alloc_field(&cursor, &remaining, &parsed.source_kind)) {
+        free_observation(&parsed);
+        return 0;
+    }
+    if (reference) {
+        size_t anchor = 0u;
+        char *prefix = NULL, *suffix = NULL;
+        const char *base;
+        size_t a, b, c;
+        if (!parse_size_token(&cursor, &remaining, &anchor) ||
+            anchor == 0u || anchor > runtime->observation_count ||
+            !parse_alloc_field(&cursor, &remaining, &prefix) ||
+            !parse_alloc_field(&cursor, &remaining, &suffix) ||
+            remaining != 0u) {
+            free(prefix);
+            free(suffix);
+            free_observation(&parsed);
+            return 0;
+        }
+        base = runtime->observations[anchor - 1u].text;
+        a = strlen(prefix); b = strlen(base); c = strlen(suffix);
+        if (a > ((size_t)-1) - b || a + b > ((size_t)-1) - c - 1u) {
+            free(prefix);
+            free(suffix);
+            free_observation(&parsed);
+            return 0;
+        }
+        parsed.text = (char *)malloc(a + b + c + 1u);
+        if (parsed.text) {
+            memcpy(parsed.text, prefix, a);
+            memcpy(parsed.text + a, base, b);
+            memcpy(parsed.text + a + b, suffix, c + 1u);
+        }
+        free(prefix);
+        free(suffix);
+    } else if (!parse_alloc_field(&cursor, &remaining, &parsed.text)) {
+        free_observation(&parsed);
+        return 0;
+    }
+    if (remaining != 0u ||
         !parsed.hierarchy_id[0] ||
         !parsed.source_id[0] ||
         !parsed.source_kind[0] ||
-        !parsed.text[0]) {
+        !parsed.text || !parsed.text[0]) {
         free_observation(&parsed);
         return 0;
     }
@@ -456,6 +528,35 @@ static int tokenize_alloc(
     return 1;
 }
 
+/* Select the longest complete trail already observed in this field. The
+ * positions, rather than token spellings, identify the reused nodule. */
+static void find_reused_trail(
+    const runtime_hierarchy *hierarchy,
+    const uint64_t *symbols,
+    size_t count,
+    size_t *out_start,
+    size_t *out_count
+) {
+    size_t i;
+    *out_start = 0u;
+    *out_count = 0u;
+    for (i = 0u; i < hierarchy->trail_slot_count; ++i) {
+        const runtime_trail_slot *candidate = &hierarchy->trail_slots[i];
+        size_t start;
+        if (!candidate->symbols || candidate->symbol_count < *out_count ||
+            candidate->symbol_count >= count) continue;
+        for (start = 0u; start <= count - candidate->symbol_count; ++start) {
+            if (memcmp(symbols + start, candidate->symbols,
+                candidate->symbol_count * sizeof(*symbols)) == 0 &&
+                (candidate->symbol_count > *out_count || start < *out_start)) {
+                *out_start = start;
+                *out_count = candidate->symbol_count;
+                break;
+            }
+        }
+    }
+}
+
 static int replay_observation(
     memoria_structural_text_runtime *runtime,
     const runtime_observation *observation
@@ -465,6 +566,7 @@ static int replay_observation(
     size_t symbol_count = 0u;
     uint64_t hash;
     runtime_trail_slot *slot;
+    size_t reuse_start = 0u, reuse_count = 0u;
     if (!runtime || !observation ||
         !tokenize_alloc(observation->text, &symbols, &symbol_count)) return 0;
     hierarchy = get_or_create_hierarchy(runtime, observation->hierarchy_id);
@@ -478,9 +580,12 @@ static int replay_observation(
         free(symbols);
         return 1;
     }
+    find_reused_trail(hierarchy, symbols, symbol_count,
+        &reuse_start, &reuse_count);
     if (!reserve_trail_slot(hierarchy) ||
-        !memoria_structural_text_field_observe(
-            hierarchy->field, symbols, symbol_count
+        !memoria_structural_text_field_observe_reusing(
+            hierarchy->field, symbols, symbol_count,
+            reuse_start, reuse_count
         )) {
         free(symbols);
         return 0;
@@ -540,6 +645,7 @@ static int load_persisted(
     size_t lag = 0u;
     double forgetting = 0.0;
     size_t i;
+    size_t schema_value = 0u;
     int ok = 0;
 
     if (!fetch_value(runtime, "meta/schema", &schema, NULL) ||
@@ -556,9 +662,8 @@ static int load_persisted(
     if (!schema || !count_text || !within_text || !lag_text || !forget_text)
         goto done;
     {
-        size_t schema_value = 0u;
         if (!parse_size_text(schema, &schema_value) ||
-            schema_value != STRUCTURAL_TEXT_RUNTIME_SCHEMA ||
+            (schema_value != 1u && schema_value != STRUCTURAL_TEXT_RUNTIME_SCHEMA) ||
             !parse_size_text(count_text, &count) ||
             !parse_size_text(within_text, &within) ||
             !parse_size_text(lag_text, &lag) ||
@@ -577,7 +682,8 @@ static int load_persisted(
         snprintf(suffix, sizeof(suffix), "observation/%012zu", i + 1u);
         if (!fetch_value(runtime, suffix, &row, &row_size) ||
             !row ||
-            !deserialize_observation(row, row_size, &observation) ||
+            !deserialize_observation(runtime, schema_value >= 2u,
+                row, row_size, &observation) ||
             !append_loaded_observation(runtime, &observation)) {
             free(row);
             free_observation(&observation);
@@ -608,9 +714,69 @@ static int same_identity(
            strcmp(observation->source_id, source_id) == 0;
 }
 
+/* References use prior durable observation addresses. Exact copies point at
+ * the earliest byte-identical payload. A new payload may point at the longest
+ * byte-identical, token-aligned substring and store only its two margins. */
+static void find_storage_reference(
+    const memoria_structural_text_runtime *runtime,
+    const char *text,
+    const uint64_t *symbols,
+    size_t symbol_count,
+    size_t *out_anchor,
+    size_t *out_prefix_length,
+    size_t *out_suffix_offset
+) {
+    size_t i, best_length = 0u;
+    size_t text_length = strlen(text);
+    *out_anchor = 0u;
+    *out_prefix_length = 0u;
+    *out_suffix_offset = text_length;
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const char *base = runtime->observations[i].text;
+        size_t base_length = strlen(base);
+        const char *match;
+        uint64_t *base_symbols = NULL;
+        size_t base_count = 0u;
+        if (base_length == text_length && strcmp(base, text) == 0) {
+            *out_anchor = i + 1u;
+            *out_prefix_length = 0u;
+            *out_suffix_offset = text_length;
+            return;
+        }
+        if (base_length >= text_length || base_length <= best_length ||
+            !tokenize_alloc(base, &base_symbols, &base_count)) continue;
+        match = strstr(text, base);
+        while (match && base_count < symbol_count) {
+            size_t prefix_length = (size_t)(match - text);
+            size_t suffix_offset = prefix_length + base_length;
+            size_t prefix_count = 0u, suffix_count = 0u;
+            if (memoria_structural_text_tokenize(text, prefix_length,
+                    NULL, 0u, &prefix_count) &&
+                memoria_structural_text_tokenize(text + suffix_offset,
+                    text_length - suffix_offset, NULL, 0u, &suffix_count) &&
+                prefix_count <= symbol_count &&
+                base_count <= symbol_count - prefix_count &&
+                prefix_count + base_count + suffix_count == symbol_count &&
+                memcmp(symbols + prefix_count, base_symbols,
+                    base_count * sizeof(*symbols)) == 0) {
+                best_length = base_length;
+                *out_anchor = i + 1u;
+                *out_prefix_length = prefix_length;
+                *out_suffix_offset = suffix_offset;
+                break;
+            }
+            match = strstr(match + 1u, base);
+        }
+        free(base_symbols);
+    }
+}
+
 static int persist_observation(
     memoria_structural_text_runtime *runtime,
-    const runtime_observation *observation
+    const runtime_observation *observation,
+    size_t anchor,
+    size_t prefix_length,
+    size_t suffix_offset
 ) {
     bdr_atomic_c_operation ops[6];
     char keys[6][KEY_CAP];
@@ -626,7 +792,8 @@ static int persist_observation(
     size_t i;
 
     if (!runtime || !observation ||
-        !serialize_observation(observation, &row, &row_size))
+        !serialize_observation(observation, anchor, prefix_length,
+            suffix_offset, &row, &row_size))
         return 0;
 
     snprintf(schema, sizeof(schema), "%u", STRUCTURAL_TEXT_RUNTIME_SCHEMA);
@@ -721,6 +888,8 @@ int memoria_structural_text_runtime_observe(
     runtime_hierarchy *hierarchy;
     runtime_trail_slot *slot;
     int novel;
+    size_t anchor = 0u, prefix_length = 0u, suffix_offset = 0u;
+    size_t reuse_start = 0u, reuse_count = 0u;
     if (duplicate) *duplicate = 0;
     if (!runtime || !hierarchy_id || !*hierarchy_id ||
         !source_id || !*source_id ||
@@ -759,16 +928,22 @@ int memoria_structural_text_runtime_observe(
     hash = trail_hash(symbols, symbol_count);
     slot = hierarchy ? find_trail_slot(hierarchy, symbols, symbol_count, hash) : NULL;
     novel = !slot || !slot->symbols;
+    find_storage_reference(runtime, text, symbols, symbol_count,
+        &anchor, &prefix_length, &suffix_offset);
     if (!hierarchy || (novel && !reserve_trail_slot(hierarchy)) ||
-        !persist_observation(runtime, &observation)) {
+        !persist_observation(runtime, &observation, anchor,
+            prefix_length, suffix_offset)) {
         free(symbols);
         free_observation(&observation);
         return 0;
     }
 
     if (novel) {
-        if (!memoria_structural_text_field_observe(
-                hierarchy->field, symbols, symbol_count)) {
+        find_reused_trail(hierarchy, symbols, symbol_count,
+            &reuse_start, &reuse_count);
+        if (!memoria_structural_text_field_observe_reusing(
+                hierarchy->field, symbols, symbol_count,
+                reuse_start, reuse_count)) {
             free(symbols);
             free_observation(&observation);
             /* Durable raw observation exists. Cold reopen rebuilds the field. */
