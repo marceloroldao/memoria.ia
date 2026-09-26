@@ -133,6 +133,22 @@ class NativeEpisodicService:
             ultimate_source_memory_id=parent_id,
         )
 
+    def store_structural(self, request: EpisodeStoreRequest) -> tuple[NativeEpisodeEdge, NativeEpisodeReceipt]:
+        """Persist a direct structural observation without semantic authority.
+
+        The event is journaled through the native episodic BDR path, but it is not
+        promoted to a factual/semantic relation. The assistant role is only the
+        transport role required by the episode ABI; source_type is authoritative.
+        """
+        if request.parent_memory_ids:
+            raise ValueError("structural observation does not accept semantic parent lineage")
+        return self._store_payload(
+            request,
+            source_type="structural_observation",
+            source_authority=0.0,
+            ultimate_source_memory_id=request.episode_id,
+        )
+
     def resolve(self, request: EpisodeRecallRequest) -> EpisodicRecallResult:
         topics = _normalized_topics(request.topics)
         payload: dict[str, object] = {

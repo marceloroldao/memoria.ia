@@ -26,6 +26,7 @@ from .product_service import EnterpriseMemoryService
 from .product_structural import ProductStructuralObservationService, attach_structural_observation_routes
 from .semantic_activation_resolver import SemanticActivationConversationResolver
 from .semantic_concept_store import PersistentSemanticConceptStore
+from .structural_contract import attach_structural_routes
 
 
 def _env(name: str, default: str | None = None, *, required: bool = False) -> str:
@@ -305,12 +306,18 @@ def build_app():
             "native_concept_catalog_count": native_concept_catalog_count,
             "concept_namespace": concept_namespace,
             "concept_relation_traversal": concept_relation_service is not None,
+            "structural_observation_journal": episodic_is_native,
         }
 
     attach_evidence_routes(app, api_key=api_key, service=evidence_service)
     attach_structural_observation_routes(app, api_key=api_key, service=structural_service)
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_episodic_routes(app, api_key=api_key, service=episodic_service)
+    attach_structural_routes(
+        app,
+        api_key=api_key,
+        service=episodic_service if episodic_is_native else None,
+    )
     if concept_relation_service is not None:
         from .product_concept_relations import attach_concept_relation_routes
         attach_concept_relation_routes(app, api_key=api_key, service=concept_relation_service)

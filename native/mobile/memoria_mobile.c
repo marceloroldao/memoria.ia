@@ -967,6 +967,7 @@ memoria_mobile_status memoria_mobile_learn_turn_json(memoria_mobile_handle *h, m
     int relation_ids_present = 0;
     long order;
     double authority;
+    size_t i;
     unsigned long next_sequence;
     memoria_mobile_status response_status;
     if (!h || !req.data || !req.size || !out) return MEMORIA_MOBILE_INVALID_ARGUMENT;
@@ -1667,6 +1668,17 @@ memoria_mobile_status memoria_mobile_store_episode_json(memoria_mobile_handle *h
     if (!id || !session_id || !source_type || !root || !timestamp || !event_type || !topics) {
         free(json); free(id); free(session_id); free(role); free(text); free(timestamp); free(event_type); free(topics); free(source_type); free(root);
         return MEMORIA_MOBILE_INTERNAL_ERROR;
+    }
+    for (i = 0; i < h->episode_count; ++i) {
+        if (h->episodes[i].episode_id && strcmp(h->episodes[i].episode_id, id) == 0) {
+            response_status = set_responsef(
+                out,
+                MEMORIA_MOBILE_INVALID_ARGUMENT,
+                "{\"status\":\"ERROR\",\"reason\":\"episode_id already exists\"}"
+            );
+            free(json); free(id); free(session_id); free(role); free(text); free(timestamp); free(event_type); free(topics); free(source_type); free(root);
+            return response_status;
+        }
     }
     candidate.episode_id = id;
     candidate.session_id = session_id;

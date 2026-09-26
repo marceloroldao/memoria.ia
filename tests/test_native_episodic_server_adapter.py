@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 
+from memoria_resolutiva.episodic_contract import EpisodeStoreRequest
 from memoria_resolutiva.native_episodic import NativeEpisodicService
 from memoria_resolutiva.product_evidence import ProductEvidenceService
 from memoria_resolutiva.product_episodic import ProductEpisodicService, attach_episodic_routes
@@ -163,5 +164,35 @@ def test_native_episodic_service_refuses_to_drop_parent_lineage(tmp_path: Path):
         )
         assert response.status_code == 409
         assert "parent lineage" in response.json()["detail"]
+    finally:
+        service.close()
+
+
+def test_native_structural_observation_keeps_nonsemantic_provenance(tmp_path: Path):
+    service = _native_service(tmp_path, _native_library())
+    request = EpisodeStoreRequest(
+        episode_id="structural:test",
+        role="assistant",
+        text='{"schema":"memoria-structural-observation/v1","signature":"abc"}',
+        session_id="structural:session",
+        order=7,
+        timestamp="2026-09-21T20:00:00Z",
+        event_type="structural_observation",
+        topics=[],
+    )
+    try:
+        edge, receipt = service.store_structural(request)
+        assert edge.evidence_id == "structural:test"
+        assert receipt.durable is True
+        with pytest.raises(ValueError, match="episode_id already exists"):
+            service.store_structural(request)
+        rows = service.history(event_type="structural_observation", limit=10)
+        matching = [item for item in rows if item["episode_id"] == "structural:test"]
+        assert len(matching) == 1
+        row = matching[0]
+        assert row["source_type"] == "structural_observation"
+        assert row["source_authority"] == 0.0
+        assert row["ultimate_source_memory_id"] == "structural:test"
+        assert row["event_type"] == "structural_observation"
     finally:
         service.close()
