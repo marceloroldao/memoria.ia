@@ -52,6 +52,7 @@ typedef struct memoria_structural_region_activation {
     size_t embedded_query_count;
     size_t distinct_count;
     size_t max_exact_overlap;
+    size_t max_ordered_span;
     unsigned long first_sequence;
     unsigned long last_sequence;
 } memoria_structural_region_activation;

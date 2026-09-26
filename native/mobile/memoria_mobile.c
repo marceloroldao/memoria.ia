@@ -2032,12 +2032,12 @@ memoria_mobile_status memoria_mobile_probe_structural_regions_json(
             "%s{\"hierarchy_id\":\"%s\",\"observation_count\":%zu,"
             "\"matching_count\":%zu,\"query_echo_count\":%zu,"
             "\"embedded_query_count\":%zu,\"distinct_count\":%zu,"
-            "\"max_exact_overlap\":%zu,"
+            "\"max_exact_overlap\":%zu,\"max_ordered_span\":%zu,"
             "\"first_sequence\":%lu,\"last_sequence\":%lu}",
             i ? "," : "", id, region->observation_count,
             region->matching_count, region->query_echo_count,
             region->embedded_query_count, region->distinct_count,
-            region->max_exact_overlap,
+            region->max_exact_overlap, region->max_ordered_span,
             region->first_sequence, region->last_sequence);
         free(id);
         if (!written) goto internal_error_regions;

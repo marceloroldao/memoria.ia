@@ -892,6 +892,7 @@ int memoria_structural_text_runtime_activate_regions(
 ) {
     uint64_t *query_symbols = NULL;
     unsigned char *query_seen = NULL;
+    size_t *ordered_runs = NULL;
     size_t query_count = 0u, count = 0u, i, retained = 0u;
     memoria_structural_region_activation *regions = NULL;
     if (!runtime || !query || !*query || !out_regions || !out_count ||
@@ -902,9 +903,10 @@ int memoria_structural_text_runtime_activate_regions(
     *out_unseen_query_symbols = 0u;
     if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
     query_seen = calloc(query_count, sizeof(*query_seen));
+    ordered_runs = calloc(query_count + 1u, sizeof(*ordered_runs));
     regions = calloc(runtime->hierarchy_count ? runtime->hierarchy_count : 1u,
                      sizeof(*regions));
-    if (!regions || !query_seen) goto fail;
+    if (!regions || !query_seen || !ordered_runs) goto fail;
     for (i = 0u; i < runtime->hierarchy_count; ++i) {
         const char *id = runtime->hierarchies[i].hierarchy_id;
         if (strncmp(id, "conversation:", 13) != 0) continue;
@@ -942,12 +944,29 @@ int memoria_structural_text_runtime_activate_regions(
                 memcmp(symbols, query_symbols,
                        query_count * sizeof(*symbols)) == 0) {
                 ++region->query_echo_count;
-                } else {
-                    ++region->distinct_count;
-                    if (symbol_count > query_count && contains_symbol_span(
-                            symbols, symbol_count, query_symbols, query_count))
-                        ++region->embedded_query_count;
-                    if (overlap > region->max_exact_overlap)
+            } else {
+                size_t span = 0u, candidate_index;
+                ++region->distinct_count;
+                if (symbol_count > query_count && contains_symbol_span(
+                        symbols, symbol_count, query_symbols, query_count))
+                    ++region->embedded_query_count;
+                memset(ordered_runs, 0,
+                       (query_count + 1u) * sizeof(*ordered_runs));
+                for (candidate_index = 0u; candidate_index < symbol_count;
+                     ++candidate_index) {
+                    size_t query_index = query_count;
+                    while (query_index > 0u) {
+                        ordered_runs[query_index] =
+                            symbols[candidate_index] == query_symbols[query_index - 1u] ?
+                            ordered_runs[query_index - 1u] + 1u : 0u;
+                        if (ordered_runs[query_index] > span)
+                            span = ordered_runs[query_index];
+                        --query_index;
+                    }
+                }
+                if (span > region->max_ordered_span)
+                    region->max_ordered_span = span;
+                if (overlap > region->max_exact_overlap)
                     region->max_exact_overlap = overlap;
             }
         }
@@ -964,6 +983,7 @@ int memoria_structural_text_runtime_activate_regions(
     for (i = 0u; i < query_count; ++i)
         if (!query_seen[i]) ++*out_unseen_query_symbols;
     free(query_seen);
+    free(ordered_runs);
     free(query_symbols);
     qsort(regions, retained, sizeof(*regions), region_activation_compare);
     *out_regions = regions;
@@ -971,6 +991,7 @@ int memoria_structural_text_runtime_activate_regions(
     return 1;
 fail:
     free(query_seen);
+    free(ordered_runs);
     free(query_symbols);
     memoria_structural_text_region_activations_free(regions, count);
     return 0;

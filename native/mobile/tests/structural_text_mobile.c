@@ -286,6 +286,7 @@ static int check_near_echo_is_not_evidence(void) {
         "\"observation_count\":2,\"matching_count\":2,"
         "\"query_echo_count\":1,\"embedded_query_count\":0,"
         "\"distinct_count\":1"));
+    CHECK(contains(out, "\"max_ordered_span\":4"));
     clear(&out);
     CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:new\","
@@ -420,10 +421,14 @@ static int check_query_embedded_in_new_payload(void) {
         CHECK(contains(out, "\"region_count\":4"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:echo\","
             "\"observation_count\":2,\"matching_count\":2,"
-            "\"query_echo_count\":2,\"embedded_query_count\":0"));
+            "\"query_echo_count\":2,\"embedded_query_count\":0,"
+            "\"distinct_count\":0,\"max_exact_overlap\":0,"
+            "\"max_ordered_span\":0"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:request\","
             "\"observation_count\":1,\"matching_count\":1,"
-            "\"query_echo_count\":0,\"embedded_query_count\":1"));
+            "\"query_echo_count\":0,\"embedded_query_count\":1,"
+            "\"distinct_count\":1,\"max_exact_overlap\":5,"
+            "\"max_ordered_span\":5"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:request-copy\","
             "\"observation_count\":1,\"matching_count\":1,"
             "\"query_echo_count\":0,\"embedded_query_count\":1"));

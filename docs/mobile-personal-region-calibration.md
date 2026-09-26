@@ -48,6 +48,22 @@ before pagination. Two copies of the same containing payload in different
 conversation regions count as two occurrences but only one distinct containing
 payload. These counts describe structure, not independent factual support.
 
+The region preview now exposes `max_ordered_span`: the longest contiguous
+symbol path shared by the query and any **distinct** observation in a region.
+Exact query echoes do not contribute. This preserves order without a vocabulary
+of question templates; it still measures a text path, not a cognitive or
+factual trajectory, and does not change ranking or qualification.
+
+In a local replay of the same private 83-observation export, one repeatedly
+asked family query activated 23/25 regions. Among the first 16 returned, 14
+had an ordered span of at most two symbols, while two reached four or five.
+An absent technical question activated 22/25 regions; the first 16 had spans
+of one (13 regions) or two (3 regions), with no exact echo or containing
+payload. The preview limit means these distributions cover the first 16
+regions only. Near-question variants can also have a long ordered span, so
+none of these counts qualifies an answer or supplies a selection threshold.
+The raw export and responses remain outside Git.
+
 ## Region preview replay, 26 September 2026
 
 Running the preview against the same 83 private observations, without storing
