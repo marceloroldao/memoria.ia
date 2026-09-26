@@ -2031,11 +2031,13 @@ memoria_mobile_status memoria_mobile_probe_structural_regions_json(
         int written = id && mobile_response_appendf(&builder,
             "%s{\"hierarchy_id\":\"%s\",\"observation_count\":%zu,"
             "\"matching_count\":%zu,\"query_echo_count\":%zu,"
-            "\"distinct_count\":%zu,\"max_exact_overlap\":%zu,"
+            "\"embedded_query_count\":%zu,\"distinct_count\":%zu,"
+            "\"max_exact_overlap\":%zu,"
             "\"first_sequence\":%lu,\"last_sequence\":%lu}",
             i ? "," : "", id, region->observation_count,
             region->matching_count, region->query_echo_count,
-            region->distinct_count, region->max_exact_overlap,
+            region->embedded_query_count, region->distinct_count,
+            region->max_exact_overlap,
             region->first_sequence, region->last_sequence);
         free(id);
         if (!written) goto internal_error_regions;
@@ -2108,12 +2110,15 @@ memoria_mobile_status memoria_mobile_probe_structural_trails_json(
             "%s{\"fingerprint\":\"%s\",\"source_id\":\"%s\","
             "\"hierarchy_id\":\"%s\",\"occurrences\":%zu,"
             "\"region_count\":%zu,\"exact_overlap\":%zu,"
-            "\"query_echo\":%s,\"branch_address\":\"%s\","
+            "\"query_echo\":%s,\"contains_query_trail\":%s,"
+            "\"branch_address\":\"%s\","
             "\"branch_depth\":%zu,\"divergent_trail_count\":%zu,"
             "\"region_ids\":[",
             i == offset ? "" : ",", group->fingerprint, id, hierarchy,
             group->occurrences, group->region_count, group->exact_overlap,
-            group->query_echo ? "true" : "false", group->branch_address,
+            group->query_echo ? "true" : "false",
+            group->contains_query_trail ? "true" : "false",
+            group->branch_address,
             group->branch_depth, group->divergent_trail_count);
         free(id); free(hierarchy);
         if (!written) goto internal_error_trails;

@@ -233,14 +233,18 @@ static int check_region_probe(memoria_mobile_handle *h) {
     CHECK(fact_region != NULL && echo_region != NULL && fact_region < echo_region);
     CHECK(strncmp(fact_region,
         "\"hierarchy_id\":\"conversation:family-a\",\"observation_count\":2,"
-        "\"matching_count\":1,\"query_echo_count\":0,\"distinct_count\":1",
+        "\"matching_count\":1,\"query_echo_count\":0,"
+        "\"embedded_query_count\":0,\"distinct_count\":1",
         strlen("\"hierarchy_id\":\"conversation:family-a\",\"observation_count\":2,"
-               "\"matching_count\":1,\"query_echo_count\":0,\"distinct_count\":1")) == 0);
+               "\"matching_count\":1,\"query_echo_count\":0,"
+               "\"embedded_query_count\":0,\"distinct_count\":1")) == 0);
     CHECK(strncmp(echo_region,
         "\"hierarchy_id\":\"conversation:family-b\",\"observation_count\":1,"
-        "\"matching_count\":1,\"query_echo_count\":1,\"distinct_count\":0",
+        "\"matching_count\":1,\"query_echo_count\":1,"
+        "\"embedded_query_count\":0,\"distinct_count\":0",
         strlen("\"hierarchy_id\":\"conversation:family-b\",\"observation_count\":1,"
-               "\"matching_count\":1,\"query_echo_count\":1,\"distinct_count\":0")) == 0);
+               "\"matching_count\":1,\"query_echo_count\":1,"
+               "\"embedded_query_count\":0,\"distinct_count\":0")) == 0);
     CHECK(!contains(out, "Falsa"));
     clear(&out);
     CHECK(call_json(memoria_mobile_probe_structural_regions_json, h,
@@ -280,7 +284,8 @@ static int check_near_echo_is_not_evidence(void) {
     CHECK(contains(out, "\"qualified\":false"));
     CHECK(contains(out, "\"hierarchy_id\":\"conversation:questions\","
         "\"observation_count\":2,\"matching_count\":2,"
-        "\"query_echo_count\":1,\"distinct_count\":1"));
+        "\"query_echo_count\":1,\"embedded_query_count\":0,"
+        "\"distinct_count\":1"));
     clear(&out);
     CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:new\","
@@ -387,6 +392,64 @@ static int check_trail_recurrence(void) {
     return 0;
 }
 
+static int check_query_embedded_in_new_payload(void) {
+    const char *dir = "./tmp-mobile-embedded-query";
+    const char *observations[] = {
+        "{\"hierarchy_id\":\"conversation:echo\",\"source_id\":\"q1\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu pai?\"}",
+        "{\"hierarchy_id\":\"conversation:echo\",\"source_id\":\"q2\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"QUAL NOME DO MEU PAI?\"}",
+        "{\"hierarchy_id\":\"conversation:request\",\"source_id\":\"request\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}",
+        "{\"hierarchy_id\":\"conversation:story\",\"source_id\":\"story\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Andando pela cidade, alguém perguntou qual nome do meu pai?\"}",
+        "{\"hierarchy_id\":\"conversation:generated\",\"source_id\":\"assistant\",\"source_kind\":\"assistant_generated\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}"
+    };
+    memoria_mobile_handle *h = NULL;
+    memoria_mobile_buffer out = {0};
+    size_t i, pass;
+    (void)system("rm -rf ./tmp-mobile-embedded-query");
+    CHECK(memoria_mobile_open(dir, "org-embedded-query", &h) == MEMORIA_MOBILE_OK);
+    for (i = 0u; i < sizeof(observations) / sizeof(*observations); ++i) {
+        CHECK(call_json(memoria_mobile_observe_structural_text_json,
+            h, observations[i], &out) == MEMORIA_MOBILE_OK);
+        clear(&out);
+    }
+    for (pass = 0u; pass < 2u; ++pass) {
+        CHECK(call_json(memoria_mobile_probe_structural_regions_json, h,
+            "{\"query\":\"Qual nome do meu pai?\",\"limit\":16}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"qualified\":false"));
+        CHECK(contains(out, "\"region_count\":3"));
+        CHECK(contains(out, "\"hierarchy_id\":\"conversation:echo\","
+            "\"observation_count\":2,\"matching_count\":2,"
+            "\"query_echo_count\":2,\"embedded_query_count\":0"));
+        CHECK(contains(out, "\"hierarchy_id\":\"conversation:request\","
+            "\"observation_count\":1,\"matching_count\":1,"
+            "\"query_echo_count\":0,\"embedded_query_count\":1"));
+        CHECK(contains(out, "\"hierarchy_id\":\"conversation:story\","
+            "\"observation_count\":1,\"matching_count\":1,"
+            "\"query_echo_count\":0,\"embedded_query_count\":1"));
+        CHECK(!contains(out, "conversation:generated"));
+        clear(&out);
+        CHECK(call_json(memoria_mobile_probe_structural_trails_json, h,
+            "{\"query\":\"Qual nome do meu pai?\"}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"group_count\":3"));
+        CHECK(contains(out, "\"occurrences\":2,\"region_count\":1"));
+        CHECK(contains(out, "\"query_echo\":true,\"contains_query_trail\":false"));
+        CHECK(contains(out, "\"query_echo\":false,\"contains_query_trail\":true"));
+        CHECK(!contains(out, "conversation:generated"));
+        clear(&out);
+        if (pass == 0u) {
+            CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
+            memoria_mobile_close(h);
+            h = NULL;
+            CHECK(memoria_mobile_open(dir, "org-embedded-query", &h)
+                == MEMORIA_MOBILE_OK);
+        }
+    }
+    memoria_mobile_close(h);
+    (void)system("rm -rf ./tmp-mobile-embedded-query");
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -396,6 +459,7 @@ int main(void) {
     CHECK(memoria_mobile_open(dir, "org-structural-mobile", &h) == MEMORIA_MOBILE_OK);
     CHECK(check_near_echo_is_not_evidence() == 0);
     CHECK(check_trail_recurrence() == 0);
+    CHECK(check_query_embedded_in_new_payload() == 0);
 
     /*
      * Existing conversation ingest MUST NOT auto-feed the structural trail.

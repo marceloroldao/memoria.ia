@@ -33,6 +33,16 @@ trajectories. It now scans observations once and locates each conversation in
 an ordered region index; token comparison and the private replay remain open
 gates. This changes traversal cost, not the activation or evidence criteria.
 
+The preview additionally reports `embedded_query_count`: observations whose
+ordered symbol trail contains the whole query trail as a proper contiguous
+span. The trail recurrence probe exposes `contains_query_trail` on each
+distinct full payload. Thus an exact repeated question and a new narrative
+containing the same question remain separate observations. This is a read-only
+structural diagnostic; it does **not** infer that the narrative supports an
+answer, create a persistent phrase node, or reinforce any field on lookup.
+Case and punctuation follow the native tokenizer; paraphrases and inserted
+words inside the query span do not count as exact containment.
+
 ## Region preview replay, 26 September 2026
 
 Running the preview against the same 83 private observations, without storing

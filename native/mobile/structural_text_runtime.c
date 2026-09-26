@@ -831,6 +831,18 @@ static int same_symbol_trail(
     return same;
 }
 
+static int contains_symbol_span(
+    const uint64_t *trail, size_t trail_count,
+    const uint64_t *span, size_t span_count
+) {
+    size_t start;
+    if (!span_count || trail_count < span_count) return 0;
+    for (start = 0u; start <= trail_count - span_count; ++start)
+        if (memcmp(trail + start, span, span_count * sizeof(*span)) == 0)
+            return 1;
+    return 0;
+}
+
 void memoria_structural_text_region_activations_free(
     memoria_structural_region_activation *regions, size_t count
 ) {
@@ -930,9 +942,12 @@ int memoria_structural_text_runtime_activate_regions(
                 memcmp(symbols, query_symbols,
                        query_count * sizeof(*symbols)) == 0) {
                 ++region->query_echo_count;
-            } else {
-                ++region->distinct_count;
-                if (overlap > region->max_exact_overlap)
+                } else {
+                    ++region->distinct_count;
+                    if (symbol_count > query_count && contains_symbol_span(
+                            symbols, symbol_count, query_symbols, query_count))
+                        ++region->embedded_query_count;
+                    if (overlap > region->max_exact_overlap)
                     region->max_exact_overlap = overlap;
             }
         }
@@ -1082,6 +1097,9 @@ int memoria_structural_text_runtime_trail_recurrence(
             group->query_echo = symbol_count == query_count &&
                 memcmp(symbols, query_symbols,
                        query_count * sizeof(*symbols)) == 0;
+            group->contains_query_trail = symbol_count > query_count &&
+                contains_symbol_span(symbols, symbol_count,
+                                     query_symbols, query_count);
             recurrence_fingerprint(symbols, symbol_count, group->fingerprint);
             ++count;
         } else {

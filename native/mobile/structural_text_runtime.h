@@ -49,6 +49,7 @@ typedef struct memoria_structural_region_activation {
     size_t observation_count;
     size_t matching_count;
     size_t query_echo_count;
+    size_t embedded_query_count;
     size_t distinct_count;
     size_t max_exact_overlap;
     unsigned long first_sequence;
@@ -72,6 +73,7 @@ typedef struct memoria_structural_trail_recurrence {
     size_t region_count;
     size_t exact_overlap;
     int query_echo;
+    int contains_query_trail;
     /* Owned by this read-only result; used to verify hash collisions. */
     uint64_t *symbols;
     size_t symbol_count;
