@@ -72,6 +72,21 @@ regions only. Near-question variants can also have a long ordered span, so
 none of these counts qualifies an answer or supplies a selection threshold.
 The raw export and responses remain outside Git.
 
+The replay can be repeated with `scripts/mobile_region_replay.py` using a local
+OFF.IA JSON export, a private JSON array of query strings, and the built native
+shared library. It opens a temporary BDR database, replays observations,
+flushes and reopens it, checks the read-only probes, and resolves every
+displayed witness through its raw window. Standard output contains only case
+indices and aggregate counts; the input files stay local. This gate verifies
+provenance and the unqualified response contract. It does not decide whether
+a returned region answers a question.
+
+An exploratory branch contrast used symbols that differed between nearby
+observed question trails. On four private probes it reduced raw activation
+from 23, 21, 19 and 22 regions to 17, 4, 12 and 0, respectively. The absent
+control improved, but two personal probes still spread across many regions.
+This contrast is **not** a retrieval rule, factual gate, or native code path.
+
 ## Region preview replay, 26 September 2026
 
 Running the preview against the same 83 private observations, without storing
