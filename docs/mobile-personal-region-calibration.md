@@ -32,6 +32,22 @@ classified as an assertion. The preview does not traverse cognitive
 trajectories and performs a scan of observations per region, so runtime cost
 and the private replay remain open gates.
 
+## Region preview replay, 26 September 2026
+
+Running the preview against the same 83 private observations, without storing
+the export or raw responses in Git, produced these aggregate counts:
+
+| Probe | Activated regions | Observation |
+| --- | ---: | --- |
+| Family subject A | 21 of 25 | Shared query structure activates many regions |
+| Family subject B | 21 of 25 | Exact echoes are separated, but nearby questions remain distinct |
+| Absent technical subject | 22 of 25 | Direct overlap alone has unacceptable false activation |
+
+This fails the cross-conversation selection gate. The preview is useful for
+inspecting where activation spreads, but its ordering cannot feed a factual
+answer. The next gate must compare regional trajectories and confirm that an
+absent subject stays unresolved.
+
 ## Required before app integration
 
 1. Preserve the whole conversation window as an addressable region, retaining
