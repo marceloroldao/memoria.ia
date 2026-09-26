@@ -855,19 +855,24 @@ int memoria_structural_text_runtime_activate_regions(
     const memoria_structural_text_runtime *runtime,
     const char *query,
     memoria_structural_region_activation **out_regions,
-    size_t *out_count
+    size_t *out_count,
+    size_t *out_unseen_query_symbols
 ) {
     uint64_t *query_symbols = NULL;
+    unsigned char *query_seen = NULL;
     size_t query_count = 0u, count = 0u, i;
     memoria_structural_region_activation *regions = NULL;
-    if (!runtime || !query || !*query || !out_regions || !out_count)
+    if (!runtime || !query || !*query || !out_regions || !out_count ||
+        !out_unseen_query_symbols)
         return 0;
     *out_regions = NULL;
     *out_count = 0u;
+    *out_unseen_query_symbols = 0u;
     if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    query_seen = calloc(query_count, sizeof(*query_seen));
     regions = calloc(runtime->hierarchy_count ? runtime->hierarchy_count : 1u,
                      sizeof(*regions));
-    if (!regions) { free(query_symbols); return 0; }
+    if (!regions || !query_seen) goto fail;
     for (i = 0u; i < runtime->hierarchy_count; ++i) {
         const char *id = runtime->hierarchies[i].hierarchy_id;
         memoria_structural_region_activation *region;
@@ -892,7 +897,10 @@ int memoria_structural_text_runtime_activate_regions(
             for (q = 0u; q < query_count; ++q) {
                 for (s = 0u; s < symbol_count; ++s)
                     if (query_symbols[q] == symbols[s]) break;
-                if (s < symbol_count) ++overlap;
+                if (s < symbol_count) {
+                    ++overlap;
+                    query_seen[q] = 1u;
+                }
             }
             if (overlap) {
                 ++region->matching_count;
@@ -915,12 +923,16 @@ int memoria_structural_text_runtime_activate_regions(
         }
         ++count;
     }
+    for (i = 0u; i < query_count; ++i)
+        if (!query_seen[i]) ++*out_unseen_query_symbols;
+    free(query_seen);
     free(query_symbols);
     qsort(regions, count, sizeof(*regions), region_activation_compare);
     *out_regions = regions;
     *out_count = count;
     return 1;
 fail:
+    free(query_seen);
     free(query_symbols);
     memoria_structural_text_region_activations_free(regions, count + 1u);
     return 0;

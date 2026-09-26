@@ -225,6 +225,7 @@ static int check_region_probe(memoria_mobile_handle *h) {
     CHECK(contains(out, "\"status\":\"CANDIDATES\""));
     CHECK(contains(out, "\"qualified\":false"));
     CHECK(contains(out, "\"trajectory_used\":false"));
+    CHECK(contains(out, "\"unseen_query_symbols\":0"));
     fact_region = strstr((const char *)out.data,
         "\"hierarchy_id\":\"conversation:family-a\"");
     echo_region = strstr((const char *)out.data,
@@ -246,6 +247,7 @@ static int check_region_probe(memoria_mobile_handle *h) {
         "{\"query\":\"transformador indutância\"}", &out)
         == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out, "\"status\":\"UNRESOLVED\""));
+    CHECK(contains(out, "\"unseen_query_symbols\":2"));
     CHECK(contains(out, "\"region_count\":0"));
     clear(&out);
     return 0;

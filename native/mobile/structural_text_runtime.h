@@ -125,7 +125,8 @@ int memoria_structural_text_runtime_activate_regions(
     const memoria_structural_text_runtime *runtime,
     const char *query,
     memoria_structural_region_activation **out_regions,
-    size_t *out_count
+    size_t *out_count,
+    size_t *out_unseen_query_symbols
 );
 
 void memoria_structural_text_region_activations_free(

@@ -2000,7 +2000,7 @@ memoria_mobile_status memoria_mobile_probe_structural_regions_json(
     char *request = NULL, *query = NULL;
     memoria_structural_region_activation *regions = NULL;
     mobile_response_builder builder = {0};
-    size_t count = 0u, i, returned;
+    size_t count = 0u, unseen = 0u, i, returned;
     long limit;
     memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
     if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
@@ -2013,16 +2013,17 @@ memoria_mobile_status memoria_mobile_probe_structural_regions_json(
     limit = json_long(request, "limit", 8);
     if (!query || !query[0] || limit < 1 || limit > 16) goto done;
     if (!memoria_structural_text_runtime_activate_regions(
-            h->structural_text_runtime, query, &regions, &count)) {
+            h->structural_text_runtime, query, &regions, &count, &unseen)) {
         status = MEMORIA_MOBILE_INTERNAL_ERROR;
         goto done;
     }
     returned = count < (size_t)limit ? count : (size_t)limit;
     if (!mobile_response_appendf(&builder,
             "{\"status\":\"%s\",\"qualified\":false,"
-            "\"trajectory_used\":false,\"region_count\":%zu,"
+            "\"trajectory_used\":false,\"unseen_query_symbols\":%zu,"
+            "\"region_count\":%zu,"
             "\"returned\":%zu,\"regions\":[",
-            count ? "CANDIDATES" : "UNRESOLVED", count, returned))
+            count ? "CANDIDATES" : "UNRESOLVED", unseen, count, returned))
         goto internal_error_regions;
     for (i = 0u; i < returned; ++i) {
         const memoria_structural_region_activation *region = &regions[i];

@@ -37,16 +37,18 @@ and the private replay remain open gates.
 Running the preview against the same 83 private observations, without storing
 the export or raw responses in Git, produced these aggregate counts:
 
-| Probe | Activated regions | Observation |
-| --- | ---: | --- |
-| Family subject A | 21 of 25 | Shared query structure activates many regions |
-| Family subject B | 21 of 25 | Exact echoes are separated, but nearby questions remain distinct |
-| Absent technical subject | 22 of 25 | Direct overlap alone has unacceptable false activation |
+| Probe | Activated regions | Unseen query symbols | Observation |
+| --- | ---: | ---: | --- |
+| Family subject A | 21 of 25 | 0 | Shared query structure activates many regions |
+| Family subject B | 21 of 25 | 0 | Exact echoes are separated, but nearby questions remain distinct |
+| Absent technical subject | 22 of 25 | 3 | Direct overlap alone has unacceptable false activation |
 
 This fails the cross-conversation selection gate. The preview is useful for
 inspecting where activation spreads, but its ordering cannot feed a factual
 answer. The next gate must compare regional trajectories and confirm that an
 absent subject stays unresolved.
+The count of unseen query symbols is a diagnostic signal, not a rule that
+missing symbols always imply an absent fact; paraphrases can contain new words.
 
 ## Required before app integration
 
