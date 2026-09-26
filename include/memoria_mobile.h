@@ -129,6 +129,16 @@ memoria_mobile_status memoria_mobile_export_structural_text_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Read-only addressable conversation region. Request: hierarchy_id, offset,
+ * limit (1..64), optional expected_token for stable pagination. Records
+ * remain raw observations; previous/next IDs describe temporal adjacency,
+ * not inferred truth or a semantic trajectory. */
+memoria_mobile_status memoria_mobile_read_structural_window_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,

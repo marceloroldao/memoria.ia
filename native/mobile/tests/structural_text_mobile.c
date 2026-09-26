@@ -130,6 +130,51 @@ static int check_window_group(memoria_mobile_handle *h) {
     return 0;
 }
 
+static int check_window_region(memoria_mobile_handle *h) {
+    memoria_mobile_buffer out = {0};
+    char request[256];
+    char token[17];
+    const char *start;
+    CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"offset\":0,\"limit\":2}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"window_revision\":6"));
+    CHECK(contains(out, "\"next_offset\":2"));
+    CHECK(contains(out, "\"source_id\":\"region-fact\""));
+    CHECK(contains(out, "\"next_source_id\":\"region-q1\""));
+    CHECK(!contains(out, "\"source_id\":\"region-q2\""));
+    start = strstr((const char *)out.data, "\"window_token\":\"");
+    CHECK(start != NULL);
+    start += strlen("\"window_token\":\"");
+    CHECK(strlen(start) >= 16u);
+    memcpy(token, start, 16u);
+    token[16] = 0;
+    clear(&out);
+    snprintf(request, sizeof(request),
+        "{\"hierarchy_id\":\"conversation:region\",\"offset\":2,"
+        "\"limit\":2,\"expected_token\":\"%s\"}", token);
+    CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+        request, &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"source_id\":\"region-q2\""));
+    CHECK(contains(out, "\"prev_source_id\":\"region-q1\""));
+    CHECK(contains(out, "\"next_source_id\":\"region-q3\""));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"offset\":2,"
+        "\"limit\":2,\"expected_token\":\"0000000000000000\"}",
+        &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"status\":\"STALE_WINDOW\""));
+    CHECK(!contains(out, "\"source_id\""));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+        "{\"hierarchy_id\":\"conversation:absent\"}", &out)
+        == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"window_revision\":0"));
+    CHECK(contains(out, "\"observations\":[]"));
+    clear(&out);
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -269,6 +314,7 @@ int main(void) {
         "\"text\":\"qual nome do meu pai?\"}", &out) == MEMORIA_MOBILE_OK);
     clear(&out);
     CHECK(check_window_group(h) == 0);
+    CHECK(check_window_region(h) == 0);
 
     /* Exact retry is idempotent. */
     CHECK(call_json(
@@ -293,6 +339,7 @@ int main(void) {
 
     CHECK(check_context_scope(h) == 0);
     CHECK(check_window_group(h) == 0);
+    CHECK(check_window_region(h) == 0);
     CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:collection\","
         "\"query\":\"Quais gatos eu mencionei?\",\"top_k\":3}", &out)
@@ -300,6 +347,34 @@ int main(void) {
     CHECK(contains(out, "Tenho um gato chamado Alt."));
     CHECK(contains(out, "Também conheço um gato chamado Nino."));
     clear(&out);
+
+    /* A new observation invalidates a token obtained before the mutation. */
+    CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+        "{\"hierarchy_id\":\"conversation:region\",\"limit\":2}", &out)
+        == MEMORIA_MOBILE_OK);
+    {
+        const char *start = strstr((const char *)out.data, "\"window_token\":\"");
+        char old_token[17], request[256];
+        CHECK(start != NULL);
+        start += strlen("\"window_token\":\"");
+        memcpy(old_token, start, 16u);
+        old_token[16] = 0;
+        clear(&out);
+        CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+            "{\"hierarchy_id\":\"conversation:region\","
+            "\"source_id\":\"region-new\",\"source_kind\":\"user_turn\","
+            "\"sequence\":7,\"text\":\"Outra observação.\"}", &out)
+            == MEMORIA_MOBILE_OK);
+        clear(&out);
+        snprintf(request, sizeof(request),
+            "{\"hierarchy_id\":\"conversation:region\",\"offset\":2,"
+            "\"expected_token\":\"%s\"}", old_token);
+        CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+            request, &out) == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"status\":\"STALE_WINDOW\""));
+        CHECK(contains(out, "\"window_revision\":7"));
+        clear(&out);
+    }
 
     /* Logical format clears raw observations and therefore derived recall too. */
     CHECK(call_json(
