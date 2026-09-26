@@ -28,6 +28,7 @@ typedef struct memoria_structural_text_occurrence {
 } memoria_structural_text_occurrence;
 
 typedef struct memoria_structural_text_context {
+    char *source_hierarchy_id;
     char *source_text;
     char *source_id;
     char *source_kind;
@@ -89,6 +90,17 @@ int memoria_structural_text_runtime_resolve(
 int memoria_structural_text_runtime_resolve_window_group(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+);
+
+/* Read-only evidence across conversation windows. Each result retains its
+ * originating hierarchy; this does not assign an epistemic role to the text. */
+int memoria_structural_text_runtime_resolve_personal_evidence(
+    memoria_structural_text_runtime *runtime,
+    const char *current_hierarchy_id,
     const char *query,
     size_t top_k,
     memoria_structural_text_context **out_contexts,

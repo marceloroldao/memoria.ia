@@ -696,6 +696,7 @@ int memoria_structural_text_runtime_observe(
 static void free_context(memoria_structural_text_context *context) {
     size_t i;
     if (!context) return;
+    free(context->source_hierarchy_id);
     free(context->source_text);
     free(context->source_id);
     free(context->source_kind);
@@ -779,18 +780,22 @@ static int context_set_source(
     char *text = dup_text(observation->text);
     char *source_id = dup_text(observation->source_id);
     char *source_kind = dup_text(observation->source_kind);
-    if (!text || !source_id || !source_kind) {
+    char *source_hierarchy_id = dup_text(observation->hierarchy_id);
+    if (!text || !source_id || !source_kind || !source_hierarchy_id) {
         free(text);
         free(source_id);
         free(source_kind);
+        free(source_hierarchy_id);
         return 0;
     }
     free(context->source_text);
     free(context->source_id);
     free(context->source_kind);
+    free(context->source_hierarchy_id);
     context->source_text = text;
     context->source_id = source_id;
     context->source_kind = source_kind;
+    context->source_hierarchy_id = source_hierarchy_id;
     context->sequence = observation->sequence;
     return 1;
 }
@@ -833,10 +838,13 @@ static int resolve_text_impl(
     size_t top_k,
     memoria_structural_text_context **out_contexts,
     size_t *out_count,
-    int window_group
+    int window_group,
+    int personal_evidence
 ) {
     const runtime_hierarchy *hierarchy;
     uint64_t *query_symbols = NULL;
+    size_t *query_frequency = NULL;
+    double query_weight_total = 0.0;
     size_t query_count = 0u;
     memoria_structural_text_context *contexts = NULL;
     size_t context_count = 0u;
@@ -849,8 +857,31 @@ static int resolve_text_impl(
     *out_contexts = NULL;
     *out_count = 0u;
     hierarchy = find_hierarchy_const(runtime, hierarchy_id);
-    if (!hierarchy) return 1;
+    if (!hierarchy && !personal_evidence) return 1;
     if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    if (personal_evidence) {
+        query_frequency = (size_t *)calloc(query_count, sizeof(*query_frequency));
+        if (!query_frequency) { free(query_symbols); return 0; }
+        for (i = 0; i < runtime->observation_count; ++i) {
+            const runtime_observation *item = &runtime->observations[i];
+            uint64_t *symbols = NULL;
+            size_t count = 0u, q, s;
+            if (strncmp(item->hierarchy_id, "conversation:", 13) != 0 ||
+                (strcmp(item->source_kind, "user_turn") != 0 &&
+                 strcmp(item->source_kind, "user_assertion") != 0)) continue;
+            if (!tokenize_alloc(item->text, &symbols, &count)) {
+                free(query_frequency); free(query_symbols); return 0;
+            }
+            for (q = 0; q < query_count; ++q)
+                for (s = 0; s < count; ++s)
+                    if (query_symbols[q] == symbols[s]) {
+                        ++query_frequency[q]; break;
+                    }
+            free(symbols);
+        }
+        for (i = 0; i < query_count; ++i)
+            query_weight_total += 1.0 / (1.0 + (double)query_frequency[i]);
+    }
 
     for (i = 0; i < runtime->observation_count; ++i) {
         const runtime_observation *observation = &runtime->observations[i];
@@ -859,17 +890,25 @@ static int resolve_text_impl(
         memoria_structural_text_score score;
         size_t j;
         memoria_structural_text_context *context = NULL;
-        if (strcmp(observation->hierarchy_id, hierarchy_id) != 0)
+        if (!personal_evidence &&
+            strcmp(observation->hierarchy_id, hierarchy_id) != 0)
+            continue;
+        if (personal_evidence &&
+            (strncmp(observation->hierarchy_id, "conversation:", 13) != 0 ||
+             (strcmp(observation->source_kind, "user_turn") != 0 &&
+              strcmp(observation->source_kind, "user_assertion") != 0)))
             continue;
         if (!tokenize_alloc(
             observation->text, &candidate_symbols, &candidate_count
         )) {
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         if (!memoria_structural_text_score_candidate(
-            hierarchy->field,
+            personal_evidence ?
+                find_hierarchy_const(runtime, observation->hierarchy_id)->field :
+                hierarchy->field,
             query_symbols,
             query_count,
             candidate_symbols,
@@ -878,7 +917,7 @@ static int resolve_text_impl(
         )) {
             free(candidate_symbols);
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         if (!memoria_structural_text_surface_overlap(
@@ -886,10 +925,39 @@ static int resolve_text_impl(
         )) {
             free(candidate_symbols);
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         score.score += 0.4 * (double)score.surface_overlap / (double)query_count;
+        if (personal_evidence) {
+            size_t k, novel = 0u;
+            double shared_weight = 0.0;
+            for (k = 0; k < candidate_count; ++k) {
+                size_t q;
+                for (q = 0; q < query_count; ++q)
+                    if (candidate_symbols[k] == query_symbols[q]) break;
+                if (q == query_count) ++novel;
+            }
+            /* A repeated question supplies no new evidence. For old records
+             * tagged user_assertion, the tag alone cannot establish truth. */
+            if (!novel || (score.exact_overlap < 2u &&
+                           score.surface_overlap < 2u)) {
+                free(candidate_symbols);
+                continue;
+            }
+            for (k = 0; k < query_count; ++k) {
+                size_t c;
+                for (c = 0; c < candidate_count; ++c)
+                    if (query_symbols[k] == candidate_symbols[c]) {
+                        shared_weight += 1.0 / (1.0 + (double)query_frequency[k]);
+                        break;
+                    }
+            }
+            /* Rare shared symbols carry more regional evidence than common
+             * query scaffolding. Associations only break close ties. */
+            score.score = shared_weight / query_weight_total +
+                0.05 * score.association_mass;
+        }
         if (score.score <= 0.0) {
             free(candidate_symbols);
             continue;
@@ -897,6 +965,10 @@ static int resolve_text_impl(
 
         for (j = 0; j < context_count; ++j) {
             int same = strcmp(contexts[j].source_text, observation->text) == 0;
+            if (personal_evidence && strcmp(
+                contexts[j].source_hierarchy_id,
+                observation->hierarchy_id
+            ) != 0) same = 0;
             if (window_group &&
                 strcmp(contexts[j].source_kind, observation->source_kind) != 0)
                 same = 0;
@@ -908,7 +980,7 @@ static int resolve_text_impl(
             if (same < 0) {
                 free(candidate_symbols);
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             if (same) {
@@ -928,7 +1000,7 @@ static int resolve_text_impl(
                     memoria_structural_text_contexts_free(
                         contexts, context_count
                     );
-                    free(query_symbols);
+                    free(query_frequency); free(query_symbols);
                     return 0;
                 }
                 contexts = grown;
@@ -943,7 +1015,7 @@ static int resolve_text_impl(
             if (!context_set_source(context, observation) ||
                 !context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             context->score = score.score;
@@ -954,7 +1026,7 @@ static int resolve_text_impl(
         } else {
             if (!context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             ++context->repetitions;
@@ -968,7 +1040,7 @@ static int resolve_text_impl(
                     memoria_structural_text_contexts_free(
                         contexts, context_count
                     );
-                    free(query_symbols);
+                    free(query_frequency); free(query_symbols);
                     return 0;
                 }
                 context->score = score.score;
@@ -978,7 +1050,7 @@ static int resolve_text_impl(
             }
         }
     }
-    free(query_symbols);
+    free(query_frequency); free(query_symbols);
 
     qsort(
         contexts,
@@ -1041,7 +1113,7 @@ int memoria_structural_text_runtime_resolve(
     size_t *out_count
 ) {
     return resolve_text_impl(
-        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 0
+        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 0, 0
     );
 }
 
@@ -1054,8 +1126,20 @@ int memoria_structural_text_runtime_resolve_window_group(
     size_t *out_count
 ) {
     return resolve_text_impl(
-        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 1
+        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 1, 0
     );
+}
+
+int memoria_structural_text_runtime_resolve_personal_evidence(
+    memoria_structural_text_runtime *runtime,
+    const char *current_hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+) {
+    return resolve_text_impl(runtime, current_hierarchy_id, query, top_k,
+                             out_contexts, out_count, 0, 1);
 }
 
 size_t memoria_structural_text_runtime_window_revision(
