@@ -2053,6 +2053,90 @@ done:
     return status;
 }
 
+memoria_mobile_status memoria_mobile_probe_structural_trails_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *request = NULL, *query = NULL;
+    memoria_structural_trail_recurrence *groups = NULL;
+    mobile_response_builder builder = {0};
+    size_t count = 0u, offset, end, i;
+    long requested_offset, requested_limit;
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
+        return status;
+    out->data = NULL;
+    out->size = 0u;
+    request = buffer_to_string(req);
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    query = json_string(request, "query");
+    requested_offset = json_long(request, "offset", 0);
+    requested_limit = json_long(request, "limit", 16);
+    if (!query || !query[0] || requested_offset < 0 ||
+        requested_limit < 1 || requested_limit > 64) goto done;
+    if (!memoria_structural_text_runtime_trail_recurrence(
+            h->structural_text_runtime, query, &groups, &count)) {
+        status = MEMORIA_MOBILE_INTERNAL_ERROR;
+        goto done;
+    }
+    offset = (size_t)requested_offset < count ? (size_t)requested_offset : count;
+    end = count - offset < (size_t)requested_limit ?
+        count : offset + (size_t)requested_limit;
+    if (!mobile_response_appendf(&builder,
+            "{\"status\":\"%s\",\"qualified\":false,"
+            "\"trajectory_used\":false,\"observation_count\":%zu,"
+            "\"group_count\":%zu,\"page\":{\"offset\":%zu,"
+            "\"returned\":%zu,\"next_offset\":",
+            count ? "CANDIDATES" : "UNRESOLVED",
+            memoria_structural_text_runtime_observation_count(
+                h->structural_text_runtime), count, offset, end - offset))
+        goto internal_error_trails;
+    if (end < count) {
+        if (!mobile_response_appendf(&builder, "%zu", end))
+            goto internal_error_trails;
+    } else if (!mobile_response_appendf(&builder, "null"))
+        goto internal_error_trails;
+    if (!mobile_response_appendf(&builder, "},\"groups\":["))
+        goto internal_error_trails;
+    for (i = offset; i < end; ++i) {
+        const memoria_structural_trail_recurrence *group = &groups[i];
+        char *id = json_escape(group->source_id);
+        char *hierarchy = json_escape(group->hierarchy_id);
+        size_t j;
+        int written = id && hierarchy && mobile_response_appendf(&builder,
+            "%s{\"fingerprint\":\"%s\",\"source_id\":\"%s\","
+            "\"hierarchy_id\":\"%s\",\"occurrences\":%zu,"
+            "\"region_count\":%zu,\"exact_overlap\":%zu,"
+            "\"query_echo\":%s,\"region_ids\":[",
+            i == offset ? "" : ",", group->fingerprint, id, hierarchy,
+            group->occurrences, group->region_count, group->exact_overlap,
+            group->query_echo ? "true" : "false");
+        free(id); free(hierarchy);
+        if (!written) goto internal_error_trails;
+        for (j = 0u; j < group->region_count; ++j) {
+            char *region_id = json_escape(group->region_ids[j]);
+            written = region_id && mobile_response_appendf(
+                &builder, "%s\"%s\"", j ? "," : "", region_id);
+            free(region_id);
+            if (!written) goto internal_error_trails;
+        }
+        if (!mobile_response_appendf(&builder, "]}"))
+            goto internal_error_trails;
+    }
+    if (!mobile_response_appendf(&builder, "]}")) goto internal_error_trails;
+    status = set_response(out, builder.data, MEMORIA_MOBILE_UNRESOLVED);
+    goto done;
+internal_error_trails:
+    status = MEMORIA_MOBILE_INTERNAL_ERROR;
+done:
+    free(builder.data);
+    memoria_structural_text_trail_recurrences_free(groups, count);
+    free(query);
+    free(request);
+    return status;
+}
+
 static int concept_catalog_parse_number(const char **cursor, size_t *remaining, size_t *value) {
     size_t v = 0, digits = 0;
     const char *p;

@@ -60,6 +60,14 @@ the native selection or answer contract. A new synthetic negative test also
 records that a question with one extra word is a distinct trail, while it
 remains unqualified evidence.
 
+A separate read-only trail recurrence probe groups identical observed symbol
+sequences and reports `occurrences` and `region_count` independently. The gate
+checks two repeats in one conversation plus one in another as three occurrences
+from two regions. A different continuation remains a separate trail, and an
+exact repeated question is marked `query_echo`. Assistant-generated text is
+excluded. These are structural observations, not corroborated facts or an
+automatic conflict decision; the probe still returns `UNRESOLVED`.
+
 ## Required before app integration
 
 1. Preserve the whole conversation window as an addressable region, retaining

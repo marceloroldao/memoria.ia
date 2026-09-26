@@ -55,6 +55,21 @@ typedef struct memoria_structural_region_activation {
     unsigned long last_sequence;
 } memoria_structural_region_activation;
 
+typedef struct memoria_structural_trail_recurrence {
+    char fingerprint[17];
+    char *source_id;
+    char *hierarchy_id;
+    size_t occurrences;
+    size_t region_count;
+    size_t exact_overlap;
+    int query_echo;
+    /* Owned by this read-only result; used to verify hash collisions. */
+    uint64_t *symbols;
+    size_t symbol_count;
+    const char **region_ids;
+    size_t region_capacity;
+} memoria_structural_trail_recurrence;
+
 /*
  * Open the structural text runtime over the SAME BDR handle already owned by
  * Memoria.ia mobile persistence. The runtime borrows db and never closes it.
@@ -131,6 +146,20 @@ int memoria_structural_text_runtime_activate_regions(
 
 void memoria_structural_text_region_activations_free(
     memoria_structural_region_activation *regions,
+    size_t count
+);
+
+/* Groups identical observed symbol trails. A second source ID in one region
+ * increases occurrences, not region_count. Neither count proves truth. */
+int memoria_structural_text_runtime_trail_recurrence(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_trail_recurrence **out_groups,
+    size_t *out_count
+);
+
+void memoria_structural_text_trail_recurrences_free(
+    memoria_structural_trail_recurrence *groups,
     size_t count
 );
 

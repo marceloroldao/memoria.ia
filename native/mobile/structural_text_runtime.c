@@ -938,6 +938,128 @@ fail:
     return 0;
 }
 
+void memoria_structural_text_trail_recurrences_free(
+    memoria_structural_trail_recurrence *groups, size_t count
+) {
+    size_t i;
+    if (!groups) return;
+    for (i = 0u; i < count; ++i) {
+        free(groups[i].source_id);
+        free(groups[i].hierarchy_id);
+        free(groups[i].symbols);
+        free(groups[i].region_ids);
+    }
+    free(groups);
+}
+
+static void recurrence_fingerprint(
+    const uint64_t *symbols, size_t count, char out[17]
+) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    size_t i, byte;
+    for (i = 0u; i < count; ++i)
+        for (byte = 0u; byte < 8u; ++byte) {
+            hash ^= (symbols[i] >> (byte * 8u)) & UINT64_C(0xff);
+            hash *= UINT64_C(1099511628211);
+        }
+    snprintf(out, 17u, "%016llx", (unsigned long long)hash);
+}
+
+int memoria_structural_text_runtime_trail_recurrence(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_trail_recurrence **out_groups,
+    size_t *out_count
+) {
+    uint64_t *query_symbols = NULL;
+    size_t query_count = 0u, count = 0u, capacity = 0u, i;
+    memoria_structural_trail_recurrence *groups = NULL;
+    if (!runtime || !query || !*query || !out_groups || !out_count) return 0;
+    *out_groups = NULL;
+    *out_count = 0u;
+    if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const runtime_observation *item = &runtime->observations[i];
+        uint64_t *symbols = NULL;
+        size_t symbol_count = 0u, overlap = 0u, q, s, j;
+        memoria_structural_trail_recurrence *group;
+        if (strncmp(item->hierarchy_id, "conversation:", 13) != 0 ||
+            (strcmp(item->source_kind, "user_turn") != 0 &&
+             strcmp(item->source_kind, "user_assertion") != 0)) continue;
+        if (!tokenize_alloc(item->text, &symbols, &symbol_count)) goto fail;
+        for (q = 0u; q < query_count; ++q) {
+            for (s = 0u; s < symbol_count; ++s)
+                if (query_symbols[q] == symbols[s]) break;
+            if (s < symbol_count) ++overlap;
+        }
+        if (!overlap) { free(symbols); continue; }
+        for (j = 0u; j < count; ++j)
+            if (groups[j].symbol_count == symbol_count &&
+                memcmp(groups[j].symbols, symbols,
+                       symbol_count * sizeof(*symbols)) == 0) break;
+        if (j == count) {
+            memoria_structural_trail_recurrence *grown;
+            if (count == capacity) {
+                size_t next = capacity ? capacity * 2u : 8u;
+                if (next < capacity || next > ((size_t)-1) / sizeof(*groups)) {
+                    free(symbols); goto fail;
+                }
+                grown = realloc(groups, next * sizeof(*groups));
+                if (!grown) { free(symbols); goto fail; }
+                groups = grown;
+                memset(groups + capacity, 0,
+                       (next - capacity) * sizeof(*groups));
+                capacity = next;
+            }
+            group = &groups[count];
+            group->source_id = dup_text(item->source_id);
+            group->hierarchy_id = dup_text(item->hierarchy_id);
+            if (!group->source_id || !group->hierarchy_id) {
+                free(symbols);
+                memoria_structural_text_trail_recurrences_free(groups, count + 1u);
+                free(query_symbols);
+                return 0;
+            }
+            group->symbols = symbols;
+            group->symbol_count = symbol_count;
+            group->exact_overlap = overlap;
+            group->query_echo = symbol_count == query_count &&
+                memcmp(symbols, query_symbols,
+                       query_count * sizeof(*symbols)) == 0;
+            recurrence_fingerprint(symbols, symbol_count, group->fingerprint);
+            ++count;
+        } else {
+            group = &groups[j];
+            free(symbols);
+        }
+        ++group->occurrences;
+        for (j = 0u; j < group->region_count; ++j)
+            if (strcmp(group->region_ids[j], item->hierarchy_id) == 0) break;
+        if (j == group->region_count) {
+            const char **grown;
+            if (group->region_count == group->region_capacity) {
+                size_t next = group->region_capacity ?
+                    group->region_capacity * 2u : 2u;
+                if (next < group->region_capacity ||
+                    next > ((size_t)-1) / sizeof(*grown)) goto fail;
+                grown = realloc(group->region_ids, next * sizeof(*grown));
+                if (!grown) goto fail;
+                group->region_ids = grown;
+                group->region_capacity = next;
+            }
+            group->region_ids[group->region_count++] = item->hierarchy_id;
+        }
+    }
+    free(query_symbols);
+    *out_groups = groups;
+    *out_count = count;
+    return 1;
+fail:
+    free(query_symbols);
+    memoria_structural_text_trail_recurrences_free(groups, count);
+    return 0;
+}
+
 static int resolve_text_impl(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,

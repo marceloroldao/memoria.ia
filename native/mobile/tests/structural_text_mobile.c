@@ -294,6 +294,62 @@ static int check_near_echo_is_not_evidence(void) {
     return 0;
 }
 
+static int check_trail_recurrence(void) {
+    const char *dir = "./tmp-mobile-trail-recurrence";
+    const char *observations[] = {
+        "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"f1\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha mãe se chama PessoaM.\"}",
+        "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"f2\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Minha mãe se chama PessoaM.\"}",
+        "{\"hierarchy_id\":\"conversation:b\",\"source_id\":\"f3\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha mãe se chama PessoaM.\"}",
+        "{\"hierarchy_id\":\"conversation:c\",\"source_id\":\"alt\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha mãe se chama PessoaN.\"}",
+        "{\"hierarchy_id\":\"conversation:q\",\"source_id\":\"q1\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"Qual nome da minha mãe?\"}",
+        "{\"hierarchy_id\":\"conversation:q\",\"source_id\":\"q2\",\"source_kind\":\"user_assertion\",\"sequence\":2,\"text\":\"Qual nome da minha mãe?\"}",
+        "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"generated\",\"source_kind\":\"assistant_generated\",\"sequence\":3,\"text\":\"Minha mãe se chama Falsa.\"}"
+    };
+    memoria_mobile_handle *h = NULL;
+    memoria_mobile_buffer out = {0};
+    size_t i;
+    (void)system("rm -rf ./tmp-mobile-trail-recurrence");
+    CHECK(memoria_mobile_open(dir, "org-trail-recurrence", &h) == MEMORIA_MOBILE_OK);
+    for (i = 0u; i < sizeof(observations) / sizeof(*observations); ++i) {
+        CHECK(call_json(memoria_mobile_observe_structural_text_json,
+            h, observations[i], &out) == MEMORIA_MOBILE_OK);
+        clear(&out);
+    }
+    for (i = 0u; i < 2u; ++i) {
+        CHECK(call_json(memoria_mobile_probe_structural_trails_json, h,
+            "{\"query\":\"Qual nome da minha mãe?\",\"limit\":16}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"qualified\":false"));
+        CHECK(contains(out, "\"group_count\":3"));
+        CHECK(contains(out, "\"source_id\":\"f1\",\"hierarchy_id\":\"conversation:a\","
+            "\"occurrences\":3,\"region_count\":2"));
+        CHECK(contains(out, "\"region_ids\":[\"conversation:a\",\"conversation:b\"]"));
+        CHECK(contains(out, "\"source_id\":\"alt\",\"hierarchy_id\":\"conversation:c\","
+            "\"occurrences\":1,\"region_count\":1"));
+        CHECK(contains(out, "\"source_id\":\"q1\",\"hierarchy_id\":\"conversation:q\","
+            "\"occurrences\":2,\"region_count\":1"));
+        CHECK(contains(out, "\"query_echo\":true"));
+        CHECK(!contains(out, "generated"));
+        clear(&out);
+        if (i == 0u) {
+            CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
+            memoria_mobile_close(h);
+            h = NULL;
+            CHECK(memoria_mobile_open(dir, "org-trail-recurrence", &h)
+                == MEMORIA_MOBILE_OK);
+        }
+    }
+    CHECK(call_json(memoria_mobile_probe_structural_trails_json, h,
+        "{\"query\":\"Qual nome da minha mãe?\",\"limit\":1}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"next_offset\":1"));
+    CHECK(contains(out, "\"returned\":1"));
+    clear(&out);
+    memoria_mobile_close(h);
+    (void)system("rm -rf ./tmp-mobile-trail-recurrence");
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -302,6 +358,7 @@ int main(void) {
     (void)system("rm -rf ./tmp-mobile-structural-text");
     CHECK(memoria_mobile_open(dir, "org-structural-mobile", &h) == MEMORIA_MOBILE_OK);
     CHECK(check_near_echo_is_not_evidence() == 0);
+    CHECK(check_trail_recurrence() == 0);
 
     /*
      * Existing conversation ingest MUST NOT auto-feed the structural trail.

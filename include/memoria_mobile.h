@@ -148,6 +148,15 @@ memoria_mobile_status memoria_mobile_probe_structural_regions_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Read-only recurrence of identical user-observed symbol trails. Request:
+ * query, offset, limit (1..64). Counts source observations separately from
+ * distinct conversation regions; neither count establishes a fact. */
+memoria_mobile_status memoria_mobile_probe_structural_trails_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
