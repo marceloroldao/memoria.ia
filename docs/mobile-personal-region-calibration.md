@@ -68,6 +68,13 @@ exact repeated question is marked `query_echo`. Assistant-generated text is
 excluded. These are structural observations, not corroborated facts or an
 automatic conflict decision; the probe still returns `UNRESOLVED`.
 
+The private replay illustrates why region count cannot equal corroboration:
+the exact repeated question for family subject C occurred 12 times in 10
+conversation regions. Exact query echoes for subjects A and B appeared 3 times
+in 2 regions and 7 times in 4 regions, respectively. The absent technical
+query had no exact echo. These aggregate counts are not entered as factual
+support; repeated questioning can span independent conversation IDs.
+
 ## Required before app integration
 
 1. Preserve the whole conversation window as an addressable region, retaining
