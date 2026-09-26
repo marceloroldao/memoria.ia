@@ -287,6 +287,9 @@ static int check_near_echo_is_not_evidence(void) {
         "\"query_echo_count\":1,\"embedded_query_count\":0,"
         "\"distinct_count\":1"));
     CHECK(contains(out, "\"max_ordered_span\":4"));
+    CHECK(contains(out, "\"witness\":{\"source_id\":\"q2\","
+        "\"source_kind\":\"user_assertion\",\"sequence\":2,"
+        "\"ordered_span\":4}"));
     clear(&out);
     CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:new\","
@@ -424,11 +427,15 @@ static int check_query_embedded_in_new_payload(void) {
             "\"query_echo_count\":2,\"embedded_query_count\":0,"
             "\"distinct_count\":0,\"max_exact_overlap\":0,"
             "\"max_ordered_span\":0"));
+        CHECK(contains(out, "\"witness\":null"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:request\","
             "\"observation_count\":1,\"matching_count\":1,"
             "\"query_echo_count\":0,\"embedded_query_count\":1,"
             "\"distinct_count\":1,\"max_exact_overlap\":5,"
             "\"max_ordered_span\":5"));
+        CHECK(contains(out, "\"witness\":{\"source_id\":\"request\","
+            "\"source_kind\":\"user_turn\",\"sequence\":1,"
+            "\"ordered_span\":5}"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:request-copy\","
             "\"observation_count\":1,\"matching_count\":1,"
             "\"query_echo_count\":0,\"embedded_query_count\":1"));
@@ -436,6 +443,12 @@ static int check_query_embedded_in_new_payload(void) {
             "\"observation_count\":1,\"matching_count\":1,"
             "\"query_echo_count\":0,\"embedded_query_count\":1"));
         CHECK(!contains(out, "conversation:generated"));
+        clear(&out);
+        CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+            "{\"hierarchy_id\":\"conversation:request\"}", &out)
+            == MEMORIA_MOBILE_OK);
+        CHECK(contains(out, "\"source_id\":\"request\","
+            "\"source_kind\":\"user_turn\",\"sequence\":1"));
         clear(&out);
         CHECK(call_json(memoria_mobile_probe_structural_trails_json, h,
             "{\"query\":\"Qual nome do meu pai?\"}", &out)

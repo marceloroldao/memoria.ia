@@ -53,6 +53,10 @@ typedef struct memoria_structural_region_activation {
     size_t distinct_count;
     size_t max_exact_overlap;
     size_t max_ordered_span;
+    /* Borrowed from the runtime until its next mutation or close. */
+    const char *witness_source_id;
+    const char *witness_source_kind;
+    unsigned long witness_sequence;
     unsigned long first_sequence;
     unsigned long last_sequence;
 } memoria_structural_region_activation;

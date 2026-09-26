@@ -2033,7 +2033,7 @@ memoria_mobile_status memoria_mobile_probe_structural_regions_json(
             "\"matching_count\":%zu,\"query_echo_count\":%zu,"
             "\"embedded_query_count\":%zu,\"distinct_count\":%zu,"
             "\"max_exact_overlap\":%zu,\"max_ordered_span\":%zu,"
-            "\"first_sequence\":%lu,\"last_sequence\":%lu}",
+            "\"first_sequence\":%lu,\"last_sequence\":%lu,\"witness\":",
             i ? "," : "", id, region->observation_count,
             region->matching_count, region->query_echo_count,
             region->embedded_query_count, region->distinct_count,
@@ -2041,6 +2041,22 @@ memoria_mobile_status memoria_mobile_probe_structural_regions_json(
             region->first_sequence, region->last_sequence);
         free(id);
         if (!written) goto internal_error_regions;
+        if (region->witness_source_id) {
+            char *source_id = json_escape(region->witness_source_id);
+            char *source_kind = json_escape(region->witness_source_kind);
+            written = source_id && source_kind && mobile_response_appendf(
+                &builder,
+                "{\"source_id\":\"%s\",\"source_kind\":\"%s\","
+                "\"sequence\":%lu,\"ordered_span\":%zu}",
+                source_id, source_kind, region->witness_sequence,
+                region->max_ordered_span);
+            free(source_id);
+            free(source_kind);
+        } else {
+            written = mobile_response_appendf(&builder, "null");
+        }
+        if (!written || !mobile_response_appendf(&builder, "}"))
+            goto internal_error_regions;
     }
     if (!mobile_response_appendf(&builder, "]}")) goto internal_error_regions;
     status = set_response(out, builder.data, MEMORIA_MOBILE_UNRESOLVED);

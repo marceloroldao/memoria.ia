@@ -964,8 +964,17 @@ int memoria_structural_text_runtime_activate_regions(
                         --query_index;
                     }
                 }
-                if (span > region->max_ordered_span)
+                if (span > region->max_ordered_span ||
+                    (span == region->max_ordered_span &&
+                     (!region->witness_source_id ||
+                      item->sequence < region->witness_sequence ||
+                      (item->sequence == region->witness_sequence &&
+                       strcmp(item->source_id, region->witness_source_id) < 0)))) {
                     region->max_ordered_span = span;
+                    region->witness_source_id = item->source_id;
+                    region->witness_source_kind = item->source_kind;
+                    region->witness_sequence = item->sequence;
+                }
                 if (overlap > region->max_exact_overlap)
                     region->max_exact_overlap = overlap;
             }

@@ -53,6 +53,14 @@ symbol path shared by the query and any **distinct** observation in a region.
 Exact query echoes do not contribute. This preserves order without a vocabulary
 of question templates; it still measures a text path, not a cognitive or
 factual trajectory, and does not change ranking or qualification.
+Each region also returns one `witness` with the source ID, source kind, order
+and ordered-span length of the distinct observation supporting that maximum.
+An echo-only region has `witness:null`. Ties use the earliest sequence and
+then source ID, so the addressable window read can inspect the same occurrence
+after cold reopen. The legacy source kind is provenance, not proof of assertion.
+The local private replay checked each non-null witness in the first 16 regions
+of four probes against the addressable raw window: 64/64 source IDs and
+sequence numbers resolved. No raw witness or personal text is committed.
 
 In a local replay of the same private 83-observation export, one repeatedly
 asked family query activated 23/25 regions. Among the first 16 returned, 14
