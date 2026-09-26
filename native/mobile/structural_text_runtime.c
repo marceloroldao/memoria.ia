@@ -831,16 +831,25 @@ static int same_symbol_trail(
     return same;
 }
 
+static size_t count_symbol_spans(
+    const uint64_t *trail, size_t trail_count,
+    const uint64_t *span, size_t span_count, size_t *first
+) {
+    size_t start, matches = 0u;
+    if (!span_count || trail_count < span_count) return 0;
+    for (start = 0u; start <= trail_count - span_count; ++start)
+        if (memcmp(trail + start, span, span_count * sizeof(*span)) == 0) {
+            if (!matches && first) *first = start;
+            ++matches;
+        }
+    return matches;
+}
+
 static int contains_symbol_span(
     const uint64_t *trail, size_t trail_count,
     const uint64_t *span, size_t span_count
 ) {
-    size_t start;
-    if (!span_count || trail_count < span_count) return 0;
-    for (start = 0u; start <= trail_count - span_count; ++start)
-        if (memcmp(trail + start, span, span_count * sizeof(*span)) == 0)
-            return 1;
-    return 0;
+    return count_symbol_spans(trail, trail_count, span, span_count, NULL) > 0u;
 }
 
 void memoria_structural_text_region_activations_free(
@@ -1127,9 +1136,14 @@ int memoria_structural_text_runtime_trail_recurrence(
             group->query_echo = symbol_count == query_count &&
                 memcmp(symbols, query_symbols,
                        query_count * sizeof(*symbols)) == 0;
-            group->contains_query_trail = symbol_count > query_count &&
-                contains_symbol_span(symbols, symbol_count,
-                                     query_symbols, query_count);
+            if (symbol_count > query_count) {
+                group->embedded_positions = count_symbol_spans(
+                    symbols, symbol_count, query_symbols, query_count,
+                    &group->embedded_start);
+                group->contains_query_trail = group->embedded_positions > 0u;
+                if (group->contains_query_trail)
+                    group->embedded_length = query_count;
+            }
             recurrence_fingerprint(symbols, symbol_count, group->fingerprint);
             ++count;
         } else {
@@ -1154,6 +1168,19 @@ int memoria_structural_text_runtime_trail_recurrence(
             }
             group->region_ids[group->region_count++] = item->hierarchy_id;
         }
+    }
+    {
+        const char *observed_base = NULL;
+        for (i = 0u; i < count; ++i)
+            if (groups[i].query_echo) {
+                observed_base = groups[i].fingerprint;
+                break;
+            }
+        if (observed_base)
+            for (i = 0u; i < count; ++i)
+                if (groups[i].contains_query_trail)
+                    memcpy(groups[i].composed_base_address,
+                           observed_base, sizeof(groups[i].composed_base_address));
     }
     for (i = 0u; i < count; ++i) {
         size_t j;

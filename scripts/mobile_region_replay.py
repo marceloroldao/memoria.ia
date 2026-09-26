@@ -126,11 +126,39 @@ def main() -> None:
                 region_status, region = probe.call(
                     "probe_structural_regions", {"query": query, "limit": 16}
                 )
-                trail_status, trails = probe.call(
-                    "probe_structural_trails", {"query": query, "limit": 64}
-                )
-                if region_status != 2 or trail_status != 2 or region["qualified"]:
+                offset = 0
+                groups = []
+                trails = None
+                while True:
+                    trail_status, page = probe.call(
+                        "probe_structural_trails",
+                        {"query": query, "offset": offset, "limit": 64},
+                    )
+                    if trail_status != 2 or page["qualified"]:
+                        raise RuntimeError("unqualified trail contract violated")
+                    if trails is None:
+                        trails = page
+                    groups.extend(page["groups"])
+                    offset = page["page"]["next_offset"]
+                    if offset is None:
+                        break
+                if region_status != 2 or region["qualified"]:
                     raise RuntimeError("unqualified probe contract violated")
+                if len(groups) != trails["group_count"]:
+                    raise RuntimeError("trail pagination gate failed")
+                bases = {group["fingerprint"] for group in groups
+                         if group["query_echo"]}
+                composed = [group for group in groups
+                            if group["composition"] is not None]
+                if any(
+                    not group["contains_query_trail"]
+                    or group["composition"]["base_address"] not in bases
+                    or group["composition"]["positions"] < 1
+                    for group in composed
+                ) or len(composed) != (
+                    trails["embedded_payload_count"] if bases else 0
+                ):
+                    raise RuntimeError("observed base composition gate failed")
                 witnesses = [r for r in region["regions"] if r["witness"] is not None]
                 missing = sum(
                     not probe.witness_exists(r["hierarchy_id"], r["witness"])
@@ -146,6 +174,15 @@ def main() -> None:
                     "query_echo_occurrences": trails["query_echo_occurrences"],
                     "embedded_payloads": trails["embedded_payload_count"],
                     "embedded_occurrences": trails["embedded_occurrences"],
+                    "composed_payloads": len(composed),
+                    "composed_with_prefix": sum(
+                        group["composition"]["prefix_symbols"] > 0
+                        for group in composed
+                    ),
+                    "composed_with_suffix": sum(
+                        group["composition"]["suffix_symbols"] > 0
+                        for group in composed
+                    ),
                     "witnesses_checked": len(witnesses),
                     "witnesses_missing": missing,
                     "qualified": region["qualified"],

@@ -79,6 +79,12 @@ typedef struct memoria_structural_trail_recurrence {
     size_t exact_overlap;
     int query_echo;
     int contains_query_trail;
+    /* A read-only decomposition, populated only when the exact query trail
+     * was also observed as a user source. No composed payload is persisted. */
+    char composed_base_address[17];
+    size_t embedded_start;
+    size_t embedded_length;
+    size_t embedded_positions;
     /* Owned by this read-only result; used to verify hash collisions. */
     uint64_t *symbols;
     size_t symbol_count;

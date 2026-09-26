@@ -2139,18 +2139,31 @@ memoria_mobile_status memoria_mobile_probe_structural_trails_json(
             "%s{\"fingerprint\":\"%s\",\"source_id\":\"%s\","
             "\"hierarchy_id\":\"%s\",\"occurrences\":%zu,"
             "\"region_count\":%zu,\"exact_overlap\":%zu,"
-            "\"query_echo\":%s,\"contains_query_trail\":%s,"
-            "\"branch_address\":\"%s\","
-            "\"branch_depth\":%zu,\"divergent_trail_count\":%zu,"
-            "\"region_ids\":[",
+            "\"query_echo\":%s,\"contains_query_trail\":%s,\"composition\":",
             i == offset ? "" : ",", group->fingerprint, id, hierarchy,
             group->occurrences, group->region_count, group->exact_overlap,
             group->query_echo ? "true" : "false",
-            group->contains_query_trail ? "true" : "false",
-            group->branch_address,
-            group->branch_depth, group->divergent_trail_count);
+            group->contains_query_trail ? "true" : "false");
         free(id); free(hierarchy);
         if (!written) goto internal_error_trails;
+        if (group->composed_base_address[0]) {
+            written = mobile_response_appendf(&builder,
+                "{\"base_address\":\"%s\",\"prefix_symbols\":%zu,"
+                "\"base_symbols\":%zu,\"suffix_symbols\":%zu,"
+                "\"positions\":%zu}", group->composed_base_address,
+                group->embedded_start, group->embedded_length,
+                group->symbol_count - group->embedded_start -
+                    group->embedded_length, group->embedded_positions);
+        } else {
+            written = mobile_response_appendf(&builder, "null");
+        }
+        if (!written || !mobile_response_appendf(&builder,
+            ",\"branch_address\":\"%s\","
+            "\"branch_depth\":%zu,\"divergent_trail_count\":%zu,"
+            "\"region_ids\":[",
+            group->branch_address,
+            group->branch_depth, group->divergent_trail_count))
+            goto internal_error_trails;
         for (j = 0u; j < group->region_count; ++j) {
             char *region_id = json_escape(group->region_ids[j]);
             written = region_id && mobile_response_appendf(

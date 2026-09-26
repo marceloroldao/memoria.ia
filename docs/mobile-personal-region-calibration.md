@@ -47,6 +47,26 @@ The trail result separately reports `query_echo_occurrences`,
 before pagination. Two copies of the same containing payload in different
 conversation regions count as two occurrences but only one distinct containing
 payload. These counts describe structure, not independent factual support.
+When the exact query trail was itself observed from a user source, a distinct
+containing trail now exposes a read-only `composition`: the observed base's
+fingerprint, its first starting position, its length, the remaining suffix
+length and the number of positions containing it. For example, a new request
+can be represented as three prefix symbols plus the already observed five
+symbol question trail. The fingerprint identifies the full symbol trail used
+by this probe; it is not a persisted nodule or a claim of semantic equivalence.
+Without an observed base the `composition` is null even if the query text is
+contained. Exact echoes also have null composition. Raw occurrences remain
+stored separately, and the current association field still processes repeated
+observations; deduplicated storage and selective reinforcement are not yet
+implemented. The private replay checks base-address links across cold reopen
+and emits aggregate counts only.
+In the 83-observation replay, the four private probes yielded 1, 0, 0 and 0
+distinct compositions, respectively. The first had a prefix and no suffix;
+all 64 displayed witnesses remained addressable. The absent technical probe
+had neither an observed base nor a composition. This validates the structural
+address link in this sample, not factual selection or compression. The
+decomposition compares the current corpus and does not establish whether the
+base was observed before the containing payload.
 
 The region preview now exposes `max_ordered_span`: the longest contiguous
 symbol path shared by the query and any **distinct** observation in a region.

@@ -404,6 +404,7 @@ static int check_query_embedded_in_new_payload(void) {
         "{\"hierarchy_id\":\"conversation:request\",\"source_id\":\"request\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}",
         "{\"hierarchy_id\":\"conversation:request-copy\",\"source_id\":\"request-copy\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}",
         "{\"hierarchy_id\":\"conversation:story\",\"source_id\":\"story\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Andando pela cidade, alguém perguntou qual nome do meu pai?\"}",
+        "{\"hierarchy_id\":\"conversation:followup\",\"source_id\":\"followup\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Ontem qual nome do meu pai mesmo?\"}",
         "{\"hierarchy_id\":\"conversation:generated\",\"source_id\":\"assistant\",\"source_kind\":\"assistant_generated\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}"
     };
     memoria_mobile_handle *h = NULL;
@@ -417,11 +418,13 @@ static int check_query_embedded_in_new_payload(void) {
         clear(&out);
     }
     for (pass = 0u; pass < 2u; ++pass) {
+        char base_address[17], expected[256];
+        const char *fingerprint;
         CHECK(call_json(memoria_mobile_probe_structural_regions_json, h,
             "{\"query\":\"Qual nome do meu pai?\",\"limit\":16}", &out)
             == MEMORIA_MOBILE_UNRESOLVED);
         CHECK(contains(out, "\"qualified\":false"));
-        CHECK(contains(out, "\"region_count\":4"));
+        CHECK(contains(out, "\"region_count\":5"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:echo\","
             "\"observation_count\":2,\"matching_count\":2,"
             "\"query_echo_count\":2,\"embedded_query_count\":0,"
@@ -442,6 +445,9 @@ static int check_query_embedded_in_new_payload(void) {
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:story\","
             "\"observation_count\":1,\"matching_count\":1,"
             "\"query_echo_count\":0,\"embedded_query_count\":1"));
+        CHECK(contains(out, "\"hierarchy_id\":\"conversation:followup\","
+            "\"observation_count\":1,\"matching_count\":1,"
+            "\"query_echo_count\":0,\"embedded_query_count\":1"));
         CHECK(!contains(out, "conversation:generated"));
         clear(&out);
         CHECK(call_json(memoria_mobile_read_structural_window_json, h,
@@ -453,16 +459,45 @@ static int check_query_embedded_in_new_payload(void) {
         CHECK(call_json(memoria_mobile_probe_structural_trails_json, h,
             "{\"query\":\"Qual nome do meu pai?\"}", &out)
             == MEMORIA_MOBILE_UNRESOLVED);
-        CHECK(contains(out, "\"group_count\":3"));
+        CHECK(contains(out, "\"group_count\":4"));
         CHECK(contains(out, "\"query_echo_occurrences\":2,"
-            "\"embedded_payload_count\":2,\"embedded_occurrences\":3"));
+            "\"embedded_payload_count\":3,\"embedded_occurrences\":4"));
         CHECK(contains(out, "\"occurrences\":2,\"region_count\":1"));
         CHECK(contains(out, "\"source_id\":\"request\","
             "\"hierarchy_id\":\"conversation:request\","
             "\"occurrences\":2,\"region_count\":2"));
-        CHECK(contains(out, "\"query_echo\":true,\"contains_query_trail\":false"));
+        CHECK(contains(out,
+            "\"query_echo\":true,\"contains_query_trail\":false,"
+            "\"composition\":null"));
         CHECK(contains(out, "\"query_echo\":false,\"contains_query_trail\":true"));
+        fingerprint = strstr((const char *)out.data, "\"fingerprint\":\"");
+        CHECK(fingerprint != NULL);
+        fingerprint += strlen("\"fingerprint\":\"");
+        memcpy(base_address, fingerprint, 16u);
+        base_address[16] = 0;
+        snprintf(expected, sizeof(expected),
+            "\"composition\":{\"base_address\":\"%s\","
+            "\"prefix_symbols\":3,\"base_symbols\":5,"
+            "\"suffix_symbols\":0,\"positions\":1}", base_address);
+        CHECK(contains(out, expected));
+        snprintf(expected, sizeof(expected),
+            "\"composition\":{\"base_address\":\"%s\","
+            "\"prefix_symbols\":5,\"base_symbols\":5,"
+            "\"suffix_symbols\":0,\"positions\":1}", base_address);
+        CHECK(contains(out, expected));
+        snprintf(expected, sizeof(expected),
+            "\"composition\":{\"base_address\":\"%s\","
+            "\"prefix_symbols\":1,\"base_symbols\":5,"
+            "\"suffix_symbols\":1,\"positions\":1}", base_address);
+        CHECK(contains(out, expected));
         CHECK(!contains(out, "conversation:generated"));
+        clear(&out);
+        CHECK(call_json(memoria_mobile_probe_structural_trails_json, h,
+            "{\"query\":\"Poderia me\"}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"query_echo_occurrences\":0"));
+        CHECK(contains(out,
+            "\"contains_query_trail\":true,\"composition\":null"));
         clear(&out);
         if (pass == 0u) {
             CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
