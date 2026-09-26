@@ -228,3 +228,48 @@ be encoded as the retrieval rule. Corpus-wide token frequency and fixed novelty
 thresholds were tried against the replay; they improved individual probes but
 failed on sparse test histories and reinforced repeated questions. They are not
 accepted as the integration gate.
+
+## Functional proof gate, 26 September 2026
+
+`scripts/mobile_personal_proof_gate.py` exercises the built native library with
+22 invented observations. It checks positive retrieval, a different subject,
+an absent recombination whose individual words all occur elsewhere, repeated
+questions, a near question, two competing name records, assistant-output
+exclusion, exact source addresses and cold BDR reopen. The `--strict` mode
+returns failure until **all** functional gates pass; it is intentionally not
+an app acceptance gate or a factual fallback.
+
+| Test | Current observation | Result |
+| --- | --- | --- |
+| Known name | Answer source addressable, but the near question ranks first | Fail |
+| Other subject | Its answer source is present, but an earlier question ranks first | Fail |
+| Absent recombination | Eight unrelated/question candidates, led by a different subject's power record | Fail |
+| Assistant text | Generated output excluded from the personal candidates | Pass |
+| Competing sources | Both conflicting user sources remain visible and unqualified | Pass |
+| Cold reopen | Candidates and exact source addresses survive | Pass |
+
+Eight of eleven script checks pass; the three failures concern selection and
+absence. Merely returning `UNRESOLVED` alongside irrelevant `CANDIDATES` is
+not proof that the system has recognized the missing answer. The old local
+resolver's `HIT` and the opt-in personal probe remain separate contracts.
+
+The same script also inspects an occurrence-local continuation path through
+the native trail and window APIs. It anchors on an observed exact query trail
+and reads only the immediate next observation in **that same conversation**;
+it never jumps through a shared symbol into another conversation or skips an
+assistant turn. Two independent synthetic conversations continue with the
+same text, one continues with a competing text, and another repeats the
+question. An assistant turn blocks traversal even when a user turn follows
+it. All four user continuations remain addressable after cold reopen. An
+absent query with no observed echo has zero such continuations.
+These are observed transitions, **not verified answers**: an immediate next
+user turn may itself be another question. The path is a research diagnostic,
+not a selector or a weight rule.
+
+In a local private replay, the four most frequent exact surface texts occurred
+6, 5, 4 and 3 times. Their immediate user-successor counts were 6, 3, 4 and
+2, respectively, across 6, 2, 2 and 2 conversation regions. These counts do
+not classify the successor texts or qualify a fact. No private text, source ID
+or raw response is stored in Git. Further work should compare the competing
+regional trajectories and test whether a candidate survives absent-subject
+and near-question controls before changing OFF.IA or optimizing throughput.
