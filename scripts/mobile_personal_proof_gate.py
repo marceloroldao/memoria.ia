@@ -73,6 +73,21 @@ def resolve(probe: NativeProbe, query: str) -> dict:
     return response
 
 
+def organized(probe: NativeProbe, query: str) -> dict:
+    status, response = probe.call("resolve_structural_text", {
+        "hierarchy_id": "conversation:new",
+        "query": query,
+        "mode": "linked_reply_evidence",
+        "top_k": 16,
+    })
+    if (status != 2 or response["qualified"] is not False
+        or response["selection_used"] is not False
+        or response["answer"] is not None
+        or response["evidence_boundary"] != "explicit_reply_only"):
+        raise RuntimeError("organized evidence must stay unqualified")
+    return response
+
+
 def region_rows(probe: NativeProbe, hierarchy_id: str) -> list[dict]:
     rows: list[dict] = []
     offset = 0
@@ -208,13 +223,21 @@ def main() -> None:
                 "query": QUERIES["known"], "limit": 64,
             })
             resolution_before = resolve(probe, QUERIES["known"])
+            unlinked = organized(probe, QUERIES["known"])
+            gates["organized_requires_explicit_relation"] = (
+                unlinked["status"] == "UNRESOLVED"
+                and unlinked["reason"] == "NO_EXPLICIT_REPLY_EVIDENCE"
+                and unlinked["groups"] == []
+            )
             explicit_links = (
                 ("linked-1", "linked-a1", 2, "linked-q1"),
                 ("linked-2", "linked-a2", 2, "linked-q2"),
                 ("linked-3", "linked-b", 2, "linked-q3"),
                 ("linked-embedded", "linked-later", 3, "linked-narrative"),
             )
-            for region, source_id, sequence, target_id in explicit_links:
+            for link_index, (region, source_id, sequence, target_id) in enumerate(
+                explicit_links
+            ):
                 status, response = probe.call("link_structural_reply", {
                     "hierarchy_id": f"conversation:{region}",
                     "source_id": source_id, "sequence": sequence,
@@ -223,6 +246,13 @@ def main() -> None:
                 if (status != 0 or response["qualified"] is not False
                     or response["duplicate"]):
                     raise RuntimeError("explicit synthetic reply link failed")
+                if link_index == 0:
+                    one = organized(probe, QUERIES["known"])
+                    gates["organized_single_stays_unqualified"] = (
+                        one["status"] == "CANDIDATES"
+                        and one["distinct_reply_trails"] == 1
+                        and one["groups"][0]["occurrences"] == 1
+                    )
             duplicate_status, duplicate_link = probe.call("link_structural_reply", {
                 "hierarchy_id": "conversation:linked-1", "source_id": "linked-a1",
                 "sequence": 2, "reply_to_source_id": "linked-q1",
@@ -240,6 +270,25 @@ def main() -> None:
                 and resolve(probe, QUERIES["known"]) == resolution_before
             )
             probe.reopen()
+            grouped = organized(probe, QUERIES["known"])
+            gates["organized_conflict_groups_not_votes"] = (
+                grouped["status"] == "CONFLICT"
+                and grouped["distinct_reply_trails"] == 2
+                and grouped["competing_reply_trails"] is True
+                and [(group["representative_text"], group["occurrences"],
+                      group["source_regions"]) for group in grouped["groups"]]
+                == [("Auri", 3, 3), ("Boreal", 1, 1)]
+                and {source["source_id"] for group in grouped["groups"]
+                     for source in group["sources"]}
+                == {"linked-a1", "linked-a2", "linked-b", "linked-later"}
+                and "Falso" not in json.dumps(grouped, ensure_ascii=False)
+            )
+            absent_grouped = organized(probe, QUERIES["absent_recombination"])
+            other_grouped = organized(probe, QUERIES["other_subject"])
+            gates["organized_absent_and_unlinked_other_empty"] = all(
+                result["status"] == "UNRESOLVED" and result["groups"] == []
+                for result in (absent_grouped, other_grouped)
+            )
             gates["explicit_reply_provenance_survives_reopen"] = all(
                 any(row["source_id"] == source_id and row["sequence"] == sequence
                     and row["reply_to"] == {"source_id": target_id, "sequence": 1}
@@ -267,6 +316,10 @@ def main() -> None:
                 and linked["embedded_question_links"] == 1
                 and {w["reply"]["source_id"] for w in linked["witnesses"]}
                 == {"linked-a1", "linked-a2", "linked-b", "linked-later"}
+                and {w["reply"]["source_id"]: w["reply"]["group_index"]
+                     for w in linked["witnesses"]}
+                == {"linked-a1": 0, "linked-a2": 0,
+                    "linked-b": 1, "linked-later": 0}
                 and "Falso" not in json.dumps(linked, ensure_ascii=False)
             )
             missing_status, missing_linked = probe.call(

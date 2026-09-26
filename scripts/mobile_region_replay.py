@@ -35,7 +35,7 @@ class NativeProbe:
             "observe_structural_text", "probe_structural_regions",
             "probe_structural_trails", "probe_structural_continuations",
             "probe_structural_linked_replies", "read_structural_window",
-            "link_structural_reply",
+            "link_structural_reply", "resolve_structural_text",
         ):
             fn = getattr(self.lib, f"memoria_mobile_{name}_json")
             fn.argtypes = [ctypes.c_void_p, Buffer, ctypes.POINTER(Buffer)]
@@ -340,6 +340,21 @@ def main() -> None:
                         linked_missing += 1
                 if linked_missing:
                     raise RuntimeError("linked reply addressability gate failed")
+                organized_status, organized = probe.call(
+                    "resolve_structural_text", {
+                        "hierarchy_id": "conversation:replay-probe",
+                        "query": query, "mode": "linked_reply_evidence",
+                        "top_k": 16,
+                    },
+                )
+                if (organized_status != 2 or organized["qualified"] is not False
+                    or organized["answer"] is not None
+                    or organized["selection_used"] is not False
+                    or organized["distinct_reply_trails"] != linked_summary[
+                        "distinct_reply_trails"]):
+                    raise RuntimeError("organized evidence contract violated")
+                if not reply_links and organized["groups"]:
+                    raise RuntimeError("legacy export invented reply evidence")
                 bases = {group["fingerprint"] for group in groups
                          if group["query_echo"]}
                 composed = [group for group in groups
@@ -398,6 +413,7 @@ def main() -> None:
                     "repeat_question_links": linked_summary[
                         "repeat_question_links"],
                     "linked_reply_witnesses_missing": linked_missing,
+                    "organized_reply_groups": len(organized["groups"]),
                     "qualified": region["qualified"],
                 })
                 if missing:

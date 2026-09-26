@@ -1940,6 +1940,7 @@ int memoria_structural_text_runtime_linked_replies(
         witness->reply_sequence = source->sequence;
         witness->embedded_question = target_count > query_count;
         witness->repeats_query = repeats;
+        witness->reply_group_index = (size_t)-1;
         recurrence_fingerprint(reply_symbols, reply_count,
                                witness->reply_trail_address);
         if (repeats) {
@@ -1957,7 +1958,8 @@ int memoria_structural_text_runtime_linked_replies(
             if (reply_trails[j] && reply_counts[i] == reply_counts[j] &&
                 memcmp(reply_trails[j], reply_trails[i],
                        reply_counts[i] * sizeof(**reply_trails)) == 0) break;
-        if (j == i) ++distinct;
+        if (j == i) witnesses[i].reply_group_index = distinct++;
+        else witnesses[i].reply_group_index = witnesses[j].reply_group_index;
     }
     for (i = 0u; i < count; ++i) free(reply_trails[i]);
     free(reply_trails);

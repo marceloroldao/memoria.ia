@@ -232,7 +232,7 @@ accepted as the integration gate.
 ## Functional proof gate, 26 September 2026
 
 `scripts/mobile_personal_proof_gate.py` exercises the built native library with
-22 invented observations. It checks positive retrieval, a different subject,
+25 invented observations. It checks positive retrieval, a different subject,
 an absent recombination whose individual words all occur elsewhere, repeated
 questions, a near question, two competing name records, assistant-output
 exclusion, exact source addresses and cold BDR reopen. The `--strict` mode
@@ -248,8 +248,9 @@ an app acceptance gate or a factual fallback.
 | Competing sources | Both conflicting user sources remain visible and unqualified | Pass |
 | Cold reopen | Candidates and exact source addresses survive | Pass |
 
-Thirteen of sixteen script checks pass; the three failures concern selection and
-absence. Merely returning `UNRESOLVED` alongside irrelevant `CANDIDATES` is
+The initial gate passed 13 of 16 checks; subsequent explicit-link checks bring
+it to 23 of 26, with the same three selection and absence failures. Merely
+returning `UNRESOLVED` alongside irrelevant `CANDIDATES` is
 not proof that the system has recognized the missing answer. The old local
 resolver's `HIT` and the opt-in personal probe remain separate contracts.
 
@@ -379,13 +380,43 @@ marked and excluded from the distinct reply trail count. Assistant-generated
 text is not a reply source. The native status remains `UNRESOLVED`, the JSON
 is `qualified:false` and `selection_used:false`, even for one apparent answer.
 
-The adversarial native fixture links two occurrences of one reply trail, one
-conflicting reply, one answer to a larger narrative and a repeated question.
-It yields five linked occurrences, two distinct non-question reply trails, one
-embedded target and one repeated-question link. The paged result is identical
+The adversarial native fixture links three occurrences of one reply trail,
+including a repeated raw payload in the same conversation, one conflicting
+reply, one answer to a larger narrative and a repeated question. It yields
+six linked occurrences, two distinct non-question reply trails, one embedded
+target and one repeated-question link. The paged result is identical
 after a cold reopen; an unrelated query returns zero links. The synthetic
 functional gate now passes 19/22 checks, with the same three selection gaps.
 The private 83-observation export still has no `reply_to` addresses, so the
 four replayed probes correctly return zero linked replies. This diagnostic
 does not resolve paraphrases that interrupt or reorder the stored query trail.
 It is not part of OFF.IA's answer path.
+
+## Organized reply evidence packet, 26 September 2026
+
+`resolve_structural_text` now accepts opt-in mode `linked_reply_evidence`.
+It reads the persisted reply links and groups their reply payloads by exact
+normalized symbol trail, comparing full trails rather than trusting the
+fingerprint alone. Two surfaces such as `Auri.` and `Auri` share one group,
+while `Boreal` remains a competing group. The group lists source IDs,
+conversation addresses, raw reply text and the target question address; raw
+occurrences and distinct source regions are descriptive counts, not votes or
+association weights. A repeated question linked as a reply is excluded from
+the reply groups and counted separately. `top_k` bounds groups, each group's
+source list shows at most 16 references and marks truncation; the paged link
+probe remains available for the full provenance audit. A separate 17-link
+synthetic check after cold reopen reported 17 occurrences, 17 source regions,
+16 displayed references and `sources_truncated:true`.
+
+Without an explicit link, the mode returns empty groups and
+`NO_EXPLICIT_REPLY_EVIDENCE` even if a loose symbol search finds plausible
+sentences. One reply trail returns `CANDIDATES`, multiple distinct trails
+return `CONFLICT`, and both retain native `UNRESOLVED`, `qualified:false`,
+`selection_used:false` and `answer:null`. This packet is a safe input to later
+reasoning, not a validated answer or a factual promotion. It does not replace
+the older `personal_evidence` diagnostic or alter OFF.IA. The synthetic gate
+now passes 23/26 checks: the organized boundary, single-trail abstention,
+conflict and absent case pass, while the three legacy selection failures
+remain. The private 83-observation export has no explicit reply links, so
+the four organized probes return no groups. To test actual personal answers,
+new observations must carry source-addressed reply provenance.

@@ -137,6 +137,8 @@ typedef struct memoria_structural_reply_witness {
     unsigned long reply_sequence;
     int embedded_question;
     int repeats_query;
+    /* Exact normalized-trail group; SIZE_MAX marks a repeated question. */
+    size_t reply_group_index;
     char reply_trail_address[17];
 } memoria_structural_reply_witness;
 

@@ -80,6 +80,10 @@ memoria_mobile_status memoria_mobile_activate_relations_json(
  *   "query":"...",
  *   "top_k":3
  * }
+ * Optional mode "linked_reply_evidence" returns only groups reached through
+ * explicit reply_to provenance. It is unqualified even for one group, and
+ * reports CONFLICT when different reply trails are linked to the query.
+ * top_k bounds returned groups; individual source lists are capped at 16.
  *
  * These calls never create facts, predicates, grammar labels or ontology.
  * Resolution is read-only and does not reinforce the query.
