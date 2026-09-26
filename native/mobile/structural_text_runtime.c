@@ -941,15 +941,48 @@ fail:
 void memoria_structural_text_trail_recurrences_free(
     memoria_structural_trail_recurrence *groups, size_t count
 ) {
-    size_t i;
+    size_t i, j;
     if (!groups) return;
     for (i = 0u; i < count; ++i) {
         free(groups[i].source_id);
         free(groups[i].hierarchy_id);
         free(groups[i].symbols);
         free(groups[i].region_ids);
+        for (j = 0u; j < groups[i].source_count; ++j) {
+            free(groups[i].sources[j].source_id);
+            free(groups[i].sources[j].hierarchy_id);
+        }
+        free(groups[i].sources);
     }
     free(groups);
+}
+
+static int recurrence_add_source(
+    memoria_structural_trail_recurrence *group,
+    const runtime_observation *item
+) {
+    memoria_structural_trail_source *grown, *source;
+    size_t next;
+    if (group->source_count >= 16u) return 1;
+    if (group->source_count == group->source_capacity) {
+        next = group->source_capacity ? group->source_capacity * 2u : 2u;
+        grown = realloc(group->sources, next * sizeof(*grown));
+        if (!grown) return 0;
+        group->sources = grown;
+        group->source_capacity = next;
+    }
+    source = &group->sources[group->source_count];
+    source->source_id = dup_text(item->source_id);
+    source->hierarchy_id = dup_text(item->hierarchy_id);
+    source->sequence = item->sequence;
+    if (!source->source_id || !source->hierarchy_id) {
+        free(source->source_id);
+        free(source->hierarchy_id);
+        memset(source, 0, sizeof(*source));
+        return 0;
+    }
+    ++group->source_count;
+    return 1;
 }
 
 static void recurrence_fingerprint(
@@ -1032,6 +1065,7 @@ int memoria_structural_text_runtime_trail_recurrence(
             group = &groups[j];
             free(symbols);
         }
+        if (!recurrence_add_source(group, item)) goto fail;
         ++group->occurrences;
         for (j = 0u; j < group->region_count; ++j)
             if (strcmp(group->region_ids[j], item->hierarchy_id) == 0) break;

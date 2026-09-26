@@ -2121,7 +2121,22 @@ memoria_mobile_status memoria_mobile_probe_structural_trails_json(
             free(region_id);
             if (!written) goto internal_error_trails;
         }
-        if (!mobile_response_appendf(&builder, "]}"))
+        if (!mobile_response_appendf(&builder, "],\"sources\":["))
+            goto internal_error_trails;
+        for (j = 0u; j < group->source_count; ++j) {
+            const memoria_structural_trail_source *source = &group->sources[j];
+            char *source_id = json_escape(source->source_id);
+            char *source_hierarchy = json_escape(source->hierarchy_id);
+            written = source_id && source_hierarchy && mobile_response_appendf(
+                &builder, "%s{\"source_id\":\"%s\",\"hierarchy_id\":\"%s\","
+                "\"sequence\":%lu}", j ? "," : "", source_id,
+                source_hierarchy, source->sequence);
+            free(source_id); free(source_hierarchy);
+            if (!written) goto internal_error_trails;
+        }
+        if (!mobile_response_appendf(&builder,
+                "],\"sources_truncated\":%s}",
+                group->occurrences > group->source_count ? "true" : "false"))
             goto internal_error_trails;
     }
     if (!mobile_response_appendf(&builder, "]}")) goto internal_error_trails;

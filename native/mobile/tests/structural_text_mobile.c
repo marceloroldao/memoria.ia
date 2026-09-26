@@ -324,6 +324,12 @@ static int check_trail_recurrence(void) {
         CHECK(contains(out, "\"source_id\":\"f1\",\"hierarchy_id\":\"conversation:a\","
             "\"occurrences\":3,\"region_count\":2"));
         CHECK(contains(out, "\"region_ids\":[\"conversation:a\",\"conversation:b\"]"));
+        CHECK(contains(out, "\"sources\":[{\"source_id\":\"f1\","
+            "\"hierarchy_id\":\"conversation:a\",\"sequence\":1},"
+            "{\"source_id\":\"f2\",\"hierarchy_id\":\"conversation:a\","
+            "\"sequence\":2},{\"source_id\":\"f3\","
+            "\"hierarchy_id\":\"conversation:b\",\"sequence\":1}]"));
+        CHECK(contains(out, "\"sources_truncated\":false"));
         CHECK(contains(out, "\"source_id\":\"alt\",\"hierarchy_id\":\"conversation:c\","
             "\"occurrences\":1,\"region_count\":1"));
         CHECK(contains(out, "\"source_id\":\"q1\",\"hierarchy_id\":\"conversation:q\","
@@ -339,11 +345,23 @@ static int check_trail_recurrence(void) {
                 == MEMORIA_MOBILE_OK);
         }
     }
+    for (i = 0u; i < 17u; ++i) {
+        char request[256];
+        snprintf(request, sizeof(request),
+            "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"extra-%zu\","
+            "\"source_kind\":\"user_turn\",\"sequence\":%zu,"
+            "\"text\":\"Minha mãe se chama PessoaM.\"}", i, i + 4u);
+        CHECK(call_json(memoria_mobile_observe_structural_text_json,
+            h, request, &out) == MEMORIA_MOBILE_OK);
+        clear(&out);
+    }
     CHECK(call_json(memoria_mobile_probe_structural_trails_json, h,
         "{\"query\":\"Qual nome da minha mãe?\",\"limit\":1}", &out)
         == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(contains(out, "\"next_offset\":1"));
     CHECK(contains(out, "\"returned\":1"));
+    CHECK(contains(out, "\"occurrences\":20,\"region_count\":2"));
+    CHECK(contains(out, "\"sources_truncated\":true"));
     clear(&out);
     memoria_mobile_close(h);
     (void)system("rm -rf ./tmp-mobile-trail-recurrence");

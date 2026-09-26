@@ -67,6 +67,9 @@ from two regions. A different continuation remains a separate trail, and an
 exact repeated question is marked `query_echo`. Assistant-generated text is
 excluded. These are structural observations, not corroborated facts or an
 automatic conflict decision; the probe still returns `UNRESOLVED`.
+Each group now includes the first 16 source references with conversation ID,
+source ID and sequence, plus `sources_truncated`. The addressable window read
+can inspect the full raw region when a group has more occurrences.
 
 The private replay illustrates why region count cannot equal corroboration:
 the exact repeated question for family subject C occurred 12 times in 10

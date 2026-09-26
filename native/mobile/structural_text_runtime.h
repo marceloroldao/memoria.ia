@@ -55,6 +55,12 @@ typedef struct memoria_structural_region_activation {
     unsigned long last_sequence;
 } memoria_structural_region_activation;
 
+typedef struct memoria_structural_trail_source {
+    char *source_id;
+    char *hierarchy_id;
+    unsigned long sequence;
+} memoria_structural_trail_source;
+
 typedef struct memoria_structural_trail_recurrence {
     char fingerprint[17];
     char *source_id;
@@ -68,6 +74,9 @@ typedef struct memoria_structural_trail_recurrence {
     size_t symbol_count;
     const char **region_ids;
     size_t region_capacity;
+    memoria_structural_trail_source *sources;
+    size_t source_count;
+    size_t source_capacity;
 } memoria_structural_trail_recurrence;
 
 /*
