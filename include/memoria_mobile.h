@@ -157,6 +157,16 @@ memoria_mobile_status memoria_mobile_probe_structural_trails_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Read-only exact-query continuation diagnostic. Request: query, offset,
+ * limit (1..64). Only the immediate next occurrence in the same conversation
+ * is considered. Echoes, blocked assistant turns and tied sequences stay
+ * explicit; candidate continuations are never qualified as facts. */
+memoria_mobile_status memoria_mobile_probe_structural_continuations_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,

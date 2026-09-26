@@ -2210,6 +2210,127 @@ done:
     return status;
 }
 
+memoria_mobile_status memoria_mobile_probe_structural_continuations_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *request = NULL, *query = NULL;
+    memoria_structural_continuation_witness *witnesses = NULL;
+    mobile_response_builder builder = {0};
+    size_t count = 0u, distinct = 0u, offset, end, i;
+    size_t user = 0u, repeated = 0u, blocked = 0u, terminal = 0u, ambiguous = 0u;
+    long requested_offset, requested_limit;
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
+        return status;
+    out->data = NULL;
+    out->size = 0u;
+    request = buffer_to_string(req);
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    query = json_string(request, "query");
+    requested_offset = json_long(request, "offset", 0);
+    requested_limit = json_long(request, "limit", 16);
+    if (!query || !query[0] || requested_offset < 0 ||
+        requested_limit < 1 || requested_limit > 64) goto done_continuations;
+    if (!memoria_structural_text_runtime_continuations(
+            h->structural_text_runtime, query, &witnesses, &count, &distinct)) {
+        status = MEMORIA_MOBILE_INTERNAL_ERROR;
+        goto done_continuations;
+    }
+    for (i = 0u; i < count; ++i) {
+        switch (witnesses[i].kind) {
+        case MEMORIA_STRUCTURAL_CONTINUATION_USER: ++user; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_REPEAT_ECHO: ++repeated; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_BLOCKED: ++blocked; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_TERMINAL: ++terminal; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_AMBIGUOUS_ORDER: ++ambiguous; break;
+        }
+    }
+    offset = (size_t)requested_offset < count ? (size_t)requested_offset : count;
+    end = count - offset < (size_t)requested_limit ?
+        count : offset + (size_t)requested_limit;
+    if (!mobile_response_appendf(&builder,
+            "{\"status\":\"%s\",\"qualified\":false,"
+            "\"occurrence_local\":true,\"trajectory_used\":false,"
+            "\"query_echo_occurrences\":%zu,"
+            "\"user_continuation_occurrences\":%zu,"
+            "\"distinct_continuation_trails\":%zu,"
+            "\"competing_continuations\":%s,"
+            "\"repeat_echo_occurrences\":%zu,"
+            "\"blocked_occurrences\":%zu,"
+            "\"terminal_occurrences\":%zu,"
+            "\"ambiguous_order_occurrences\":%zu,"
+            "\"page\":{\"offset\":%zu,\"returned\":%zu,\"next_offset\":",
+            user ? "CANDIDATES" : "UNRESOLVED", count, user, distinct,
+            distinct > 1u ? "true" : "false", repeated, blocked, terminal,
+            ambiguous, offset, end - offset))
+        goto internal_error_continuations;
+    if (end < count) {
+        if (!mobile_response_appendf(&builder, "%zu", end))
+            goto internal_error_continuations;
+    } else if (!mobile_response_appendf(&builder, "null"))
+        goto internal_error_continuations;
+    if (!mobile_response_appendf(&builder, "},\"witnesses\":["))
+        goto internal_error_continuations;
+    for (i = offset; i < end; ++i) {
+        const memoria_structural_continuation_witness *item = &witnesses[i];
+        const char *kind = "TERMINAL";
+        char *hierarchy = json_escape(item->hierarchy_id);
+        char *echo = json_escape(item->echo_source_id);
+        int written;
+        switch (item->kind) {
+        case MEMORIA_STRUCTURAL_CONTINUATION_USER: kind = "USER_CONTINUATION"; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_REPEAT_ECHO: kind = "REPEAT_ECHO"; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_BLOCKED: kind = "BLOCKED"; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_AMBIGUOUS_ORDER:
+            kind = "AMBIGUOUS_ORDER"; break;
+        case MEMORIA_STRUCTURAL_CONTINUATION_TERMINAL: break;
+        }
+        written = hierarchy && echo && mobile_response_appendf(&builder,
+            "%s{\"hierarchy_id\":\"%s\",\"echo_source_id\":\"%s\","
+            "\"echo_sequence\":%lu,\"kind\":\"%s\",\"next\":",
+            i == offset ? "" : ",", hierarchy, echo, item->echo_sequence, kind);
+        free(hierarchy); free(echo);
+        if (!written) goto internal_error_continuations;
+        if (item->next_source_id) {
+            char *next_id = json_escape(item->next_source_id);
+            char *next_kind = json_escape(item->next_source_kind);
+            char *next_text = item->next_text ? json_escape(item->next_text) : NULL;
+            written = next_id && next_kind &&
+                (!item->next_text || next_text) && mobile_response_appendf(
+                    &builder,
+                    "{\"source_id\":\"%s\",\"source_kind\":\"%s\","
+                    "\"sequence\":%lu,\"text\":",
+                    next_id, next_kind, item->next_sequence);
+            if (written) written = next_text ?
+                mobile_response_appendf(&builder, "\"%s\"", next_text) :
+                mobile_response_appendf(&builder, "null");
+            if (written) written = item->kind == MEMORIA_STRUCTURAL_CONTINUATION_USER ?
+                mobile_response_appendf(&builder,
+                    ",\"trail_address\":\"%s\"}", item->next_trail_address) :
+                mobile_response_appendf(&builder, ",\"trail_address\":null}");
+            free(next_id); free(next_kind); free(next_text);
+        } else {
+            written = mobile_response_appendf(&builder, "null");
+        }
+        if (!written || !mobile_response_appendf(&builder, "}"))
+            goto internal_error_continuations;
+    }
+    if (!mobile_response_appendf(&builder, "]}"))
+        goto internal_error_continuations;
+    status = set_response(out, builder.data, MEMORIA_MOBILE_UNRESOLVED);
+    goto done_continuations;
+internal_error_continuations:
+    status = MEMORIA_MOBILE_INTERNAL_ERROR;
+done_continuations:
+    free(builder.data);
+    free(witnesses);
+    free(query);
+    free(request);
+    return status;
+}
+
 static int concept_catalog_parse_number(const char **cursor, size_t *remaining, size_t *value) {
     size_t v = 0, digits = 0;
     const char *p;

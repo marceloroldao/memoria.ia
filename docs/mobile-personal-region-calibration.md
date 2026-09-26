@@ -248,7 +248,7 @@ an app acceptance gate or a factual fallback.
 | Competing sources | Both conflicting user sources remain visible and unqualified | Pass |
 | Cold reopen | Candidates and exact source addresses survive | Pass |
 
-Eight of eleven script checks pass; the three failures concern selection and
+Thirteen of sixteen script checks pass; the three failures concern selection and
 absence. Merely returning `UNRESOLVED` alongside irrelevant `CANDIDATES` is
 not proof that the system has recognized the missing answer. The old local
 resolver's `HIT` and the opt-in personal probe remain separate contracts.
@@ -273,3 +273,32 @@ not classify the successor texts or qualify a fact. No private text, source ID
 or raw response is stored in Git. Further work should compare the competing
 regional trajectories and test whether a candidate survives absent-subject
 and near-question controls before changing OFF.IA or optimizing throughput.
+
+The occurrence-local path is now exposed directly by the native read-only
+`probe_structural_continuations` API, rather than relying on a host-side join
+of trail pages and conversation windows. For each observed exact normalized
+user query, it looks at the lowest higher sequence in the **same** conversation.
+An immediate user turn gets a source address and normalized trail address;
+an identical question is `REPEAT_ECHO`. An assistant turn is `BLOCKED`, with
+its text omitted and no jump to a later user turn. Missing successors are
+`TERMINAL`; tied sequence numbers are `AMBIGUOUS_ORDER` and expose no claimed
+successor. Counts and source-addressed witnesses are paginated separately.
+Every response has `qualified:false`, `trajectory_used:false` and native
+`UNRESOLVED` status, including one with `CANDIDATES`. Distinct continuation
+trails count normalized forms, while occurrence counts retain the original
+records. Neither count reinforces a field or verifies a personal answer.
+An unseen paraphrase will have no exact echo; the probe does not establish
+that the answer is absent from memory.
+
+The synthetic gate checks 9 echoes: 3 user continuations with 2 distinct
+trails, 1 repeat echo, 1 assistant barrier and 4 terminal occurrences. It
+checks all sources after cold reopen, plus an absent query with zero echoes.
+On the private 83-observation replay, four frequent query surfaces activated
+12, 6, 7 and 3 normalized echoes. Their user continuation counts were 5, 3,
+3 and 2, with 4, 2, 3 and 2 distinct normalized trails, respectively; two
+immediate repeated questions were categorized as echoes. All 28 echo witnesses
+resolved to the raw conversation window after cold reopen. This result shows
+observed alternatives and correct provenance, not a selected factual value.
+The older host-side counts above include question repeats among user successors
+and use surface-level occurrence grouping, so they should not be treated as
+native factual support.

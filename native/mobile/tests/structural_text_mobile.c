@@ -396,6 +396,79 @@ static int check_trail_recurrence(void) {
     return 0;
 }
 
+static int check_occurrence_local_continuations(void) {
+    const char *dir = "./tmp-mobile-continuations";
+    const char *observations[] = {
+        "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"a-q\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"a-v\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Meu drone se chama Auri.\"}",
+        "{\"hierarchy_id\":\"conversation:b\",\"source_id\":\"b-v\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Meu drone se chama Auri.\"}",
+        "{\"hierarchy_id\":\"conversation:b\",\"source_id\":\"b-q\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"QUAL NOME DO MEU DRONE?\"}",
+        "{\"hierarchy_id\":\"conversation:c\",\"source_id\":\"c-q\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:c\",\"source_id\":\"c-v\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Meu drone se chama Boreal.\"}",
+        "{\"hierarchy_id\":\"conversation:d\",\"source_id\":\"d-q\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:d\",\"source_id\":\"d-generated\",\"source_kind\":\"assistant_generated\",\"sequence\":2,\"text\":\"Inventei um nome de drone.\"}",
+        "{\"hierarchy_id\":\"conversation:d\",\"source_id\":\"d-after\",\"source_kind\":\"user_turn\",\"sequence\":3,\"text\":\"Meu drone se chama Falso.\"}",
+        "{\"hierarchy_id\":\"conversation:e\",\"source_id\":\"e-q1\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:e\",\"source_id\":\"e-q2\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:f\",\"source_id\":\"f-q\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:g\",\"source_id\":\"g-q\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:g\",\"source_id\":\"g-v1\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Meu drone se chama T1.\"}",
+        "{\"hierarchy_id\":\"conversation:g\",\"source_id\":\"g-v2\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Meu drone se chama T2.\"}"
+    };
+    memoria_mobile_handle *h = NULL;
+    memoria_mobile_buffer out = {0};
+    size_t i, pass;
+    (void)system("rm -rf ./tmp-mobile-continuations");
+    CHECK(memoria_mobile_open(dir, "org-continuations", &h) == MEMORIA_MOBILE_OK);
+    for (i = 0u; i < sizeof(observations) / sizeof(*observations); ++i) {
+        CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+            observations[i], &out) == MEMORIA_MOBILE_OK);
+        clear(&out);
+    }
+    for (pass = 0u; pass < 2u; ++pass) {
+        CHECK(call_json(memoria_mobile_probe_structural_continuations_json, h,
+            "{\"query\":\"Qual nome do meu drone?\",\"limit\":64}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"status\":\"CANDIDATES\",\"qualified\":false"));
+        CHECK(contains(out, "\"occurrence_local\":true,\"trajectory_used\":false"));
+        CHECK(contains(out, "\"query_echo_occurrences\":8"));
+        CHECK(contains(out, "\"user_continuation_occurrences\":3"));
+        CHECK(contains(out, "\"distinct_continuation_trails\":2,\"competing_continuations\":true"));
+        CHECK(contains(out, "\"repeat_echo_occurrences\":1,\"blocked_occurrences\":1,"));
+        CHECK(contains(out, "\"terminal_occurrences\":2,\"ambiguous_order_occurrences\":1"));
+        CHECK(contains(out, "\"echo_source_id\":\"b-q\",\"echo_sequence\":1,"));
+        CHECK(contains(out, "\"source_id\":\"b-v\",\"source_kind\":\"user_turn\""));
+        CHECK(contains(out, "\"source_id\":\"d-generated\",\"source_kind\":\"assistant_generated\",\"sequence\":2,\"text\":null"));
+        CHECK(!contains(out, "Inventei um nome de drone."));
+        CHECK(!contains(out, "d-after"));
+        CHECK(contains(out, "\"echo_source_id\":\"e-q1\",\"echo_sequence\":1,\"kind\":\"REPEAT_ECHO\""));
+        CHECK(contains(out, "\"echo_source_id\":\"g-q\",\"echo_sequence\":1,\"kind\":\"AMBIGUOUS_ORDER\",\"next\":null"));
+        clear(&out);
+        CHECK(call_json(memoria_mobile_probe_structural_continuations_json, h,
+            "{\"query\":\"Qual nome do meu drone?\",\"offset\":2,\"limit\":2}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"page\":{\"offset\":2,\"returned\":2,\"next_offset\":4}"));
+        CHECK(contains(out, "\"query_echo_occurrences\":8"));
+        clear(&out);
+        CHECK(call_json(memoria_mobile_probe_structural_continuations_json, h,
+            "{\"query\":\"Qual potência do meu drone?\"}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"status\":\"UNRESOLVED\""));
+        CHECK(contains(out, "\"query_echo_occurrences\":0"));
+        clear(&out);
+        if (!pass) {
+            CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
+            memoria_mobile_close(h);
+            h = NULL;
+            CHECK(memoria_mobile_open(dir, "org-continuations", &h)
+                == MEMORIA_MOBILE_OK);
+        }
+    }
+    memoria_mobile_close(h);
+    (void)system("rm -rf ./tmp-mobile-continuations");
+    return 0;
+}
+
 static int check_query_embedded_in_new_payload(void) {
     const char *dir = "./tmp-mobile-embedded-query";
     const char *observations[] = {
@@ -521,6 +594,7 @@ int main(void) {
     CHECK(memoria_mobile_open(dir, "org-structural-mobile", &h) == MEMORIA_MOBILE_OK);
     CHECK(check_near_echo_is_not_evidence() == 0);
     CHECK(check_trail_recurrence() == 0);
+    CHECK(check_occurrence_local_continuations() == 0);
     CHECK(check_query_embedded_in_new_payload() == 0);
 
     /*

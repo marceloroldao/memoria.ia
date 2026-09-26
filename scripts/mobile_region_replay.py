@@ -32,7 +32,8 @@ class NativeProbe:
         self.lib.memoria_mobile_free_buffer.argtypes = [Buffer]
         for name in (
             "observe_structural_text", "probe_structural_regions",
-            "probe_structural_trails", "read_structural_window",
+            "probe_structural_trails", "probe_structural_continuations",
+            "read_structural_window",
         ):
             fn = getattr(self.lib, f"memoria_mobile_{name}_json")
             fn.argtypes = [ctypes.c_void_p, Buffer, ctypes.POINTER(Buffer)]
@@ -150,6 +151,86 @@ def main() -> None:
                     raise RuntimeError("unqualified probe contract violated")
                 if len(groups) != trails["group_count"]:
                     raise RuntimeError("trail pagination gate failed")
+                continuation_offset = 0
+                continuations = []
+                continuation_summary = None
+                while True:
+                    continuation_status, continuation_page = probe.call(
+                        "probe_structural_continuations",
+                        {"query": query, "offset": continuation_offset, "limit": 64},
+                    )
+                    if (continuation_status != 2
+                        or continuation_page["qualified"] is not False
+                        or continuation_page["occurrence_local"] is not True
+                        or continuation_page["trajectory_used"] is not False):
+                        raise RuntimeError("unqualified continuation contract violated")
+                    if continuation_summary is None:
+                        continuation_summary = continuation_page
+                    continuations.extend(continuation_page["witnesses"])
+                    continuation_offset = continuation_page["page"]["next_offset"]
+                    if continuation_offset is None:
+                        break
+                if len(continuations) != continuation_summary["query_echo_occurrences"]:
+                    raise RuntimeError("continuation pagination gate failed")
+                if len(continuations) != trails["query_echo_occurrences"]:
+                    raise RuntimeError("query echo provenance gate failed")
+                kind_counts = Counter(row["kind"] for row in continuations)
+                if any(
+                    kind_counts[kind] != continuation_summary[field]
+                    for kind, field in (
+                        ("USER_CONTINUATION", "user_continuation_occurrences"),
+                        ("REPEAT_ECHO", "repeat_echo_occurrences"),
+                        ("BLOCKED", "blocked_occurrences"),
+                        ("TERMINAL", "terminal_occurrences"),
+                        ("AMBIGUOUS_ORDER", "ambiguous_order_occurrences"),
+                    )
+                ) or continuation_summary["competing_continuations"] != (
+                    continuation_summary["distinct_continuation_trails"] > 1
+                ):
+                    raise RuntimeError("continuation classification gate failed")
+                continuation_windows = {}
+                missing_continuations = 0
+                for witness in continuations:
+                    hierarchy_id = witness["hierarchy_id"]
+                    if hierarchy_id not in continuation_windows:
+                        offset = 0
+                        rows = []
+                        while True:
+                            window_status, window = probe.call(
+                                "read_structural_window",
+                                {"hierarchy_id": hierarchy_id,
+                                 "offset": offset, "limit": 64},
+                            )
+                            if window_status != 0:
+                                raise RuntimeError("continuation window read failed")
+                            rows.extend(window["observations"])
+                            offset = window["page"]["next_offset"]
+                            if offset is None:
+                                break
+                        continuation_windows[hierarchy_id] = rows
+                    rows = continuation_windows[hierarchy_id]
+                    echo_found = any(
+                        row["source_id"] == witness["echo_source_id"]
+                        and row["sequence"] == witness["echo_sequence"]
+                        and row["source_kind"] in ("user_turn", "user_assertion")
+                        for row in rows
+                    )
+                    next_observation = witness["next"]
+                    next_found = next_observation is None or any(
+                        row["source_id"] == next_observation["source_id"]
+                        and row["sequence"] == next_observation["sequence"]
+                        and row["source_kind"] == next_observation["source_kind"]
+                        and (next_observation["text"] is None
+                             or row["text"] == next_observation["text"])
+                        for row in rows
+                    )
+                    if not echo_found or not next_found:
+                        missing_continuations += 1
+                    if (witness["kind"] == "BLOCKED"
+                        and next_observation["text"] is not None):
+                        raise RuntimeError("assistant continuation text exposed")
+                if missing_continuations:
+                    raise RuntimeError("continuation addressability gate failed")
                 bases = {group["fingerprint"] for group in groups
                          if group["query_echo"]}
                 composed = [group for group in groups
@@ -189,6 +270,16 @@ def main() -> None:
                     ),
                     "witnesses_checked": len(witnesses),
                     "witnesses_missing": missing,
+                    "user_continuations": continuation_summary[
+                        "user_continuation_occurrences"],
+                    "distinct_continuation_trails": continuation_summary[
+                        "distinct_continuation_trails"],
+                    "repeat_echoes": continuation_summary["repeat_echo_occurrences"],
+                    "blocked_continuations": continuation_summary["blocked_occurrences"],
+                    "ambiguous_continuations": continuation_summary[
+                        "ambiguous_order_occurrences"],
+                    "continuation_witnesses_checked": len(continuations),
+                    "continuation_witnesses_missing": missing_continuations,
                     "qualified": region["qualified"],
                 })
                 if missing:

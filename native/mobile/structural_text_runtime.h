@@ -95,6 +95,27 @@ typedef struct memoria_structural_trail_recurrence {
     size_t source_capacity;
 } memoria_structural_trail_recurrence;
 
+typedef enum memoria_structural_continuation_kind {
+    MEMORIA_STRUCTURAL_CONTINUATION_TERMINAL = 0,
+    MEMORIA_STRUCTURAL_CONTINUATION_BLOCKED = 1,
+    MEMORIA_STRUCTURAL_CONTINUATION_REPEAT_ECHO = 2,
+    MEMORIA_STRUCTURAL_CONTINUATION_USER = 3,
+    MEMORIA_STRUCTURAL_CONTINUATION_AMBIGUOUS_ORDER = 4
+} memoria_structural_continuation_kind;
+
+typedef struct memoria_structural_continuation_witness {
+    /* All pointers are borrowed from the runtime until its next mutation. */
+    const char *hierarchy_id;
+    const char *echo_source_id;
+    unsigned long echo_sequence;
+    const char *next_source_id;
+    const char *next_source_kind;
+    const char *next_text;
+    unsigned long next_sequence;
+    memoria_structural_continuation_kind kind;
+    char next_trail_address[17];
+} memoria_structural_continuation_witness;
+
 /*
  * Open the structural text runtime over the SAME BDR handle already owned by
  * Memoria.ia mobile persistence. The runtime borrows db and never closes it.
@@ -186,6 +207,19 @@ int memoria_structural_text_runtime_trail_recurrence(
 void memoria_structural_text_trail_recurrences_free(
     memoria_structural_trail_recurrence *groups,
     size_t count
+);
+
+/* Exact observed query -> immediate next occurrence in its own conversation.
+ * A repeated question stays an echo, assistant output blocks the transition,
+ * and same-sequence successors are ambiguous. No continuation is an answer
+ * or fact merely because it follows a question. The returned array is owned;
+ * its string pointers remain borrowed from the runtime. */
+int memoria_structural_text_runtime_continuations(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_continuation_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_user_trails
 );
 
 size_t memoria_structural_text_runtime_window_revision(

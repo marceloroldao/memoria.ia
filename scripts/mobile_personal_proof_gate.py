@@ -211,6 +211,65 @@ def main() -> None:
             gates["absent_query_has_no_continuation"] = not immediate_continuations(
                 probe, QUERIES["absent_recombination"]
             )
+            native_status, native = probe.call("probe_structural_continuations", {
+                "query": QUERIES["known"], "limit": 64,
+            })
+            native_witnesses = native["witnesses"]
+            gates["native_local_continuation_contract"] = (
+                native_status == 2 and native["qualified"] is False
+                and native["occurrence_local"] is True
+                and native["trajectory_used"] is False
+                and native["query_echo_occurrences"] == 9
+                and native["user_continuation_occurrences"] == 3
+                and native["distinct_continuation_trails"] == 2
+                and native["competing_continuations"] is True
+                and native["repeat_echo_occurrences"] == 1
+                and native["blocked_occurrences"] == 1
+                and native["terminal_occurrences"] == 4
+                and native["ambiguous_order_occurrences"] == 0
+                and native["page"]["next_offset"] is None
+            )
+            gates["native_local_sources_addressable"] = all(
+                any(row["source_id"] == item["echo_source_id"]
+                    and row["sequence"] == item["echo_sequence"]
+                    for row in region_rows(probe, item["hierarchy_id"]))
+                and (item["next"] is None or any(
+                    row["source_id"] == item["next"]["source_id"]
+                    and row["sequence"] == item["next"]["sequence"]
+                    for row in region_rows(probe, item["hierarchy_id"])))
+                for item in native_witnesses
+            )
+            gates["native_local_barrier_and_echo"] = (
+                {item["next"]["source_id"] for item in native_witnesses
+                 if item["kind"] == "USER_CONTINUATION"}
+                == {"linked-a1", "linked-a2", "linked-b"}
+                and any(item["echo_source_id"] == "linked-repeat-q1"
+                        and item["kind"] == "REPEAT_ECHO"
+                        for item in native_witnesses)
+                and any(item["echo_source_id"] == "linked-q4"
+                        and item["kind"] == "BLOCKED"
+                        and item["next"]["text"] is None
+                        for item in native_witnesses)
+                and "Falso" not in json.dumps(native, ensure_ascii=False)
+                and "linked-after-generated" not in json.dumps(native)
+            )
+            empty_status, empty_native = probe.call(
+                "probe_structural_continuations",
+                {"query": QUERIES["absent_recombination"]},
+            )
+            gates["native_absent_query_unresolved"] = (
+                empty_status == 2 and empty_native["status"] == "UNRESOLVED"
+                and empty_native["query_echo_occurrences"] == 0
+                and empty_native["witnesses"] == []
+            )
+            probe.reopen()
+            repeat_status, repeat_native = probe.call(
+                "probe_structural_continuations",
+                {"query": QUERIES["known"], "limit": 64},
+            )
+            gates["native_cold_reopen_identical"] = (
+                repeat_status == native_status and repeat_native == native
+            )
             print(json.dumps({
                 "observations": len(OBSERVATIONS) + len(LINKED),
                 "functional_gates": gates,

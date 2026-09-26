@@ -1490,6 +1490,134 @@ fail:
     return 0;
 }
 
+int memoria_structural_text_runtime_continuations(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_continuation_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_user_trails
+) {
+    memoria_structural_continuation_witness *witnesses = NULL;
+    uint64_t **user_trails = NULL;
+    size_t *user_counts = NULL;
+    uint64_t *query_symbols = NULL;
+    size_t query_count = 0u, count = 0u, distinct = 0u, i;
+    if (!runtime || !query || !*query || !out_witnesses || !out_count ||
+        !out_distinct_user_trails) return 0;
+    *out_witnesses = NULL;
+    *out_count = 0u;
+    *out_distinct_user_trails = 0u;
+    if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    if (runtime->observation_count > ((size_t)-1) / sizeof(*witnesses) ||
+        runtime->observation_count > ((size_t)-1) / sizeof(*user_trails) ||
+        runtime->observation_count > ((size_t)-1) / sizeof(*user_counts))
+        goto fail;
+    if (runtime->observation_count) {
+        witnesses = calloc(runtime->observation_count, sizeof(*witnesses));
+        user_trails = calloc(runtime->observation_count, sizeof(*user_trails));
+        user_counts = calloc(runtime->observation_count, sizeof(*user_counts));
+        if (!witnesses || !user_trails || !user_counts) goto fail;
+    }
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const runtime_observation *item = &runtime->observations[i];
+        const runtime_observation *next = NULL;
+        memoria_structural_continuation_witness *witness;
+        uint64_t *symbols = NULL;
+        size_t symbol_count = 0u, j;
+        int tied = 0;
+        if (strncmp(item->hierarchy_id, "conversation:", 13) != 0 ||
+            (strcmp(item->source_kind, "user_turn") != 0 &&
+             strcmp(item->source_kind, "user_assertion") != 0)) continue;
+        if (!tokenize_alloc(item->text, &symbols, &symbol_count)) goto fail;
+        if (symbol_count != query_count ||
+            memcmp(symbols, query_symbols, query_count * sizeof(*symbols)) != 0) {
+            free(symbols);
+            continue;
+        }
+        free(symbols);
+        witness = &witnesses[count];
+        witness->hierarchy_id = item->hierarchy_id;
+        witness->echo_source_id = item->source_id;
+        witness->echo_sequence = item->sequence;
+        witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_TERMINAL;
+        for (j = 0u; j < runtime->observation_count; ++j) {
+            const runtime_observation *candidate = &runtime->observations[j];
+            if (i == j || strcmp(item->hierarchy_id,
+                                candidate->hierarchy_id) != 0) continue;
+            if (candidate->sequence == item->sequence) tied = 1;
+            if (candidate->sequence <= item->sequence) continue;
+            if (!next || candidate->sequence < next->sequence) {
+                next = candidate;
+            }
+        }
+        if (next) {
+            for (j = 0u; j < runtime->observation_count; ++j) {
+                const runtime_observation *other = &runtime->observations[j];
+                if (other != next && other->sequence == next->sequence &&
+                    strcmp(other->hierarchy_id, item->hierarchy_id) == 0) {
+                    tied = 1;
+                    break;
+                }
+            }
+        }
+        if (tied) {
+            witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_AMBIGUOUS_ORDER;
+        } else if (next) {
+            witness->next_source_id = next->source_id;
+            witness->next_source_kind = next->source_kind;
+            witness->next_sequence = next->sequence;
+            if (strcmp(next->source_kind, "user_turn") != 0 &&
+                strcmp(next->source_kind, "user_assertion") != 0) {
+                witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_BLOCKED;
+            } else {
+                if (!tokenize_alloc(next->text, &symbols, &symbol_count))
+                    goto fail;
+                witness->next_text = next->text;
+                if (symbol_count == query_count &&
+                    memcmp(symbols, query_symbols,
+                           query_count * sizeof(*symbols)) == 0) {
+                    witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_REPEAT_ECHO;
+                    free(symbols);
+                } else {
+                    witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_USER;
+                    recurrence_fingerprint(symbols, symbol_count,
+                                           witness->next_trail_address);
+                    user_trails[count] = symbols;
+                    user_counts[count] = symbol_count;
+                }
+            }
+        }
+        ++count;
+    }
+    for (i = 0u; i < count; ++i) {
+        size_t j;
+        if (!user_trails[i]) continue;
+        for (j = 0u; j < i; ++j)
+            if (user_trails[j] && user_counts[j] == user_counts[i] &&
+                memcmp(user_trails[j], user_trails[i],
+                       user_counts[i] * sizeof(**user_trails)) == 0) break;
+        if (j == i) ++distinct;
+    }
+    for (i = 0u; i < count; ++i) free(user_trails[i]);
+    free(user_trails);
+    free(user_counts);
+    free(query_symbols);
+    *out_witnesses = witnesses;
+    *out_count = count;
+    *out_distinct_user_trails = distinct;
+    return 1;
+fail:
+    if (user_trails) {
+        for (i = 0u; i < runtime->observation_count; ++i)
+            free(user_trails[i]);
+    }
+    free(user_trails);
+    free(user_counts);
+    free(query_symbols);
+    free(witnesses);
+    return 0;
+}
+
 static int resolve_text_impl(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,
