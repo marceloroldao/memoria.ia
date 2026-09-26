@@ -1812,6 +1812,74 @@ memoria_mobile_status memoria_mobile_export_snapshot_json(
     return status;
 }
 
+memoria_mobile_status memoria_mobile_link_structural_reply_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *request = NULL, *hierarchy = NULL, *source = NULL, *target = NULL;
+    char *escaped_hierarchy = NULL, *escaped_source = NULL, *escaped_target = NULL;
+    long sequence, target_sequence;
+    int duplicate = 0;
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
+        return status;
+    out->data = NULL;
+    out->size = 0u;
+    request = buffer_to_string(req);
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    hierarchy = json_string(request, "hierarchy_id");
+    source = json_string(request, "source_id");
+    target = json_string(request, "reply_to_source_id");
+    sequence = json_long(request, "sequence", -1);
+    target_sequence = json_long(request, "reply_to_sequence", -1);
+    if (!hierarchy || !hierarchy[0] || !source || !source[0] ||
+        !target || !target[0] || sequence < 0 || target_sequence < 0 ||
+        target_sequence >= sequence) goto done_link;
+    if (!memoria_structural_text_runtime_link_reply(
+            h->structural_text_runtime, hierarchy, source,
+            (unsigned long)sequence, target, (unsigned long)target_sequence,
+            &duplicate)) goto done_link;
+    escaped_hierarchy = json_escape(hierarchy);
+    escaped_source = json_escape(source);
+    escaped_target = json_escape(target);
+    if (!escaped_hierarchy || !escaped_source || !escaped_target) {
+        status = MEMORIA_MOBILE_INTERNAL_ERROR;
+        goto done_link;
+    }
+    status = set_responsef(out, MEMORIA_MOBILE_OK,
+        "{\"status\":\"OK\",\"qualified\":false,\"relation\":\"reply_to\","
+        "\"hierarchy_id\":\"%s\",\"source_id\":\"%s\",\"sequence\":%ld,"
+        "\"reply_to_source_id\":\"%s\",\"reply_to_sequence\":%ld,"
+        "\"duplicate\":%s,\"reply_link_count\":%zu}",
+        escaped_hierarchy, escaped_source, sequence, escaped_target,
+        target_sequence, duplicate ? "true" : "false",
+        memoria_structural_text_runtime_reply_link_count(h->structural_text_runtime));
+done_link:
+    free(request); free(hierarchy); free(source); free(target);
+    free(escaped_hierarchy); free(escaped_source); free(escaped_target);
+    return status;
+}
+
+static int mobile_append_reply_to(
+    mobile_response_builder *builder,
+    const memoria_structural_text_runtime *runtime,
+    const memoria_structural_text_observation_view *item
+) {
+    memoria_structural_reply_link_view link = {0};
+    char *target;
+    int written;
+    if (!memoria_structural_text_runtime_reply_to(runtime, item->hierarchy_id,
+            item->source_id, item->sequence, &link))
+        return mobile_response_appendf(builder, "null");
+    target = json_escape(link.reply_to_source_id);
+    written = target && mobile_response_appendf(builder,
+        "{\"source_id\":\"%s\",\"sequence\":%lu}",
+        target, link.reply_to_sequence);
+    free(target);
+    return written;
+}
+
 memoria_mobile_status memoria_mobile_export_structural_text_json(
     memoria_mobile_handle *h,
     memoria_mobile_buffer req,
@@ -1857,10 +1925,13 @@ memoria_mobile_status memoria_mobile_export_structural_text_json(
         written = hierarchy && id && kind && text && mobile_response_appendf(
             &builder,
             "%s{\"hierarchy_id\":\"%s\",\"source_id\":\"%s\","
-            "\"source_kind\":\"%s\",\"sequence\":%lu,\"text\":\"%s\"}",
+            "\"source_kind\":\"%s\",\"sequence\":%lu,\"text\":\"%s\","
+            "\"reply_to\":",
             i == offset ? "" : ",", hierarchy, id, kind, observation.sequence, text);
         free(hierarchy); free(id); free(kind); free(text);
-        if (!written) goto fail;
+        if (!written || !mobile_append_reply_to(&builder,
+                h->structural_text_runtime, &observation) ||
+            !mobile_response_appendf(&builder, "}")) goto fail;
     }
     if (!mobile_response_appendf(&builder, "]}")) goto fail;
     status = set_response(out, builder.data, MEMORIA_MOBILE_OK);
@@ -1939,11 +2010,19 @@ memoria_mobile_status memoria_mobile_read_structural_window_json(
     fingerprint = window_token_bytes(fingerprint, hierarchy);
     for (i = 0u; i < count; ++i) {
         char sequence[32];
+        memoria_structural_reply_link_view link = {0};
         snprintf(sequence, sizeof(sequence), "%lu", records[i].sequence);
         fingerprint = window_token_bytes(fingerprint, sequence);
         fingerprint = window_token_bytes(fingerprint, records[i].source_id);
         fingerprint = window_token_bytes(fingerprint, records[i].source_kind);
         fingerprint = window_token_bytes(fingerprint, records[i].text);
+        if (memoria_structural_text_runtime_reply_to(
+                h->structural_text_runtime, records[i].hierarchy_id,
+                records[i].source_id, records[i].sequence, &link)) {
+            snprintf(sequence, sizeof(sequence), "%lu", link.reply_to_sequence);
+            fingerprint = window_token_bytes(fingerprint, link.reply_to_source_id);
+            fingerprint = window_token_bytes(fingerprint, sequence);
+        }
     }
     snprintf(token, sizeof(token), "%016llx", fingerprint);
     escaped = json_escape(hierarchy);
@@ -1984,10 +2063,12 @@ memoria_mobile_status memoria_mobile_read_structural_window_json(
             mobile_response_appendf(&builder, "\"%s\"", prev) :
             mobile_response_appendf(&builder, "null");
         if (written) written = next ?
-            mobile_response_appendf(&builder, ",\"next_source_id\":\"%s\"}", next) :
-            mobile_response_appendf(&builder, ",\"next_source_id\":null}");
+            mobile_response_appendf(&builder, ",\"next_source_id\":\"%s\"", next) :
+            mobile_response_appendf(&builder, ",\"next_source_id\":null");
         free(id); free(kind); free(text); free(prev); free(next);
-        if (!written) goto internal_error_window;
+        if (!written || !mobile_response_appendf(&builder, ",\"reply_to\":") ||
+            !mobile_append_reply_to(&builder, h->structural_text_runtime, item) ||
+            !mobile_response_appendf(&builder, "}")) goto internal_error_window;
     }
     if (!mobile_response_appendf(&builder, "]}")) goto internal_error_window;
     status = set_response(out, builder.data, MEMORIA_MOBILE_OK);

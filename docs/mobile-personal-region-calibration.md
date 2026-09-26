@@ -329,3 +329,35 @@ evidence must preserve the speaker's observed reply/confirmation relation
 and the epistemic status of the source; a normalized trail or legacy source
 kind alone cannot supply those distinctions. The three strict functional
 selection failures remain open.
+
+## Explicit reply provenance, 26 September 2026
+
+The native mobile API now accepts `link_structural_reply` for a caller-observed
+user reply to an earlier source address in the same conversation. The request
+names `hierarchy_id`, `source_id`, `sequence`, `reply_to_source_id` and
+`reply_to_sequence`. Both observations must already exist, the reply must be a
+user observation, and its sequence must be later than its target. An exact
+retry is idempotent; a conflicting target, assistant source or cross-conversation
+address is rejected. The API reports `qualified:false`. It records an observed
+relation between two source addresses, without deciding whether the reply is
+an answer, confirmation or truthful personal fact.
+
+The relation has its own atomic BDR log and count alongside structural-text
+schema 2. It does not rewrite raw observations, advance the conversation field
+clock, strengthen an existing nodule or change resolution. The structural
+export and paged conversation window expose `reply_to` as a target source
+address or `null`; a new link invalidates an older window token. Cold reopen
+restores the link, and replay imports exported links after their observations
+and checks each source address after another reopen. Exports without the field
+continue to replay unchanged.
+
+The synthetic proof gate now has 17 passing checks out of 20. Three distinct
+reply relations, their idempotence, their cold-reopen provenance and their lack
+of effect on retrieval pass. A repeated question and assistant-generated turn
+remain unlinked. The remaining failures are still the wrong first candidate
+for a known question, the wrong first candidate for another subject and eight
+irrelevant candidates for an absent recombination. An invented two-observation
+export replayed 1 of 1 reply links. The private 83-observation export contains
+no explicit `reply_to` metadata, so its replay correctly restored zero links;
+it cannot establish that older adjacent turns were replies. No automatic
+factual answer selection or OFF.IA behavior changes in this step.

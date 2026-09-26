@@ -17,6 +17,14 @@ typedef struct runtime_observation {
     unsigned long sequence;
 } runtime_observation;
 
+typedef struct runtime_reply_link {
+    char *hierarchy_id;
+    char *source_id;
+    unsigned long sequence;
+    char *reply_to_source_id;
+    unsigned long reply_to_sequence;
+} runtime_reply_link;
+
 typedef struct runtime_trail_slot {
     uint64_t *symbols;
     size_t symbol_count;
@@ -42,6 +50,9 @@ struct memoria_structural_text_runtime {
     runtime_observation *observations;
     size_t observation_count;
     size_t observation_capacity;
+    runtime_reply_link *reply_links;
+    size_t reply_link_count;
+    size_t reply_link_capacity;
     runtime_hierarchy *hierarchies;
     size_t hierarchy_count;
     size_t hierarchy_capacity;
@@ -273,6 +284,68 @@ static int parse_alloc_field(
     return 1;
 }
 
+static void free_reply_link(runtime_reply_link *link) {
+    if (!link) return;
+    free(link->hierarchy_id);
+    free(link->source_id);
+    free(link->reply_to_source_id);
+    memset(link, 0, sizeof(*link));
+}
+
+static int serialize_reply_link(
+    const runtime_reply_link *link, char **out, size_t *out_size
+) {
+    dynbuf buffer = {0};
+    char sequence[64], target_sequence[64];
+    int n, m;
+    if (!link || !out || !out_size) return 0;
+    *out = NULL;
+    *out_size = 0u;
+    n = snprintf(sequence, sizeof(sequence), "%lu:", link->sequence);
+    m = snprintf(target_sequence, sizeof(target_sequence), "%lu:",
+                 link->reply_to_sequence);
+    if (n <= 0 || m <= 0 ||
+        (size_t)n >= sizeof(sequence) ||
+        (size_t)m >= sizeof(target_sequence) ||
+        !dynbuf_append(&buffer, "L1:", 3u) ||
+        !dynbuf_append_field(&buffer, link->hierarchy_id) ||
+        !dynbuf_append_field(&buffer, link->source_id) ||
+        !dynbuf_append(&buffer, sequence, (size_t)n) ||
+        !dynbuf_append_field(&buffer, link->reply_to_source_id) ||
+        !dynbuf_append(&buffer, target_sequence, (size_t)m)) {
+        free(buffer.data);
+        return 0;
+    }
+    *out = buffer.data;
+    *out_size = buffer.size;
+    return 1;
+}
+
+static int deserialize_reply_link(
+    const char *value, size_t size, runtime_reply_link *out
+) {
+    const char *cursor = value;
+    size_t remaining = size;
+    runtime_reply_link link = {0};
+    if (!value || size < 3u || memcmp(value, "L1:", 3u) != 0 || !out)
+        return 0;
+    cursor += 3u;
+    remaining -= 3u;
+    if (!parse_alloc_field(&cursor, &remaining, &link.hierarchy_id) ||
+        !parse_alloc_field(&cursor, &remaining, &link.source_id) ||
+        !parse_ulong_token(&cursor, &remaining, &link.sequence) ||
+        !parse_alloc_field(&cursor, &remaining, &link.reply_to_source_id) ||
+        !parse_ulong_token(&cursor, &remaining, &link.reply_to_sequence) ||
+        remaining != 0u || !link.hierarchy_id[0] || !link.source_id[0] ||
+        !link.reply_to_source_id[0] ||
+        link.reply_to_sequence >= link.sequence) {
+        free_reply_link(&link);
+        return 0;
+    }
+    *out = link;
+    return 1;
+}
+
 static void free_observation(runtime_observation *observation) {
     if (!observation) return;
     free(observation->hierarchy_id);
@@ -369,6 +442,20 @@ static int reserve_observations(
     if (!grown) return 0;
     runtime->observations = grown;
     runtime->observation_capacity = capacity;
+    return 1;
+}
+
+static int reserve_reply_links(memoria_structural_text_runtime *runtime) {
+    runtime_reply_link *grown;
+    size_t capacity;
+    if (runtime->reply_link_count < runtime->reply_link_capacity) return 1;
+    capacity = runtime->reply_link_capacity ? runtime->reply_link_capacity * 2u : 8u;
+    if (capacity < runtime->reply_link_capacity ||
+        capacity > ((size_t)-1) / sizeof(*grown)) return 0;
+    grown = realloc(runtime->reply_links, capacity * sizeof(*grown));
+    if (!grown) return 0;
+    runtime->reply_links = grown;
+    runtime->reply_link_capacity = capacity;
     return 1;
 }
 
@@ -632,6 +719,38 @@ static int parse_double_text(const char *text, double *out) {
     return 1;
 }
 
+static const runtime_observation *find_observation_address(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *source_id,
+    unsigned long sequence
+) {
+    size_t i;
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const runtime_observation *item = &runtime->observations[i];
+        if (item->sequence == sequence &&
+            strcmp(item->hierarchy_id, hierarchy_id) == 0 &&
+            strcmp(item->source_id, source_id) == 0) return item;
+    }
+    return NULL;
+}
+
+static const runtime_reply_link *find_reply_link(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *source_id,
+    unsigned long sequence
+) {
+    size_t i;
+    for (i = 0u; i < runtime->reply_link_count; ++i) {
+        const runtime_reply_link *link = &runtime->reply_links[i];
+        if (link->sequence == sequence &&
+            strcmp(link->hierarchy_id, hierarchy_id) == 0 &&
+            strcmp(link->source_id, source_id) == 0) return link;
+    }
+    return NULL;
+}
+
 static int load_persisted(
     memoria_structural_text_runtime *runtime
 ) {
@@ -640,7 +759,8 @@ static int load_persisted(
     char *within_text = NULL;
     char *lag_text = NULL;
     char *forget_text = NULL;
-    size_t count = 0u;
+    char *reply_count_text = NULL;
+    size_t count = 0u, reply_count = 0u;
     size_t within = 0u;
     size_t lag = 0u;
     double forgetting = 0.0;
@@ -652,10 +772,12 @@ static int load_persisted(
         !fetch_value(runtime, "meta/count", &count_text, NULL) ||
         !fetch_value(runtime, "meta/max_within_distance", &within_text, NULL) ||
         !fetch_value(runtime, "meta/max_event_lag", &lag_text, NULL) ||
-        !fetch_value(runtime, "meta/forgetting_rate", &forget_text, NULL))
+        !fetch_value(runtime, "meta/forgetting_rate", &forget_text, NULL) ||
+        !fetch_value(runtime, "meta/reply_link_count", &reply_count_text, NULL))
         goto done;
 
-    if (!schema && !count_text && !within_text && !lag_text && !forget_text) {
+    if (!schema && !count_text && !within_text && !lag_text && !forget_text &&
+        !reply_count_text) {
         ok = 1;
         goto done;
     }
@@ -673,6 +795,8 @@ static int load_persisted(
             fabs(forgetting - runtime->forgetting_rate) > 1e-15)
             goto done;
     }
+    if (reply_count_text && !parse_size_text(reply_count_text, &reply_count))
+        goto done;
 
     for (i = 0; i < count; ++i) {
         char suffix[64];
@@ -691,7 +815,37 @@ static int load_persisted(
         }
         free(row);
     }
-    ok = runtime->observation_count == count;
+    for (i = 0u; i < reply_count; ++i) {
+        char suffix[64];
+        char *row = NULL;
+        size_t row_size = 0u;
+        runtime_reply_link link = {0};
+        const runtime_observation *source;
+        snprintf(suffix, sizeof(suffix), "reply_link/%012zu", i + 1u);
+        if (!fetch_value(runtime, suffix, &row, &row_size) || !row ||
+            !deserialize_reply_link(row, row_size, &link)) {
+            free(row);
+            free_reply_link(&link);
+            goto done;
+        }
+        free(row);
+        source = find_observation_address(runtime, link.hierarchy_id,
+                                          link.source_id, link.sequence);
+        if (!source ||
+            (strcmp(source->source_kind, "user_turn") != 0 &&
+             strcmp(source->source_kind, "user_assertion") != 0) ||
+            !find_observation_address(runtime, link.hierarchy_id,
+                link.reply_to_source_id, link.reply_to_sequence) ||
+            find_reply_link(runtime, link.hierarchy_id,
+                link.source_id, link.sequence) ||
+            !reserve_reply_links(runtime)) {
+            free_reply_link(&link);
+            goto done;
+        }
+        runtime->reply_links[runtime->reply_link_count++] = link;
+    }
+    ok = runtime->observation_count == count &&
+         runtime->reply_link_count == reply_count;
 
 done:
     free(schema);
@@ -699,6 +853,7 @@ done:
     free(within_text);
     free(lag_text);
     free(forget_text);
+    free(reply_count_text);
     return ok;
 }
 
@@ -839,6 +994,39 @@ static int persist_observation(
     return (int)i;
 }
 
+static int persist_reply_link(
+    memoria_structural_text_runtime *runtime,
+    const runtime_reply_link *link
+) {
+    bdr_atomic_c_operation ops[2] = {{0}, {0}};
+    bdr_atomic_c_batch_result result = {0};
+    char keys[2][KEY_CAP];
+    char count[64], suffix[64];
+    char *row = NULL;
+    size_t row_size = 0u;
+    int ok;
+    if (!runtime || !link || !serialize_reply_link(link, &row, &row_size))
+        return 0;
+    snprintf(count, sizeof(count), "%zu", runtime->reply_link_count + 1u);
+    snprintf(suffix, sizeof(suffix), "reply_link/%012zu",
+             runtime->reply_link_count + 1u);
+    if (!make_key(runtime, keys[0], KEY_CAP, "meta/reply_link_count") ||
+        !make_key(runtime, keys[1], KEY_CAP, suffix)) {
+        free(row);
+        return 0;
+    }
+    ops[0].type = BDR_ATOMIC_C_PUT;
+    ops[0].key = keys[0]; ops[0].key_size = strlen(keys[0]);
+    ops[0].value = count; ops[0].value_size = strlen(count);
+    ops[1].type = BDR_ATOMIC_C_PUT;
+    ops[1].key = keys[1]; ops[1].key_size = strlen(keys[1]);
+    ops[1].value = row; ops[1].value_size = row_size;
+    ok = bdr_atomic_c_write_batch(runtime->db, ops, 2u, &result)
+        == BDR_ATOMIC_C_OK && result.durable == 1 && result.operations == 2u;
+    free(row);
+    return ok;
+}
+
 int memoria_structural_text_runtime_open_shared(
     bdr_atomic_c_handle *db,
     const char *organization_id,
@@ -959,6 +1147,79 @@ int memoria_structural_text_runtime_observe(
     }
     runtime->observations[runtime->observation_count++] = observation;
     return 1;
+}
+
+int memoria_structural_text_runtime_link_reply(
+    memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *source_id,
+    unsigned long sequence,
+    const char *reply_to_source_id,
+    unsigned long reply_to_sequence,
+    int *duplicate
+) {
+    const runtime_observation *source;
+    const runtime_reply_link *existing;
+    runtime_reply_link link = {0};
+    if (duplicate) *duplicate = 0;
+    if (!runtime || !hierarchy_id || !*hierarchy_id ||
+        strncmp(hierarchy_id, "conversation:", 13u) != 0 ||
+        !source_id || !*source_id || !reply_to_source_id ||
+        !*reply_to_source_id || reply_to_sequence >= sequence)
+        return 0;
+    source = find_observation_address(runtime, hierarchy_id, source_id, sequence);
+    if (!source ||
+        (strcmp(source->source_kind, "user_turn") != 0 &&
+         strcmp(source->source_kind, "user_assertion") != 0) ||
+        !find_observation_address(runtime, hierarchy_id,
+            reply_to_source_id, reply_to_sequence)) return 0;
+    existing = find_reply_link(runtime, hierarchy_id, source_id, sequence);
+    if (existing) {
+        if (existing->reply_to_sequence != reply_to_sequence ||
+            strcmp(existing->reply_to_source_id, reply_to_source_id) != 0)
+            return 0;
+        if (duplicate) *duplicate = 1;
+        return 1;
+    }
+    link.hierarchy_id = dup_text(hierarchy_id);
+    link.source_id = dup_text(source_id);
+    link.sequence = sequence;
+    link.reply_to_source_id = dup_text(reply_to_source_id);
+    link.reply_to_sequence = reply_to_sequence;
+    if (!link.hierarchy_id || !link.source_id ||
+        !link.reply_to_source_id || !reserve_reply_links(runtime) ||
+        !persist_reply_link(runtime, &link)) {
+        free_reply_link(&link);
+        return 0;
+    }
+    runtime->reply_links[runtime->reply_link_count++] = link;
+    return 1;
+}
+
+int memoria_structural_text_runtime_reply_to(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *source_id,
+    unsigned long sequence,
+    memoria_structural_reply_link_view *out
+) {
+    const runtime_reply_link *link;
+    if (!runtime || !hierarchy_id || !source_id || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    link = find_reply_link(runtime, hierarchy_id, source_id, sequence);
+    if (!link) return 0;
+    out->hierarchy_id = link->hierarchy_id;
+    out->source_id = link->source_id;
+    out->sequence = link->sequence;
+    out->reply_to_source_id = link->reply_to_source_id;
+    out->reply_to_sequence = link->reply_to_sequence;
+    return 1;
+}
+
+size_t memoria_structural_text_runtime_reply_link_count(
+    const memoria_structural_text_runtime *runtime
+) {
+    return runtime ? runtime->reply_link_count : 0u;
 }
 
 static void free_context(memoria_structural_text_context *context) {
@@ -2023,6 +2284,8 @@ void memoria_structural_text_runtime_close(
     if (!runtime) return;
     for (i = 0; i < runtime->observation_count; ++i)
         free_observation(&runtime->observations[i]);
+    for (i = 0; i < runtime->reply_link_count; ++i)
+        free_reply_link(&runtime->reply_links[i]);
     for (i = 0; i < runtime->hierarchy_count; ++i) {
         size_t j;
         for (j = 0u; j < runtime->hierarchies[i].trail_slot_count; ++j)
@@ -2034,6 +2297,7 @@ void memoria_structural_text_runtime_close(
         );
     }
     free(runtime->observations);
+    free(runtime->reply_links);
     free(runtime->hierarchies);
     free(runtime->org);
     free(runtime);

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Replay a private OFF.IA export against the native read-only region probes.
+"""Replay a private OFF.IA export against native region diagnostics.
 
 Input texts and raw responses are never printed or stored by this script.
+Explicit reply links, when present, are restored in the temporary database.
 Only aggregate counts and addressability checks are emitted as JSON.
 """
 
@@ -33,7 +34,7 @@ class NativeProbe:
         for name in (
             "observe_structural_text", "probe_structural_regions",
             "probe_structural_trails", "probe_structural_continuations",
-            "read_structural_window",
+            "read_structural_window", "link_structural_reply",
         ):
             fn = getattr(self.lib, f"memoria_mobile_{name}_json")
             fn.argtypes = [ctypes.c_void_p, Buffer, ctypes.POINTER(Buffer)]
@@ -119,13 +120,58 @@ def main() -> None:
         try:
             field_updates = 0
             duplicate_sources = 0
+            reply_links = []
             for observation in observations:
                 status, recorded = probe.call("observe_structural_text", observation)
                 if status != 0:
                     raise RuntimeError("native observation failed")
                 field_updates += bool(recorded["new_trail"])
                 duplicate_sources += bool(recorded["duplicate"])
+                if observation.get("reply_to") is not None:
+                    target = observation["reply_to"]
+                    request = {
+                        "hierarchy_id": observation["hierarchy_id"],
+                        "source_id": observation["source_id"],
+                        "sequence": observation["sequence"],
+                        "reply_to_source_id": target["source_id"],
+                        "reply_to_sequence": target["sequence"],
+                    }
+                    reply_links.append(request)
+            for request in reply_links:
+                status, linked = probe.call("link_structural_reply", request)
+                if (status != 0 or linked["qualified"] is not False
+                        or linked["relation"] != "reply_to"):
+                    raise RuntimeError("native reply link failed")
             probe.reopen()
+            reply_links_addressable = 0
+            if reply_links:
+                windows = {}
+                for request in reply_links:
+                    hierarchy_id = request["hierarchy_id"]
+                    if hierarchy_id not in windows:
+                        offset = 0
+                        rows = []
+                        while True:
+                            status, window = probe.call("read_structural_window", {
+                                "hierarchy_id": hierarchy_id, "offset": offset,
+                                "limit": 64,
+                            })
+                            if status != 0:
+                                raise RuntimeError("reply link window read failed")
+                            rows.extend(window["observations"])
+                            offset = window["page"]["next_offset"]
+                            if offset is None:
+                                break
+                        windows[hierarchy_id] = rows
+                    matching = [row for row in windows[hierarchy_id]
+                                if row["source_id"] == request["source_id"]
+                                and row["sequence"] == request["sequence"]]
+                    if len(matching) != 1 or matching[0]["reply_to"] != {
+                        "source_id": request["reply_to_source_id"],
+                        "sequence": request["reply_to_sequence"],
+                    }:
+                        raise RuntimeError("reply link lost after cold reopen")
+                    reply_links_addressable += 1
             results = []
             for index, query in enumerate(queries):
                 region_status, region = probe.call(
@@ -291,6 +337,8 @@ def main() -> None:
         "regions": len({row["hierarchy_id"] for row in observations}),
         "distinct_region_trails": field_updates,
         "duplicate_source_events": duplicate_sources,
+        "reply_links_replayed": len(reply_links),
+        "reply_links_addressable": reply_links_addressable,
         "cases": results,
     }, sort_keys=True))
 

@@ -469,6 +469,109 @@ static int check_occurrence_local_continuations(void) {
     return 0;
 }
 
+static int check_explicit_reply_links(void) {
+    const char *dir = "./tmp-mobile-reply-links";
+    const char *observations[] = {
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"q1\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"assistant\",\"source_kind\":\"assistant_generated\",\"sequence\":2,\"text\":\"Talvez Falso.\"}",
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"r1\",\"source_kind\":\"user_turn\",\"sequence\":3,\"text\":\"Auri.\"}",
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"q2\",\"source_kind\":\"user_turn\",\"sequence\":4,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"r2\",\"source_kind\":\"user_turn\",\"sequence\":5,\"text\":\"Auri.\"}",
+        "{\"hierarchy_id\":\"conversation:other\",\"source_id\":\"other\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Boreal.\"}"
+    };
+    memoria_mobile_handle *h = NULL;
+    memoria_mobile_buffer out = {0};
+    char old_token[17], request[256];
+    const char *start;
+    size_t i, pass;
+    (void)system("rm -rf ./tmp-mobile-reply-links");
+    CHECK(memoria_mobile_open(dir, "org-reply-links", &h) == MEMORIA_MOBILE_OK);
+    for (i = 0u; i < sizeof(observations) / sizeof(*observations); ++i) {
+        CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+            observations[i], &out) == MEMORIA_MOBILE_OK);
+        if (i == 4u) CHECK(contains(out, "\"new_trail\":false"));
+        clear(&out);
+    }
+    CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+        "{\"hierarchy_id\":\"conversation:links\",\"limit\":2}", &out)
+        == MEMORIA_MOBILE_OK);
+    start = strstr((const char *)out.data, "\"window_token\":\"");
+    CHECK(start != NULL);
+    memcpy(old_token, start + strlen("\"window_token\":\""), 16u);
+    old_token[16] = 0;
+    clear(&out);
+    CHECK(call_json(memoria_mobile_link_structural_reply_json, h,
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"r1\","
+        "\"sequence\":3,\"reply_to_source_id\":\"q1\",\"reply_to_sequence\":1}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"qualified\":false,\"relation\":\"reply_to\""));
+    CHECK(contains(out, "\"duplicate\":false,\"reply_link_count\":1"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_link_structural_reply_json, h,
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"r1\","
+        "\"sequence\":3,\"reply_to_source_id\":\"q1\",\"reply_to_sequence\":1}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"duplicate\":true,\"reply_link_count\":1"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_link_structural_reply_json, h,
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"r1\","
+        "\"sequence\":3,\"reply_to_source_id\":\"assistant\",\"reply_to_sequence\":2}",
+        &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
+    CHECK(!out.data);
+    CHECK(call_json(memoria_mobile_link_structural_reply_json, h,
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"r2\","
+        "\"sequence\":5,\"reply_to_source_id\":\"other\",\"reply_to_sequence\":1}",
+        &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
+    CHECK(call_json(memoria_mobile_link_structural_reply_json, h,
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"assistant\","
+        "\"sequence\":2,\"reply_to_source_id\":\"q1\",\"reply_to_sequence\":1}",
+        &out) == MEMORIA_MOBILE_INVALID_ARGUMENT);
+    CHECK(call_json(memoria_mobile_link_structural_reply_json, h,
+        "{\"hierarchy_id\":\"conversation:links\",\"source_id\":\"r2\","
+        "\"sequence\":5,\"reply_to_source_id\":\"q2\",\"reply_to_sequence\":4}",
+        &out) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"reply_link_count\":2"));
+    clear(&out);
+    snprintf(request, sizeof(request),
+        "{\"hierarchy_id\":\"conversation:links\",\"limit\":2,"
+        "\"expected_token\":\"%s\"}", old_token);
+    CHECK(call_json(memoria_mobile_read_structural_window_json,
+        h, request, &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"status\":\"STALE_WINDOW\""));
+    clear(&out);
+    for (pass = 0u; pass < 2u; ++pass) {
+        CHECK(call_json(memoria_mobile_read_structural_window_json, h,
+            "{\"hierarchy_id\":\"conversation:links\",\"limit\":64}", &out)
+            == MEMORIA_MOBILE_OK);
+        CHECK(contains(out, "\"source_id\":\"r1\",\"source_kind\":\"user_turn\","
+            "\"sequence\":3,\"text\":\"Auri.\""));
+        CHECK(contains(out, "\"reply_to\":{\"source_id\":\"q1\",\"sequence\":1}"));
+        CHECK(contains(out, "\"reply_to\":{\"source_id\":\"q2\",\"sequence\":4}"));
+        CHECK(contains(out, "\"reply_to\":null"));
+        clear(&out);
+        CHECK(call_json(memoria_mobile_export_structural_text_json, h,
+            "{\"limit\":64}", &out) == MEMORIA_MOBILE_OK);
+        CHECK(contains(out, "\"reply_to\":{\"source_id\":\"q1\",\"sequence\":1}"));
+        clear(&out);
+        CHECK(call_json(memoria_mobile_probe_structural_continuations_json, h,
+            "{\"query\":\"Qual nome do meu drone?\"}", &out)
+            == MEMORIA_MOBILE_UNRESOLVED);
+        CHECK(contains(out, "\"blocked_occurrences\":1"));
+        CHECK(contains(out, "\"qualified\":false"));
+        clear(&out);
+        if (pass == 0u) {
+            CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
+            memoria_mobile_close(h);
+            h = NULL;
+            CHECK(memoria_mobile_open(dir, "org-reply-links", &h)
+                == MEMORIA_MOBILE_OK);
+        }
+    }
+    memoria_mobile_close(h);
+    (void)system("rm -rf ./tmp-mobile-reply-links");
+    return 0;
+}
+
 static int check_query_embedded_in_new_payload(void) {
     const char *dir = "./tmp-mobile-embedded-query";
     const char *observations[] = {
@@ -595,6 +698,7 @@ int main(void) {
     CHECK(check_near_echo_is_not_evidence() == 0);
     CHECK(check_trail_recurrence() == 0);
     CHECK(check_occurrence_local_continuations() == 0);
+    CHECK(check_explicit_reply_links() == 0);
     CHECK(check_query_embedded_in_new_payload() == 0);
 
     /*

@@ -129,6 +129,16 @@ memoria_mobile_status memoria_mobile_export_structural_text_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Persist a caller-observed reply relation in one conversation. Request:
+ * hierarchy_id, source_id, sequence, reply_to_source_id, reply_to_sequence.
+ * Both observations must already exist and the target must precede the user
+ * source. The relation is provenance, not user confirmation or a fact. */
+memoria_mobile_status memoria_mobile_link_structural_reply_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 /* Read-only addressable conversation region. Request: hierarchy_id, offset,
  * limit (1..64), optional expected_token for stable pagination. Records
  * remain raw observations; previous/next IDs describe temporal adjacency,

@@ -20,6 +20,15 @@ typedef struct memoria_structural_text_observation_view {
     unsigned long sequence;
 } memoria_structural_text_observation_view;
 
+typedef struct memoria_structural_reply_link_view {
+    /* Pointers are borrowed until the runtime's next mutation or close. */
+    const char *hierarchy_id;
+    const char *source_id;
+    unsigned long sequence;
+    const char *reply_to_source_id;
+    unsigned long reply_to_sequence;
+} memoria_structural_reply_link_view;
+
 typedef struct memoria_structural_text_occurrence {
     char *source_id;
     char *source_text;
@@ -141,6 +150,32 @@ int memoria_structural_text_runtime_observe(
     unsigned long sequence,
     const char *text,
     int *duplicate
+);
+
+/* A caller-observed reply address between two existing occurrences in one
+ * conversation. This is provenance only: it changes no symbol field or
+ * factual qualification. Exact retries are idempotent; a conflicting target
+ * for the same source address is rejected. */
+int memoria_structural_text_runtime_link_reply(
+    memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *source_id,
+    unsigned long sequence,
+    const char *reply_to_source_id,
+    unsigned long reply_to_sequence,
+    int *duplicate
+);
+
+int memoria_structural_text_runtime_reply_to(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    const char *source_id,
+    unsigned long sequence,
+    memoria_structural_reply_link_view *out
+);
+
+size_t memoria_structural_text_runtime_reply_link_count(
+    const memoria_structural_text_runtime *runtime
 );
 
 /*

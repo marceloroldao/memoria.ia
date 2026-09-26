@@ -199,7 +199,53 @@ def main() -> None:
                 })
                 if status != 0 or response["duplicate"]:
                     raise RuntimeError("linked synthetic observation failed")
+            trail_status, trails_before = probe.call("probe_structural_trails", {
+                "query": QUERIES["known"], "limit": 64,
+            })
+            resolution_before = resolve(probe, QUERIES["known"])
+            explicit_links = (
+                ("linked-1", "linked-a1", "linked-q1"),
+                ("linked-2", "linked-a2", "linked-q2"),
+                ("linked-3", "linked-b", "linked-q3"),
+            )
+            for region, source_id, target_id in explicit_links:
+                status, response = probe.call("link_structural_reply", {
+                    "hierarchy_id": f"conversation:{region}",
+                    "source_id": source_id, "sequence": 2,
+                    "reply_to_source_id": target_id, "reply_to_sequence": 1,
+                })
+                if (status != 0 or response["qualified"] is not False
+                    or response["duplicate"]):
+                    raise RuntimeError("explicit synthetic reply link failed")
+            duplicate_status, duplicate_link = probe.call("link_structural_reply", {
+                "hierarchy_id": "conversation:linked-1", "source_id": "linked-a1",
+                "sequence": 2, "reply_to_source_id": "linked-q1",
+                "reply_to_sequence": 1,
+            })
+            trails_after_status, trails_after = probe.call("probe_structural_trails", {
+                "query": QUERIES["known"], "limit": 64,
+            })
+            gates["reply_link_idempotent"] = (
+                duplicate_status == 0 and duplicate_link["duplicate"] is True
+                and duplicate_link["reply_link_count"] == 3
+            )
+            gates["reply_link_does_not_reinforce_or_select"] = (
+                trail_status == trails_after_status and trails_after == trails_before
+                and resolve(probe, QUERIES["known"]) == resolution_before
+            )
             probe.reopen()
+            gates["explicit_reply_provenance_survives_reopen"] = all(
+                any(row["source_id"] == source_id and row["sequence"] == 2
+                    and row["reply_to"] == {"source_id": target_id, "sequence": 1}
+                    for row in region_rows(probe, f"conversation:{region}"))
+                for region, source_id, target_id in explicit_links
+            )
+            gates["unlinked_repeat_and_assistant_stay_unlinked"] = (
+                all(row["reply_to"] is None for row in region_rows(
+                    probe, "conversation:linked-repeat"))
+                and all(row["reply_to"] is None for row in region_rows(
+                    probe, "conversation:linked-4"))
+            )
             continuations = immediate_continuations(probe, QUERIES["known"])
             gates["local_continuations_preserve_competition"] = {
                 source_id for _, source_id in continuations
