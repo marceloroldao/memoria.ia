@@ -302,3 +302,30 @@ observed alternatives and correct provenance, not a selected factual value.
 The older host-side counts above include question repeats among user successors
 and use surface-level occurrence grouping, so they should not be treated as
 native factual support.
+
+## Structural analogy stress, 26 September 2026
+
+`scripts/mobile_analogy_stress.py` tests a possible next link without changing
+the native resolver. From an observed question and its immediate user successor,
+it finds another user payload containing that successor, then projects the
+shared symbol positions onto a different query. All links retain their source
+IDs; the output is explicitly unqualified. The synthetic test also renames the
+subject, relation and value words to check that it is not recognizing a fixed
+family or name vocabulary.
+
+The invented history finds two competing records for the original question
+and no record for an absent subject–attribute combination. For another subject
+it finds **two** records: the intended statement and a question with the same
+normalized symbol trail, tagged with the legacy `user_assertion` kind. The
+question is a false candidate. Even an observed continuation plus a matching
+statement shape does not establish whether the latter is a claim.
+
+On the private 83-observation replay, the four frequent surfaces formed
+39, 24, 1 and 17 tentative exemplars, leading to 24, 13, 1 and 19 distinct
+candidate sources. Only these counts are printed. The broad first, second and
+fourth sets reject this analogy as a factual selector. The experiment does
+not alter storage, association weights, native retrieval or OFF.IA. Further
+evidence must preserve the speaker's observed reply/confirmation relation
+and the epistemic status of the source; a normalized trail or legacy source
+kind alone cannot supply those distinctions. The three strict functional
+selection failures remain open.
