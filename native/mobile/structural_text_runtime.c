@@ -1879,6 +1879,106 @@ fail:
     return 0;
 }
 
+int memoria_structural_text_runtime_linked_replies(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_reply_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_reply_trails
+) {
+    memoria_structural_reply_witness *witnesses = NULL;
+    uint64_t **reply_trails = NULL, *query_symbols = NULL;
+    size_t *reply_counts = NULL;
+    size_t query_count = 0u, count = 0u, distinct = 0u, i;
+    if (!runtime || !query || !*query || !out_witnesses || !out_count ||
+        !out_distinct_reply_trails) return 0;
+    *out_witnesses = NULL;
+    *out_count = 0u;
+    *out_distinct_reply_trails = 0u;
+    if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    if (runtime->reply_link_count > ((size_t)-1) / sizeof(*witnesses) ||
+        runtime->reply_link_count > ((size_t)-1) / sizeof(*reply_trails) ||
+        runtime->reply_link_count > ((size_t)-1) / sizeof(*reply_counts))
+        goto fail;
+    if (runtime->reply_link_count) {
+        witnesses = calloc(runtime->reply_link_count, sizeof(*witnesses));
+        reply_trails = calloc(runtime->reply_link_count, sizeof(*reply_trails));
+        reply_counts = calloc(runtime->reply_link_count, sizeof(*reply_counts));
+        if (!witnesses || !reply_trails || !reply_counts) goto fail;
+    }
+    for (i = 0u; i < runtime->reply_link_count; ++i) {
+        const runtime_reply_link *link = &runtime->reply_links[i];
+        const runtime_observation *target = find_observation_address(
+            runtime, link->hierarchy_id, link->reply_to_source_id,
+            link->reply_to_sequence);
+        const runtime_observation *source = find_observation_address(
+            runtime, link->hierarchy_id, link->source_id, link->sequence);
+        memoria_structural_reply_witness *witness;
+        uint64_t *target_symbols = NULL, *reply_symbols = NULL;
+        size_t target_count = 0u, reply_count = 0u;
+        int matches, repeats;
+        if (!target || !source ||
+            !tokenize_alloc(target->text, &target_symbols, &target_count))
+            goto fail;
+        matches = contains_symbol_span(target_symbols, target_count,
+                                       query_symbols, query_count);
+        free(target_symbols);
+        if (!matches) continue;
+        if (!tokenize_alloc(source->text, &reply_symbols, &reply_count))
+            goto fail;
+        repeats = reply_count == query_count &&
+            memcmp(reply_symbols, query_symbols,
+                   query_count * sizeof(*reply_symbols)) == 0;
+        witness = &witnesses[count];
+        witness->hierarchy_id = link->hierarchy_id;
+        witness->question_source_id = target->source_id;
+        witness->question_source_kind = target->source_kind;
+        witness->question_sequence = target->sequence;
+        witness->reply_source_id = source->source_id;
+        witness->reply_source_kind = source->source_kind;
+        witness->reply_text = source->text;
+        witness->reply_sequence = source->sequence;
+        witness->embedded_question = target_count > query_count;
+        witness->repeats_query = repeats;
+        recurrence_fingerprint(reply_symbols, reply_count,
+                               witness->reply_trail_address);
+        if (repeats) {
+            free(reply_symbols);
+        } else {
+            reply_trails[count] = reply_symbols;
+            reply_counts[count] = reply_count;
+        }
+        ++count;
+    }
+    for (i = 0u; i < count; ++i) {
+        size_t j;
+        if (!reply_trails[i]) continue;
+        for (j = 0u; j < i; ++j)
+            if (reply_trails[j] && reply_counts[i] == reply_counts[j] &&
+                memcmp(reply_trails[j], reply_trails[i],
+                       reply_counts[i] * sizeof(**reply_trails)) == 0) break;
+        if (j == i) ++distinct;
+    }
+    for (i = 0u; i < count; ++i) free(reply_trails[i]);
+    free(reply_trails);
+    free(reply_counts);
+    free(query_symbols);
+    *out_witnesses = witnesses;
+    *out_count = count;
+    *out_distinct_reply_trails = distinct;
+    return 1;
+fail:
+    if (reply_trails) {
+        for (i = 0u; i < runtime->reply_link_count; ++i)
+            free(reply_trails[i]);
+    }
+    free(reply_trails);
+    free(reply_counts);
+    free(query_symbols);
+    free(witnesses);
+    return 0;
+}
+
 static int resolve_text_impl(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,

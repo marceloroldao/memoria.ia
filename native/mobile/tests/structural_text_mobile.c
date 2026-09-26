@@ -572,6 +572,106 @@ static int check_explicit_reply_links(void) {
     return 0;
 }
 
+static int check_linked_reply_probe(void) {
+    const char *dir = "./tmp-mobile-linked-reply-probe";
+    const char *observations[] = {
+        "{\"hierarchy_id\":\"conversation:l1\",\"source_id\":\"q1\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:l1\",\"source_id\":\"a1\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Auri.\"}",
+        "{\"hierarchy_id\":\"conversation:l2\",\"source_id\":\"q2\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:l2\",\"source_id\":\"a2\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Auri\"}",
+        "{\"hierarchy_id\":\"conversation:l3\",\"source_id\":\"q3\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:l3\",\"source_id\":\"b\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Boreal\"}",
+        "{\"hierarchy_id\":\"conversation:embedded\",\"source_id\":\"narrative\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Estava andando pela cidade e alguém perguntou: Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:embedded\",\"source_id\":\"generated\",\"source_kind\":\"assistant_generated\",\"sequence\":2,\"text\":\"Falso\"}",
+        "{\"hierarchy_id\":\"conversation:embedded\",\"source_id\":\"a3\",\"source_kind\":\"user_turn\",\"sequence\":3,\"text\":\"Auri\"}",
+        "{\"hierarchy_id\":\"conversation:repeat\",\"source_id\":\"q4\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:repeat\",\"source_id\":\"repeat\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Qual nome do meu drone?\"}",
+        "{\"hierarchy_id\":\"conversation:other\",\"source_id\":\"other-q\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual potência do meu drone?\"}"
+    };
+    const char *links[] = {
+        "{\"hierarchy_id\":\"conversation:l1\",\"source_id\":\"a1\",\"sequence\":2,\"reply_to_source_id\":\"q1\",\"reply_to_sequence\":1}",
+        "{\"hierarchy_id\":\"conversation:l2\",\"source_id\":\"a2\",\"sequence\":2,\"reply_to_source_id\":\"q2\",\"reply_to_sequence\":1}",
+        "{\"hierarchy_id\":\"conversation:l3\",\"source_id\":\"b\",\"sequence\":2,\"reply_to_source_id\":\"q3\",\"reply_to_sequence\":1}",
+        "{\"hierarchy_id\":\"conversation:embedded\",\"source_id\":\"a3\",\"sequence\":3,\"reply_to_source_id\":\"narrative\",\"reply_to_sequence\":1}",
+        "{\"hierarchy_id\":\"conversation:repeat\",\"source_id\":\"repeat\",\"sequence\":2,\"reply_to_source_id\":\"q4\",\"reply_to_sequence\":1}"
+    };
+    memoria_mobile_handle *h = NULL;
+    memoria_mobile_buffer out = {0};
+    char *before_reopen = NULL;
+    size_t i;
+    (void)system("rm -rf ./tmp-mobile-linked-reply-probe");
+    CHECK(memoria_mobile_open(dir, "org-linked-probe", &h) == MEMORIA_MOBILE_OK);
+    for (i = 0u; i < sizeof(observations) / sizeof(*observations); ++i) {
+        CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+            observations[i], &out) == MEMORIA_MOBILE_OK);
+        clear(&out);
+    }
+    for (i = 0u; i < sizeof(links) / sizeof(*links); ++i) {
+        CHECK(call_json(memoria_mobile_link_structural_reply_json, h,
+            links[i], &out) == MEMORIA_MOBILE_OK);
+        clear(&out);
+    }
+    CHECK(call_json(memoria_mobile_probe_structural_linked_replies_json, h,
+        "{\"query\":\"Qual nome do meu drone?\",\"limit\":2}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"status\":\"CANDIDATES\",\"qualified\":false"));
+    CHECK(contains(out, "\"selection_used\":false"));
+    CHECK(contains(out, "\"explicit_reply_occurrences\":5"));
+    CHECK(contains(out, "\"distinct_reply_trails\":2"));
+    CHECK(contains(out, "\"competing_reply_trails\":true"));
+    CHECK(contains(out, "\"embedded_question_links\":1"));
+    CHECK(contains(out, "\"repeat_question_links\":1"));
+    CHECK(contains(out, "\"next_offset\":2"));
+    CHECK(contains(out, "\"source_id\":\"a1\""));
+    CHECK(contains(out, "\"source_id\":\"a2\""));
+    CHECK(!contains(out, "Boreal"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_probe_structural_linked_replies_json, h,
+        "{\"query\":\"Qual nome do meu drone?\",\"offset\":2,\"limit\":2}",
+        &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "Boreal"));
+    CHECK(contains(out, "\"source_id\":\"narrative\",\"source_kind\":\"user_turn\",\"sequence\":1,\"match\":\"EMBEDDED\""));
+    CHECK(contains(out, "\"source_id\":\"a3\""));
+    CHECK(!contains(out, "Falso"));
+    CHECK(contains(out, "\"next_offset\":4"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_probe_structural_linked_replies_json, h,
+        "{\"query\":\"Qual nome do meu drone?\",\"offset\":4,\"limit\":2}",
+        &out) == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"source_id\":\"repeat\""));
+    CHECK(contains(out, "\"repeats_query\":true"));
+    CHECK(contains(out, "\"next_offset\":null"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_probe_structural_linked_replies_json, h,
+        "{\"query\":\"Qual potência do meu drone?\"}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"status\":\"UNRESOLVED\""));
+    CHECK(contains(out, "\"explicit_reply_occurrences\":0"));
+    CHECK(contains(out, "\"witnesses\":[]"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_probe_structural_linked_replies_json, h,
+        "{\"query\":\"Qual nome do meu drone?\",\"limit\":64}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    before_reopen = malloc(out.size + 1u);
+    CHECK(before_reopen != NULL);
+    memcpy(before_reopen, out.data, out.size);
+    before_reopen[out.size] = 0;
+    clear(&out);
+    CHECK(memoria_mobile_flush(h) == MEMORIA_MOBILE_OK);
+    memoria_mobile_close(h);
+    h = NULL;
+    CHECK(memoria_mobile_open(dir, "org-linked-probe", &h) == MEMORIA_MOBILE_OK);
+    CHECK(call_json(memoria_mobile_probe_structural_linked_replies_json, h,
+        "{\"query\":\"Qual nome do meu drone?\",\"limit\":64}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(strcmp((const char *)out.data, before_reopen) == 0);
+    clear(&out);
+    free(before_reopen);
+    memoria_mobile_close(h);
+    (void)system("rm -rf ./tmp-mobile-linked-reply-probe");
+    return 0;
+}
+
 static int check_query_embedded_in_new_payload(void) {
     const char *dir = "./tmp-mobile-embedded-query";
     const char *observations[] = {
@@ -699,6 +799,7 @@ int main(void) {
     CHECK(check_trail_recurrence() == 0);
     CHECK(check_occurrence_local_continuations() == 0);
     CHECK(check_explicit_reply_links() == 0);
+    CHECK(check_linked_reply_probe() == 0);
     CHECK(check_query_embedded_in_new_payload() == 0);
 
     /*

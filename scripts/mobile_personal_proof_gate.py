@@ -53,6 +53,11 @@ LINKED = (
     ("linked-after-generated", "linked-4", 3, "Auri", "user_turn"),
     ("linked-repeat-q1", "linked-repeat", 1, QUERIES["known"], "user_turn"),
     ("linked-repeat-q2", "linked-repeat", 2, QUERIES["known"], "user_turn"),
+    ("linked-narrative", "linked-embedded", 1,
+     "Estava andando pela cidade e alguém perguntou: Qual nome do meu drone?",
+     "user_turn"),
+    ("linked-middle", "linked-embedded", 2, "Falso", "assistant_generated"),
+    ("linked-later", "linked-embedded", 3, "Auri", "user_turn"),
 )
 
 
@@ -204,14 +209,15 @@ def main() -> None:
             })
             resolution_before = resolve(probe, QUERIES["known"])
             explicit_links = (
-                ("linked-1", "linked-a1", "linked-q1"),
-                ("linked-2", "linked-a2", "linked-q2"),
-                ("linked-3", "linked-b", "linked-q3"),
+                ("linked-1", "linked-a1", 2, "linked-q1"),
+                ("linked-2", "linked-a2", 2, "linked-q2"),
+                ("linked-3", "linked-b", 2, "linked-q3"),
+                ("linked-embedded", "linked-later", 3, "linked-narrative"),
             )
-            for region, source_id, target_id in explicit_links:
+            for region, source_id, sequence, target_id in explicit_links:
                 status, response = probe.call("link_structural_reply", {
                     "hierarchy_id": f"conversation:{region}",
-                    "source_id": source_id, "sequence": 2,
+                    "source_id": source_id, "sequence": sequence,
                     "reply_to_source_id": target_id, "reply_to_sequence": 1,
                 })
                 if (status != 0 or response["qualified"] is not False
@@ -227,7 +233,7 @@ def main() -> None:
             })
             gates["reply_link_idempotent"] = (
                 duplicate_status == 0 and duplicate_link["duplicate"] is True
-                and duplicate_link["reply_link_count"] == 3
+                and duplicate_link["reply_link_count"] == 4
             )
             gates["reply_link_does_not_reinforce_or_select"] = (
                 trail_status == trails_after_status and trails_after == trails_before
@@ -235,16 +241,42 @@ def main() -> None:
             )
             probe.reopen()
             gates["explicit_reply_provenance_survives_reopen"] = all(
-                any(row["source_id"] == source_id and row["sequence"] == 2
+                any(row["source_id"] == source_id and row["sequence"] == sequence
                     and row["reply_to"] == {"source_id": target_id, "sequence": 1}
                     for row in region_rows(probe, f"conversation:{region}"))
-                for region, source_id, target_id in explicit_links
+                for region, source_id, sequence, target_id in explicit_links
             )
             gates["unlinked_repeat_and_assistant_stay_unlinked"] = (
                 all(row["reply_to"] is None for row in region_rows(
                     probe, "conversation:linked-repeat"))
                 and all(row["reply_to"] is None for row in region_rows(
                     probe, "conversation:linked-4"))
+                and all(row["reply_to"] is None for row in region_rows(
+                    probe, "conversation:linked-embedded")
+                    if row["source_kind"] == "assistant_generated")
+            )
+            linked_status, linked = probe.call("probe_structural_linked_replies", {
+                "query": QUERIES["known"], "limit": 64,
+            })
+            gates["linked_reply_probe_keeps_competition"] = (
+                linked_status == 2 and linked["qualified"] is False
+                and linked["selection_used"] is False
+                and linked["explicit_reply_occurrences"] == 4
+                and linked["distinct_reply_trails"] == 2
+                and linked["competing_reply_trails"] is True
+                and linked["embedded_question_links"] == 1
+                and {w["reply"]["source_id"] for w in linked["witnesses"]}
+                == {"linked-a1", "linked-a2", "linked-b", "linked-later"}
+                and "Falso" not in json.dumps(linked, ensure_ascii=False)
+            )
+            missing_status, missing_linked = probe.call(
+                "probe_structural_linked_replies",
+                {"query": QUERIES["absent_recombination"]},
+            )
+            gates["linked_reply_absent_recombination_empty"] = (
+                missing_status == 2 and missing_linked["status"] == "UNRESOLVED"
+                and missing_linked["explicit_reply_occurrences"] == 0
+                and missing_linked["witnesses"] == []
             )
             continuations = immediate_continuations(probe, QUERIES["known"])
             gates["local_continuations_preserve_competition"] = {

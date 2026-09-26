@@ -361,3 +361,31 @@ export replayed 1 of 1 reply links. The private 83-observation export contains
 no explicit `reply_to` metadata, so its replay correctly restored zero links;
 it cannot establish that older adjacent turns were replies. No automatic
 factual answer selection or OFF.IA behavior changes in this step.
+
+## Read linked replies without selecting a fact, 26 September 2026
+
+`probe_structural_linked_replies` follows only persisted `reply_to` addresses.
+It compares the complete normalized query trail with the linked target, either
+as an exact trail or as a contiguous span in a larger observed payload. For a
+question embedded in a narrative, this permits a linked reply to be inspected
+without inventing a second copy of the question or any link from adjacency.
+The result exposes each question and reply source address, reply text, trail
+address, both source kinds, exact/embedded match and pagination. An earlier
+assistant prompt may be a target, but its kind stays visible and its text is
+never counted as the user's reply. It reports distinct reply trails,
+competing trails and linked question repeats separately. Repeated reply
+occurrences remain visible but are not factual votes; a repeated question is
+marked and excluded from the distinct reply trail count. Assistant-generated
+text is not a reply source. The native status remains `UNRESOLVED`, the JSON
+is `qualified:false` and `selection_used:false`, even for one apparent answer.
+
+The adversarial native fixture links two occurrences of one reply trail, one
+conflicting reply, one answer to a larger narrative and a repeated question.
+It yields five linked occurrences, two distinct non-question reply trails, one
+embedded target and one repeated-question link. The paged result is identical
+after a cold reopen; an unrelated query returns zero links. The synthetic
+functional gate now passes 19/22 checks, with the same three selection gaps.
+The private 83-observation export still has no `reply_to` addresses, so the
+four replayed probes correctly return zero linked replies. This diagnostic
+does not resolve paraphrases that interrupt or reorder the stored query trail.
+It is not part of OFF.IA's answer path.

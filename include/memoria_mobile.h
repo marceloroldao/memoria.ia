@@ -177,6 +177,16 @@ memoria_mobile_status memoria_mobile_probe_structural_continuations_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Read-only explicit reply provenance for a complete ordered query trail,
+ * including that trail inside a larger target payload. Request: query,
+ * optional offset and limit (1..64). Returns source-addressed witnesses,
+ * repeated-question and competing-trail counts, always unqualified. */
+memoria_mobile_status memoria_mobile_probe_structural_linked_replies_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 memoria_mobile_status memoria_mobile_apply_concept_catalog_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,

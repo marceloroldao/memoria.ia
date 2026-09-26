@@ -34,7 +34,8 @@ class NativeProbe:
         for name in (
             "observe_structural_text", "probe_structural_regions",
             "probe_structural_trails", "probe_structural_continuations",
-            "read_structural_window", "link_structural_reply",
+            "probe_structural_linked_replies", "read_structural_window",
+            "link_structural_reply",
         ):
             fn = getattr(self.lib, f"memoria_mobile_{name}_json")
             fn.argtypes = [ctypes.c_void_p, Buffer, ctypes.POINTER(Buffer)]
@@ -277,6 +278,68 @@ def main() -> None:
                         raise RuntimeError("assistant continuation text exposed")
                 if missing_continuations:
                     raise RuntimeError("continuation addressability gate failed")
+                linked_offset = 0
+                linked_witnesses = []
+                linked_summary = None
+                while True:
+                    linked_status, linked_page = probe.call(
+                        "probe_structural_linked_replies",
+                        {"query": query, "offset": linked_offset, "limit": 64},
+                    )
+                    if (linked_status != 2 or linked_page["qualified"] is not False
+                        or linked_page["selection_used"] is not False
+                        or linked_page["relation"] != "reply_to"):
+                        raise RuntimeError("unqualified linked reply contract violated")
+                    if linked_summary is None:
+                        linked_summary = linked_page
+                    linked_witnesses.extend(linked_page["witnesses"])
+                    linked_offset = linked_page["page"]["next_offset"]
+                    if linked_offset is None:
+                        break
+                if len(linked_witnesses) != linked_summary["explicit_reply_occurrences"]:
+                    raise RuntimeError("linked reply pagination gate failed")
+                linked_missing = 0
+                for witness in linked_witnesses:
+                    hierarchy_id = witness["hierarchy_id"]
+                    if hierarchy_id not in continuation_windows:
+                        offset = 0
+                        rows = []
+                        while True:
+                            status, window = probe.call("read_structural_window", {
+                                "hierarchy_id": hierarchy_id,
+                                "offset": offset, "limit": 64,
+                            })
+                            if status != 0:
+                                raise RuntimeError("linked reply window read failed")
+                            rows.extend(window["observations"])
+                            offset = window["page"]["next_offset"]
+                            if offset is None:
+                                break
+                        continuation_windows[hierarchy_id] = rows
+                    rows = continuation_windows[hierarchy_id]
+                    question = witness["question"]
+                    reply = witness["reply"]
+                    question_present = any(
+                        row["source_id"] == question["source_id"]
+                        and row["sequence"] == question["sequence"]
+                        and row["source_kind"] == question["source_kind"]
+                        for row in rows
+                    )
+                    reply_present = any(
+                        row["source_id"] == reply["source_id"]
+                        and row["sequence"] == reply["sequence"]
+                        and row["source_kind"] in ("user_turn", "user_assertion")
+                        and row["text"] == reply["text"]
+                        and row["reply_to"] == {
+                            "source_id": question["source_id"],
+                            "sequence": question["sequence"],
+                        }
+                        for row in rows
+                    )
+                    if not question_present or not reply_present:
+                        linked_missing += 1
+                if linked_missing:
+                    raise RuntimeError("linked reply addressability gate failed")
                 bases = {group["fingerprint"] for group in groups
                          if group["query_echo"]}
                 composed = [group for group in groups
@@ -326,6 +389,15 @@ def main() -> None:
                         "ambiguous_order_occurrences"],
                     "continuation_witnesses_checked": len(continuations),
                     "continuation_witnesses_missing": missing_continuations,
+                    "explicit_reply_occurrences": linked_summary[
+                        "explicit_reply_occurrences"],
+                    "distinct_reply_trails": linked_summary[
+                        "distinct_reply_trails"],
+                    "embedded_question_links": linked_summary[
+                        "embedded_question_links"],
+                    "repeat_question_links": linked_summary[
+                        "repeat_question_links"],
+                    "linked_reply_witnesses_missing": linked_missing,
                     "qualified": region["qualified"],
                 })
                 if missing:

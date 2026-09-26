@@ -2412,6 +2412,105 @@ done_continuations:
     return status;
 }
 
+memoria_mobile_status memoria_mobile_probe_structural_linked_replies_json(
+    memoria_mobile_handle *h,
+    memoria_mobile_buffer req,
+    memoria_mobile_buffer *out
+) {
+    char *request = NULL, *query = NULL;
+    memoria_structural_reply_witness *witnesses = NULL;
+    mobile_response_builder builder = {0};
+    size_t count = 0u, distinct = 0u, embedded = 0u, repeated = 0u;
+    size_t offset, end, i;
+    long requested_offset, requested_limit;
+    memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
+    if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
+        return status;
+    out->data = NULL;
+    out->size = 0u;
+    request = buffer_to_string(req);
+    if (!request) return MEMORIA_MOBILE_INTERNAL_ERROR;
+    query = json_string(request, "query");
+    requested_offset = json_long(request, "offset", 0);
+    requested_limit = json_long(request, "limit", 16);
+    if (!query || !query[0] || requested_offset < 0 ||
+        requested_limit < 1 || requested_limit > 64) goto done_linked_replies;
+    if (!memoria_structural_text_runtime_linked_replies(
+            h->structural_text_runtime, query, &witnesses, &count, &distinct)) {
+        status = MEMORIA_MOBILE_INTERNAL_ERROR;
+        goto done_linked_replies;
+    }
+    for (i = 0u; i < count; ++i) {
+        embedded += witnesses[i].embedded_question != 0;
+        repeated += witnesses[i].repeats_query != 0;
+    }
+    offset = (size_t)requested_offset < count ? (size_t)requested_offset : count;
+    end = count - offset < (size_t)requested_limit ?
+        count : offset + (size_t)requested_limit;
+    if (!mobile_response_appendf(&builder,
+            "{\"status\":\"%s\",\"qualified\":false,"
+            "\"relation\":\"reply_to\",\"trajectory_used\":false,"
+            "\"selection_used\":false,"
+            "\"query_match\":\"complete_ordered_trail\","
+            "\"explicit_reply_occurrences\":%zu,"
+            "\"distinct_reply_trails\":%zu,"
+            "\"competing_reply_trails\":%s,"
+            "\"embedded_question_links\":%zu,"
+            "\"repeat_question_links\":%zu,"
+            "\"page\":{\"offset\":%zu,\"returned\":%zu,\"next_offset\":",
+            distinct ? "CANDIDATES" : "UNRESOLVED", count, distinct,
+            distinct > 1u ? "true" : "false", embedded, repeated,
+            offset, end - offset)) goto internal_error_linked_replies;
+    if (end < count) {
+        if (!mobile_response_appendf(&builder, "%zu", end))
+            goto internal_error_linked_replies;
+    } else if (!mobile_response_appendf(&builder, "null"))
+        goto internal_error_linked_replies;
+    if (!mobile_response_appendf(&builder, "},\"witnesses\":["))
+        goto internal_error_linked_replies;
+    for (i = offset; i < end; ++i) {
+        const memoria_structural_reply_witness *item = &witnesses[i];
+        char *hierarchy = json_escape(item->hierarchy_id);
+        char *question = json_escape(item->question_source_id);
+        char *question_kind = json_escape(item->question_source_kind);
+        char *reply = json_escape(item->reply_source_id);
+        char *kind = json_escape(item->reply_source_kind);
+        char *reply_text = json_escape(item->reply_text);
+        int written = hierarchy && question && question_kind && reply && kind &&
+            reply_text &&
+            mobile_response_appendf(&builder,
+                "%s{\"hierarchy_id\":\"%s\","
+                "\"question\":{\"source_id\":\"%s\","
+                "\"source_kind\":\"%s\",\"sequence\":%lu,"
+                "\"match\":\"%s\"},"
+                "\"reply\":{\"source_id\":\"%s\","
+                "\"source_kind\":\"%s\",\"sequence\":%lu,"
+                "\"text\":\"%s\",\"trail_address\":\"%s\","
+                "\"repeats_query\":%s}}",
+                i == offset ? "" : ",", hierarchy, question, question_kind,
+                item->question_sequence,
+                item->embedded_question ? "EMBEDDED" : "EXACT",
+                reply, kind, item->reply_sequence, reply_text,
+                item->reply_trail_address,
+                item->repeats_query ? "true" : "false");
+        free(hierarchy); free(question); free(question_kind);
+        free(reply); free(kind); free(reply_text);
+        if (!written) goto internal_error_linked_replies;
+    }
+    if (!mobile_response_appendf(&builder, "]}"))
+        goto internal_error_linked_replies;
+    status = set_response(out, builder.data, MEMORIA_MOBILE_UNRESOLVED);
+    goto done_linked_replies;
+internal_error_linked_replies:
+    status = MEMORIA_MOBILE_INTERNAL_ERROR;
+done_linked_replies:
+    free(builder.data);
+    free(witnesses);
+    free(query);
+    free(request);
+    return status;
+}
+
 static int concept_catalog_parse_number(const char **cursor, size_t *remaining, size_t *value) {
     size_t v = 0, digits = 0;
     const char *p;

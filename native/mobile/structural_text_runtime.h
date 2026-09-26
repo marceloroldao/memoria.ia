@@ -125,6 +125,21 @@ typedef struct memoria_structural_continuation_witness {
     char next_trail_address[17];
 } memoria_structural_continuation_witness;
 
+typedef struct memoria_structural_reply_witness {
+    /* Strings are borrowed from the runtime until its next mutation. */
+    const char *hierarchy_id;
+    const char *question_source_id;
+    const char *question_source_kind;
+    unsigned long question_sequence;
+    const char *reply_source_id;
+    const char *reply_source_kind;
+    const char *reply_text;
+    unsigned long reply_sequence;
+    int embedded_question;
+    int repeats_query;
+    char reply_trail_address[17];
+} memoria_structural_reply_witness;
+
 /*
  * Open the structural text runtime over the SAME BDR handle already owned by
  * Memoria.ia mobile persistence. The runtime borrows db and never closes it.
@@ -255,6 +270,18 @@ int memoria_structural_text_runtime_continuations(
     memoria_structural_continuation_witness **out_witnesses,
     size_t *out_count,
     size_t *out_distinct_user_trails
+);
+
+/* Only explicit reply links whose target contains the complete ordered query
+ * trail are returned. The caller owns the witness array; its text pointers
+ * remain borrowed. Repeated questions are exposed, but excluded from the
+ * distinct reply trail count. No answer or fact is inferred. */
+int memoria_structural_text_runtime_linked_replies(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_reply_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_reply_trails
 );
 
 size_t memoria_structural_text_runtime_window_revision(
