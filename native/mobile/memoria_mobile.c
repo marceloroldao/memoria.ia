@@ -1361,6 +1361,7 @@ memoria_mobile_status memoria_mobile_observe_structural_text_json(
     char *text = NULL;
     char *escaped_hierarchy = NULL;
     long sequence;
+    size_t distinct_before, distinct_after;
     int duplicate = 0;
     memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
     if (!h || !h->structural_text_runtime ||
@@ -1383,6 +1384,8 @@ memoria_mobile_status memoria_mobile_observe_structural_text_json(
         !text || !text[0] || sequence < 0)
         goto done;
 
+    distinct_before = memoria_structural_text_runtime_distinct_trail_count(
+        h->structural_text_runtime, hierarchy_id);
     if (!memoria_structural_text_runtime_observe(
             h->structural_text_runtime,
             hierarchy_id,
@@ -1398,6 +1401,8 @@ memoria_mobile_status memoria_mobile_observe_structural_text_json(
         );
         goto done;
     }
+    distinct_after = memoria_structural_text_runtime_distinct_trail_count(
+        h->structural_text_runtime, hierarchy_id);
 
     escaped_hierarchy = json_escape(hierarchy_id);
     if (!escaped_hierarchy) {
@@ -1408,12 +1413,15 @@ memoria_mobile_status memoria_mobile_observe_structural_text_json(
         response_json,
         MEMORIA_MOBILE_OK,
         "{\"status\":\"OK\",\"semantic_projection\":false,"
-        "\"hierarchy_id\":\"%s\",\"duplicate\":%s,"
-        "\"observation_count\":%zu,\"hierarchy_count\":%zu,\"edge_count\":%zu}",
+        "\"hierarchy_id\":\"%s\",\"duplicate\":%s,\"new_trail\":%s,"
+        "\"observation_count\":%zu,\"hierarchy_count\":%zu,"
+        "\"distinct_trail_count\":%zu,\"edge_count\":%zu}",
         escaped_hierarchy,
         duplicate ? "true" : "false",
+        distinct_after > distinct_before ? "true" : "false",
         memoria_structural_text_runtime_observation_count(h->structural_text_runtime),
         memoria_structural_text_runtime_hierarchy_count(h->structural_text_runtime),
+        distinct_after,
         memoria_structural_text_runtime_edge_count(h->structural_text_runtime, hierarchy_id)
     );
 

@@ -558,6 +558,8 @@ int main(void) {
         &out
     ) == MEMORIA_MOBILE_OK);
     CHECK(contains(out, "\"duplicate\":false"));
+    CHECK(contains(out, "\"new_trail\":true"));
+    CHECK(contains(out, "\"distinct_trail_count\":1"));
     clear(&out);
 
     CHECK(call_json(
@@ -568,6 +570,9 @@ int main(void) {
         "\"text\":\"Meu gato se chama Alt.\"}",
         &out
     ) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"duplicate\":false,\"new_trail\":false"));
+    CHECK(contains(out, "\"observation_count\":2"));
+    CHECK(contains(out, "\"distinct_trail_count\":1"));
     clear(&out);
 
     CHECK(call_json(
@@ -578,6 +583,8 @@ int main(void) {
         "\"text\":\"Meu gato dorme no sofa.\"}",
         &out
     ) == MEMORIA_MOBILE_OK);
+    CHECK(contains(out, "\"new_trail\":true"));
+    CHECK(contains(out, "\"distinct_trail_count\":2"));
     clear(&out);
 
     CHECK(call_json(

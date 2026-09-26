@@ -17,9 +17,20 @@ typedef struct runtime_observation {
     unsigned long sequence;
 } runtime_observation;
 
+typedef struct runtime_trail_slot {
+    uint64_t *symbols;
+    size_t symbol_count;
+    uint64_t hash;
+} runtime_trail_slot;
+
 typedef struct runtime_hierarchy {
     char *hierarchy_id;
     memoria_structural_text_field *field;
+    /* One normalized symbol trail per conversation field; raw source
+     * occurrences remain in runtime->observations and the BDR log. */
+    runtime_trail_slot *trail_slots;
+    size_t trail_slot_count;
+    size_t distinct_trail_count;
 } runtime_hierarchy;
 
 struct memoria_structural_text_runtime {
@@ -360,9 +371,63 @@ static runtime_hierarchy *get_or_create_hierarchy(
         return NULL;
     }
     slot = &runtime->hierarchies[runtime->hierarchy_count++];
+    memset(slot, 0, sizeof(*slot));
     slot->hierarchy_id = id_copy;
     slot->field = field;
     return slot;
+}
+
+static uint64_t trail_hash(const uint64_t *symbols, size_t count) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    size_t i, byte;
+    for (i = 0u; i < count; ++i)
+        for (byte = 0u; byte < 8u; ++byte) {
+            hash ^= (symbols[i] >> (byte * 8u)) & UINT64_C(0xff);
+            hash *= UINT64_C(1099511628211);
+        }
+    hash ^= (uint64_t)count;
+    return hash * UINT64_C(1099511628211);
+}
+
+static runtime_trail_slot *find_trail_slot(
+    runtime_hierarchy *hierarchy,
+    const uint64_t *symbols, size_t count, uint64_t hash
+) {
+    size_t index;
+    if (!hierarchy->trail_slot_count) return NULL;
+    index = (size_t)hash & (hierarchy->trail_slot_count - 1u);
+    while (hierarchy->trail_slots[index].symbols) {
+        runtime_trail_slot *slot = &hierarchy->trail_slots[index];
+        if (slot->hash == hash && slot->symbol_count == count &&
+            memcmp(slot->symbols, symbols, count * sizeof(*symbols)) == 0)
+            return slot;
+        index = (index + 1u) & (hierarchy->trail_slot_count - 1u);
+    }
+    return &hierarchy->trail_slots[index];
+}
+
+static int reserve_trail_slot(runtime_hierarchy *hierarchy) {
+    runtime_trail_slot *slots;
+    size_t count, i;
+    if (hierarchy->distinct_trail_count + 1u <=
+        hierarchy->trail_slot_count / 2u) return 1;
+    count = hierarchy->trail_slot_count ? hierarchy->trail_slot_count * 2u : 8u;
+    if (count < hierarchy->trail_slot_count ||
+        count > ((size_t)-1) / sizeof(*slots)) return 0;
+    slots = calloc(count, sizeof(*slots));
+    if (!slots) return 0;
+    for (i = 0u; i < hierarchy->trail_slot_count; ++i) {
+        runtime_trail_slot *old = &hierarchy->trail_slots[i];
+        size_t index;
+        if (!old->symbols) continue;
+        index = (size_t)old->hash & (count - 1u);
+        while (slots[index].symbols) index = (index + 1u) & (count - 1u);
+        slots[index] = *old;
+    }
+    free(hierarchy->trail_slots);
+    hierarchy->trail_slots = slots;
+    hierarchy->trail_slot_count = count;
+    return 1;
 }
 
 static int tokenize_alloc(
@@ -398,17 +463,33 @@ static int replay_observation(
     runtime_hierarchy *hierarchy;
     uint64_t *symbols = NULL;
     size_t symbol_count = 0u;
+    uint64_t hash;
+    runtime_trail_slot *slot;
     if (!runtime || !observation ||
         !tokenize_alloc(observation->text, &symbols, &symbol_count)) return 0;
     hierarchy = get_or_create_hierarchy(runtime, observation->hierarchy_id);
-    if (!hierarchy ||
+    if (!hierarchy) {
+        free(symbols);
+        return 0;
+    }
+    hash = trail_hash(symbols, symbol_count);
+    slot = find_trail_slot(hierarchy, symbols, symbol_count, hash);
+    if (slot && slot->symbols) {
+        free(symbols);
+        return 1;
+    }
+    if (!reserve_trail_slot(hierarchy) ||
         !memoria_structural_text_field_observe(
             hierarchy->field, symbols, symbol_count
         )) {
         free(symbols);
         return 0;
     }
-    free(symbols);
+    slot = find_trail_slot(hierarchy, symbols, symbol_count, hash);
+    slot->symbols = symbols;
+    slot->symbol_count = symbol_count;
+    slot->hash = hash;
+    ++hierarchy->distinct_trail_count;
     return 1;
 }
 
@@ -635,8 +716,11 @@ int memoria_structural_text_runtime_observe(
     runtime_observation observation = {0};
     uint64_t *symbols = NULL;
     size_t symbol_count = 0u;
+    uint64_t hash;
     size_t i;
     runtime_hierarchy *hierarchy;
+    runtime_trail_slot *slot;
+    int novel;
     if (duplicate) *duplicate = 0;
     if (!runtime || !hierarchy_id || !*hierarchy_id ||
         !source_id || !*source_id ||
@@ -644,8 +728,6 @@ int memoria_structural_text_runtime_observe(
         !text || !*text ||
         !tokenize_alloc(text, &symbols, &symbol_count))
         return 0;
-    free(symbols);
-
     for (i = 0; i < runtime->observation_count; ++i) {
         const runtime_observation *existing = &runtime->observations[i];
         if (!same_identity(existing, hierarchy_id, source_id, sequence))
@@ -653,8 +735,10 @@ int memoria_structural_text_runtime_observe(
         if (strcmp(existing->text, text) == 0 &&
             strcmp(existing->source_kind, source_kind) == 0) {
             if (duplicate) *duplicate = 1;
+            free(symbols);
             return 1;
         }
+        free(symbols);
         return 0;
     }
 
@@ -666,29 +750,38 @@ int memoria_structural_text_runtime_observe(
     if (!observation.hierarchy_id || !observation.source_id ||
         !observation.source_kind || !observation.text ||
         !reserve_observations(runtime, runtime->observation_count + 1u)) {
+        free(symbols);
         free_observation(&observation);
         return 0;
     }
 
     hierarchy = get_or_create_hierarchy(runtime, hierarchy_id);
-    if (!hierarchy || !persist_observation(runtime, &observation)) {
+    hash = trail_hash(symbols, symbol_count);
+    slot = hierarchy ? find_trail_slot(hierarchy, symbols, symbol_count, hash) : NULL;
+    novel = !slot || !slot->symbols;
+    if (!hierarchy || (novel && !reserve_trail_slot(hierarchy)) ||
+        !persist_observation(runtime, &observation)) {
+        free(symbols);
         free_observation(&observation);
         return 0;
     }
 
-    if (!tokenize_alloc(text, &symbols, &symbol_count) ||
-        !memoria_structural_text_field_observe(
-            hierarchy->field, symbols, symbol_count
-        )) {
+    if (novel) {
+        if (!memoria_structural_text_field_observe(
+                hierarchy->field, symbols, symbol_count)) {
+            free(symbols);
+            free_observation(&observation);
+            /* Durable raw observation exists. Cold reopen rebuilds the field. */
+            return 0;
+        }
+        slot = find_trail_slot(hierarchy, symbols, symbol_count, hash);
+        slot->symbols = symbols;
+        slot->symbol_count = symbol_count;
+        slot->hash = hash;
+        ++hierarchy->distinct_trail_count;
+    } else {
         free(symbols);
-        free_observation(&observation);
-        /*
-         * Durable raw observation already exists. Cold reopen deterministically
-         * repairs this process-local failure by replaying the persisted suffix.
-         */
-        return 0;
     }
-    free(symbols);
     runtime->observations[runtime->observation_count++] = observation;
     return 1;
 }
@@ -1584,6 +1677,35 @@ size_t memoria_structural_text_runtime_edge_count(
         : 0u;
 }
 
+size_t memoria_structural_text_runtime_distinct_trail_count(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+) {
+    const runtime_hierarchy *hierarchy =
+        find_hierarchy_const(runtime, hierarchy_id);
+    return hierarchy ? hierarchy->distinct_trail_count : 0u;
+}
+
+uint64_t memoria_structural_text_runtime_field_tick(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+) {
+    const runtime_hierarchy *hierarchy =
+        find_hierarchy_const(runtime, hierarchy_id);
+    return hierarchy ? memoria_structural_text_field_tick(hierarchy->field) : 0u;
+}
+
+double memoria_structural_text_runtime_association(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    uint64_t source, uint64_t target, int channel
+) {
+    const runtime_hierarchy *hierarchy =
+        find_hierarchy_const(runtime, hierarchy_id);
+    return hierarchy ? memoria_structural_text_field_association(
+        hierarchy->field, source, target, channel) : 0.0;
+}
+
 int memoria_structural_text_runtime_sync(
     memoria_structural_text_runtime *runtime
 ) {
@@ -1599,6 +1721,10 @@ void memoria_structural_text_runtime_close(
     for (i = 0; i < runtime->observation_count; ++i)
         free_observation(&runtime->observations[i]);
     for (i = 0; i < runtime->hierarchy_count; ++i) {
+        size_t j;
+        for (j = 0u; j < runtime->hierarchies[i].trail_slot_count; ++j)
+            free(runtime->hierarchies[i].trail_slots[j].symbols);
+        free(runtime->hierarchies[i].trail_slots);
         free(runtime->hierarchies[i].hierarchy_id);
         memoria_structural_text_field_destroy(
             runtime->hierarchies[i].field

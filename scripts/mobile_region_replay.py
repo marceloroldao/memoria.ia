@@ -116,10 +116,14 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="memoria-region-replay-") as directory:
         probe = NativeProbe(args.library, Path(directory))
         try:
+            field_updates = 0
+            duplicate_sources = 0
             for observation in observations:
-                status, _ = probe.call("observe_structural_text", observation)
+                status, recorded = probe.call("observe_structural_text", observation)
                 if status != 0:
                     raise RuntimeError("native observation failed")
+                field_updates += bool(recorded["new_trail"])
+                duplicate_sources += bool(recorded["duplicate"])
             probe.reopen()
             results = []
             for index, query in enumerate(queries):
@@ -194,6 +198,8 @@ def main() -> None:
     print(json.dumps({
         "observations": len(observations),
         "regions": len({row["hierarchy_id"] for row in observations}),
+        "distinct_region_trails": field_updates,
+        "duplicate_source_events": duplicate_sources,
         "cases": results,
     }, sort_keys=True))
 

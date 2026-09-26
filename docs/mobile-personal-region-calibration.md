@@ -56,10 +56,8 @@ symbol question trail. The fingerprint identifies the full symbol trail used
 by this probe; it is not a persisted nodule or a claim of semantic equivalence.
 Without an observed base the `composition` is null even if the query text is
 contained. Exact echoes also have null composition. Raw occurrences remain
-stored separately, and the current association field still processes repeated
-observations; deduplicated storage and selective reinforcement are not yet
-implemented. The private replay checks base-address links across cold reopen
-and emits aggregate counts only.
+stored separately. The private replay checks base-address links across cold
+reopen and emits aggregate counts only.
 In the 83-observation replay, the four private probes yielded 1, 0, 0 and 0
 distinct compositions, respectively. The first had a prefix and no suffix;
 all 64 displayed witnesses remained addressable. The absent technical probe
@@ -67,6 +65,26 @@ had neither an observed base nor a composition. This validates the structural
 address link in this sample, not factual selection or compression. The
 decomposition compares the current corpus and does not establish whether the
 base was observed before the containing payload.
+
+The native observation runtime now indexes distinct normalized symbol trails
+**within each conversation field**. A second source with the same trail is
+persisted as another raw occurrence but does not advance that field's tick,
+within-trail weights or temporal recent set. This also holds across case and
+punctuation differences under the native tokenizer; an identical source ID
+and sequence remains an idempotent duplicate and creates no second raw record.
+`observe_structural_text` reports `duplicate` for that source identity,
+`new_trail` for a field update and `distinct_trail_count` for the conversation.
+
+A different payload containing a known trail remains a new field observation.
+It adds contextual associations across the boundary and currently updates
+associations *inside* the reused span too. The change does not yet persist a
+shared phrase nodule, compress the BDR raw record, deduplicate across
+conversations or decide that either payload is a fact. On the private export,
+83 raw observations across 25 conversations yielded 75 distinct region trails:
+8 repeat occurrences did not update their local field. The four cross-region
+probes still returned `UNRESOLVED`, and all 64 displayed witnesses resolved
+after cold reopen. The clock now counts distinct structural trails, not raw
+events; elapsed-time forgetting needs its own later policy.
 
 The region preview now exposes `max_ordered_span`: the longest contiguous
 symbol path shared by the query and any **distinct** observation in a region.

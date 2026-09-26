@@ -50,6 +50,97 @@ static size_t find_repetitions(
     return 0u;
 }
 
+static int check_identical_payload_is_occurrence_only(void) {
+    const char *dir = "./tmp-structural-text-composition";
+    const char *region = "conversation:composition";
+    bdr_atomic_c_handle *db = NULL;
+    memoria_structural_text_runtime *runtime = NULL;
+    memoria_structural_text_observation_view raw = {0};
+    uint64_t dizer = 0u, qual = 0u, nome = 0u;
+    double base_weight, context_weight;
+    size_t base_edges, context_edges;
+    int duplicate = 0;
+    (void)system("rm -rf ./tmp-structural-text-composition");
+    CHECK(memoria_structural_text_symbol("dizer", 5u, &dizer));
+    CHECK(memoria_structural_text_symbol("qual", 4u, &qual));
+    CHECK(memoria_structural_text_symbol("nome", 4u, &nome));
+    CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);
+    CHECK(memoria_structural_text_runtime_open_shared(
+        db, "org-composition", 8u, 4u, 0.0, &runtime));
+
+    CHECK(memoria_structural_text_runtime_observe(runtime, region, "q1",
+        "user_turn", 1ul, "Qual nome do meu pai?", &duplicate));
+    CHECK(!duplicate);
+    CHECK(memoria_structural_text_runtime_distinct_trail_count(runtime, region) == 1u);
+    CHECK(memoria_structural_text_runtime_field_tick(runtime, region) == 1u);
+    base_weight = memoria_structural_text_runtime_association(runtime, region,
+        qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN);
+    base_edges = memoria_structural_text_runtime_edge_count(runtime, region);
+    CHECK(base_weight > 0.0 && base_edges > 0u);
+
+    /* Different source, same normalized payload: keep the raw occurrence,
+     * but do not advance the association field or its temporal recent set. */
+    CHECK(memoria_structural_text_runtime_observe(runtime, region, "q2",
+        "user_turn", 2ul, "QUAL NOME DO MEU PAI!!!", &duplicate));
+    CHECK(!duplicate);
+    CHECK(memoria_structural_text_runtime_observation_count(runtime) == 2u);
+    CHECK(memoria_structural_text_runtime_distinct_trail_count(runtime, region) == 1u);
+    CHECK(memoria_structural_text_runtime_field_tick(runtime, region) == 1u);
+    CHECK(memoria_structural_text_runtime_edge_count(runtime, region) == base_edges);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) == base_weight);
+    CHECK(memoria_structural_text_runtime_observe(runtime, region, "q2",
+        "user_turn", 2ul, "QUAL NOME DO MEU PAI!!!", &duplicate));
+    CHECK(duplicate);
+    CHECK(memoria_structural_text_runtime_observation_count(runtime) == 2u);
+
+    CHECK(memoria_structural_text_runtime_observe(runtime, region, "context",
+        "user_turn", 3ul, "Poderia me dizer qual nome do meu pai?", &duplicate));
+    CHECK(!duplicate);
+    CHECK(memoria_structural_text_runtime_distinct_trail_count(runtime, region) == 2u);
+    CHECK(memoria_structural_text_runtime_field_tick(runtime, region) == 2u);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        dizer, qual, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) > 0.0);
+    context_weight = memoria_structural_text_runtime_association(runtime,
+        region, qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN);
+    context_edges = memoria_structural_text_runtime_edge_count(runtime, region);
+    CHECK(context_weight > base_weight && context_edges > base_edges);
+
+    CHECK(memoria_structural_text_runtime_observe(runtime, region, "context-copy",
+        "user_turn", 4ul, "PODERIA ME DIZER QUAL NOME DO MEU PAI?", &duplicate));
+    CHECK(!duplicate);
+    CHECK(memoria_structural_text_runtime_observation_count(runtime) == 4u);
+    CHECK(memoria_structural_text_runtime_distinct_trail_count(runtime, region) == 2u);
+    CHECK(memoria_structural_text_runtime_field_tick(runtime, region) == 2u);
+    CHECK(memoria_structural_text_runtime_edge_count(runtime, region) == context_edges);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) == context_weight);
+
+    CHECK(memoria_structural_text_runtime_observation_at(runtime, 1u, &raw));
+    CHECK(strcmp(raw.source_id, "q2") == 0 && raw.sequence == 2ul);
+    CHECK(memoria_structural_text_runtime_observation_at(runtime, 3u, &raw));
+    CHECK(strcmp(raw.source_id, "context-copy") == 0);
+    CHECK(memoria_structural_text_runtime_sync(runtime));
+    memoria_structural_text_runtime_close(runtime);
+    bdr_atomic_c_close(db);
+
+    CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);
+    CHECK(memoria_structural_text_runtime_open_shared(
+        db, "org-composition", 8u, 4u, 0.0, &runtime));
+    CHECK(memoria_structural_text_runtime_observation_count(runtime) == 4u);
+    CHECK(memoria_structural_text_runtime_distinct_trail_count(runtime, region) == 2u);
+    CHECK(memoria_structural_text_runtime_field_tick(runtime, region) == 2u);
+    CHECK(memoria_structural_text_runtime_edge_count(runtime, region) == context_edges);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        qual, nome, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) == context_weight);
+    CHECK(memoria_structural_text_runtime_association(runtime, region,
+        dizer, qual, MEMORIA_STRUCTURAL_CHANNEL_WITHIN) > 0.0);
+    memoria_structural_text_runtime_close(runtime);
+    bdr_atomic_c_close(db);
+    (void)system("rm -rf ./tmp-structural-text-composition");
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-structural-text-runtime-restart";
     bdr_atomic_c_handle *db = NULL;
@@ -59,6 +150,8 @@ int main(void) {
     size_t edges_before = 0u;
     size_t edges_after = 0u;
     int duplicate = 0;
+
+    CHECK(check_identical_payload_is_occurrence_only() == 0);
 
     (void)system("rm -rf ./tmp-structural-text-runtime-restart");
     CHECK(bdr_atomic_c_open(dir, &db) == BDR_ATOMIC_C_OK);

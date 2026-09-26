@@ -218,6 +218,24 @@ size_t memoria_structural_text_runtime_edge_count(
     const char *hierarchy_id
 );
 
+/* Raw occurrences and distinct normalized trails are separate. Repeated
+ * source text in the same hierarchy does not advance its association field. */
+size_t memoria_structural_text_runtime_distinct_trail_count(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+);
+
+uint64_t memoria_structural_text_runtime_field_tick(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+);
+
+double memoria_structural_text_runtime_association(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    uint64_t source, uint64_t target, int channel
+);
+
 int memoria_structural_text_runtime_sync(
     memoria_structural_text_runtime *runtime
 );
