@@ -50,6 +50,16 @@ absent subject stays unresolved.
 The count of unseen query symbols is a diagnostic signal, not a rule that
 missing symbols always imply an absent fact; paraphrases can contain new words.
 
+An exploratory contrastive score combined query-symbol co-occurrence within
+an observation, recurrence across regions and distance from a repeated query
+within its conversation. In the private replay, the expected region for family
+subject A ranked first, and the three regions carrying observations for family
+subject B ranked in the first three positions. The absent technical subject
+still gave a high score to an unrelated region. This score is **not** part of
+the native selection or answer contract. A new synthetic negative test also
+records that a question with one extra word is a distinct trail, while it
+remains unqualified evidence.
+
 ## Required before app integration
 
 1. Preserve the whole conversation window as an addressable region, retaining

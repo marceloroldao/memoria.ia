@@ -253,6 +253,47 @@ static int check_region_probe(memoria_mobile_handle *h) {
     return 0;
 }
 
+static int check_near_echo_is_not_evidence(void) {
+    const char *dir = "./tmp-mobile-near-echo";
+    memoria_mobile_handle *h = NULL;
+    memoria_mobile_buffer out = {0};
+    (void)system("rm -rf ./tmp-mobile-near-echo");
+    CHECK(memoria_mobile_open(dir, "org-near-echo", &h) == MEMORIA_MOBILE_OK);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:questions\",\"source_id\":\"q1\","
+        "\"source_kind\":\"user_assertion\",\"sequence\":1,"
+        "\"text\":\"Qual nome da minha mãe?\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:questions\",\"source_id\":\"q2\","
+        "\"source_kind\":\"user_assertion\",\"sequence\":2,"
+        "\"text\":\"Qual o nome da minha mãe?\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_observe_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:record\",\"source_id\":\"record\","
+        "\"source_kind\":\"user_turn\",\"sequence\":1,"
+        "\"text\":\"Minha mãe se chama PessoaM.\"}", &out) == MEMORIA_MOBILE_OK);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_probe_structural_regions_json, h,
+        "{\"query\":\"Qual nome da minha mãe?\"}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"qualified\":false"));
+    CHECK(contains(out, "\"hierarchy_id\":\"conversation:questions\","
+        "\"observation_count\":2,\"matching_count\":2,"
+        "\"query_echo_count\":1,\"distinct_count\":1"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:new\","
+        "\"query\":\"Qual nome da minha mãe?\","
+        "\"mode\":\"personal_evidence\"}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(!contains(out, "\"status\":\"HIT\""));
+    clear(&out);
+    memoria_mobile_close(h);
+    (void)system("rm -rf ./tmp-mobile-near-echo");
+    return 0;
+}
+
 int main(void) {
     const char *dir = "./tmp-mobile-structural-text";
     memoria_mobile_handle *h = NULL;
@@ -260,6 +301,7 @@ int main(void) {
 
     (void)system("rm -rf ./tmp-mobile-structural-text");
     CHECK(memoria_mobile_open(dir, "org-structural-mobile", &h) == MEMORIA_MOBILE_OK);
+    CHECK(check_near_echo_is_not_evidence() == 0);
 
     /*
      * Existing conversation ingest MUST NOT auto-feed the structural trail.
