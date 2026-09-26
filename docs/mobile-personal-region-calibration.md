@@ -2,7 +2,8 @@
 
 The native `personal_evidence` mode is an opt-in, read-only probe. It preserves
 the source hierarchy and source ID. It is **not** enabled in OFF.IA's default
-response path and a HIT here does not establish a fact.
+response path. A nonempty result returns `CANDIDATES`, `qualified:false` and
+the native `UNRESOLVED` status. These records cannot yet establish a fact.
 
 ## Private device replay, 25 September 2026
 
@@ -18,8 +19,9 @@ questions. The raw export is not stored in this repository.
 | Absent technical subject | Unrelated family questions appear | Fail: false HIT |
 
 These failures occur even with assistant output excluded and source provenance
-retained. A successful 8/8 isolated native diagnostic does not cover this
-cross-conversation gate.
+retained. The probe no longer returns `HIT` for them; this is a contract safety
+change, not a retrieval fix. A successful 8/8 isolated native diagnostic does
+not cover this cross-conversation gate.
 
 ## Required before app integration
 
