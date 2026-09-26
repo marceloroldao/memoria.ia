@@ -1084,6 +1084,36 @@ int memoria_structural_text_runtime_trail_recurrence(
             group->region_ids[group->region_count++] = item->hierarchy_id;
         }
     }
+    for (i = 0u; i < count; ++i) {
+        size_t j;
+        for (j = i + 1u; j < count; ++j) {
+            size_t prefix = 0u;
+            memoria_structural_trail_recurrence *left = &groups[i];
+            memoria_structural_trail_recurrence *right = &groups[j];
+            size_t shorter = left->symbol_count < right->symbol_count ?
+                left->symbol_count : right->symbol_count;
+            while (prefix < shorter &&
+                   left->symbols[prefix] == right->symbols[prefix]) ++prefix;
+            /* A prefix extension is not a fork: both trails need a next symbol. */
+            if (!prefix || prefix == shorter) continue;
+            if (prefix > left->branch_depth) {
+                left->branch_depth = prefix;
+                left->divergent_trail_count = 1u;
+                recurrence_fingerprint(left->symbols, prefix,
+                                       left->branch_address);
+            } else if (prefix == left->branch_depth) {
+                ++left->divergent_trail_count;
+            }
+            if (prefix > right->branch_depth) {
+                right->branch_depth = prefix;
+                right->divergent_trail_count = 1u;
+                recurrence_fingerprint(right->symbols, prefix,
+                                       right->branch_address);
+            } else if (prefix == right->branch_depth) {
+                ++right->divergent_trail_count;
+            }
+        }
+    }
     free(query_symbols);
     *out_groups = groups;
     *out_count = count;

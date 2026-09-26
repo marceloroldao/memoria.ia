@@ -301,6 +301,7 @@ static int check_trail_recurrence(void) {
         "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"f2\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"Minha mãe se chama PessoaM.\"}",
         "{\"hierarchy_id\":\"conversation:b\",\"source_id\":\"f3\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha mãe se chama PessoaM.\"}",
         "{\"hierarchy_id\":\"conversation:c\",\"source_id\":\"alt\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha mãe se chama PessoaN.\"}",
+        "{\"hierarchy_id\":\"conversation:d\",\"source_id\":\"extension\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Minha mãe se chama PessoaM hoje.\"}",
         "{\"hierarchy_id\":\"conversation:q\",\"source_id\":\"q1\",\"source_kind\":\"user_assertion\",\"sequence\":1,\"text\":\"Qual nome da minha mãe?\"}",
         "{\"hierarchy_id\":\"conversation:q\",\"source_id\":\"q2\",\"source_kind\":\"user_assertion\",\"sequence\":2,\"text\":\"Qual nome da minha mãe?\"}",
         "{\"hierarchy_id\":\"conversation:a\",\"source_id\":\"generated\",\"source_kind\":\"assistant_generated\",\"sequence\":3,\"text\":\"Minha mãe se chama Falsa.\"}"
@@ -320,7 +321,7 @@ static int check_trail_recurrence(void) {
             "{\"query\":\"Qual nome da minha mãe?\",\"limit\":16}", &out)
             == MEMORIA_MOBILE_UNRESOLVED);
         CHECK(contains(out, "\"qualified\":false"));
-        CHECK(contains(out, "\"group_count\":3"));
+        CHECK(contains(out, "\"group_count\":4"));
         CHECK(contains(out, "\"source_id\":\"f1\",\"hierarchy_id\":\"conversation:a\","
             "\"occurrences\":3,\"region_count\":2"));
         CHECK(contains(out, "\"region_ids\":[\"conversation:a\",\"conversation:b\"]"));
@@ -332,6 +333,24 @@ static int check_trail_recurrence(void) {
         CHECK(contains(out, "\"sources_truncated\":false"));
         CHECK(contains(out, "\"source_id\":\"alt\",\"hierarchy_id\":\"conversation:c\","
             "\"occurrences\":1,\"region_count\":1"));
+        CHECK(contains(out, "\"source_id\":\"extension\",\"hierarchy_id\":\"conversation:d\","
+            "\"occurrences\":1,\"region_count\":1"));
+        {
+            const char *fact = strstr((const char *)out.data, "\"source_id\":\"f1\"");
+            const char *alternative = strstr((const char *)out.data, "\"source_id\":\"alt\"");
+            const char *fact_branch = fact ? strstr(fact, "\"branch_address\":\"") : NULL;
+            const char *alt_branch = alternative ? strstr(alternative, "\"branch_address\":\"") : NULL;
+            const size_t prefix_len = sizeof("\"branch_address\":\"") - 1u;
+            CHECK(fact_branch && alt_branch);
+            CHECK(strncmp(fact_branch + prefix_len, alt_branch + prefix_len, 16u) == 0);
+            CHECK(strncmp(fact_branch + prefix_len + 16u,
+                "\",\"branch_depth\":4,\"divergent_trail_count\":1",
+                sizeof("\",\"branch_depth\":4,\"divergent_trail_count\":1") - 1u) == 0);
+            CHECK(strncmp(alt_branch + prefix_len + 16u,
+                "\",\"branch_depth\":4,\"divergent_trail_count\":2",
+                sizeof("\",\"branch_depth\":4,\"divergent_trail_count\":2") - 1u) == 0);
+            CHECK(fact_branch[prefix_len] != '"');
+        }
         CHECK(contains(out, "\"source_id\":\"q1\",\"hierarchy_id\":\"conversation:q\","
             "\"occurrences\":2,\"region_count\":1"));
         CHECK(contains(out, "\"query_echo\":true"));

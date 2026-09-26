@@ -63,6 +63,9 @@ typedef struct memoria_structural_trail_source {
 
 typedef struct memoria_structural_trail_recurrence {
     char fingerprint[17];
+    char branch_address[17];
+    size_t branch_depth;
+    size_t divergent_trail_count;
     char *source_id;
     char *hierarchy_id;
     size_t occurrences;

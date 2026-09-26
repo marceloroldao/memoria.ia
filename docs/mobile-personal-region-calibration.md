@@ -70,6 +70,13 @@ automatic conflict decision; the probe still returns `UNRESOLVED`.
 Each group now includes the first 16 source references with conversation ID,
 source ID and sequence, plus `sources_truncated`. The addressable window read
 can inspect the full raw region when a group has more occurrences.
+The trail probe also records the deepest shared token prefix where two distinct
+trails have different next symbols. `branch_address` fingerprints that prefix,
+`branch_depth` counts its symbols, and `divergent_trail_count` counts other
+trails diverging there. An exact prefix extension is not a fork. Two alternative
+continuations can thus point to the same compositional address without being
+declared a contradiction or a fact. This diagnostic currently compares every
+pair of distinct trails, so its quadratic group cost remains a runtime gate.
 
 The private replay illustrates why region count cannot equal corroboration:
 the exact repeated question for family subject C occurred 12 times in 10

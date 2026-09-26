@@ -2108,10 +2108,13 @@ memoria_mobile_status memoria_mobile_probe_structural_trails_json(
             "%s{\"fingerprint\":\"%s\",\"source_id\":\"%s\","
             "\"hierarchy_id\":\"%s\",\"occurrences\":%zu,"
             "\"region_count\":%zu,\"exact_overlap\":%zu,"
-            "\"query_echo\":%s,\"region_ids\":[",
+            "\"query_echo\":%s,\"branch_address\":\"%s\","
+            "\"branch_depth\":%zu,\"divergent_trail_count\":%zu,"
+            "\"region_ids\":[",
             i == offset ? "" : ",", group->fingerprint, id, hierarchy,
             group->occurrences, group->region_count, group->exact_overlap,
-            group->query_echo ? "true" : "false");
+            group->query_echo ? "true" : "false", group->branch_address,
+            group->branch_depth, group->divergent_trail_count);
         free(id); free(hierarchy);
         if (!written) goto internal_error_trails;
         for (j = 0u; j < group->region_count; ++j) {
