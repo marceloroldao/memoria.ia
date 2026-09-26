@@ -184,6 +184,8 @@ def main() -> None:
             gates["cold_reopen_provenance"] = all(
                 row["source_id"] in expected
                 and row["source_text"] == expected[row["source_id"]][1]
+                and row["source_kind"] == expected[row["source_id"]][2]
+                and row["sequence"] == expected[row["source_id"]][3]
                 and row["source_hierarchy_id"] ==
                     f"conversation:{expected[row['source_id']][0]}"
                 and probe.witness_exists(row["source_hierarchy_id"], row)
