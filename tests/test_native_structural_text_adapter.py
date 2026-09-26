@@ -80,7 +80,10 @@ def test_native_structural_text_service_shares_runtime_and_survives_restart(tmp_
             sequence=1,
         )
         assert first["duplicate"] is False
+        assert first["new_trail"] is True
         assert second["duplicate"] is False
+        assert second["new_trail"] is False
+        assert second["distinct_trail_count"] == 1
 
         duplicate = structural.observe(
             "Meu gato se chama Alt.",
@@ -89,6 +92,7 @@ def test_native_structural_text_service_shares_runtime_and_survives_restart(tmp_
             sequence=2,
         )
         assert duplicate["duplicate"] is True
+        assert duplicate["new_trail"] is False
         assert duplicate["observation_count"] == 4
 
         result = structural.resolve(
@@ -98,10 +102,12 @@ def test_native_structural_text_service_shares_runtime_and_survives_restart(tmp_
         )
         assert result["status"] == "HIT"
         assert result["semantic_projection"] is False
-        top = result["contexts"][0]
-        assert top["source_text"] == "Meu gato se chama Alt."
-        assert top["repetitions"] == 2
-        assert set(top["source_ids"]) == {"m1", "m2"}
+        # A repeated payload is still two addressable sources, but its count
+        # no longer biases association ranking as if it were new structure.
+        by_text = {row["source_text"]: row for row in result["contexts"]}
+        assert set(by_text) == {"Meu gato se chama Alt.", "Meu gato dorme no sofa."}
+        assert by_text["Meu gato se chama Alt."]["repetitions"] == 2
+        assert set(by_text["Meu gato se chama Alt."]["source_ids"]) == {"m1", "m2"}
         assert all(row["source_text"] != "Meu cachorro se chama Bolt." for row in result["contexts"])
         structural.flush()
     finally:
@@ -123,8 +129,9 @@ def test_native_structural_text_service_shares_runtime_and_survives_restart(tmp_
             top_k=3,
         )
         assert result["status"] == "HIT"
-        assert result["contexts"][0]["source_text"] == "Meu gato se chama Alt."
-        assert set(result["contexts"][0]["source_ids"]) == {"m1", "m2"}
+        by_text = {row["source_text"]: row for row in result["contexts"]}
+        assert set(by_text) == {"Meu gato se chama Alt.", "Meu gato dorme no sofa."}
+        assert set(by_text["Meu gato se chama Alt."]["source_ids"]) == {"m1", "m2"}
     finally:
         reopened.close()
         assert manager.active_runtime_count() == 0

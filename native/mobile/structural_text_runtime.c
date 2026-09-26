@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define STRUCTURAL_TEXT_RUNTIME_SCHEMA 1u
+#define STRUCTURAL_TEXT_RUNTIME_SCHEMA 2u
 #define KEY_CAP 512u
 
 typedef struct runtime_observation {
@@ -17,9 +17,20 @@ typedef struct runtime_observation {
     unsigned long sequence;
 } runtime_observation;
 
+typedef struct runtime_trail_slot {
+    uint64_t *symbols;
+    size_t symbol_count;
+    uint64_t hash;
+} runtime_trail_slot;
+
 typedef struct runtime_hierarchy {
     char *hierarchy_id;
     memoria_structural_text_field *field;
+    /* One normalized symbol trail per conversation field; raw source
+     * occurrences remain in runtime->observations and the BDR log. */
+    runtime_trail_slot *trail_slots;
+    size_t trail_slot_count;
+    size_t distinct_trail_count;
 } runtime_hierarchy;
 
 struct memoria_structural_text_runtime {
@@ -126,33 +137,62 @@ static int dynbuf_append(dynbuf *buffer, const char *data, size_t size) {
     return 1;
 }
 
-static int dynbuf_append_field(dynbuf *buffer, const char *value) {
+static int dynbuf_append_field_n(dynbuf *buffer, const char *value, size_t n) {
     char length[64];
-    size_t n = strlen(value ? value : "");
     int written = snprintf(length, sizeof(length), "%zu:", n);
     if (written <= 0 || (size_t)written >= sizeof(length)) return 0;
     return dynbuf_append(buffer, length, (size_t)written) &&
-           dynbuf_append(buffer, value ? value : "", n);
+        dynbuf_append(buffer, value ? value : "", n);
+}
+
+static int dynbuf_append_field(dynbuf *buffer, const char *value) {
+    return dynbuf_append_field_n(buffer, value, strlen(value ? value : ""));
 }
 
 static int serialize_observation(
     const runtime_observation *observation,
+    size_t anchor,
+    size_t prefix_length,
+    size_t suffix_offset,
     char **out,
     size_t *out_size
 ) {
     dynbuf buffer = {0};
     char sequence[64];
+    char reference[64];
     int written;
     if (!observation || !out || !out_size) return 0;
     *out = NULL;
     *out_size = 0u;
     written = snprintf(sequence, sizeof(sequence), "%lu:", observation->sequence);
+    if (anchor && !dynbuf_append(&buffer, "R2:", 3u)) {
+        free(buffer.data);
+        return 0;
+    }
     if (written <= 0 || (size_t)written >= sizeof(sequence) ||
         !dynbuf_append(&buffer, sequence, (size_t)written) ||
         !dynbuf_append_field(&buffer, observation->hierarchy_id) ||
         !dynbuf_append_field(&buffer, observation->source_id) ||
-        !dynbuf_append_field(&buffer, observation->source_kind) ||
-        !dynbuf_append_field(&buffer, observation->text)) {
+        !dynbuf_append_field(&buffer, observation->source_kind)) {
+        free(buffer.data);
+        return 0;
+    }
+    if (anchor) {
+        size_t text_length = strlen(observation->text);
+        if (prefix_length > suffix_offset || suffix_offset > text_length) {
+            free(buffer.data);
+            return 0;
+        }
+        written = snprintf(reference, sizeof(reference), "%zu:", anchor);
+        if (written <= 0 || (size_t)written >= sizeof(reference) ||
+            !dynbuf_append(&buffer, reference, (size_t)written) ||
+            !dynbuf_append_field_n(&buffer, observation->text, prefix_length) ||
+            !dynbuf_append_field_n(&buffer, observation->text + suffix_offset,
+                text_length - suffix_offset)) {
+            free(buffer.data);
+            return 0;
+        }
+    } else if (!dynbuf_append_field(&buffer, observation->text)) {
         free(buffer.data);
         return 0;
     }
@@ -221,7 +261,8 @@ static int parse_alloc_field(
     size_t n;
     char *value;
     if (!cursor || !remaining || !out ||
-        !parse_size_token(cursor, remaining, &n) || n > *remaining) return 0;
+        !parse_size_token(cursor, remaining, &n) || n > *remaining ||
+        n == (size_t)-1 || memchr(*cursor, 0, n)) return 0;
     value = (char *)malloc(n + 1u);
     if (!value) return 0;
     if (n) memcpy(value, *cursor, n);
@@ -242,6 +283,8 @@ static void free_observation(runtime_observation *observation) {
 }
 
 static int deserialize_observation(
+    const memoria_structural_text_runtime *runtime,
+    int allow_references,
     const char *value,
     size_t value_size,
     runtime_observation *out
@@ -249,17 +292,57 @@ static int deserialize_observation(
     const char *cursor = value;
     size_t remaining = value_size;
     runtime_observation parsed = {0};
-    if (!value || !out ||
+    int reference = value && value_size >= 3u &&
+        memcmp(value, "R2:", 3u) == 0;
+    if (reference) { cursor += 3u; remaining -= 3u; }
+    if (!runtime || !value || !out || (reference && !allow_references) ||
         !parse_ulong_token(&cursor, &remaining, &parsed.sequence) ||
         !parse_alloc_field(&cursor, &remaining, &parsed.hierarchy_id) ||
         !parse_alloc_field(&cursor, &remaining, &parsed.source_id) ||
-        !parse_alloc_field(&cursor, &remaining, &parsed.source_kind) ||
-        !parse_alloc_field(&cursor, &remaining, &parsed.text) ||
-        remaining != 0u ||
+        !parse_alloc_field(&cursor, &remaining, &parsed.source_kind)) {
+        free_observation(&parsed);
+        return 0;
+    }
+    if (reference) {
+        size_t anchor = 0u;
+        char *prefix = NULL, *suffix = NULL;
+        const char *base;
+        size_t a, b, c;
+        if (!parse_size_token(&cursor, &remaining, &anchor) ||
+            anchor == 0u || anchor > runtime->observation_count ||
+            !parse_alloc_field(&cursor, &remaining, &prefix) ||
+            !parse_alloc_field(&cursor, &remaining, &suffix) ||
+            remaining != 0u) {
+            free(prefix);
+            free(suffix);
+            free_observation(&parsed);
+            return 0;
+        }
+        base = runtime->observations[anchor - 1u].text;
+        a = strlen(prefix); b = strlen(base); c = strlen(suffix);
+        if (a > ((size_t)-1) - b || a + b > ((size_t)-1) - c - 1u) {
+            free(prefix);
+            free(suffix);
+            free_observation(&parsed);
+            return 0;
+        }
+        parsed.text = (char *)malloc(a + b + c + 1u);
+        if (parsed.text) {
+            memcpy(parsed.text, prefix, a);
+            memcpy(parsed.text + a, base, b);
+            memcpy(parsed.text + a + b, suffix, c + 1u);
+        }
+        free(prefix);
+        free(suffix);
+    } else if (!parse_alloc_field(&cursor, &remaining, &parsed.text)) {
+        free_observation(&parsed);
+        return 0;
+    }
+    if (remaining != 0u ||
         !parsed.hierarchy_id[0] ||
         !parsed.source_id[0] ||
         !parsed.source_kind[0] ||
-        !parsed.text[0]) {
+        !parsed.text || !parsed.text[0]) {
         free_observation(&parsed);
         return 0;
     }
@@ -360,9 +443,63 @@ static runtime_hierarchy *get_or_create_hierarchy(
         return NULL;
     }
     slot = &runtime->hierarchies[runtime->hierarchy_count++];
+    memset(slot, 0, sizeof(*slot));
     slot->hierarchy_id = id_copy;
     slot->field = field;
     return slot;
+}
+
+static uint64_t trail_hash(const uint64_t *symbols, size_t count) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    size_t i, byte;
+    for (i = 0u; i < count; ++i)
+        for (byte = 0u; byte < 8u; ++byte) {
+            hash ^= (symbols[i] >> (byte * 8u)) & UINT64_C(0xff);
+            hash *= UINT64_C(1099511628211);
+        }
+    hash ^= (uint64_t)count;
+    return hash * UINT64_C(1099511628211);
+}
+
+static runtime_trail_slot *find_trail_slot(
+    runtime_hierarchy *hierarchy,
+    const uint64_t *symbols, size_t count, uint64_t hash
+) {
+    size_t index;
+    if (!hierarchy->trail_slot_count) return NULL;
+    index = (size_t)hash & (hierarchy->trail_slot_count - 1u);
+    while (hierarchy->trail_slots[index].symbols) {
+        runtime_trail_slot *slot = &hierarchy->trail_slots[index];
+        if (slot->hash == hash && slot->symbol_count == count &&
+            memcmp(slot->symbols, symbols, count * sizeof(*symbols)) == 0)
+            return slot;
+        index = (index + 1u) & (hierarchy->trail_slot_count - 1u);
+    }
+    return &hierarchy->trail_slots[index];
+}
+
+static int reserve_trail_slot(runtime_hierarchy *hierarchy) {
+    runtime_trail_slot *slots;
+    size_t count, i;
+    if (hierarchy->distinct_trail_count + 1u <=
+        hierarchy->trail_slot_count / 2u) return 1;
+    count = hierarchy->trail_slot_count ? hierarchy->trail_slot_count * 2u : 8u;
+    if (count < hierarchy->trail_slot_count ||
+        count > ((size_t)-1) / sizeof(*slots)) return 0;
+    slots = calloc(count, sizeof(*slots));
+    if (!slots) return 0;
+    for (i = 0u; i < hierarchy->trail_slot_count; ++i) {
+        runtime_trail_slot *old = &hierarchy->trail_slots[i];
+        size_t index;
+        if (!old->symbols) continue;
+        index = (size_t)old->hash & (count - 1u);
+        while (slots[index].symbols) index = (index + 1u) & (count - 1u);
+        slots[index] = *old;
+    }
+    free(hierarchy->trail_slots);
+    hierarchy->trail_slots = slots;
+    hierarchy->trail_slot_count = count;
+    return 1;
 }
 
 static int tokenize_alloc(
@@ -391,6 +528,35 @@ static int tokenize_alloc(
     return 1;
 }
 
+/* Select the longest complete trail already observed in this field. The
+ * positions, rather than token spellings, identify the reused nodule. */
+static void find_reused_trail(
+    const runtime_hierarchy *hierarchy,
+    const uint64_t *symbols,
+    size_t count,
+    size_t *out_start,
+    size_t *out_count
+) {
+    size_t i;
+    *out_start = 0u;
+    *out_count = 0u;
+    for (i = 0u; i < hierarchy->trail_slot_count; ++i) {
+        const runtime_trail_slot *candidate = &hierarchy->trail_slots[i];
+        size_t start;
+        if (!candidate->symbols || candidate->symbol_count < *out_count ||
+            candidate->symbol_count >= count) continue;
+        for (start = 0u; start <= count - candidate->symbol_count; ++start) {
+            if (memcmp(symbols + start, candidate->symbols,
+                candidate->symbol_count * sizeof(*symbols)) == 0 &&
+                (candidate->symbol_count > *out_count || start < *out_start)) {
+                *out_start = start;
+                *out_count = candidate->symbol_count;
+                break;
+            }
+        }
+    }
+}
+
 static int replay_observation(
     memoria_structural_text_runtime *runtime,
     const runtime_observation *observation
@@ -398,17 +564,37 @@ static int replay_observation(
     runtime_hierarchy *hierarchy;
     uint64_t *symbols = NULL;
     size_t symbol_count = 0u;
+    uint64_t hash;
+    runtime_trail_slot *slot;
+    size_t reuse_start = 0u, reuse_count = 0u;
     if (!runtime || !observation ||
         !tokenize_alloc(observation->text, &symbols, &symbol_count)) return 0;
     hierarchy = get_or_create_hierarchy(runtime, observation->hierarchy_id);
-    if (!hierarchy ||
-        !memoria_structural_text_field_observe(
-            hierarchy->field, symbols, symbol_count
+    if (!hierarchy) {
+        free(symbols);
+        return 0;
+    }
+    hash = trail_hash(symbols, symbol_count);
+    slot = find_trail_slot(hierarchy, symbols, symbol_count, hash);
+    if (slot && slot->symbols) {
+        free(symbols);
+        return 1;
+    }
+    find_reused_trail(hierarchy, symbols, symbol_count,
+        &reuse_start, &reuse_count);
+    if (!reserve_trail_slot(hierarchy) ||
+        !memoria_structural_text_field_observe_reusing(
+            hierarchy->field, symbols, symbol_count,
+            reuse_start, reuse_count
         )) {
         free(symbols);
         return 0;
     }
-    free(symbols);
+    slot = find_trail_slot(hierarchy, symbols, symbol_count, hash);
+    slot->symbols = symbols;
+    slot->symbol_count = symbol_count;
+    slot->hash = hash;
+    ++hierarchy->distinct_trail_count;
     return 1;
 }
 
@@ -459,6 +645,7 @@ static int load_persisted(
     size_t lag = 0u;
     double forgetting = 0.0;
     size_t i;
+    size_t schema_value = 0u;
     int ok = 0;
 
     if (!fetch_value(runtime, "meta/schema", &schema, NULL) ||
@@ -475,9 +662,8 @@ static int load_persisted(
     if (!schema || !count_text || !within_text || !lag_text || !forget_text)
         goto done;
     {
-        size_t schema_value = 0u;
         if (!parse_size_text(schema, &schema_value) ||
-            schema_value != STRUCTURAL_TEXT_RUNTIME_SCHEMA ||
+            (schema_value != 1u && schema_value != STRUCTURAL_TEXT_RUNTIME_SCHEMA) ||
             !parse_size_text(count_text, &count) ||
             !parse_size_text(within_text, &within) ||
             !parse_size_text(lag_text, &lag) ||
@@ -496,7 +682,8 @@ static int load_persisted(
         snprintf(suffix, sizeof(suffix), "observation/%012zu", i + 1u);
         if (!fetch_value(runtime, suffix, &row, &row_size) ||
             !row ||
-            !deserialize_observation(row, row_size, &observation) ||
+            !deserialize_observation(runtime, schema_value >= 2u,
+                row, row_size, &observation) ||
             !append_loaded_observation(runtime, &observation)) {
             free(row);
             free_observation(&observation);
@@ -527,9 +714,69 @@ static int same_identity(
            strcmp(observation->source_id, source_id) == 0;
 }
 
+/* References use prior durable observation addresses. Exact copies point at
+ * the earliest byte-identical payload. A new payload may point at the longest
+ * byte-identical, token-aligned substring and store only its two margins. */
+static void find_storage_reference(
+    const memoria_structural_text_runtime *runtime,
+    const char *text,
+    const uint64_t *symbols,
+    size_t symbol_count,
+    size_t *out_anchor,
+    size_t *out_prefix_length,
+    size_t *out_suffix_offset
+) {
+    size_t i, best_length = 0u;
+    size_t text_length = strlen(text);
+    *out_anchor = 0u;
+    *out_prefix_length = 0u;
+    *out_suffix_offset = text_length;
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const char *base = runtime->observations[i].text;
+        size_t base_length = strlen(base);
+        const char *match;
+        uint64_t *base_symbols = NULL;
+        size_t base_count = 0u;
+        if (base_length == text_length && strcmp(base, text) == 0) {
+            *out_anchor = i + 1u;
+            *out_prefix_length = 0u;
+            *out_suffix_offset = text_length;
+            return;
+        }
+        if (base_length >= text_length || base_length <= best_length ||
+            !tokenize_alloc(base, &base_symbols, &base_count)) continue;
+        match = strstr(text, base);
+        while (match && base_count < symbol_count) {
+            size_t prefix_length = (size_t)(match - text);
+            size_t suffix_offset = prefix_length + base_length;
+            size_t prefix_count = 0u, suffix_count = 0u;
+            if (memoria_structural_text_tokenize(text, prefix_length,
+                    NULL, 0u, &prefix_count) &&
+                memoria_structural_text_tokenize(text + suffix_offset,
+                    text_length - suffix_offset, NULL, 0u, &suffix_count) &&
+                prefix_count <= symbol_count &&
+                base_count <= symbol_count - prefix_count &&
+                prefix_count + base_count + suffix_count == symbol_count &&
+                memcmp(symbols + prefix_count, base_symbols,
+                    base_count * sizeof(*symbols)) == 0) {
+                best_length = base_length;
+                *out_anchor = i + 1u;
+                *out_prefix_length = prefix_length;
+                *out_suffix_offset = suffix_offset;
+                break;
+            }
+            match = strstr(match + 1u, base);
+        }
+        free(base_symbols);
+    }
+}
+
 static int persist_observation(
     memoria_structural_text_runtime *runtime,
-    const runtime_observation *observation
+    const runtime_observation *observation,
+    size_t anchor,
+    size_t prefix_length,
+    size_t suffix_offset
 ) {
     bdr_atomic_c_operation ops[6];
     char keys[6][KEY_CAP];
@@ -545,7 +792,8 @@ static int persist_observation(
     size_t i;
 
     if (!runtime || !observation ||
-        !serialize_observation(observation, &row, &row_size))
+        !serialize_observation(observation, anchor, prefix_length,
+            suffix_offset, &row, &row_size))
         return 0;
 
     snprintf(schema, sizeof(schema), "%u", STRUCTURAL_TEXT_RUNTIME_SCHEMA);
@@ -635,8 +883,13 @@ int memoria_structural_text_runtime_observe(
     runtime_observation observation = {0};
     uint64_t *symbols = NULL;
     size_t symbol_count = 0u;
+    uint64_t hash;
     size_t i;
     runtime_hierarchy *hierarchy;
+    runtime_trail_slot *slot;
+    int novel;
+    size_t anchor = 0u, prefix_length = 0u, suffix_offset = 0u;
+    size_t reuse_start = 0u, reuse_count = 0u;
     if (duplicate) *duplicate = 0;
     if (!runtime || !hierarchy_id || !*hierarchy_id ||
         !source_id || !*source_id ||
@@ -644,8 +897,6 @@ int memoria_structural_text_runtime_observe(
         !text || !*text ||
         !tokenize_alloc(text, &symbols, &symbol_count))
         return 0;
-    free(symbols);
-
     for (i = 0; i < runtime->observation_count; ++i) {
         const runtime_observation *existing = &runtime->observations[i];
         if (!same_identity(existing, hierarchy_id, source_id, sequence))
@@ -653,8 +904,10 @@ int memoria_structural_text_runtime_observe(
         if (strcmp(existing->text, text) == 0 &&
             strcmp(existing->source_kind, source_kind) == 0) {
             if (duplicate) *duplicate = 1;
+            free(symbols);
             return 1;
         }
+        free(symbols);
         return 0;
     }
 
@@ -666,29 +919,44 @@ int memoria_structural_text_runtime_observe(
     if (!observation.hierarchy_id || !observation.source_id ||
         !observation.source_kind || !observation.text ||
         !reserve_observations(runtime, runtime->observation_count + 1u)) {
+        free(symbols);
         free_observation(&observation);
         return 0;
     }
 
     hierarchy = get_or_create_hierarchy(runtime, hierarchy_id);
-    if (!hierarchy || !persist_observation(runtime, &observation)) {
+    hash = trail_hash(symbols, symbol_count);
+    slot = hierarchy ? find_trail_slot(hierarchy, symbols, symbol_count, hash) : NULL;
+    novel = !slot || !slot->symbols;
+    find_storage_reference(runtime, text, symbols, symbol_count,
+        &anchor, &prefix_length, &suffix_offset);
+    if (!hierarchy || (novel && !reserve_trail_slot(hierarchy)) ||
+        !persist_observation(runtime, &observation, anchor,
+            prefix_length, suffix_offset)) {
+        free(symbols);
         free_observation(&observation);
         return 0;
     }
 
-    if (!tokenize_alloc(text, &symbols, &symbol_count) ||
-        !memoria_structural_text_field_observe(
-            hierarchy->field, symbols, symbol_count
-        )) {
+    if (novel) {
+        find_reused_trail(hierarchy, symbols, symbol_count,
+            &reuse_start, &reuse_count);
+        if (!memoria_structural_text_field_observe_reusing(
+                hierarchy->field, symbols, symbol_count,
+                reuse_start, reuse_count)) {
+            free(symbols);
+            free_observation(&observation);
+            /* Durable raw observation exists. Cold reopen rebuilds the field. */
+            return 0;
+        }
+        slot = find_trail_slot(hierarchy, symbols, symbol_count, hash);
+        slot->symbols = symbols;
+        slot->symbol_count = symbol_count;
+        slot->hash = hash;
+        ++hierarchy->distinct_trail_count;
+    } else {
         free(symbols);
-        free_observation(&observation);
-        /*
-         * Durable raw observation already exists. Cold reopen deterministically
-         * repairs this process-local failure by replaying the persisted suffix.
-         */
-        return 0;
     }
-    free(symbols);
     runtime->observations[runtime->observation_count++] = observation;
     return 1;
 }
@@ -696,6 +964,7 @@ int memoria_structural_text_runtime_observe(
 static void free_context(memoria_structural_text_context *context) {
     size_t i;
     if (!context) return;
+    free(context->source_hierarchy_id);
     free(context->source_text);
     free(context->source_id);
     free(context->source_kind);
@@ -779,18 +1048,22 @@ static int context_set_source(
     char *text = dup_text(observation->text);
     char *source_id = dup_text(observation->source_id);
     char *source_kind = dup_text(observation->source_kind);
-    if (!text || !source_id || !source_kind) {
+    char *source_hierarchy_id = dup_text(observation->hierarchy_id);
+    if (!text || !source_id || !source_kind || !source_hierarchy_id) {
         free(text);
         free(source_id);
         free(source_kind);
+        free(source_hierarchy_id);
         return 0;
     }
     free(context->source_text);
     free(context->source_id);
     free(context->source_kind);
+    free(context->source_hierarchy_id);
     context->source_text = text;
     context->source_id = source_id;
     context->source_kind = source_kind;
+    context->source_hierarchy_id = source_hierarchy_id;
     context->sequence = observation->sequence;
     return 1;
 }
@@ -826,6 +1099,525 @@ static int same_symbol_trail(
     return same;
 }
 
+static size_t count_symbol_spans(
+    const uint64_t *trail, size_t trail_count,
+    const uint64_t *span, size_t span_count, size_t *first
+) {
+    size_t start, matches = 0u;
+    if (!span_count || trail_count < span_count) return 0;
+    for (start = 0u; start <= trail_count - span_count; ++start)
+        if (memcmp(trail + start, span, span_count * sizeof(*span)) == 0) {
+            if (!matches && first) *first = start;
+            ++matches;
+        }
+    return matches;
+}
+
+static int contains_symbol_span(
+    const uint64_t *trail, size_t trail_count,
+    const uint64_t *span, size_t span_count
+) {
+    return count_symbol_spans(trail, trail_count, span, span_count, NULL) > 0u;
+}
+
+void memoria_structural_text_region_activations_free(
+    memoria_structural_region_activation *regions, size_t count
+) {
+    size_t i;
+    if (!regions) return;
+    for (i = 0u; i < count; ++i) free(regions[i].hierarchy_id);
+    free(regions);
+}
+
+static int region_activation_compare(const void *a, const void *b) {
+    const memoria_structural_region_activation *left = a, *right = b;
+    if (left->max_exact_overlap != right->max_exact_overlap)
+        return left->max_exact_overlap < right->max_exact_overlap ? 1 : -1;
+    if (left->distinct_count != right->distinct_count)
+        return left->distinct_count < right->distinct_count ? 1 : -1;
+    if (left->query_echo_count != right->query_echo_count)
+        return left->query_echo_count > right->query_echo_count ? 1 : -1;
+    return strcmp(left->hierarchy_id, right->hierarchy_id);
+}
+
+static int region_id_compare(const void *a, const void *b) {
+    const memoria_structural_region_activation *left = a, *right = b;
+    return strcmp(left->hierarchy_id, right->hierarchy_id);
+}
+
+static memoria_structural_region_activation *find_region(
+    memoria_structural_region_activation *regions, size_t count,
+    const char *hierarchy_id
+) {
+    size_t low = 0u, high = count;
+    while (low < high) {
+        size_t mid = low + (high - low) / 2u;
+        int order = strcmp(regions[mid].hierarchy_id, hierarchy_id);
+        if (order < 0) low = mid + 1u;
+        else if (order > 0) high = mid;
+        else return &regions[mid];
+    }
+    return NULL;
+}
+
+int memoria_structural_text_runtime_activate_regions(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_region_activation **out_regions,
+    size_t *out_count,
+    size_t *out_unseen_query_symbols
+) {
+    uint64_t *query_symbols = NULL;
+    unsigned char *query_seen = NULL;
+    size_t *ordered_runs = NULL;
+    size_t query_count = 0u, count = 0u, i, retained = 0u;
+    memoria_structural_region_activation *regions = NULL;
+    if (!runtime || !query || !*query || !out_regions || !out_count ||
+        !out_unseen_query_symbols)
+        return 0;
+    *out_regions = NULL;
+    *out_count = 0u;
+    *out_unseen_query_symbols = 0u;
+    if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    query_seen = calloc(query_count, sizeof(*query_seen));
+    ordered_runs = calloc(query_count + 1u, sizeof(*ordered_runs));
+    regions = calloc(runtime->hierarchy_count ? runtime->hierarchy_count : 1u,
+                     sizeof(*regions));
+    if (!regions || !query_seen || !ordered_runs) goto fail;
+    for (i = 0u; i < runtime->hierarchy_count; ++i) {
+        const char *id = runtime->hierarchies[i].hierarchy_id;
+        if (strncmp(id, "conversation:", 13) != 0) continue;
+        regions[count].hierarchy_id = dup_text(id);
+        if (!regions[count].hierarchy_id) goto fail;
+        ++count;
+    }
+    qsort(regions, count, sizeof(*regions), region_id_compare);
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const runtime_observation *item = &runtime->observations[i];
+        memoria_structural_region_activation *region =
+            find_region(regions, count, item->hierarchy_id);
+        uint64_t *symbols = NULL;
+        size_t symbol_count = 0u, q, s, overlap = 0u;
+        if (!region) continue;
+        if (!region->observation_count || item->sequence < region->first_sequence)
+            region->first_sequence = item->sequence;
+        if (!region->observation_count || item->sequence > region->last_sequence)
+            region->last_sequence = item->sequence;
+        ++region->observation_count;
+        if (strcmp(item->source_kind, "user_turn") != 0 &&
+            strcmp(item->source_kind, "user_assertion") != 0) continue;
+        if (!tokenize_alloc(item->text, &symbols, &symbol_count)) goto fail;
+        for (q = 0u; q < query_count; ++q) {
+            for (s = 0u; s < symbol_count; ++s)
+                if (query_symbols[q] == symbols[s]) break;
+            if (s < symbol_count) {
+                ++overlap;
+                query_seen[q] = 1u;
+            }
+        }
+        if (overlap) {
+            ++region->matching_count;
+            if (symbol_count == query_count &&
+                memcmp(symbols, query_symbols,
+                       query_count * sizeof(*symbols)) == 0) {
+                ++region->query_echo_count;
+            } else {
+                size_t span = 0u, candidate_index;
+                ++region->distinct_count;
+                if (symbol_count > query_count && contains_symbol_span(
+                        symbols, symbol_count, query_symbols, query_count))
+                    ++region->embedded_query_count;
+                memset(ordered_runs, 0,
+                       (query_count + 1u) * sizeof(*ordered_runs));
+                for (candidate_index = 0u; candidate_index < symbol_count;
+                     ++candidate_index) {
+                    size_t query_index = query_count;
+                    while (query_index > 0u) {
+                        ordered_runs[query_index] =
+                            symbols[candidate_index] == query_symbols[query_index - 1u] ?
+                            ordered_runs[query_index - 1u] + 1u : 0u;
+                        if (ordered_runs[query_index] > span)
+                            span = ordered_runs[query_index];
+                        --query_index;
+                    }
+                }
+                if (span > region->max_ordered_span ||
+                    (span == region->max_ordered_span &&
+                     (!region->witness_source_id ||
+                      item->sequence < region->witness_sequence ||
+                      (item->sequence == region->witness_sequence &&
+                       strcmp(item->source_id, region->witness_source_id) < 0)))) {
+                    region->max_ordered_span = span;
+                    region->witness_source_id = item->source_id;
+                    region->witness_source_kind = item->source_kind;
+                    region->witness_sequence = item->sequence;
+                }
+                if (overlap > region->max_exact_overlap)
+                    region->max_exact_overlap = overlap;
+            }
+        }
+        free(symbols);
+    }
+    for (i = 0u; i < count; ++i) {
+        if (regions[i].matching_count) {
+            if (retained != i) regions[retained] = regions[i];
+            ++retained;
+        } else {
+            free(regions[i].hierarchy_id);
+        }
+    }
+    for (i = 0u; i < query_count; ++i)
+        if (!query_seen[i]) ++*out_unseen_query_symbols;
+    free(query_seen);
+    free(ordered_runs);
+    free(query_symbols);
+    qsort(regions, retained, sizeof(*regions), region_activation_compare);
+    *out_regions = regions;
+    *out_count = retained;
+    return 1;
+fail:
+    free(query_seen);
+    free(ordered_runs);
+    free(query_symbols);
+    memoria_structural_text_region_activations_free(regions, count);
+    return 0;
+}
+
+void memoria_structural_text_trail_recurrences_free(
+    memoria_structural_trail_recurrence *groups, size_t count
+) {
+    size_t i, j;
+    if (!groups) return;
+    for (i = 0u; i < count; ++i) {
+        free(groups[i].source_id);
+        free(groups[i].hierarchy_id);
+        free(groups[i].symbols);
+        free(groups[i].region_ids);
+        for (j = 0u; j < groups[i].source_count; ++j) {
+            free(groups[i].sources[j].source_id);
+            free(groups[i].sources[j].hierarchy_id);
+        }
+        free(groups[i].sources);
+    }
+    free(groups);
+}
+
+static int recurrence_add_source(
+    memoria_structural_trail_recurrence *group,
+    const runtime_observation *item
+) {
+    memoria_structural_trail_source *grown, *source;
+    size_t next;
+    if (group->source_count >= 16u) return 1;
+    if (group->source_count == group->source_capacity) {
+        next = group->source_capacity ? group->source_capacity * 2u : 2u;
+        grown = realloc(group->sources, next * sizeof(*grown));
+        if (!grown) return 0;
+        group->sources = grown;
+        group->source_capacity = next;
+    }
+    source = &group->sources[group->source_count];
+    source->source_id = dup_text(item->source_id);
+    source->hierarchy_id = dup_text(item->hierarchy_id);
+    source->sequence = item->sequence;
+    if (!source->source_id || !source->hierarchy_id) {
+        free(source->source_id);
+        free(source->hierarchy_id);
+        memset(source, 0, sizeof(*source));
+        return 0;
+    }
+    ++group->source_count;
+    return 1;
+}
+
+static void recurrence_fingerprint(
+    const uint64_t *symbols, size_t count, char out[17]
+) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    size_t i, byte;
+    for (i = 0u; i < count; ++i)
+        for (byte = 0u; byte < 8u; ++byte) {
+            hash ^= (symbols[i] >> (byte * 8u)) & UINT64_C(0xff);
+            hash *= UINT64_C(1099511628211);
+        }
+    snprintf(out, 17u, "%016llx", (unsigned long long)hash);
+}
+
+int memoria_structural_text_runtime_trail_recurrence(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_trail_recurrence **out_groups,
+    size_t *out_count
+) {
+    uint64_t *query_symbols = NULL;
+    size_t query_count = 0u, count = 0u, capacity = 0u, i;
+    memoria_structural_trail_recurrence *groups = NULL;
+    if (!runtime || !query || !*query || !out_groups || !out_count) return 0;
+    *out_groups = NULL;
+    *out_count = 0u;
+    if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const runtime_observation *item = &runtime->observations[i];
+        uint64_t *symbols = NULL;
+        size_t symbol_count = 0u, overlap = 0u, q, s, j;
+        memoria_structural_trail_recurrence *group;
+        if (strncmp(item->hierarchy_id, "conversation:", 13) != 0 ||
+            (strcmp(item->source_kind, "user_turn") != 0 &&
+             strcmp(item->source_kind, "user_assertion") != 0)) continue;
+        if (!tokenize_alloc(item->text, &symbols, &symbol_count)) goto fail;
+        for (q = 0u; q < query_count; ++q) {
+            for (s = 0u; s < symbol_count; ++s)
+                if (query_symbols[q] == symbols[s]) break;
+            if (s < symbol_count) ++overlap;
+        }
+        if (!overlap) { free(symbols); continue; }
+        for (j = 0u; j < count; ++j)
+            if (groups[j].symbol_count == symbol_count &&
+                memcmp(groups[j].symbols, symbols,
+                       symbol_count * sizeof(*symbols)) == 0) break;
+        if (j == count) {
+            memoria_structural_trail_recurrence *grown;
+            if (count == capacity) {
+                size_t next = capacity ? capacity * 2u : 8u;
+                if (next < capacity || next > ((size_t)-1) / sizeof(*groups)) {
+                    free(symbols); goto fail;
+                }
+                grown = realloc(groups, next * sizeof(*groups));
+                if (!grown) { free(symbols); goto fail; }
+                groups = grown;
+                memset(groups + capacity, 0,
+                       (next - capacity) * sizeof(*groups));
+                capacity = next;
+            }
+            group = &groups[count];
+            group->source_id = dup_text(item->source_id);
+            group->hierarchy_id = dup_text(item->hierarchy_id);
+            if (!group->source_id || !group->hierarchy_id) {
+                free(symbols);
+                memoria_structural_text_trail_recurrences_free(groups, count + 1u);
+                free(query_symbols);
+                return 0;
+            }
+            group->symbols = symbols;
+            group->symbol_count = symbol_count;
+            group->exact_overlap = overlap;
+            group->query_echo = symbol_count == query_count &&
+                memcmp(symbols, query_symbols,
+                       query_count * sizeof(*symbols)) == 0;
+            if (symbol_count > query_count) {
+                group->embedded_positions = count_symbol_spans(
+                    symbols, symbol_count, query_symbols, query_count,
+                    &group->embedded_start);
+                group->contains_query_trail = group->embedded_positions > 0u;
+                if (group->contains_query_trail)
+                    group->embedded_length = query_count;
+            }
+            recurrence_fingerprint(symbols, symbol_count, group->fingerprint);
+            ++count;
+        } else {
+            group = &groups[j];
+            free(symbols);
+        }
+        if (!recurrence_add_source(group, item)) goto fail;
+        ++group->occurrences;
+        for (j = 0u; j < group->region_count; ++j)
+            if (strcmp(group->region_ids[j], item->hierarchy_id) == 0) break;
+        if (j == group->region_count) {
+            const char **grown;
+            if (group->region_count == group->region_capacity) {
+                size_t next = group->region_capacity ?
+                    group->region_capacity * 2u : 2u;
+                if (next < group->region_capacity ||
+                    next > ((size_t)-1) / sizeof(*grown)) goto fail;
+                grown = realloc(group->region_ids, next * sizeof(*grown));
+                if (!grown) goto fail;
+                group->region_ids = grown;
+                group->region_capacity = next;
+            }
+            group->region_ids[group->region_count++] = item->hierarchy_id;
+        }
+    }
+    {
+        const char *observed_base = NULL;
+        for (i = 0u; i < count; ++i)
+            if (groups[i].query_echo) {
+                observed_base = groups[i].fingerprint;
+                break;
+            }
+        if (observed_base)
+            for (i = 0u; i < count; ++i)
+                if (groups[i].contains_query_trail)
+                    memcpy(groups[i].composed_base_address,
+                           observed_base, sizeof(groups[i].composed_base_address));
+    }
+    for (i = 0u; i < count; ++i) {
+        size_t j;
+        for (j = i + 1u; j < count; ++j) {
+            size_t prefix = 0u;
+            memoria_structural_trail_recurrence *left = &groups[i];
+            memoria_structural_trail_recurrence *right = &groups[j];
+            size_t shorter = left->symbol_count < right->symbol_count ?
+                left->symbol_count : right->symbol_count;
+            while (prefix < shorter &&
+                   left->symbols[prefix] == right->symbols[prefix]) ++prefix;
+            /* A prefix extension is not a fork: both trails need a next symbol. */
+            if (!prefix || prefix == shorter) continue;
+            if (prefix > left->branch_depth) {
+                left->branch_depth = prefix;
+                left->divergent_trail_count = 1u;
+                recurrence_fingerprint(left->symbols, prefix,
+                                       left->branch_address);
+            } else if (prefix == left->branch_depth) {
+                ++left->divergent_trail_count;
+            }
+            if (prefix > right->branch_depth) {
+                right->branch_depth = prefix;
+                right->divergent_trail_count = 1u;
+                recurrence_fingerprint(right->symbols, prefix,
+                                       right->branch_address);
+            } else if (prefix == right->branch_depth) {
+                ++right->divergent_trail_count;
+            }
+        }
+    }
+    free(query_symbols);
+    *out_groups = groups;
+    *out_count = count;
+    return 1;
+fail:
+    free(query_symbols);
+    memoria_structural_text_trail_recurrences_free(groups, count);
+    return 0;
+}
+
+int memoria_structural_text_runtime_continuations(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_continuation_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_user_trails
+) {
+    memoria_structural_continuation_witness *witnesses = NULL;
+    uint64_t **user_trails = NULL;
+    size_t *user_counts = NULL;
+    uint64_t *query_symbols = NULL;
+    size_t query_count = 0u, count = 0u, distinct = 0u, i;
+    if (!runtime || !query || !*query || !out_witnesses || !out_count ||
+        !out_distinct_user_trails) return 0;
+    *out_witnesses = NULL;
+    *out_count = 0u;
+    *out_distinct_user_trails = 0u;
+    if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    if (runtime->observation_count > ((size_t)-1) / sizeof(*witnesses) ||
+        runtime->observation_count > ((size_t)-1) / sizeof(*user_trails) ||
+        runtime->observation_count > ((size_t)-1) / sizeof(*user_counts))
+        goto fail;
+    if (runtime->observation_count) {
+        witnesses = calloc(runtime->observation_count, sizeof(*witnesses));
+        user_trails = calloc(runtime->observation_count, sizeof(*user_trails));
+        user_counts = calloc(runtime->observation_count, sizeof(*user_counts));
+        if (!witnesses || !user_trails || !user_counts) goto fail;
+    }
+    for (i = 0u; i < runtime->observation_count; ++i) {
+        const runtime_observation *item = &runtime->observations[i];
+        const runtime_observation *next = NULL;
+        memoria_structural_continuation_witness *witness;
+        uint64_t *symbols = NULL;
+        size_t symbol_count = 0u, j;
+        int tied = 0;
+        if (strncmp(item->hierarchy_id, "conversation:", 13) != 0 ||
+            (strcmp(item->source_kind, "user_turn") != 0 &&
+             strcmp(item->source_kind, "user_assertion") != 0)) continue;
+        if (!tokenize_alloc(item->text, &symbols, &symbol_count)) goto fail;
+        if (symbol_count != query_count ||
+            memcmp(symbols, query_symbols, query_count * sizeof(*symbols)) != 0) {
+            free(symbols);
+            continue;
+        }
+        free(symbols);
+        witness = &witnesses[count];
+        witness->hierarchy_id = item->hierarchy_id;
+        witness->echo_source_id = item->source_id;
+        witness->echo_sequence = item->sequence;
+        witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_TERMINAL;
+        for (j = 0u; j < runtime->observation_count; ++j) {
+            const runtime_observation *candidate = &runtime->observations[j];
+            if (i == j || strcmp(item->hierarchy_id,
+                                candidate->hierarchy_id) != 0) continue;
+            if (candidate->sequence == item->sequence) tied = 1;
+            if (candidate->sequence <= item->sequence) continue;
+            if (!next || candidate->sequence < next->sequence) {
+                next = candidate;
+            }
+        }
+        if (next) {
+            for (j = 0u; j < runtime->observation_count; ++j) {
+                const runtime_observation *other = &runtime->observations[j];
+                if (other != next && other->sequence == next->sequence &&
+                    strcmp(other->hierarchy_id, item->hierarchy_id) == 0) {
+                    tied = 1;
+                    break;
+                }
+            }
+        }
+        if (tied) {
+            witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_AMBIGUOUS_ORDER;
+        } else if (next) {
+            witness->next_source_id = next->source_id;
+            witness->next_source_kind = next->source_kind;
+            witness->next_sequence = next->sequence;
+            if (strcmp(next->source_kind, "user_turn") != 0 &&
+                strcmp(next->source_kind, "user_assertion") != 0) {
+                witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_BLOCKED;
+            } else {
+                if (!tokenize_alloc(next->text, &symbols, &symbol_count))
+                    goto fail;
+                witness->next_text = next->text;
+                if (symbol_count == query_count &&
+                    memcmp(symbols, query_symbols,
+                           query_count * sizeof(*symbols)) == 0) {
+                    witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_REPEAT_ECHO;
+                    free(symbols);
+                } else {
+                    witness->kind = MEMORIA_STRUCTURAL_CONTINUATION_USER;
+                    recurrence_fingerprint(symbols, symbol_count,
+                                           witness->next_trail_address);
+                    user_trails[count] = symbols;
+                    user_counts[count] = symbol_count;
+                }
+            }
+        }
+        ++count;
+    }
+    for (i = 0u; i < count; ++i) {
+        size_t j;
+        if (!user_trails[i]) continue;
+        for (j = 0u; j < i; ++j)
+            if (user_trails[j] && user_counts[j] == user_counts[i] &&
+                memcmp(user_trails[j], user_trails[i],
+                       user_counts[i] * sizeof(**user_trails)) == 0) break;
+        if (j == i) ++distinct;
+    }
+    for (i = 0u; i < count; ++i) free(user_trails[i]);
+    free(user_trails);
+    free(user_counts);
+    free(query_symbols);
+    *out_witnesses = witnesses;
+    *out_count = count;
+    *out_distinct_user_trails = distinct;
+    return 1;
+fail:
+    if (user_trails) {
+        for (i = 0u; i < runtime->observation_count; ++i)
+            free(user_trails[i]);
+    }
+    free(user_trails);
+    free(user_counts);
+    free(query_symbols);
+    free(witnesses);
+    return 0;
+}
+
 static int resolve_text_impl(
     memoria_structural_text_runtime *runtime,
     const char *hierarchy_id,
@@ -833,10 +1625,13 @@ static int resolve_text_impl(
     size_t top_k,
     memoria_structural_text_context **out_contexts,
     size_t *out_count,
-    int window_group
+    int window_group,
+    int personal_evidence
 ) {
     const runtime_hierarchy *hierarchy;
     uint64_t *query_symbols = NULL;
+    size_t *query_frequency = NULL;
+    double query_weight_total = 0.0;
     size_t query_count = 0u;
     memoria_structural_text_context *contexts = NULL;
     size_t context_count = 0u;
@@ -849,8 +1644,31 @@ static int resolve_text_impl(
     *out_contexts = NULL;
     *out_count = 0u;
     hierarchy = find_hierarchy_const(runtime, hierarchy_id);
-    if (!hierarchy) return 1;
+    if (!hierarchy && !personal_evidence) return 1;
     if (!tokenize_alloc(query, &query_symbols, &query_count)) return 0;
+    if (personal_evidence) {
+        query_frequency = (size_t *)calloc(query_count, sizeof(*query_frequency));
+        if (!query_frequency) { free(query_symbols); return 0; }
+        for (i = 0; i < runtime->observation_count; ++i) {
+            const runtime_observation *item = &runtime->observations[i];
+            uint64_t *symbols = NULL;
+            size_t count = 0u, q, s;
+            if (strncmp(item->hierarchy_id, "conversation:", 13) != 0 ||
+                (strcmp(item->source_kind, "user_turn") != 0 &&
+                 strcmp(item->source_kind, "user_assertion") != 0)) continue;
+            if (!tokenize_alloc(item->text, &symbols, &count)) {
+                free(query_frequency); free(query_symbols); return 0;
+            }
+            for (q = 0; q < query_count; ++q)
+                for (s = 0; s < count; ++s)
+                    if (query_symbols[q] == symbols[s]) {
+                        ++query_frequency[q]; break;
+                    }
+            free(symbols);
+        }
+        for (i = 0; i < query_count; ++i)
+            query_weight_total += 1.0 / (1.0 + (double)query_frequency[i]);
+    }
 
     for (i = 0; i < runtime->observation_count; ++i) {
         const runtime_observation *observation = &runtime->observations[i];
@@ -859,17 +1677,25 @@ static int resolve_text_impl(
         memoria_structural_text_score score;
         size_t j;
         memoria_structural_text_context *context = NULL;
-        if (strcmp(observation->hierarchy_id, hierarchy_id) != 0)
+        if (!personal_evidence &&
+            strcmp(observation->hierarchy_id, hierarchy_id) != 0)
+            continue;
+        if (personal_evidence &&
+            (strncmp(observation->hierarchy_id, "conversation:", 13) != 0 ||
+             (strcmp(observation->source_kind, "user_turn") != 0 &&
+              strcmp(observation->source_kind, "user_assertion") != 0)))
             continue;
         if (!tokenize_alloc(
             observation->text, &candidate_symbols, &candidate_count
         )) {
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         if (!memoria_structural_text_score_candidate(
-            hierarchy->field,
+            personal_evidence ?
+                find_hierarchy_const(runtime, observation->hierarchy_id)->field :
+                hierarchy->field,
             query_symbols,
             query_count,
             candidate_symbols,
@@ -878,7 +1704,7 @@ static int resolve_text_impl(
         )) {
             free(candidate_symbols);
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         if (!memoria_structural_text_surface_overlap(
@@ -886,10 +1712,39 @@ static int resolve_text_impl(
         )) {
             free(candidate_symbols);
             memoria_structural_text_contexts_free(contexts, context_count);
-            free(query_symbols);
+            free(query_frequency); free(query_symbols);
             return 0;
         }
         score.score += 0.4 * (double)score.surface_overlap / (double)query_count;
+        if (personal_evidence) {
+            size_t k, novel = 0u;
+            double shared_weight = 0.0;
+            for (k = 0; k < candidate_count; ++k) {
+                size_t q;
+                for (q = 0; q < query_count; ++q)
+                    if (candidate_symbols[k] == query_symbols[q]) break;
+                if (q == query_count) ++novel;
+            }
+            /* A repeated question supplies no new evidence. For old records
+             * tagged user_assertion, the tag alone cannot establish truth. */
+            if (!novel || (score.exact_overlap < 2u &&
+                           score.surface_overlap < 2u)) {
+                free(candidate_symbols);
+                continue;
+            }
+            for (k = 0; k < query_count; ++k) {
+                size_t c;
+                for (c = 0; c < candidate_count; ++c)
+                    if (query_symbols[k] == candidate_symbols[c]) {
+                        shared_weight += 1.0 / (1.0 + (double)query_frequency[k]);
+                        break;
+                    }
+            }
+            /* Rare shared symbols carry more regional evidence than common
+             * query scaffolding. Associations only break close ties. */
+            score.score = shared_weight / query_weight_total +
+                0.05 * score.association_mass;
+        }
         if (score.score <= 0.0) {
             free(candidate_symbols);
             continue;
@@ -897,6 +1752,10 @@ static int resolve_text_impl(
 
         for (j = 0; j < context_count; ++j) {
             int same = strcmp(contexts[j].source_text, observation->text) == 0;
+            if (personal_evidence && strcmp(
+                contexts[j].source_hierarchy_id,
+                observation->hierarchy_id
+            ) != 0) same = 0;
             if (window_group &&
                 strcmp(contexts[j].source_kind, observation->source_kind) != 0)
                 same = 0;
@@ -908,7 +1767,7 @@ static int resolve_text_impl(
             if (same < 0) {
                 free(candidate_symbols);
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             if (same) {
@@ -928,7 +1787,7 @@ static int resolve_text_impl(
                     memoria_structural_text_contexts_free(
                         contexts, context_count
                     );
-                    free(query_symbols);
+                    free(query_frequency); free(query_symbols);
                     return 0;
                 }
                 contexts = grown;
@@ -943,7 +1802,7 @@ static int resolve_text_impl(
             if (!context_set_source(context, observation) ||
                 !context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             context->score = score.score;
@@ -954,7 +1813,7 @@ static int resolve_text_impl(
         } else {
             if (!context_add_source_id(context, observation, window_group)) {
                 memoria_structural_text_contexts_free(contexts, context_count);
-                free(query_symbols);
+                free(query_frequency); free(query_symbols);
                 return 0;
             }
             ++context->repetitions;
@@ -968,7 +1827,7 @@ static int resolve_text_impl(
                     memoria_structural_text_contexts_free(
                         contexts, context_count
                     );
-                    free(query_symbols);
+                    free(query_frequency); free(query_symbols);
                     return 0;
                 }
                 context->score = score.score;
@@ -978,7 +1837,7 @@ static int resolve_text_impl(
             }
         }
     }
-    free(query_symbols);
+    free(query_frequency); free(query_symbols);
 
     qsort(
         contexts,
@@ -1041,7 +1900,7 @@ int memoria_structural_text_runtime_resolve(
     size_t *out_count
 ) {
     return resolve_text_impl(
-        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 0
+        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 0, 0
     );
 }
 
@@ -1054,8 +1913,20 @@ int memoria_structural_text_runtime_resolve_window_group(
     size_t *out_count
 ) {
     return resolve_text_impl(
-        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 1
+        runtime, hierarchy_id, query, top_k, out_contexts, out_count, 1, 0
     );
+}
+
+int memoria_structural_text_runtime_resolve_personal_evidence(
+    memoria_structural_text_runtime *runtime,
+    const char *current_hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+) {
+    return resolve_text_impl(runtime, current_hierarchy_id, query, top_k,
+                             out_contexts, out_count, 0, 1);
 }
 
 size_t memoria_structural_text_runtime_window_revision(
@@ -1109,6 +1980,35 @@ size_t memoria_structural_text_runtime_edge_count(
         : 0u;
 }
 
+size_t memoria_structural_text_runtime_distinct_trail_count(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+) {
+    const runtime_hierarchy *hierarchy =
+        find_hierarchy_const(runtime, hierarchy_id);
+    return hierarchy ? hierarchy->distinct_trail_count : 0u;
+}
+
+uint64_t memoria_structural_text_runtime_field_tick(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+) {
+    const runtime_hierarchy *hierarchy =
+        find_hierarchy_const(runtime, hierarchy_id);
+    return hierarchy ? memoria_structural_text_field_tick(hierarchy->field) : 0u;
+}
+
+double memoria_structural_text_runtime_association(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    uint64_t source, uint64_t target, int channel
+) {
+    const runtime_hierarchy *hierarchy =
+        find_hierarchy_const(runtime, hierarchy_id);
+    return hierarchy ? memoria_structural_text_field_association(
+        hierarchy->field, source, target, channel) : 0.0;
+}
+
 int memoria_structural_text_runtime_sync(
     memoria_structural_text_runtime *runtime
 ) {
@@ -1124,6 +2024,10 @@ void memoria_structural_text_runtime_close(
     for (i = 0; i < runtime->observation_count; ++i)
         free_observation(&runtime->observations[i]);
     for (i = 0; i < runtime->hierarchy_count; ++i) {
+        size_t j;
+        for (j = 0u; j < runtime->hierarchies[i].trail_slot_count; ++j)
+            free(runtime->hierarchies[i].trail_slots[j].symbols);
+        free(runtime->hierarchies[i].trail_slots);
         free(runtime->hierarchies[i].hierarchy_id);
         memoria_structural_text_field_destroy(
             runtime->hierarchies[i].field

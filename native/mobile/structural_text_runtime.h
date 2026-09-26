@@ -28,6 +28,7 @@ typedef struct memoria_structural_text_occurrence {
 } memoria_structural_text_occurrence;
 
 typedef struct memoria_structural_text_context {
+    char *source_hierarchy_id;
     char *source_text;
     char *source_id;
     char *source_kind;
@@ -43,13 +44,85 @@ typedef struct memoria_structural_text_context {
     size_t repetitions;
 } memoria_structural_text_context;
 
+typedef struct memoria_structural_region_activation {
+    char *hierarchy_id;
+    size_t observation_count;
+    size_t matching_count;
+    size_t query_echo_count;
+    size_t embedded_query_count;
+    size_t distinct_count;
+    size_t max_exact_overlap;
+    size_t max_ordered_span;
+    /* Borrowed from the runtime until its next mutation or close. */
+    const char *witness_source_id;
+    const char *witness_source_kind;
+    unsigned long witness_sequence;
+    unsigned long first_sequence;
+    unsigned long last_sequence;
+} memoria_structural_region_activation;
+
+typedef struct memoria_structural_trail_source {
+    char *source_id;
+    char *hierarchy_id;
+    unsigned long sequence;
+} memoria_structural_trail_source;
+
+typedef struct memoria_structural_trail_recurrence {
+    char fingerprint[17];
+    char branch_address[17];
+    size_t branch_depth;
+    size_t divergent_trail_count;
+    char *source_id;
+    char *hierarchy_id;
+    size_t occurrences;
+    size_t region_count;
+    size_t exact_overlap;
+    int query_echo;
+    int contains_query_trail;
+    /* A read-only query decomposition, populated only when the exact query
+     * trail was also observed as a user source. This result writes nothing. */
+    char composed_base_address[17];
+    size_t embedded_start;
+    size_t embedded_length;
+    size_t embedded_positions;
+    /* Owned by this read-only result; used to verify hash collisions. */
+    uint64_t *symbols;
+    size_t symbol_count;
+    const char **region_ids;
+    size_t region_capacity;
+    memoria_structural_trail_source *sources;
+    size_t source_count;
+    size_t source_capacity;
+} memoria_structural_trail_recurrence;
+
+typedef enum memoria_structural_continuation_kind {
+    MEMORIA_STRUCTURAL_CONTINUATION_TERMINAL = 0,
+    MEMORIA_STRUCTURAL_CONTINUATION_BLOCKED = 1,
+    MEMORIA_STRUCTURAL_CONTINUATION_REPEAT_ECHO = 2,
+    MEMORIA_STRUCTURAL_CONTINUATION_USER = 3,
+    MEMORIA_STRUCTURAL_CONTINUATION_AMBIGUOUS_ORDER = 4
+} memoria_structural_continuation_kind;
+
+typedef struct memoria_structural_continuation_witness {
+    /* All pointers are borrowed from the runtime until its next mutation. */
+    const char *hierarchy_id;
+    const char *echo_source_id;
+    unsigned long echo_sequence;
+    const char *next_source_id;
+    const char *next_source_kind;
+    const char *next_text;
+    unsigned long next_sequence;
+    memoria_structural_continuation_kind kind;
+    char next_trail_address[17];
+} memoria_structural_continuation_witness;
+
 /*
  * Open the structural text runtime over the SAME BDR handle already owned by
  * Memoria.ia mobile persistence. The runtime borrows db and never closes it.
  *
- * Raw observations are authoritative. Association fields are reconstructed by
- * replaying those observations on every cold open; no derived edge is promoted
- * into persisted fact state.
+ * Source occurrences are authoritative. Their payloads can be stored inline
+ * or as references to earlier occurrences and reconstructed on cold open.
+ * Association fields replay those occurrences; no derived edge becomes fact.
  */
 int memoria_structural_text_runtime_open_shared(
     bdr_atomic_c_handle *db,
@@ -95,6 +168,60 @@ int memoria_structural_text_runtime_resolve_window_group(
     size_t *out_count
 );
 
+/* Read-only evidence across conversation windows. Each result retains its
+ * originating hierarchy; this does not assign an epistemic role to the text. */
+int memoria_structural_text_runtime_resolve_personal_evidence(
+    memoria_structural_text_runtime *runtime,
+    const char *current_hierarchy_id,
+    const char *query,
+    size_t top_k,
+    memoria_structural_text_context **out_contexts,
+    size_t *out_count
+);
+
+/* Read-only region comparison. An exact query trail is counted as an echo,
+ * while other matching observations remain unqualified candidates. This API
+ * does not decide whether a region contains an answer or a fact. */
+int memoria_structural_text_runtime_activate_regions(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_region_activation **out_regions,
+    size_t *out_count,
+    size_t *out_unseen_query_symbols
+);
+
+void memoria_structural_text_region_activations_free(
+    memoria_structural_region_activation *regions,
+    size_t count
+);
+
+/* Groups identical observed symbol trails. A second source ID in one region
+ * increases occurrences, not region_count. Neither count proves truth. */
+int memoria_structural_text_runtime_trail_recurrence(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_trail_recurrence **out_groups,
+    size_t *out_count
+);
+
+void memoria_structural_text_trail_recurrences_free(
+    memoria_structural_trail_recurrence *groups,
+    size_t count
+);
+
+/* Exact observed query -> immediate next occurrence in its own conversation.
+ * A repeated question stays an echo, assistant output blocks the transition,
+ * and same-sequence successors are ambiguous. No continuation is an answer
+ * or fact merely because it follows a question. The returned array is owned;
+ * its string pointers remain borrowed from the runtime. */
+int memoria_structural_text_runtime_continuations(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_continuation_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_user_trails
+);
+
 size_t memoria_structural_text_runtime_window_revision(
     const memoria_structural_text_runtime *runtime,
     const char *hierarchy_id
@@ -123,6 +250,24 @@ size_t memoria_structural_text_runtime_hierarchy_count(
 size_t memoria_structural_text_runtime_edge_count(
     const memoria_structural_text_runtime *runtime,
     const char *hierarchy_id
+);
+
+/* Raw occurrences and distinct normalized trails are separate. Repeated
+ * source text in the same hierarchy does not advance its association field. */
+size_t memoria_structural_text_runtime_distinct_trail_count(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+);
+
+uint64_t memoria_structural_text_runtime_field_tick(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id
+);
+
+double memoria_structural_text_runtime_association(
+    const memoria_structural_text_runtime *runtime,
+    const char *hierarchy_id,
+    uint64_t source, uint64_t target, int channel
 );
 
 int memoria_structural_text_runtime_sync(
