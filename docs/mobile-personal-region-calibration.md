@@ -29,8 +29,9 @@ from other matching observations, the region's sequence span and its origin ID.
 It returns `UNRESOLVED` with `qualified:false` even when candidate regions
 exist. An observation with extra symbols is merely *distinct*; it is not
 classified as an assertion. The preview does not traverse cognitive
-trajectories and performs a scan of observations per region, so runtime cost
-and the private replay remain open gates.
+trajectories. It now scans observations once and locates each conversation in
+an ordered region index; token comparison and the private replay remain open
+gates. This changes traversal cost, not the activation or evidence criteria.
 
 ## Region preview replay, 26 September 2026
 
