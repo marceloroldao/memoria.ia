@@ -2064,6 +2064,8 @@ memoria_mobile_status memoria_mobile_probe_structural_trails_json(
     memoria_structural_trail_recurrence *groups = NULL;
     mobile_response_builder builder = {0};
     size_t count = 0u, offset, end, i;
+    size_t query_echo_occurrences = 0u;
+    size_t embedded_payload_count = 0u, embedded_occurrences = 0u;
     long requested_offset, requested_limit;
     memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
     if (!h || !h->structural_text_runtime || !req.data || !req.size || !out)
@@ -2082,17 +2084,28 @@ memoria_mobile_status memoria_mobile_probe_structural_trails_json(
         status = MEMORIA_MOBILE_INTERNAL_ERROR;
         goto done;
     }
+    for (i = 0u; i < count; ++i) {
+        if (groups[i].query_echo)
+            query_echo_occurrences += groups[i].occurrences;
+        if (groups[i].contains_query_trail) {
+            ++embedded_payload_count;
+            embedded_occurrences += groups[i].occurrences;
+        }
+    }
     offset = (size_t)requested_offset < count ? (size_t)requested_offset : count;
     end = count - offset < (size_t)requested_limit ?
         count : offset + (size_t)requested_limit;
     if (!mobile_response_appendf(&builder,
             "{\"status\":\"%s\",\"qualified\":false,"
             "\"trajectory_used\":false,\"observation_count\":%zu,"
-            "\"group_count\":%zu,\"page\":{\"offset\":%zu,"
+            "\"group_count\":%zu,\"query_echo_occurrences\":%zu,"
+            "\"embedded_payload_count\":%zu,\"embedded_occurrences\":%zu,"
+            "\"page\":{\"offset\":%zu,"
             "\"returned\":%zu,\"next_offset\":",
             count ? "CANDIDATES" : "UNRESOLVED",
             memoria_structural_text_runtime_observation_count(
-                h->structural_text_runtime), count, offset, end - offset))
+                h->structural_text_runtime), count, query_echo_occurrences,
+            embedded_payload_count, embedded_occurrences, offset, end - offset))
         goto internal_error_trails;
     if (end < count) {
         if (!mobile_response_appendf(&builder, "%zu", end))

@@ -398,6 +398,7 @@ static int check_query_embedded_in_new_payload(void) {
         "{\"hierarchy_id\":\"conversation:echo\",\"source_id\":\"q1\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Qual nome do meu pai?\"}",
         "{\"hierarchy_id\":\"conversation:echo\",\"source_id\":\"q2\",\"source_kind\":\"user_turn\",\"sequence\":2,\"text\":\"QUAL NOME DO MEU PAI?\"}",
         "{\"hierarchy_id\":\"conversation:request\",\"source_id\":\"request\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}",
+        "{\"hierarchy_id\":\"conversation:request-copy\",\"source_id\":\"request-copy\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}",
         "{\"hierarchy_id\":\"conversation:story\",\"source_id\":\"story\",\"source_kind\":\"user_turn\",\"sequence\":1,\"text\":\"Andando pela cidade, alguém perguntou qual nome do meu pai?\"}",
         "{\"hierarchy_id\":\"conversation:generated\",\"source_id\":\"assistant\",\"source_kind\":\"assistant_generated\",\"sequence\":1,\"text\":\"Poderia me dizer qual nome do meu pai?\"}"
     };
@@ -416,11 +417,14 @@ static int check_query_embedded_in_new_payload(void) {
             "{\"query\":\"Qual nome do meu pai?\",\"limit\":16}", &out)
             == MEMORIA_MOBILE_UNRESOLVED);
         CHECK(contains(out, "\"qualified\":false"));
-        CHECK(contains(out, "\"region_count\":3"));
+        CHECK(contains(out, "\"region_count\":4"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:echo\","
             "\"observation_count\":2,\"matching_count\":2,"
             "\"query_echo_count\":2,\"embedded_query_count\":0"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:request\","
+            "\"observation_count\":1,\"matching_count\":1,"
+            "\"query_echo_count\":0,\"embedded_query_count\":1"));
+        CHECK(contains(out, "\"hierarchy_id\":\"conversation:request-copy\","
             "\"observation_count\":1,\"matching_count\":1,"
             "\"query_echo_count\":0,\"embedded_query_count\":1"));
         CHECK(contains(out, "\"hierarchy_id\":\"conversation:story\","
@@ -432,7 +436,12 @@ static int check_query_embedded_in_new_payload(void) {
             "{\"query\":\"Qual nome do meu pai?\"}", &out)
             == MEMORIA_MOBILE_UNRESOLVED);
         CHECK(contains(out, "\"group_count\":3"));
+        CHECK(contains(out, "\"query_echo_occurrences\":2,"
+            "\"embedded_payload_count\":2,\"embedded_occurrences\":3"));
         CHECK(contains(out, "\"occurrences\":2,\"region_count\":1"));
+        CHECK(contains(out, "\"source_id\":\"request\","
+            "\"hierarchy_id\":\"conversation:request\","
+            "\"occurrences\":2,\"region_count\":2"));
         CHECK(contains(out, "\"query_echo\":true,\"contains_query_trail\":false"));
         CHECK(contains(out, "\"query_echo\":false,\"contains_query_trail\":true"));
         CHECK(!contains(out, "conversation:generated"));

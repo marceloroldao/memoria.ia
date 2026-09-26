@@ -42,6 +42,11 @@ structural diagnostic; it does **not** infer that the narrative supports an
 answer, create a persistent phrase node, or reinforce any field on lookup.
 Case and punctuation follow the native tokenizer; paraphrases and inserted
 words inside the query span do not count as exact containment.
+The trail result separately reports `query_echo_occurrences`,
+`embedded_occurrences` and `embedded_payload_count` over the complete probe,
+before pagination. Two copies of the same containing payload in different
+conversation regions count as two occurrences but only one distinct containing
+payload. These counts describe structure, not independent factual support.
 
 ## Region preview replay, 26 September 2026
 
