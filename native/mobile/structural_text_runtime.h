@@ -286,6 +286,19 @@ int memoria_structural_text_runtime_linked_replies(
     size_t *out_distinct_reply_trails
 );
 
+/* Same read-only probe, constrained to one observed target source address.
+ * The query still has to match that target's complete ordered trail. */
+int memoria_structural_text_runtime_linked_replies_at(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    const char *target_hierarchy_id,
+    const char *target_source_id,
+    unsigned long target_sequence,
+    memoria_structural_reply_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_reply_trails
+);
+
 size_t memoria_structural_text_runtime_window_revision(
     const memoria_structural_text_runtime *runtime,
     const char *hierarchy_id

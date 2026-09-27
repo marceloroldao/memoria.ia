@@ -1879,9 +1879,12 @@ fail:
     return 0;
 }
 
-int memoria_structural_text_runtime_linked_replies(
+int memoria_structural_text_runtime_linked_replies_at(
     const memoria_structural_text_runtime *runtime,
     const char *query,
+    const char *target_hierarchy_id,
+    const char *target_source_id,
+    unsigned long target_sequence,
     memoria_structural_reply_witness **out_witnesses,
     size_t *out_count,
     size_t *out_distinct_reply_trails
@@ -1891,6 +1894,8 @@ int memoria_structural_text_runtime_linked_replies(
     size_t *reply_counts = NULL;
     size_t query_count = 0u, count = 0u, distinct = 0u, i;
     if (!runtime || !query || !*query || !out_witnesses || !out_count ||
+        (target_source_id && (!*target_source_id || !target_hierarchy_id ||
+                              !*target_hierarchy_id)) ||
         !out_distinct_reply_trails) return 0;
     *out_witnesses = NULL;
     *out_count = 0u;
@@ -1908,6 +1913,10 @@ int memoria_structural_text_runtime_linked_replies(
     }
     for (i = 0u; i < runtime->reply_link_count; ++i) {
         const runtime_reply_link *link = &runtime->reply_links[i];
+        if (target_source_id &&
+            (strcmp(link->hierarchy_id, target_hierarchy_id) != 0 ||
+             strcmp(link->reply_to_source_id, target_source_id) != 0 ||
+             link->reply_to_sequence != target_sequence)) continue;
         const runtime_observation *target = find_observation_address(
             runtime, link->hierarchy_id, link->reply_to_source_id,
             link->reply_to_sequence);
@@ -1979,6 +1988,18 @@ fail:
     free(query_symbols);
     free(witnesses);
     return 0;
+}
+
+int memoria_structural_text_runtime_linked_replies(
+    const memoria_structural_text_runtime *runtime,
+    const char *query,
+    memoria_structural_reply_witness **out_witnesses,
+    size_t *out_count,
+    size_t *out_distinct_reply_trails
+) {
+    return memoria_structural_text_runtime_linked_replies_at(
+        runtime, query, NULL, NULL, 0ul,
+        out_witnesses, out_count, out_distinct_reply_trails);
 }
 
 static int resolve_text_impl(

@@ -679,6 +679,44 @@ static int check_linked_reply_probe(void) {
     CHECK(!contains(out, "Falso"));
     clear(&out);
     CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:l3\","
+        "\"query\":\"Qual nome do meu drone?\","
+        "\"mode\":\"linked_reply_evidence\","
+        "\"target_source_id\":\"q3\",\"target_sequence\":1}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"evidence_scope\":\"exact_target\""));
+    CHECK(contains(out, "\"status\":\"CANDIDATES\""));
+    CHECK(contains(out, "\"distinct_reply_trails\":1"));
+    CHECK(contains(out, "\"explicit_reply_occurrences\":1"));
+    CHECK(contains(out, "Boreal"));
+    CHECK(!contains(out, "Auri"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:l2\","
+        "\"query\":\"Qual nome do meu drone?\","
+        "\"mode\":\"linked_reply_evidence\","
+        "\"target_source_id\":\"q3\",\"target_sequence\":1}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"evidence_scope\":\"exact_target\""));
+    CHECK(contains(out, "\"status\":\"UNRESOLVED\""));
+    CHECK(contains(out, "\"groups\":[]"));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:l3\","
+        "\"query\":\"Qual potência do meu drone?\","
+        "\"mode\":\"linked_reply_evidence\","
+        "\"target_source_id\":\"q3\",\"target_sequence\":1}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"status\":\"UNRESOLVED\""));
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:l3\","
+        "\"query\":\"Qual nome do meu drone?\","
+        "\"mode\":\"linked_reply_evidence\","
+        "\"target_source_id\":\"q3\"}", &out)
+        == MEMORIA_MOBILE_INVALID_ARGUMENT);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
         "{\"hierarchy_id\":\"conversation:new\","
         "\"query\":\"Qual nome do meu drone?\","
         "\"mode\":\"linked_reply_evidence\",\"top_k\":1}", &out)
@@ -711,6 +749,17 @@ static int check_linked_reply_probe(void) {
         "{\"query\":\"Qual nome do meu drone?\",\"limit\":64}", &out)
         == MEMORIA_MOBILE_UNRESOLVED);
     CHECK(strcmp((const char *)out.data, before_reopen) == 0);
+    clear(&out);
+    CHECK(call_json(memoria_mobile_resolve_structural_text_json, h,
+        "{\"hierarchy_id\":\"conversation:l3\","
+        "\"query\":\"Qual nome do meu drone?\","
+        "\"mode\":\"linked_reply_evidence\","
+        "\"target_source_id\":\"q3\",\"target_sequence\":1}", &out)
+        == MEMORIA_MOBILE_UNRESOLVED);
+    CHECK(contains(out, "\"evidence_scope\":\"exact_target\""));
+    CHECK(contains(out, "\"explicit_reply_occurrences\":1"));
+    CHECK(contains(out, "Boreal"));
+    CHECK(!contains(out, "Auri"));
     clear(&out);
     free(before_reopen);
     memoria_mobile_close(h);

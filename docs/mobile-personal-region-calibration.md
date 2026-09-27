@@ -488,3 +488,25 @@ proves the source-addressed capture and durable diagnostic retrieval on one
 real device example. It does not establish factual truth or validate an
 automatic method for inferring reply links; the three legacy selection
 failures remain open.
+
+## Address-scoped reply inspection, 27 September 2026
+
+The opt-in `linked_reply_evidence` request now accepts both
+`target_source_id` and `target_sequence`. With this pair, `hierarchy_id`
+identifies the exact observed target and the runtime assembles only links
+addressed to it; the query trail must still be present in that target.
+The response marks `evidence_scope:"exact_target"`. Without the pair, the
+existing query-wide inspection remains available with
+`evidence_scope:"matching_targets"`. A missing half of the address is
+rejected. This prevents two identical texts in different conversations
+from being silently combined when inspecting one selected message; neither
+scope promotes a reply to a fact.
+
+The native fixture has multiple identical target texts with competing linked
+replies. The exact-target probe returns only the selected target's one group;
+the same source ID in another conversation and an unrelated query return zero.
+The result survives a cold reopen. Replaying the private 99-observation
+alpha.13 export with its one real link yields one group and one occurrence
+for that exact target both before and after reopening. Status remains
+`CANDIDATES`, `qualified:false`, `answer:null`. No raw source IDs or payloads
+from that export are stored here. The legacy synthetic gate remains 23/26.

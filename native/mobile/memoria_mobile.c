@@ -1439,6 +1439,8 @@ static memoria_mobile_status mobile_resolve_linked_reply_evidence(
     memoria_mobile_handle *h,
     const char *hierarchy_id,
     const char *query,
+    const char *target_source_id,
+    unsigned long target_sequence,
     size_t top_k,
     memoria_mobile_buffer *out
 ) {
@@ -1448,8 +1450,10 @@ static memoria_mobile_status mobile_resolve_linked_reply_evidence(
     size_t *first = NULL, *occurrences = NULL, *regions = NULL;
     size_t count = 0u, distinct = 0u, repeated = 0u, i, group;
     memoria_mobile_status status = MEMORIA_MOBILE_INTERNAL_ERROR;
-    if (!memoria_structural_text_runtime_linked_replies(
-            h->structural_text_runtime, query, &witnesses, &count, &distinct))
+    if (!memoria_structural_text_runtime_linked_replies_at(
+            h->structural_text_runtime, query,
+            target_source_id ? hierarchy_id : NULL, target_source_id,
+            target_sequence, &witnesses, &count, &distinct))
         return status;
     escaped_hierarchy = json_escape(hierarchy_id);
     if (!escaped_hierarchy) goto done_linked_evidence;
@@ -1480,6 +1484,7 @@ static memoria_mobile_status mobile_resolve_linked_reply_evidence(
             "\"selection_used\":false,\"semantic_projection\":false,"
             "\"trajectory_used\":false,"
             "\"evidence_boundary\":\"explicit_reply_only\","
+            "\"evidence_scope\":\"%s\","
             "\"hierarchy_id\":\"%s\",\"answer\":null,"
             "\"reason\":%s,\"distinct_reply_trails\":%zu,"
             "\"competing_reply_trails\":%s,"
@@ -1487,6 +1492,7 @@ static memoria_mobile_status mobile_resolve_linked_reply_evidence(
             "\"repeat_question_links\":%zu,"
             "\"groups_truncated\":%s,\"groups\":[",
             distinct > 1u ? "CONFLICT" : distinct ? "CANDIDATES" : "UNRESOLVED",
+            target_source_id ? "exact_target" : "matching_targets",
             escaped_hierarchy,
             distinct ? "null" : "\"NO_EXPLICIT_REPLY_EVIDENCE\"",
             distinct, distinct > 1u ? "true" : "false", count, repeated,
@@ -1564,11 +1570,13 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
     char *hierarchy_id = NULL;
     char *query = NULL;
     char *mode = NULL;
+    char *target_source_id = NULL;
     char *escaped_hierarchy = NULL;
     memoria_structural_text_context *contexts = NULL;
     size_t context_count = 0u;
     mobile_response_builder builder = {0};
     long top_k_value;
+    long target_sequence;
     size_t top_k;
     size_t i;
     memoria_mobile_status status = MEMORIA_MOBILE_INVALID_ARGUMENT;
@@ -1583,10 +1591,15 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
     hierarchy_id = json_string(json, "hierarchy_id");
     query = json_string(json, "query");
     mode = json_string(json, "mode");
+    target_source_id = json_string(json, "target_source_id");
+    target_sequence = json_long(json, "target_sequence", -1);
     top_k_value = json_long(json, "top_k", 3);
     if (!hierarchy_id || !hierarchy_id[0] ||
         !query || !query[0] ||
         top_k_value < 1 || top_k_value > 16 ||
+        ((target_source_id != NULL || target_sequence >= 0) &&
+         (!mode || strcmp(mode, "linked_reply_evidence") != 0 ||
+          !target_source_id || !target_source_id[0] || target_sequence < 0)) ||
         (mode && strcmp(mode, "window_group") != 0 &&
          strcmp(mode, "personal_evidence") != 0 &&
          strcmp(mode, "linked_reply_evidence") != 0))
@@ -1595,7 +1608,9 @@ memoria_mobile_status memoria_mobile_resolve_structural_text_json(
 
     if (mode && strcmp(mode, "linked_reply_evidence") == 0) {
         status = mobile_resolve_linked_reply_evidence(
-            h, hierarchy_id, query, top_k, response_json);
+            h, hierarchy_id, query, target_source_id,
+            (unsigned long)(target_sequence < 0 ? 0 : target_sequence),
+            top_k, response_json);
         goto done;
     }
 
@@ -1766,6 +1781,7 @@ done:
     free(hierarchy_id);
     free(query);
     free(mode);
+    free(target_source_id);
     free(json);
     return status;
 }
