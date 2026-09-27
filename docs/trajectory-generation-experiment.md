@@ -224,6 +224,9 @@ os contratos programados. A primeira [avaliação com contextos reservados](traj
 mede generalização estrutural e controles negativos em dois lotes pequenos;
 conversas reais e modalidades não textuais ainda exigem provas próprias.
 
-O armazenamento SQLite foi exercitado neste gate; BDR e integração nativa
+Uma [prova entre conversas sintéticas](trajectory-episode-proof.md) também
+verifica rotas concorrentes, testemunhas por captura e ambiguidade após
+distração sem vínculos manuais. O armazenamento SQLite foi exercitado neste
+gate; BDR e integração nativa
 precisam de validação própria. Otimização, organização em segundo plano e
 integração ao ciclo de respostas do aplicativo são etapas posteriores.
