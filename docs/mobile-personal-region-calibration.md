@@ -458,4 +458,10 @@ native-linked replies. It compares recorded chat intentions with native links
 without reinterpreting any payload as an answer. A subsequent device export
 will distinguish a missing selection from a failed or interrupted link. With
 zero links in this export, all organized linked-reply probes still have zero
-evidence, regardless of surface similarity.
+evidence, regardless of surface similarity. Replaying all 86 observations in
+the native runtime and probing each of the three new entry surfaces returned
+`UNRESOLVED`, zero groups and `qualified:false` in every case.
+
+The revised OFF.IA alpha.13 Android workflow passed unit tests, the native
+gate, full APK build and signature verification. Its signed experimental APK
+is the artifact of [workflow 36284502542](https://github.com/marceloroldao/off.ia/actions/runs/36284502542).
