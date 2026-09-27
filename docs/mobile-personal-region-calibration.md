@@ -465,3 +465,26 @@ the native runtime and probing each of the three new entry surfaces returned
 The revised OFF.IA alpha.13 Android workflow passed unit tests, the native
 gate, full APK build and signature verification. Its signed experimental APK
 is the artifact of [workflow 36284502542](https://github.com/marceloroldao/off.ia/actions/runs/36284502542).
+
+## First source-addressed device reply, 27 September 2026
+
+The next private alpha.13 export identifies OFF.IA commit
+`7e2ea8b916bf8d00b30b4a8a4f7ed74347065296` and Memoria.ia commit
+`0627e9bd365421e88f5d2a9f6039c807139efb4f`, with laboratory mode
+enabled at export. It contains 99 observations in 28 conversations: 13 new
+user observations in two new conversations since the 86/26 export. Existing
+payloads did not change. One new user observation has a `reply_to` address
+pointing to an earlier user observation in the same conversation. OFF.IA
+reports one selected, one recorded and one native link; pending and mismatch
+counts are zero. No raw personal payloads or source IDs are stored in Git.
+
+Replaying all 99 observations and their one link in the native runtime:
+the first link was accepted, a duplicate call preserved the count at one,
+the linked target query yielded one reply group, and an absent query yielded
+zero groups. After a cold reopen the linked query still yielded the same one
+group. The native result remains `CANDIDATES`, `qualified:false`,
+`selection_used:false`, `answer:null` and `MEMORIA_MOBILE_UNRESOLVED`. This
+proves the source-addressed capture and durable diagnostic retrieval on one
+real device example. It does not establish factual truth or validate an
+automatic method for inferring reply links; the three legacy selection
+failures remain open.
