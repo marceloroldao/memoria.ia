@@ -293,6 +293,192 @@ class TrajectoryGenerationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             StructuralTrajectoryIndex.restore(lossless.snapshot())
 
+    def test_intermediate_nodule_recall_emerges_without_manual_links(self):
+        memory = TrajectoryGenerationExperiment()
+        a = memory.observe((90, 1, 2, 3, 91), observation_id="a")
+        c = memory.observe((94, 7, 8, 9, 95), observation_id="c")
+        self.assertEqual(memory.associated_nodules((100, 1, 2, 3, 101)).candidates, ())
+        b = memory.observe((92, 1, 2, 3, 93), observation_id="b")
+        d = memory.observe((96, 7, 8, 9, 97), observation_id="d")
+        before = memory.snapshot(), memory.learning_state()
+
+        result = memory.associated_nodules((100, 1, 2, 3, 101))
+        self.assertEqual(result.depth, 1)
+        self.assertEqual(result.selected, (7, 8, 9))
+        self.assertEqual({node.symbols for node in result.candidates}, {(7, 8, 9)})
+        self.assertAlmostEqual(result.candidates[0].weight, (2 + exp(-0.7)) / 9)
+        self.assertEqual(
+            set(result.candidates[0].witnesses),
+            {(a.payload_id, c.payload_id, "default"),
+             (a.payload_id, d.payload_id, "default"),
+             (b.payload_id, d.payload_id, "default")},
+        )
+        generated = memory.generate((100, 1, 2, 3, 101))
+        self.assertEqual(generated.mode, "NODULE_RECALL")
+        self.assertEqual(generated.selected, (7, 8, 9))
+        self.assertEqual(generated.association_evidence, result)
+        self.assertFalse(any(memory.expand(node["address"]) == (7, 8, 9)
+                             for node in memory.snapshot()["nodes"]))
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+
+    def test_text_adapter_discovers_longer_recurrent_spans_without_word_rules(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, text in enumerate((
+            "no quarto ensolarado", "a cama está arrumada",
+            "este quarto é claro", "uma cama com cobertor",
+        )):
+            memory.observe(text_symbols(text), observation_id=str(i))
+        query = text_symbols("pensei no quarto durante a viagem!")
+        result = memory.associated_nodules(query)
+        self.assertEqual(result.depth, 1)
+        self.assertEqual("".join(map(chr, result.candidates[0].symbols)), "a cama ")
+        self.assertEqual(len(result.candidates[0].witnesses), 3)
+        self.assertTrue(result.ambiguous)
+        self.assertTrue(result.truncated)
+        self.assertIsNone(result.selected)
+        self.assertEqual(memory.generate(query).mode, "NODULE_RECALL")
+        self.assertIsNone(memory.generate(query).selected)
+
+    def test_distinct_contexts_reinforce_compositions_but_copies_do_not(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, payload in enumerate(((90, 1, 2, 3, 91), (94, 7, 8, 9, 95),
+                                     (92, 1, 2, 3, 93), (96, 7, 8, 9, 97))):
+            memory.observe(payload, observation_id=str(i))
+        query = (100, 1, 2, 3, 101)
+        before = memory.associated_nodules(query)
+        learned = memory.learning_state()
+        for i in range(12):
+            memory.observe((90, 1, 2, 3, 91), observation_id=f"copy:{i}",
+                           stream_id=f"new:{i}")
+        self.assertEqual(memory.learning_state(), learned)
+        self.assertEqual(memory.associated_nodules(query), before)
+        memory.observe((98, 1, 2, 3, 99), observation_id="new-source")
+        memory.observe((110, 7, 8, 9, 111), observation_id="new-target")
+        after = memory.associated_nodules(query)
+        target = next(c for c in after.candidates if c.symbols == (7, 8, 9))
+        self.assertGreater(target.weight, before.candidates[0].weight)
+        self.assertGreater(len(target.witnesses), len(before.candidates[0].witnesses))
+
+    def test_intermediate_association_is_directed_and_capture_local(self):
+        forward = TrajectoryGenerationExperiment()
+        reverse = TrajectoryGenerationExperiment()
+        split = TrajectoryGenerationExperiment()
+        source = ((90, 1, 2, 3, 91), (92, 1, 2, 3, 93))
+        target = ((94, 7, 8, 9, 95), (96, 7, 8, 9, 97))
+        for i, payload in enumerate((source[0], target[0], source[1], target[1])):
+            forward.observe(payload, observation_id=str(i))
+        for i, payload in enumerate((*target, *source)):
+            reverse.observe(payload, observation_id=str(i))
+        for i, payload in enumerate((source[0], target[0], source[1], target[1])):
+            split.observe(payload, observation_id=str(i),
+                          stream_id="source" if i % 2 == 0 else "target")
+        query = (100, 1, 2, 3, 101)
+        self.assertEqual(forward.associated_nodules(query).selected, (7, 8, 9))
+        self.assertEqual(reverse.associated_nodules(query).candidates, ())
+        self.assertEqual(split.associated_nodules(query).candidates, ())
+        self.assertEqual(split.generate(query).mode, "ECHO")
+
+    def test_temporal_distraction_decreases_nodule_weight(self):
+        def memory(with_distraction):
+            result = TrajectoryGenerationExperiment()
+            payloads = [(90, 1, 2, 3, 91), (94, 7, 8, 9, 95),
+                        (92, 1, 2, 3, 93), (96, 7, 8, 9, 97)]
+            if with_distraction:
+                payloads.insert(1, (200, 201, 202, 203))
+            for i, payload in enumerate(payloads):
+                result.observe(payload, observation_id=str(i))
+            return result
+
+        query = (100, 1, 2, 3, 101)
+        close = memory(False).associated_nodules(query)
+        distant = memory(True).associated_nodules(query)
+        self.assertGreater(close.candidates[0].weight, distant.candidates[0].weight)
+        self.assertEqual(close.candidates[0].symbols, distant.candidates[0].symbols)
+        self.assertEqual(len(close.candidates[0].witnesses), len(distant.candidates[0].witnesses))
+
+    def test_competing_intermediate_associations_remain_alternatives(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, payload in enumerate((
+            (90, 1, 2, 3, 91), (100, 7, 8, 9, 101),
+            (92, 1, 2, 3, 93), (102, 11, 12, 13, 103),
+            (94, 1, 2, 3, 95), (104, 7, 8, 9, 105),
+            (96, 1, 2, 3, 97), (106, 11, 12, 13, 107),
+        )):
+            memory.observe(payload, observation_id=str(i))
+        query = (200, 1, 2, 3, 201)
+        result = memory.associated_nodules(query)
+        self.assertTrue(result.ambiguous)
+        self.assertFalse(result.truncated)
+        self.assertIsNone(result.selected)
+        self.assertEqual({c.symbols for c in result.candidates}, {(7, 8, 9), (11, 12, 13)})
+        generated = memory.generate(query)
+        self.assertEqual(generated.mode, "NODULE_RECALL")
+        self.assertTrue(generated.ambiguous)
+        self.assertIsNone(generated.selected)
+
+    def test_overlapping_compositions_do_not_create_false_within_edge(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, payload in enumerate(((0, 1, 2, 3, 4, 7, 8, 9, 50),
+                                     (99, 1, 2, 3, 4, 7, 8, 9, 51))):
+            memory.observe(payload, observation_id=str(i))
+        result = memory.associated_nodules((1, 2, 3), channel="within")
+        self.assertEqual(result.depth, 1)
+        self.assertFalse(any(c.symbols == (2, 3, 4) for c in result.candidates))
+        target = next(c for c in result.candidates if c.symbols == (4, 7, 8, 9))
+        self.assertAlmostEqual(target.weight, 2.0)  # Adjacent [1,2,3] -> [4,7,8,9].
+        self.assertEqual(len(target.witnesses), 2)
+        self.assertTrue(all(left == right for left, right, _ in target.witnesses))
+
+    def test_longer_recurring_nodules_activate_their_own_scale(self):
+        memory = TrajectoryGenerationExperiment()
+        source = tuple(range(1, 10))
+        target = tuple(range(21, 30))
+        for i, payload in enumerate(((90,) + source + (91,), (92,) + target + (93,),
+                                     (94,) + source + (95,), (96,) + target + (97,))):
+            memory.observe(payload, observation_id=str(i))
+        query = (300,) + source + (301,)
+        result = memory.associated_nodules(query)
+        self.assertGreaterEqual(result.depth, 2)
+        self.assertEqual(result.selected, target)
+        self.assertEqual(memory.generate(query).selected, target)
+
+    def test_nodule_recall_survives_reopen_and_symbol_renaming(self):
+        payloads = ((90, 1, 2, 3, 91), (94, 7, 8, 9, 95),
+                    (92, 1, 2, 3, 93), (96, 7, 8, 9, 97))
+        query = (100, 1, 2, 3, 101)
+        memory, renamed = TrajectoryGenerationExperiment(), TrajectoryGenerationExperiment()
+        mapping = {symbol: symbol * 101 + 17 for payload in (*payloads, query) for symbol in payload}
+        for i, payload in enumerate(payloads):
+            memory.observe(payload, observation_id=str(i))
+            renamed.observe(tuple(mapping[symbol] for symbol in payload), observation_id=str(i))
+        original = memory.associated_nodules(query)
+        transformed = renamed.associated_nodules(tuple(mapping[symbol] for symbol in query))
+        self.assertEqual(original.candidates[0].weight, transformed.candidates[0].weight)
+        self.assertEqual(tuple(mapping[symbol] for symbol in original.selected), transformed.selected)
+        self.assertEqual(original.depth, transformed.depth)
+        with tempfile.TemporaryDirectory() as directory:
+            store = ContentAddressedStatePersistence(
+                Path(directory), namespace="nodule-association-test", backend="sqlite",
+                allow_fallback=False,
+            )
+            receipt = memory.save(store)
+            reopened = TrajectoryGenerationExperiment.load(store, receipt)
+        self.assertEqual(reopened.associated_nodules(query), original)
+        self.assertEqual(reopened.generate(query), memory.generate(query))
+
+    def test_no_nodule_association_without_recurrence_or_between_hierarchies(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((90, 1, 2, 3, 91), observation_id="one", hierarchy_id="h1")
+        memory.observe((92, 7, 8, 9, 93), observation_id="two", hierarchy_id="h2")
+        query = (100, 1, 2, 3, 101)
+        self.assertEqual(memory.associated_nodules(query, hierarchy_id="h1").candidates, ())
+        self.assertEqual(memory.associated_nodules(query, hierarchy_id="h2").candidates, ())
+        self.assertEqual(memory.generate(query, hierarchy_id="h1").mode, "ECHO")
+        with self.assertRaises(ValueError):
+            memory.associated_nodules(query, channel="unknown")
+        with self.assertRaises(ValueError):
+            memory.associated_nodules(query, limit=0)
+
 
 if __name__ == "__main__":
     unittest.main()

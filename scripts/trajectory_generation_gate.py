@@ -44,6 +44,24 @@ def demonstrate():
     branching.observe(symbols("hoje está bonito"), observation_id="one")
     branching.observe(symbols("hoje está quente"), observation_id="two")
     alternatives = branching.generate(symbols("hoje está "))
+
+    composition = TrajectoryGenerationExperiment()
+    for index, item in enumerate((
+        (90, 1, 2, 3, 91), (94, 7, 8, 9, 95),
+        (92, 1, 2, 3, 93), (96, 7, 8, 9, 97),
+    )):
+        composition.observe(item, observation_id=f"nodule:{index}")
+    novel = (100, 1, 2, 3, 101)
+    related = composition.associated_nodules(novel)
+
+    text_memory = TrajectoryGenerationExperiment()
+    for index, item in enumerate((
+        "no quarto ensolarado", "a cama está arrumada",
+        "este quarto é claro", "uma cama com cobertor",
+    )):
+        text_memory.observe(symbols(item), observation_id=f"room:{index}")
+    room_query = "pensei no quarto durante a viagem!"
+    room = text_memory.associated_nodules(symbols(room_query))
     return dict(
         bootstrap=bootstrap,
         deduplication=dict(
@@ -60,6 +78,17 @@ def demonstrate():
                                 )),
         branching=dict(input="hoje está ", ambiguous=alternatives.ambiguous,
                        alternatives=[decode(c.output) for c in alternatives.candidates]),
+        automatic_nodule_association=dict(
+            cue_symbols=[1, 2, 3], related_symbols=list(related.selected),
+            weight=round(related.candidates[0].weight, 6),
+            witnessed_input_pairs=len(related.candidates[0].witnesses),
+            generated_mode=composition.generate(novel).mode,
+        ),
+        text_adapter_association=dict(
+            query=room_query, strongest_candidate=decode(room.candidates[0].symbols),
+            competing_candidates=room.ambiguous, truncated=room.truncated,
+            selected_output=decode(room.selected) if room.selected else None,
+        ),
         scope="synthetic structural experiment; no claim of language understanding or mobile integration",
     )
 

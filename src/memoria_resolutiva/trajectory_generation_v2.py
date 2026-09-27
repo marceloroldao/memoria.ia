@@ -11,6 +11,11 @@ import json
 from math import isfinite, log
 from typing import Iterable
 
+from .compositional_association_v2 import (
+    CompositionObservation,
+    CompositionalAssociationView,
+    CompositionalRecall,
+)
 from .hierarchical_composition_v2 import (
     HierarchicalCompositionEngineV2,
     HierarchyLevelV2,
@@ -114,12 +119,13 @@ class TemporalNeighbor:
 
 @dataclass(frozen=True, slots=True)
 class GenerationResult:
-    mode: str  # ECHO, CONTINUATION, or TEMPORAL_RECALL; never a truth label.
+    mode: str  # ECHO, CONTINUATION, TEMPORAL_RECALL, NODULE_RECALL.
     candidates: tuple[GenerationCandidate, ...]
     ambiguous: bool
     truncated: bool
     scale: int
     temporal_evidence: tuple[TemporalNeighbor, ...] = ()
+    association_evidence: CompositionalRecall | None = None
 
     @property
     def selected(self) -> tuple[int, ...] | None:
@@ -278,6 +284,38 @@ class TrajectoryGenerationExperiment:
             for target, weight in sorted(weights.items(), key=lambda item: (-item[1], item[0]))
         )
 
+    def associated_nodules(
+        self, payload: Iterable[int], *, hierarchy_id: str = "default",
+        channel: str = "temporal", limit: int = 8,
+    ) -> CompositionalRecall:
+        """Rebuild associations at every discovered scale without learning.
+
+        A newly discovered composition is projected over earlier unique input
+        events. Each event contributes once in its original stream and order.
+        The longest recurring cue in the query activates its own scale.
+        """
+        hierarchy = _name(hierarchy_id)
+        query = _symbols(payload)
+        observations: list[CompositionObservation] = []
+        seen: set[str] = set()
+        for row in self._observations.values():
+            address = row["payload_id"]
+            if row["hierarchy_id"] != hierarchy or address in seen:
+                continue
+            seen.add(address)
+            observations.append(CompositionObservation(
+                address, row["stream_id"], self.expand(address),
+            ))
+        field = CompositionalAssociationView(
+            self.levels(hierarchy_id=hierarchy), observations,
+            within_decay=self.config.within_decay,
+            temporal_decay=self.config.temporal_decay,
+            forgetting_rate=self.config.forgetting_rate,
+            trace_floor=self.config.trace_floor,
+            max_pattern_size=self.config.max_context,
+        )
+        return field.recall(query, channel=channel, limit=limit)
+
     def _views(self, query: tuple[int, ...], hierarchy: str):
         trajectories = tuple(t for t in self._index.snapshot() if t.hierarchy_id == hierarchy)
         ids = {t.trajectory_id: t.source_id for t in trajectories}
@@ -342,7 +380,8 @@ class TrajectoryGenerationExperiment:
 
         Auto scale maximizes matched atomic span, then prefers the deeper view.
         A known end competes with continuation and prevents unbounded backoff.
-        Whole-payload temporal recall is a fallback when no continuation exists.
+        Whole-payload temporal recall is tried first. If no route exists, a
+        recurring nodule inside a new input can evoke related nodules.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
@@ -413,6 +452,26 @@ class TrajectoryGenerationExperiment:
                 "TEMPORAL_RECALL", recall, len(neighbors) > 1,
                 len(neighbors) > beam_width, depth, neighbors[:beam_width],
             )
+        if not ambiguous and not truncated and all(
+            candidate.stop_reason == "no_route" for candidate in candidates
+        ):
+            association = self.associated_nodules(
+                query, hierarchy_id=hierarchy, limit=beam_width,
+            )
+            if association.candidates:
+                recall = tuple(
+                    GenerationCandidate(
+                        candidate.symbols, (),
+                        log(candidate.rank_score / association.total_rank_score),
+                        "nodule_association", (),
+                    )
+                    for candidate in association.candidates
+                )
+                return GenerationResult(
+                    "NODULE_RECALL", recall, association.ambiguous,
+                    association.truncated, association.depth,
+                    association_evidence=association,
+                )
         return GenerationResult("ECHO", tuple(candidates), ambiguous, truncated, depth)
 
     def respond(self, payload: Iterable[int], *, observation_id: str,

@@ -96,8 +96,42 @@ também não consomem posições temporais: é uma escolha explícita desta vers
 Como cada raiz contribui uma vez por hierarquia, a evocação temporal entre
 raízes ainda não acumula repetidas ocorrências do mesmo par. A recorrência
 entre contextos diferentes já aparece no campo de símbolos e nos suportes
-das continuações; generalizar essa evocação para nódulos intermediários é
-trabalho posterior.
+das continuações. A nova projeção de nódulos intermediários recupera relações
+entre composições, reconstruindo os campos a partir das entradas únicas;
+ela ainda não substitui a evocação entre raízes quando a consulta é um
+payload completo já conhecido.
+
+### Nódulos intermediários, sem vínculos manuais
+
+Ao encontrar uma sequência recorrente em dois payloads **diferentes**, o
+experimento projeta suas ocorrências sobre os símbolos originais, inclusive
+nas entradas anteriores à descoberta. A projeção inclui todas as posições
+exatas, mesmo as que uma compactação gulosa teria escondido. Nenhuma entrada
+histórica é regravada. Padrões recorrentes de 2 até 32 símbolos podem se
+tornar candidatos derivados, mantendo a formação hierárquica existente para
+os níveis posteriores. O limite usa `max_context` e pode ser configurado.
+
+Cada ocorrência mantém o intervalo `[início, fim)` dentro do payload.
+Composições sobrepostas não geram relação direcional de proximidade espacial.
+Entre entradas de uma mesma captura, o peso temporal preserva a ordem e o
+decaimento por distância entre eventos. Payload repetido não avança o relógio
+de aprendizado. Origens `(payload anterior, payload posterior, captura)`
+acompanham as relações encontradas; relações internas usam o mesmo payload
+nas duas pontas. Essas origens são estruturais, não votos de verdade.
+
+`associated_nodules` retorna os nódulos ligados ao trecho recorrente mais
+longo contido na consulta. Exibe canal, escala, peso e origens. Nódulos curtos
+contidos em outro com **as mesmas origens** deixam de disputar com a versão
+maior; os que têm origens distintas permanecem. Para ordenar alternativas,
+usa `peso × comprimento do alvo`: um prior de especificidade não calibrado.
+O peso bruto permanece acessível e nem o escore nem a posição certificam
+verdade. Só há `selected` quando resta uma única alternativa sem truncamento.
+
+`generate` usa essa evocação (`NODULE_RECALL`) como última opção quando não
+encontra continuação nem evocação da raiz e a rota terminou por falta de
+evidência. O nódulo evocado é mostrado separadamente; não se afirma que a
+frase toda tenha sido observada. O cálculo hoje ocorre durante a consulta.
+Organizá-lo em segundo plano continua sendo uma etapa futura.
 
 ## Escalas e inferência
 
@@ -127,8 +161,8 @@ uma vez; os escores entre escalas não são probabilidades calibradas.
 
 Concorrentes continuam disponíveis mesmo quando um tem mais suporte. O campo
 `selected` só existe para uma hipótese única, sem ambiguidade nem truncamento.
-Um escore alto não determina verdade. `ECHO`, `CONTINUATION` e `TEMPORAL_RECALL`
-descrevem a operação realizada.
+Um escore alto não determina verdade. `ECHO`, `CONTINUATION`,
+`TEMPORAL_RECALL` e `NODULE_RECALL` descrevem a operação realizada.
 
 Limites iniciais, configuráveis:
 
@@ -146,10 +180,11 @@ produzir continuações sem sentido por coincidência estrutural.
 
 ## Evidência do gate
 
-Execução local em 27/09/2026: **22/22 testes do experimento passaram**. Também
-passaram 60 funções de regressão existentes de trajetórias, campo contínuo,
-ramificações, composição multiescala e atratores. O workflow executa ainda os
-testes do índice persistente; o backend BDR opcional depende de sua extensão.
+Primeira etapa em 27/09/2026: 22 testes novos e 64 regressões passaram no
+workflow; um teste do backend BDR opcional foi pulado. Nesta etapa de
+associação intermediária, 32 testes do experimento passam localmente, com
+dois novos testes do campo posicional. O workflow também verifica os
+consumidores anteriores do índice e o índice persistente.
 
 Os testes cobrem bootstrap com `oi`, `hoje o dia está bonito` e `hoje está
 quente`; reuso sem reforço; inclusão de um nódulo em outro payload; formação
@@ -159,6 +194,18 @@ diferentes; fim concorrente; limites de ciclos e ramificações; ordem e
 isolamento temporal; isolamento de hierarquias; renomeação de símbolos;
 bytes/Unicode sem perda; nenhuma autoalimentação; rejeição de identidade
 alterada e estado corrompido; persistência SQLite com reabertura idêntica.
+Os novos controles incluem: nódulo interno descoberto retrospectivamente;
+associação automática entre entradas próximas; redução de peso por um evento
+interposto; inversão temporal; capturas separadas; trechos sobrepostos que
+não produzem aresta falsa; reaparecimento em contexto distinto versus cópias;
+composição longa em outra escala; renomeação opaca; e reabertura idêntica.
+
+Exemplo controlado: `(1, 2, 3)` recorrente em contextos diferentes precede
+`(7, 8, 9)` também recorrente. Uma consulta inédita contendo `(1, 2, 3)`
+evoca `(7, 8, 9)` com três pares de entradas testemunhando a relação. Na
+demonstração com caracteres Unicode, `quarto` pode ativar o trecho recorrente
+`a cama ` como **primeira hipótese**, mas outras combinações curtas competem,
+portanto a saída não é declarada única nem uma afirmação sobre o mundo.
 
 Exemplo: depois de observar `hoje o dia está bonito`, a consulta
 `amanhã o dia está ` gera `amanhã o dia está bonito`. A frase completa gerada

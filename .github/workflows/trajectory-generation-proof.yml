@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/memoria_resolutiva/**'
       - 'tests/test_trajectory_generation_v2.py'
+      - 'tests/test_structural_association_continuous.py'
       - 'tests/test_structural_trajectory_v2.py'
       - 'scripts/trajectory_generation_gate.py'
       - '.github/workflows/trajectory-generation-proof.yml'
