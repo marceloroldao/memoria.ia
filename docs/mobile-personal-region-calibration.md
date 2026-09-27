@@ -420,3 +420,24 @@ conflict and absent case pass, while the three legacy selection failures
 remain. The private 83-observation export has no explicit reply links, so
 the four organized probes return no groups. To test actual personal answers,
 new observations must carry source-addressed reply provenance.
+
+## Device capture bridge, 27 September 2026
+
+The draft [OFF.IA #69](https://github.com/marceloroldao/off.ia/pull/69)
+pins this experimental mobile commit and adds an opt-in laboratory action:
+select an earlier user message, then send a new user message explicitly
+addressed to it. OFF.IA observes the new payload first and calls
+`link_structural_reply` with both stable source addresses. It does not infer
+replies from temporal adjacency or link generated assistant text. The normal
+answer resolver remains unchanged; the exported structural observations expose
+the native `reply_to` metadata. A persisted, unrecorded user selection can be
+retried on conversation reopen, using the idempotent native link.
+
+The OFF.IA CI and full Android APK workflow passed, including the native gate
+for duplicate links, diagnostic evidence, export and cold reopen, as well as
+Kotlin selection/recovery tests. The experimental APK is in the
+[Android workflow artifact](https://github.com/marceloroldao/off.ia/actions/runs/36282662502).
+No new private export or on-device validation has been received yet. The
+83-observation export above remains a baseline with zero explicit links; it
+cannot measure this capture path. A new device export is required to compare
+linked evidence, conflicts and absent controls before any answer selection.
