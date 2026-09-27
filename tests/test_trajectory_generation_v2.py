@@ -442,6 +442,34 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertEqual(result.selected, target)
         self.assertEqual(memory.generate(query).selected, target)
 
+    def test_deeper_cue_preserves_shorter_targets_from_another_scale(self):
+        source = (1, 2, 3, 4, 5)
+        short = (7, 8, 9)
+        long = (11, 12, 13, 14, 15)
+        query = (500, *source, 600)
+
+        def learn(targets):
+            memory = TrajectoryGenerationExperiment()
+            for i, target in enumerate(targets):
+                memory.observe((100 + i, *source, 200 + i), observation_id=f"s:{i}")
+                memory.observe((300 + i, *target, 400 + i), observation_id=f"t:{i}")
+            return memory
+
+        clean = learn((short,) * 4)
+        recalled = clean.associated_nodules(query)
+        self.assertGreaterEqual(recalled.depth, 2)
+        self.assertEqual(recalled.selected, short)
+        self.assertEqual(clean.generate(query).selected, short)
+
+        competing = learn((short, long, short, long)).associated_nodules(query)
+        self.assertGreaterEqual(competing.depth, 2)
+        self.assertEqual({candidate.symbols for candidate in competing.candidates},
+                         {short, long})
+        self.assertTrue(competing.ambiguous)
+        self.assertIsNone(competing.selected)
+        self.assertAlmostEqual(competing.total_rank_score,
+                               sum(candidate.rank_score for candidate in competing.candidates))
+
     def test_nodule_recall_survives_reopen_and_symbol_renaming(self):
         payloads = ((90, 1, 2, 3, 91), (94, 7, 8, 9, 95),
                     (92, 1, 2, 3, 93), (96, 7, 8, 9, 97))

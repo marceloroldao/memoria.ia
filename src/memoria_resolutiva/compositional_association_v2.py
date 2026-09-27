@@ -233,9 +233,45 @@ class CompositionalAssociationView:
         ]
         if not matched:
             return CompositionalRecall(channel, 0, (), (), False, False)
-        size, depth = max((width, level) for width, level, _ in matched)
-        cues = tuple(sorted(address for width, level, address in matched
-                            if width == size and level == depth))
+        size = max(width for width, _, _ in matched)
+        by_depth: dict[int, tuple[str, ...]] = {
+            depth: tuple(sorted(address for width, level, address in matched
+                                if width == size and level == depth))
+            for depth in sorted({level for width, level, _ in matched if width == size})
+        }
+        # An identical atomic cue can exist at several abstraction levels.
+        # A deeper catalogue need not contain every shorter associated target:
+        # merge alternatives without adding the same evidence more than once.
+        representatives: dict[tuple[int, ...], tuple[int, AssociatedNodule]] = {}
+        for depth, cues in by_depth.items():
+            for candidate in self._recall_depth(depth, cues, channel):
+                prior = representatives.get(candidate.symbols)
+                if prior is None or (candidate.weight, depth) > (prior[1].weight, prior[0]):
+                    representatives[candidate.symbols] = depth, candidate
+        candidates = tuple(candidate for _, candidate in representatives.values())
+        candidates = tuple(
+            candidate for candidate in candidates
+            if not any(
+                len(other.symbols) > len(candidate.symbols)
+                and self._contained(candidate.symbols, other.symbols)
+                and candidate.witnesses == other.witnesses
+                and other.weight >= candidate.weight
+                for other in candidates
+            )
+        )
+        candidates = tuple(sorted(
+            candidates, key=lambda item: (-item.rank_score, -item.weight, item.address),
+        ))
+        return CompositionalRecall(
+            channel, max(by_depth),
+            tuple(address for cues in by_depth.values() for address in cues),
+            candidates[:limit], len(candidates) > 1, len(candidates) > limit,
+            sum(candidate.rank_score for candidate in candidates),
+        )
+
+    def _recall_depth(
+        self, depth: int, cues: tuple[str, ...], channel: str,
+    ) -> tuple[AssociatedNodule, ...]:
         field = self._fields[depth]
         identifiers = self._identifiers[depth]
         reverse = {value: address for address, value in identifiers.items()}
@@ -270,27 +306,7 @@ class CompositionalAssociationView:
                 for pattern in cue_patterns
             )
         )
-        # Several catalogue entries can name nested parts of the very same
-        # evidence. Keep their longest representative when no observation
-        # distinguishes the shorter route. Independent shorter evidence stays.
-        candidates = tuple(
-            candidate for candidate in candidates
-            if not any(
-                len(other.symbols) > len(candidate.symbols)
-                and self._contained(candidate.symbols, other.symbols)
-                and candidate.witnesses == other.witnesses
-                and other.weight >= candidate.weight
-                for other in candidates
-            )
-        )
-        candidates = tuple(sorted(
-            candidates, key=lambda item: (-item.rank_score, -item.weight, item.address),
-        ))
-        return CompositionalRecall(
-            channel, depth, cues, candidates[:limit],
-            len(candidates) > 1, len(candidates) > limit,
-            sum(candidate.rank_score for candidate in candidates),
-        )
+        return candidates
 
     @staticmethod
     def _contained(part: tuple[int, ...], whole: tuple[int, ...]) -> bool:

@@ -120,12 +120,17 @@ acompanham as relações encontradas; relações internas usam o mesmo payload
 nas duas pontas. Essas origens são estruturais, não votos de verdade.
 
 `associated_nodules` retorna os nódulos ligados ao trecho recorrente mais
-longo contido na consulta. Exibe canal, escala, peso e origens. Nódulos curtos
+longo contido na consulta. Consulta todas as escalas que representam esse
+mesmo trecho e reúne os alvos distintos. Uma representação repetida do mesmo
+alvo em outra escala não soma um novo voto; o campo `depth` informa a escala
+mais profunda consultada. Exibe canal, escala, peso e origens. Nódulos curtos
 contidos em outro com **as mesmas origens** deixam de disputar com a versão
 maior; os que têm origens distintas permanecem. Para ordenar alternativas,
 usa `peso × comprimento do alvo`: um prior de especificidade não calibrado.
 O peso bruto permanece acessível e nem o escore nem a posição certificam
 verdade. Só há `selected` quando resta uma única alternativa sem truncamento.
+Pesos brutos de escalas diferentes têm normalizações distintas; a ordem entre
+alvos de comprimentos e escalas diferentes ainda precisa de calibração.
 
 `generate` usa essa evocação (`NODULE_RECALL`) como última opção quando não
 encontra continuação nem evocação da raiz e a rota terminou por falta de
@@ -182,7 +187,7 @@ produzir continuações sem sentido por coincidência estrutural.
 
 Primeira etapa em 27/09/2026: 22 testes novos e 64 regressões passaram no
 workflow; um teste do backend BDR opcional foi pulado. Nesta etapa de
-associação intermediária, 32 testes do experimento passam localmente, com
+associação intermediária, 33 testes do experimento passam localmente, com
 dois novos testes do campo posicional. O workflow também verifica os
 consumidores anteriores do índice e o índice persistente.
 
@@ -215,8 +220,9 @@ não estava armazenada. Isso demonstra recombinação estrutural simples.
 cognição humana, aprendizado perceptivo de áudio/imagem ou generalização
 robusta em conversas reais. O mecanismo é próximo de um modelo de contexto
 variável com composições e evocação associativa. Testes sintéticos demonstram
-os contratos programados; uma avaliação posterior deve medir utilidade em
-sequências não usadas no desenvolvimento, com controles contra coincidências.
+os contratos programados. A primeira [avaliação com contextos reservados](trajectory-holdout-proof.md)
+mede generalização estrutural e controles negativos em dois lotes pequenos;
+conversas reais e modalidades não textuais ainda exigem provas próprias.
 
 O armazenamento SQLite foi exercitado neste gate; BDR e integração nativa
 precisam de validação própria. Otimização, organização em segundo plano e

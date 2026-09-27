@@ -292,7 +292,9 @@ class TrajectoryGenerationExperiment:
 
         A newly discovered composition is projected over earlier unique input
         events. Each event contributes once in its original stream and order.
-        The longest recurring cue in the query activates its own scale.
+        The longest recurring cue activates all scales representing it;
+        identical targets are not reinforced merely by appearing at several
+        depths, and independent shorter targets remain visible.
         """
         hierarchy = _name(hierarchy_id)
         query = _symbols(payload)

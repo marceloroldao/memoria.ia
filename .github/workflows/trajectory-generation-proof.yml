@@ -8,6 +8,7 @@ on:
       - 'tests/test_structural_association_continuous.py'
       - 'tests/test_structural_trajectory_v2.py'
       - 'scripts/trajectory_generation_gate.py'
+      - 'scripts/trajectory_holdout_probe.py'
       - '.github/workflows/trajectory-generation-proof.yml'
   workflow_dispatch:
 
@@ -25,6 +26,10 @@ jobs:
           python-version: '3.12'
       - name: Synthetic generative proof
         run: python scripts/trajectory_generation_gate.py
+      - name: Held-out structural scenarios and negative controls
+        run: |
+          python scripts/trajectory_holdout_probe.py --seed 4107
+          python scripts/trajectory_holdout_probe.py --seed 20260927
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
