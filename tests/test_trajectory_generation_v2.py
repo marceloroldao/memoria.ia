@@ -1,0 +1,298 @@
+from __future__ import annotations
+
+import copy
+from math import exp
+from pathlib import Path
+import tempfile
+import unittest
+
+from memoria_resolutiva.structural_state_persistence import ContentAddressedStatePersistence
+from memoria_resolutiva.structural_trajectory_v2 import StructuralTrajectoryIndex
+from memoria_resolutiva.trajectory_generation_v2 import GenerationConfig, TrajectoryGenerationExperiment
+
+
+def text_symbols(text):
+    # Adapter only. The engine has no tokenizer or vocabulary.
+    return tuple(map(ord, text))
+
+
+class TrajectoryGenerationTests(unittest.TestCase):
+    def test_empty_memory_echoes_without_learning_output(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, text in enumerate(("oi", "hoje o dia está bonito", "hoje está quente")):
+            result, receipt = memory.respond(text_symbols(text), observation_id=str(i))
+            self.assertEqual(result.mode, "ECHO")
+            self.assertEqual(result.selected, text_symbols(text))
+            self.assertTrue(receipt.learned)
+        self.assertEqual(memory.learning_state()["learned_payloads"], 3)
+        self.assertEqual(len(memory.snapshot()["observations"]), 3)
+
+    def test_payload_reuse_and_replay_have_zero_learning_effect(self):
+        memory = TrajectoryGenerationExperiment()
+        first = memory.observe((1, 1, 2, 3), observation_id="first")
+        before = memory.learning_state()
+        for i in range(30):
+            receipt = memory.observe((1, 1, 2, 3), observation_id=f"copy:{i}", stream_id=f"stream:{i}")
+            self.assertEqual(receipt.payload_id, first.payload_id)
+            self.assertFalse(receipt.learned)
+        self.assertEqual(memory.learning_state(), before)
+        self.assertEqual(len(memory.snapshot()["nodes"]), 1)
+        snapshot = memory.snapshot()
+        self.assertTrue(memory.observe((1, 1, 2, 3), observation_id="first").replayed)
+        self.assertEqual(memory.snapshot(), snapshot)
+
+    def test_new_context_reuses_nodule_and_adds_evidence(self):
+        memory = TrajectoryGenerationExperiment()
+        first = memory.observe((1, 1, 2, 3), observation_id="first")
+        before = memory.association(2, 3)
+        second = memory.observe((9, 8, 1, 1, 2, 3), observation_id="second")
+        self.assertTrue(second.learned)
+        self.assertEqual(memory.snapshot()["nodes"][1]["children"], [9, 8, first.payload_id])
+        self.assertEqual(memory.expand(second.payload_id), (9, 8, 1, 1, 2, 3))
+        self.assertGreater(memory.association(2, 3), before)
+        self.assertEqual(memory.learning_state()["learned_payloads"], 2)
+        self.assertTrue(memory.levels())
+
+    def test_same_kernel_forms_multiple_scales_and_preserves_every_position(self):
+        memory = TrajectoryGenerationExperiment()
+        core = (1, 1, 2, 3, 4, 5, 6, 7, 8)
+        memory.observe(core + (90,), observation_id="a")
+        memory.observe(core + (91,), observation_id="b")
+        levels = memory.levels()
+        self.assertGreaterEqual(len(levels), 2)
+        for scale in range(len(levels) + 1):
+            result = memory.generate(core, scale=scale)
+            self.assertEqual({c.output for c in result.candidates}, {core + (90,), core + (91,)})
+            self.assertTrue(result.ambiguous)
+            self.assertFalse(result.truncated)
+        self.assertGreater(memory.generate(core).scale, 0)
+
+    def test_novel_context_completes_from_learned_suffix(self):
+        memory = TrajectoryGenerationExperiment()
+        stored = text_symbols("hoje o dia está bonito")
+        memory.observe(stored, observation_id="a")
+        query = text_symbols("amanhã o dia está ")
+        before = memory.snapshot()
+        fields = memory.learning_state()
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "CONTINUATION")
+        self.assertEqual(result.selected, text_symbols("amanhã o dia está bonito"))
+        self.assertNotEqual(result.selected, stored)
+        self.assertTrue(all(step.supporting_payloads for step in result.candidates[0].steps))
+        self.assertEqual(memory.snapshot(), before)
+        self.assertEqual(memory.learning_state(), fields)
+
+    def test_competing_routes_are_exposed_and_distinct_contexts_change_support(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3), observation_id="a")
+        memory.observe((1, 2, 4), observation_id="b")
+        result = memory.generate((1, 2))
+        self.assertIsNone(result.selected)
+        self.assertTrue(result.ambiguous)
+        self.assertEqual({c.continuation for c in result.candidates}, {(3,), (4,)})
+        self.assertEqual({c.steps[0].relative_support for c in result.candidates}, {0.5})
+        memory.observe((9, 1, 2, 4), observation_id="new-context")
+        weighted = memory.generate((1, 2))
+        supports = {c.continuation: c.steps[0].relative_support for c in weighted.candidates}
+        self.assertAlmostEqual(supports[(4,)], 2 / 3)
+        self.assertAlmostEqual(supports[(3,)], 1 / 3)
+        self.assertTrue(weighted.ambiguous)  # Stronger support is not proof.
+        before = weighted
+        memory.observe((9, 1, 2, 4), observation_id="copy")
+        self.assertEqual(memory.generate((1, 2)), before)
+
+    def test_each_payload_supplies_at_most_one_vote_per_next_address(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3, 1, 2, 3), observation_id="a")
+        memory.observe((1, 2, 4), observation_id="b")
+        result = memory.generate((1, 2), max_steps=1, scale=0)
+        self.assertEqual({c.steps[0].relative_support for c in result.candidates}, {0.5})
+
+    def test_sequential_proximity_learns_root_relations_without_reply_links(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, payload in enumerate(((1, 2), (7, 8), (9, 10))):
+            memory.observe(payload, observation_id=str(i))
+        neighbors = memory.temporal_neighbors((1, 2))
+        self.assertEqual([n.symbols for n in neighbors], [(7, 8), (9, 10)])
+        self.assertAlmostEqual(neighbors[0].weight, 1.0)
+        self.assertAlmostEqual(neighbors[1].weight, exp(-0.35))
+        result = memory.generate((1, 2))
+        self.assertEqual(result.mode, "TEMPORAL_RECALL")
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        self.assertEqual({c.output for c in result.candidates}, {(7, 8), (9, 10)})
+
+    def test_proximity_changes_with_order_and_respects_capture_boundaries(self):
+        forward, reverse, separate = (TrajectoryGenerationExperiment() for _ in range(3))
+        forward.observe((1, 2), observation_id="a")
+        forward.observe((7, 8), observation_id="b")
+        reverse.observe((7, 8), observation_id="b")
+        reverse.observe((1, 2), observation_id="a")
+        separate.observe((1, 2), observation_id="a", stream_id="one")
+        separate.observe((7, 8), observation_id="b", stream_id="two")
+        self.assertEqual(forward.generate((1, 2)).selected, (7, 8))
+        self.assertEqual(reverse.generate((1, 2)).mode, "ECHO")
+        self.assertEqual(separate.temporal_neighbors((1, 2)), ())
+        self.assertGreater(forward.association(1, 7, channel="temporal"), 0)
+        self.assertEqual(separate.association(1, 7, channel="temporal"), 0)
+
+    def test_hierarchies_are_isolated_but_share_content_storage(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3), observation_id="a", hierarchy_id="one")
+        before = memory.learning_state()
+        self.assertEqual(memory.generate((1, 2), hierarchy_id="two").mode, "ECHO")
+        self.assertEqual(memory.learning_state(), before)
+        receipt = memory.observe((1, 2, 3), observation_id="b", hierarchy_id="two")
+        self.assertTrue(receipt.learned)
+        self.assertEqual(len(memory.snapshot()["nodes"]), 1)
+        self.assertEqual(memory.generate((1, 2), hierarchy_id="two").selected, (1, 2, 3))
+
+    def test_end_of_observation_competes_with_continuation(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2), observation_id="a", stream_id="one")
+        memory.observe((1, 2, 3), observation_id="b", stream_id="two")
+        result = memory.generate((1, 2))
+        self.assertEqual({c.output for c in result.candidates}, {(1, 2), (1, 2, 3)})
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+
+    def test_beam_pruning_and_cycles_are_explicit_and_bounded(self):
+        memory = TrajectoryGenerationExperiment(GenerationConfig(max_context=2))
+        memory.observe((1, 2, 1, 2, 3), observation_id="a")
+        before = memory.learning_state()
+        result = memory.generate((1, 2), scale=0, max_steps=5, beam_width=3)
+        self.assertTrue(result.truncated)
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        self.assertLessEqual(len(result.candidates), 3)
+        self.assertTrue(all(len(c.continuation) <= 5 for c in result.candidates))
+        pruned = memory.generate((1, 2), scale=0, max_steps=8, beam_width=1)
+        self.assertTrue(pruned.truncated)
+        self.assertIsNone(pruned.selected)
+        self.assertEqual(memory.learning_state(), before)
+
+    def test_opaque_symbol_renaming_preserves_routes_and_support(self):
+        payloads = [(1, 1, 2, 3, 4, 5, 6, 7, 8, 90), (1, 1, 2, 3, 4, 5, 6, 7, 8, 91)]
+        mapping = {symbol: 10000 - symbol * 7 for payload in payloads for symbol in payload}
+        original, renamed = TrajectoryGenerationExperiment(), TrajectoryGenerationExperiment()
+        for i, payload in enumerate(payloads):
+            original.observe(payload, observation_id=str(i))
+            renamed.observe(tuple(mapping[s] for s in payload), observation_id=str(i))
+        query = tuple(payloads[0][:-1])
+        left = original.generate(query)
+        right = renamed.generate(tuple(mapping[s] for s in query))
+        expected = {(tuple(mapping[s] for s in c.output), c.log_score) for c in left.candidates}
+        self.assertEqual(expected, {(c.output, c.log_score) for c in right.candidates})
+        self.assertEqual((left.mode, left.ambiguous, left.scale), (right.mode, right.ambiguous, right.scale))
+
+    def test_respond_never_stores_its_generated_continuation(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3), observation_id="a")
+        result, receipt = memory.respond((9, 1, 2), observation_id="b")
+        self.assertEqual(result.selected, (9, 1, 2, 3))
+        self.assertEqual(memory.expand(receipt.payload_id), (9, 1, 2))
+        self.assertEqual({memory.expand(n["address"]) for n in memory.snapshot()["nodes"]},
+                         {(1, 2, 3), (9, 1, 2)})
+
+    def test_recombination_across_observations_is_a_witnessed_hypothesis(self):
+        memory = TrajectoryGenerationExperiment(GenerationConfig(max_context=2))
+        a = memory.observe((1, 2, 3, 4), observation_id="a")
+        b = memory.observe((3, 4, 5, 6), observation_id="b")
+        result = memory.generate((9, 1, 2), scale=0)
+        self.assertEqual({c.output for c in result.candidates},
+                         {(9, 1, 2, 3, 4), (9, 1, 2, 3, 4, 5, 6)})
+        longer = next(c for c in result.candidates if len(c.output) == 7)
+        witnesses = {root for step in longer.steps for root in step.supporting_payloads}
+        self.assertEqual(witnesses, {a.payload_id, b.payload_id})
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+
+    def test_unrelated_and_reversed_contexts_do_not_invent_routes(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3, 4), observation_id="a")
+        for query in ((91, 92), (2, 1), (4, 3)):
+            self.assertEqual(memory.generate(query).mode, "ECHO")
+            self.assertEqual(memory.generate(query).selected, query)
+
+    def test_query_inside_larger_composition_keeps_all_competing_routes(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, payload in enumerate(((1, 2, 3), (1, 2, 4), (9, 1, 2, 4))):
+            memory.observe(payload, observation_id=str(i))
+        for scale in range(len(memory.levels()) + 1):
+            result = memory.generate((1, 2), scale=scale)
+            self.assertEqual({c.continuation for c in result.candidates}, {(3,), (4,)})
+            support = {c.continuation: c.steps[0].relative_support for c in result.candidates}
+            self.assertAlmostEqual(support[(4,)], 2 / 3)
+
+    def test_binary_and_unicode_roundtrip_without_normalization(self):
+        memory = TrajectoryGenerationExperiment()
+        binary = bytes([0, 255, 255, 0, 1, 1, 128])
+        a = memory.observe(binary, observation_id="binary", hierarchy_id="bytes")
+        text = "ação  café\n cafe\u0301"
+        b = memory.observe(text_symbols(text), observation_id="text", hierarchy_id="codepoints")
+        restored = TrajectoryGenerationExperiment.restore(memory.snapshot())
+        self.assertEqual(bytes(restored.expand(a.payload_id)), binary)
+        self.assertEqual("".join(map(chr, restored.expand(b.payload_id))), text)
+
+    def test_reopen_restores_weights_compounds_and_continuations(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, payload in enumerate(((1, 1, 2, 3), (9, 1, 1, 2, 3), (1, 1, 2, 4), (1, 1, 2, 4))):
+            memory.observe(payload, observation_id=str(i))
+        with tempfile.TemporaryDirectory() as directory:
+            persistence = ContentAddressedStatePersistence(
+                Path(directory), namespace="trajectory-generation-test", backend="sqlite", allow_fallback=False,
+            )
+            receipt = memory.save(persistence)
+            self.assertEqual(receipt, memory.save(persistence))
+            reopened = TrajectoryGenerationExperiment.load(persistence, receipt)
+        self.assertEqual(reopened.snapshot(), memory.snapshot())
+        self.assertEqual(reopened.learning_state(), memory.learning_state())
+        self.assertEqual(reopened.levels(), memory.levels())
+        self.assertEqual(reopened.generate((1, 1, 2)), memory.generate((1, 1, 2)))
+        self.assertEqual(reopened.temporal_neighbors((1, 1, 2, 3)), memory.temporal_neighbors((1, 1, 2, 3)))
+
+    def test_invalid_inputs_and_reused_identity_leave_memory_unchanged(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 1, 2), observation_id="same")
+        before = memory.snapshot(), memory.learning_state()
+        for payload in ((), (-1,), (True,), (1.5,), ("1",)):
+            with self.assertRaises(ValueError):
+                memory.observe(payload, observation_id="invalid")
+        with self.assertRaises(ValueError):
+            memory.observe((1, 2), observation_id="same")
+        with self.assertRaises(ValueError):
+            memory.observe((1, 1, 2), observation_id="same", stream_id="different")
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+        for options in ({"min_context": 5, "max_context": 4}, {"temporal_decay": float("nan")},
+                        {"forgetting_rate": -1}, {"max_depth": True}):
+            with self.assertRaises(ValueError):
+                GenerationConfig(**options)
+
+    def test_corrupted_or_cyclic_snapshot_is_rejected(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3), observation_id="a")
+        corrupt = copy.deepcopy(memory.snapshot())
+        corrupt["nodes"][0]["children"][0] = 99
+        with self.assertRaises(ValueError):
+            TrajectoryGenerationExperiment.restore(corrupt)
+        cyclic = copy.deepcopy(memory.snapshot())
+        cyclic["nodes"][0]["children"] = [cyclic["nodes"][0]["address"]]
+        with self.assertRaises(ValueError):
+            TrajectoryGenerationExperiment.restore(cyclic)
+
+    def test_lossless_index_is_opt_in_and_queries_keep_positions(self):
+        legacy, lossless = StructuralTrajectoryIndex(), StructuralTrajectoryIndex(preserve_repetitions=True)
+        for index in (legacy, lossless):
+            index.ingest_addresses((1, 1, 2), hierarchy_id="h", source_id="a", sequence=0)
+        self.assertEqual(legacy.snapshot()[0].addresses, (1, 2))
+        self.assertEqual(lossless.snapshot()[0].addresses, (1, 1, 2))
+        self.assertEqual(lossless.frontier((1, 1), hierarchy_id="h").resolved_address, 2)
+        self.assertEqual(lossless.resolve_addresses((1, 1, 2), hierarchy_id="h")[0].ordered_overlap, 3)
+        restored = StructuralTrajectoryIndex.restore(lossless.snapshot(), preserve_repetitions=True)
+        self.assertEqual(restored.snapshot(), lossless.snapshot())
+        with self.assertRaises(ValueError):
+            StructuralTrajectoryIndex.restore(lossless.snapshot())
+
+
+if __name__ == "__main__":
+    unittest.main()

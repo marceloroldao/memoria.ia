@@ -1,0 +1,39 @@
+name: trajectory generation proof
+
+on:
+  pull_request:
+    paths:
+      - 'src/memoria_resolutiva/**'
+      - 'tests/test_trajectory_generation_v2.py'
+      - 'tests/test_structural_trajectory_v2.py'
+      - 'scripts/trajectory_generation_gate.py'
+      - '.github/workflows/trajectory-generation-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Synthetic generative proof
+        run: python scripts/trajectory_generation_gate.py
+      - name: Install regression runner
+        run: python -m pip install 'pytest>=8,<9'
+      - name: Existing trajectory consumers and association field
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m pytest -q
+          tests/test_structural_trajectory_v2.py
+          tests/test_persistent_structural_trajectory_v2.py
+          tests/test_structural_association_continuous.py
+          tests/test_structural_branch_rollout_recovery_v2.py
+          tests/test_hierarchical_multiscale_v2.py
+          tests/test_structural_attractor_v2.py
