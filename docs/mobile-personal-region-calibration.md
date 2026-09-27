@@ -437,7 +437,25 @@ The OFF.IA CI and full Android APK workflow passed, including the native gate
 for duplicate links, diagnostic evidence, export and cold reopen, as well as
 Kotlin selection/recovery tests. The experimental APK is in the
 [Android workflow artifact](https://github.com/marceloroldao/off.ia/actions/runs/36282662502).
-No new private export or on-device validation has been received yet. The
-83-observation export above remains a baseline with zero explicit links; it
-cannot measure this capture path. A new device export is required to compare
-linked evidence, conflicts and absent controls before any answer selection.
+The 83-observation export above remains a baseline with zero explicit links.
+The new device export below also has no recorded reply relations, so a
+source-addressed answer test still requires another capture.
+
+## First new device export, 27 September 2026
+
+The next private OFF.IA diagnostic contains 86 structural observations across
+26 conversations: three more user turns in one new conversation than the
+previous 83/25 baseline. Every exported observation has the new `reply_to`
+field, but all 86 values are `null`. This establishes that the newer native
+export contract ran, while **no explicit reply relation was persisted**. It
+does not reveal whether the laboratory reply action was selected, left pending
+or unavailable in the installed app. None of its raw personal payloads are
+stored in Git.
+
+The follow-up OFF.IA export includes application build identity, laboratory
+mode at export time and aggregate counts of selected, pending, recorded and
+native-linked replies. It compares recorded chat intentions with native links
+without reinterpreting any payload as an answer. A subsequent device export
+will distinguish a missing selection from a failed or interrupted link. With
+zero links in this export, all organized linked-reply probes still have zero
+evidence, regardless of surface similarity.
