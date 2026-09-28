@@ -25,7 +25,8 @@ As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
 | Consultas inéditas com prefixo e sufixo, uma por payload distinto | 68 |
 | Modos após união anterior: só nódulo / só raiz / ambos / eco | 9 / 18 / 30 / 11 |
 | Modos com recuo a pistas menores: só nódulo / só raiz / ambos / eco | 14 / 17 / 31 / 6 |
-| Ambos com destinos disjuntos / algum destino comum | 30 / 1 |
+| Modos após recuo de raiz embutida sem sucessor: só nódulo / só raiz / ambos / eco | 13 / 17 / 32 / 6 |
+| Ambos com destinos disjuntos / algum destino comum | 31 / 1 |
 | Consultas com ambiguidade, antes / agora | 47 / 53 |
 | Consultas com truncamento, antes / agora | 13 / 15 |
 | Saídas únicas diferentes de eco, antes / agora | 10 / 9 |
@@ -50,6 +51,12 @@ consultas, mas somente 6 deles são testemunhados em duas ou mais capturas.
 Esse contraste impede interpretar automaticamente o maior peso como consenso.
 Detalhes e controles estão na
 [prova de estabilidade](trajectory-stability-proof.md).
+
+O recuo da raiz embutida alterou uma das 68 consultas inéditas: ela agora
+exibe candidatos tanto de nódulo recorrente quanto de raiz contida, em vez
+de mostrar apenas o nódulo. As 99 consultas cronológicas e a avaliação do
+único par explícito não mudaram. Esse novo candidato também pode ser uma
+distração; o export não tem rótulos suficientes para medir acurácia.
 
 O export contém **um** `reply_to` explícito resolúvel. Ele foi usado **só
 depois** do aprendizado para conferir a evocação; não foi passado a `observe`

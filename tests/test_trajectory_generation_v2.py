@@ -391,6 +391,62 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertEqual(TrajectoryGenerationExperiment.restore(
             memory.snapshot()).generate(query), result)
 
+    def test_longer_embedded_root_without_successor_does_not_hide_shorter_link(self):
+        memory = TrajectoryGenerationExperiment()
+        cue, target = (1, 2, 3), (7, 8, 9)
+        larger = (90, *cue, 91)
+        query = (88, *larger, 92)
+        source = memory.observe(cue, observation_id="source", stream_id="episode")
+        memory.observe(target, observation_id="target", stream_id="episode")
+        memory.observe(larger, observation_id="larger", stream_id="other")
+        before = memory.snapshot(), memory.learning_state()
+
+        embedded = memory.embedded_root_relations(query)
+        self.assertEqual(embedded.cue_payload_ids, (source.payload_id,))
+        self.assertEqual([neighbor.symbols for neighbor in embedded.neighbors], [target])
+        self.assertEqual(embedded.links[0].streams, ("episode",))
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "EMBEDDED_TEMPORAL_RECALL")
+        self.assertEqual(result.selected, target)
+        self.assertEqual(result.embedded_evidence, embedded)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            before[0]).generate(query), result)
+
+        for index in range(5):
+            memory.observe(larger, observation_id=f"copy:{index}",
+                           stream_id=f"copy:{index}")
+        self.assertEqual(memory.learning_state(), before[1])
+        self.assertEqual(memory.generate(query), result)
+
+        closer = TrajectoryGenerationExperiment.restore(before[0])
+        closer.observe((4, 5, 6), observation_id="larger-successor", stream_id="other")
+        self.assertEqual([neighbor.symbols for neighbor in
+                          closer.embedded_root_relations(query).neighbors], [(4, 5, 6)])
+
+        peer = TrajectoryGenerationExperiment.restore(before[0])
+        linked_peer = (4, 5, 6, 7, 8)  # Same length as the unlinked larger root.
+        peer_target = (11, 12, 13)
+        peer_source = peer.observe(linked_peer, observation_id="peer", stream_id="peer")
+        peer.observe(peer_target, observation_id="peer-target", stream_id="peer")
+        mixed_query = (87, *larger, 86, *linked_peer, 85)
+        limited = peer.embedded_root_relations(mixed_query, limit=1)
+        self.assertEqual(limited.cue_payload_ids, (peer_source.payload_id,))
+        self.assertEqual([neighbor.symbols for neighbor in limited.neighbors], [peer_target])
+        self.assertFalse(limited.truncated)
+
+        split = TrajectoryGenerationExperiment()
+        split.observe(cue, observation_id="source", stream_id="one")
+        split.observe(target, observation_id="target", stream_id="two")
+        split.observe(larger, observation_id="larger", stream_id="three")
+        self.assertEqual(split.generate(query).mode, "ECHO")
+
+        reversed_memory = TrajectoryGenerationExperiment()
+        reversed_memory.observe(target, observation_id="target", stream_id="one")
+        reversed_memory.observe(cue, observation_id="source", stream_id="one")
+        reversed_memory.observe(larger, observation_id="larger", stream_id="other")
+        self.assertEqual(reversed_memory.generate(query).mode, "ECHO")
+
     def test_embedded_roots_expose_competition_and_capture_boundaries(self):
         memory = TrajectoryGenerationExperiment()
         a, b = (1, 2, 3), (4, 5, 6)

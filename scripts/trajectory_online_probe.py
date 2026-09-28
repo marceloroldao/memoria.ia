@@ -73,6 +73,24 @@ def trial(rng: Random) -> dict[str, bool]:
                               observation_id=f"end:{index}", stream_id=f"end:{index}")
     pruned_state = (pruned_memory.snapshot(), pruned_memory.learning_state())
     pruned_result = pruned_memory.generate(new_input, beam_width=1)
+
+    embedded_memory = TrajectoryGenerationExperiment()
+    embedded_source = embedded_memory.observe(cue, observation_id="embedded-cue",
+                                              stream_id="first")
+    embedded_memory.observe(target, observation_id="embedded-target", stream_id="first")
+    unlinked_larger = wrapped(cue)
+    embedded_memory.observe(unlinked_larger, observation_id="larger",
+                            stream_id="second")
+    nested_query = wrapped(unlinked_larger)
+    embedded_state = (embedded_memory.snapshot(), embedded_memory.learning_state())
+    nested_result = embedded_memory.generate(nested_query)
+    closer_memory = TrajectoryGenerationExperiment.restore(embedded_state[0])
+    closer_memory.observe(interposed, observation_id="larger-target", stream_id="second")
+    closer_result = closer_memory.embedded_root_relations(nested_query)
+    split_embedded = TrajectoryGenerationExperiment()
+    split_embedded.observe(cue, observation_id="cue", stream_id="one")
+    split_embedded.observe(target, observation_id="target", stream_id="two")
+    split_embedded.observe(unlinked_larger, observation_id="larger", stream_id="three")
     memory.observe(new_input, observation_id="cue:2", stream_id="episode:2")
     before_interposition = memory.generate(new_input)
     prefix = memory.snapshot()
@@ -129,6 +147,19 @@ def trial(rng: Random) -> dict[str, bool]:
             and pruned_result.ambiguous and pruned_result.truncated
             and pruned_result.selected is None
             and (pruned_memory.snapshot(), pruned_memory.learning_state()) == pruned_state),
+        unlinked_embedded_parent_keeps_child_route=(
+            nested_result.mode == "EMBEDDED_TEMPORAL_RECALL"
+            and nested_result.selected == target
+            and nested_result.embedded_evidence.cue_payload_ids
+            == (embedded_source.payload_id,)
+            and nested_result.embedded_evidence.links[0].streams == ("first",)
+            and (embedded_memory.snapshot(), embedded_memory.learning_state())
+            == embedded_state),
+        linked_embedded_parent_takes_precedence=(
+            tuple(neighbor.symbols for neighbor in closer_result.neighbors)
+            == (interposed,)),
+        split_embedded_capture_stays_unlinked=(
+            split_embedded.generate(nested_query).mode == "ECHO"),
         after_input_before_interposition=(before_interposition.selected == target),
         unrelated_capture_does_not_create_exact_root_link=(
             split_result.mode == "NODULE_RECALL" and split_result.selected == target),

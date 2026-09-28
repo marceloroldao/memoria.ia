@@ -347,7 +347,7 @@ class TrajectoryGenerationExperiment:
         """Evoked whole-payload roots contained in a new input, read-only.
 
         One observed root is already a nodule. Exact copies cannot add votes;
-        only roots of the longest matching width activate temporal neighbors.
+        use the longest width that has a witnessed temporal successor.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
@@ -365,16 +365,26 @@ class TrajectoryGenerationExperiment:
                 matches.append((len(pattern), address, pattern))
         if not matches:
             return EmbeddedRootRecall((), (), (), False, False)
-        longest = max(size for size, _, _ in matches)
-        cues = sorted((address, pattern) for size, address, pattern in matches
-                      if size == longest)
-        truncated = len(cues) > limit
-        active = cues[:limit]
+        matches.sort(key=lambda item: item[1])
+        linked: list[tuple[str, tuple[int, ...], tuple[TemporalNeighbor, ...]]] = []
+        for width in sorted({size for size, _, _ in matches}, reverse=True):
+            linked = [
+                (address, pattern, neighbors)
+                for size, address, pattern in matches
+                if size == width
+                if (neighbors := self.temporal_neighbors(pattern, hierarchy_id=hierarchy))
+            ]
+            if linked:
+                break
+        if not linked:
+            return EmbeddedRootRecall((), (), (), False, False)
+        truncated = len(linked) > limit
+        active = linked[:limit]
         links: list[EmbeddedRootLink] = []
         weights: dict[str, float] = {}
         streams: dict[str, set[str]] = {}
-        for address, pattern in active:
-            for neighbor in self.temporal_neighbors(pattern, hierarchy_id=hierarchy):
+        for address, _pattern, neighbors in active:
+            for neighbor in neighbors:
                 links.append(EmbeddedRootLink(
                     address, neighbor.payload_id, neighbor.weight, neighbor.streams,
                 ))
@@ -388,8 +398,8 @@ class TrajectoryGenerationExperiment:
             for address, weight in sorted(weights.items(), key=lambda item: (-item[1], item[0]))
         )
         return EmbeddedRootRecall(
-            tuple(address for address, _ in active), tuple(links), targets[:limit],
-            len(cues) > 1 or len(targets) > 1,
+            tuple(address for address, _, _ in active), tuple(links), targets[:limit],
+            len(linked) > 1 or len(targets) > 1,
             truncated or len(targets) > limit,
         )
 

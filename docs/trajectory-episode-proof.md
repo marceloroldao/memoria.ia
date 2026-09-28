@@ -130,6 +130,11 @@ sem sucessor observado: a busca pelo nódulo menor ainda encontra a relação
 antiga. Em outro cenário, a poda retém só o término observado e descarta a
 continuação; a evocação exata ainda fica visível nas evidências, com
 `truncated` e sem resposta escolhida.
+Um terceiro controle observa uma raiz curta seguida de outra entrada, depois
+uma raiz maior que contém a curta sem sucessor. Em uma nova consulta que
+contém ambas, a evocação da raiz curta permanece disponível. Se a maior
+ganha um sucessor observado, sua rota passa a ser a mais específica; capturas
+separadas não criam essa ligação.
 
 | Critério, por lote de 12 cenários | Desenvolvimento `9271902` | Reserva `20260930` |
 | --- | ---: | ---: |
@@ -138,6 +143,8 @@ continuação; a evocação exata ainda fica visível nas evidências, com
 | Limite, leitura, cópias e reabertura na continuação | 12 | 12 |
 | Pista maior sem sucessor preserva a rota menor | 12 | 12 |
 | Poda da continuação preserva a evocação independente | 12 | 12 |
+| Raiz maior sem sucessor preserva a raiz contida com ligação | 12 | 12 |
+| Raiz maior com sucessor e captura separada respeitam origem | 12 | 12 |
 | Interposição preserva os dois destinos e impede seleção única | 12 | 12 |
 | Alvo coincidente aparece uma vez | 12 | 12 |
 | Captura separada não cria ligação da raiz | 12 | 12 |

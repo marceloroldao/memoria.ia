@@ -143,8 +143,10 @@ afirma que a frase toda tenha sido observada.
 
 Um payload completo conhecido já é uma raiz reutilizável mesmo que só tenha
 aparecido uma vez. Se uma consulta inédita contém essa sequência inteira,
-`embedded_root_relations` procura as raízes contidas mais longas e suas entradas
-posteriores **na mesma captura**.
+`embedded_root_relations` procura as raízes contidas mais longas **com uma
+entrada posterior na mesma captura**. Se as raízes maiores não tiverem
+sucessor, recua para o próximo comprimento. Raízes sem ligação não consomem
+o limite de candidatos nem diluem o peso de outras raízes do mesmo tamanho.
 `EMBEDDED_TEMPORAL_RECALL` expõe a raiz de origem, cada raiz de destino, peso
 e capturas testemunhas quando não há outra família de candidatos. Uma consulta
 que coincide com a raiz completa pode evocar suas entradas posteriores por
@@ -166,8 +168,8 @@ Duas raízes ou dois destinos concorrentes também mantêm
 também cobre uma nova consulta que termina exatamente com a raiz conhecida.
 Não usa `reply_to` e não converte proximidade temporal em fato: o sucessor
 pode ser uma distração. Raízes menores com relações não são consultadas se
-uma raiz contida maior prevalecer, mesmo que essa maior não tenha sucessor;
-é uma escolha conservadora ainda sem calibração. Se a união exceder o limite
+uma raiz contida maior **já tiver sucessor**; comparar destinos de comprimentos
+diferentes exige calibração. Se a união exceder o limite
 de candidatos, todas as evidências continuam inspecionáveis e o resultado
 marca truncamento. O cálculo hoje ocorre durante a consulta. Organizá-lo em
 segundo plano continua sendo uma etapa futura.
