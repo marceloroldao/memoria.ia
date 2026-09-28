@@ -93,6 +93,7 @@ def replay(document: dict) -> dict:
     by_origin = {(row["hierarchy_id"], row["source_id"], row["sequence"]): index
                  for index, row in enumerate(rows)}
     linked = []
+    resolved_pairs: list[tuple[int, int]] = []
     unresolved = 0
     for target_index, row in enumerate(rows):
         reference = row.get("reply_to")
@@ -107,6 +108,7 @@ def replay(document: dict) -> dict:
         if source_index is None or source_index >= target_index:
             unresolved += 1
             continue
+        resolved_pairs.append((source_index, target_index))
         result = memory.generate(query(payloads[source_index]))
         prefix_result = memory.generate((sentinel, *payloads[source_index]))
         with patch.object(memory, "embedded_root_relations",
@@ -125,6 +127,33 @@ def replay(document: dict) -> dict:
             truncated=result.truncated,
         ))
 
+    # A second pass queries only the prefix already learned before each input.
+    # Labels are used for aggregation after the calls, never in observe.
+    online = TrajectoryGenerationExperiment()
+    online_outcomes = []
+    after_source = []
+    before_target = []
+    after_target = []
+
+    def verdict(source: int, target: int) -> dict:
+        result = online.generate(query(payloads[source]))
+        return dict(mode=result.mode,
+                    target_selected=result.selected == payloads[target],
+                    target_in_candidates=payloads[target] in
+                    (candidate.output for candidate in result.candidates),
+                    ambiguous=result.ambiguous)
+
+    for index, (row, payload) in enumerate(zip(rows, payloads)):
+        online_outcomes.append(online.generate(payload))
+        before_target.extend(verdict(source, target) for source, target in resolved_pairs
+                             if target == index)
+        online.observe(payload, observation_id=f"row:{index}",
+                       stream_id=row["hierarchy_id"])
+        after_source.extend(verdict(source, target) for source, target in resolved_pairs
+                            if source == index)
+        after_target.extend(verdict(source, target) for source, target in resolved_pairs
+                            if target == index)
+
     return dict(
         observations=len(rows), captures=len(first_stream),
         distinct_payloads=len(distinct), exact_duplicate_occurrences=len(rows) - learned,
@@ -137,6 +166,25 @@ def replay(document: dict) -> dict:
             combined_shared_targets=len(combined) - combined_disjoint,
             selected_non_echo=sum(result.selected is not None and result.mode != "ECHO"
                                   for result in outcomes),
+        ),
+        online_before_observe=dict(
+            modes=by_mode(online_outcomes),
+            ambiguous=sum(result.ambiguous for result in online_outcomes),
+            truncated=sum(result.truncated for result in online_outcomes),
+            selected_non_echo=sum(result.selected is not None and result.mode != "ECHO"
+                                  for result in online_outcomes),
+        ),
+        chronological_reply_evaluation=dict(
+            after_source_modes=dict(sorted(Counter(
+                row["mode"] for row in after_source).items())),
+            before_target_modes=dict(sorted(Counter(
+                row["mode"] for row in before_target).items())),
+            after_target_modes=dict(sorted(Counter(
+                row["mode"] for row in after_target).items())),
+            before_target_selected=sum(row["target_selected"] for row in before_target),
+            after_target_selected=sum(row["target_selected"] for row in after_target),
+            after_target_in_candidates=sum(row["target_in_candidates"] for row in after_target),
+            after_target_ambiguous=sum(row["ambiguous"] for row in after_target),
         ),
         explicit_reply_evaluation=dict(
             total=sum(bool(row.get("reply_to")) for row in rows),
@@ -165,6 +213,8 @@ def synthetic() -> dict:
     result = replay({"structural": {"observations": [source, target, duplicate]}})
     if (result["exact_duplicate_occurrences"] != 1 or
         result["explicit_reply_evaluation"]["target_selected"] != 1 or
+        result["chronological_reply_evaluation"]["before_target_selected"] != 0 or
+        result["chronological_reply_evaluation"]["after_target_selected"] != 1 or
         result["explicit_reply_evaluation"]["without_embedded_modes"] != {"ECHO": 1}):
         raise AssertionError("synthetic embedded root replay failed")
     return result

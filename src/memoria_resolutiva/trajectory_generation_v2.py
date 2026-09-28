@@ -469,9 +469,9 @@ class TrajectoryGenerationExperiment:
 
         Auto scale maximizes matched atomic span, then prefers the deeper view.
         A known end competes with continuation and prevents unbounded backoff.
-        Whole-payload temporal recall is tried first. If no continuation
-        exists, a recurring nodule and an embedded observed payload can evoke
-        alternatives together. Neither operation establishes a fact.
+        With no continuation, a whole-payload temporal route, a recurring
+        nodule and an embedded observed payload can evoke alternatives
+        together. Neither operation establishes a fact.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
@@ -532,16 +532,6 @@ class TrajectoryGenerationExperiment:
             self.temporal_neighbors(query, hierarchy_id=hierarchy)
             if not ambiguous and not truncated else ()
         )
-        if neighbors:
-            total = sum(neighbor.weight for neighbor in neighbors)
-            recall = tuple(
-                GenerationCandidate(neighbor.symbols, (), log(neighbor.weight / total), "temporal_recall", ())
-                for neighbor in neighbors[:beam_width]
-            )
-            return GenerationResult(
-                "TEMPORAL_RECALL", recall, len(neighbors) > 1,
-                len(neighbors) > beam_width, depth, neighbors[:beam_width],
-            )
         if not ambiguous and not truncated and all(
             candidate.stop_reason in ("no_route", "observed_end")
             for candidate in candidates
@@ -552,6 +542,16 @@ class TrajectoryGenerationExperiment:
             embedded = self.embedded_root_relations(
                 query, hierarchy_id=hierarchy, limit=beam_width,
             )
+            temporal_recall: tuple[GenerationCandidate, ...] = ()
+            if neighbors:
+                total = sum(neighbor.weight for neighbor in neighbors)
+                temporal_recall = tuple(
+                    GenerationCandidate(
+                        neighbor.symbols, (), log(neighbor.weight / total),
+                        "temporal_recall", (),
+                    )
+                    for neighbor in neighbors[:beam_width]
+                )
             nodule_recall = tuple(
                 GenerationCandidate(
                     candidate.symbols, (),
@@ -570,21 +570,34 @@ class TrajectoryGenerationExperiment:
                     )
                     for neighbor in embedded.neighbors
                 )
-            if nodule_recall and embedded_recall:
+            family_count = sum(bool(family) for family in
+                               (temporal_recall, embedded_recall, nodule_recall))
+            if family_count > 1:
                 # Scores are relative within each route family, not additive.
-                # A full observed cue comes first; all distinct nodule targets
-                # remain alternatives rather than silently disappearing.
+                # The exact root comes first, then embedded roots and nodules.
+                # A newly adjacent payload cannot hide an older recurring
+                # route observed in other captures.
                 combined: list[GenerationCandidate] = []
                 seen: set[tuple[int, ...]] = set()
-                for candidate in (*embedded_recall, *nodule_recall):
+                for candidate in (*temporal_recall, *embedded_recall, *nodule_recall):
                     if candidate.output not in seen:
                         seen.add(candidate.output)
                         combined.append(candidate)
                 return GenerationResult(
                     "COMBINED_RECALL", tuple(combined[:beam_width]),
-                    association.ambiguous or embedded.ambiguous or len(combined) > 1,
-                    association.truncated or embedded.truncated or len(combined) > beam_width,
-                    association.depth, embedded.neighbors, association, embedded,
+                    len(neighbors) > 1 or association.ambiguous or
+                    embedded.ambiguous or len(combined) > 1,
+                    len(neighbors) > beam_width or association.truncated or
+                    embedded.truncated or len(combined) > beam_width,
+                    association.depth if nodule_recall else depth,
+                    neighbors[:beam_width] if neighbors else embedded.neighbors,
+                    association if nodule_recall else None,
+                    embedded if embedded_recall else None,
+                )
+            if temporal_recall:
+                return GenerationResult(
+                    "TEMPORAL_RECALL", temporal_recall, len(neighbors) > 1,
+                    len(neighbors) > beam_width, depth, neighbors[:beam_width],
                 )
             if nodule_recall:
                 return GenerationResult(

@@ -434,6 +434,95 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertEqual(result.embedded_evidence.neighbors[0].symbols, target)
         self.assertEqual(result.association_evidence.candidates[0].symbols, target)
 
+    def test_online_interposed_input_cannot_hide_earlier_cross_capture_route(self):
+        memory = TrajectoryGenerationExperiment()
+        cue, target, interposed = (1, 2, 3), (7, 8, 9), (4, 5, 6)
+        for index in range(2):
+            memory.observe((100 + index, *cue, 200 + index),
+                           observation_id=f"cue:{index}", stream_id=f"ep:{index}")
+            memory.observe((300 + index, *target, 400 + index),
+                           observation_id=f"target:{index}", stream_id=f"ep:{index}")
+
+        new_cue = (102, *cue, 202)
+        before = memory.generate(new_cue)
+        self.assertEqual(before.mode, "NODULE_RECALL")
+        self.assertEqual(before.selected, target)
+        memory.observe(new_cue, observation_id="cue:2", stream_id="ep:2")
+        self.assertEqual(memory.generate(new_cue).selected, target)
+        same_target = TrajectoryGenerationExperiment.restore(memory.snapshot())
+        same_target.observe(target, observation_id="target:2", stream_id="ep:2")
+        converged = same_target.generate(new_cue)
+        self.assertEqual(converged.mode, "COMBINED_RECALL")
+        self.assertEqual([candidate.output for candidate in converged.candidates], [target])
+        self.assertEqual(converged.selected, target)
+        memory.observe(interposed, observation_id="interposed:2", stream_id="ep:2")
+        stored = memory.snapshot(), memory.learning_state()
+
+        result = memory.generate(new_cue)
+        self.assertEqual(result.mode, "COMBINED_RECALL")
+        self.assertEqual([candidate.output for candidate in result.candidates],
+                         [interposed, target])
+        self.assertEqual([candidate.stop_reason for candidate in result.candidates],
+                         ["temporal_recall", "nodule_association"])
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        self.assertEqual(result.temporal_evidence[0].streams, ("ep:2",))
+        self.assertEqual({stream for candidate in result.association_evidence.candidates
+                          for _, _, stream in candidate.witnesses}, {"ep:0", "ep:1"})
+        self.assertEqual((memory.snapshot(), memory.learning_state()), stored)
+        narrow = memory.generate(new_cue, beam_width=1)
+        self.assertEqual(narrow.candidates[0].output, interposed)
+        self.assertTrue(narrow.truncated)
+        self.assertIsNone(narrow.selected)
+        self.assertEqual(narrow.association_evidence.candidates[0].symbols, target)
+
+        for index in range(5):
+            memory.observe(new_cue, observation_id=f"copy:{index}",
+                           stream_id=f"unrelated:{index}")
+        self.assertEqual(memory.learning_state(), stored[1])
+        self.assertEqual(memory.generate(new_cue), result)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).generate(new_cue), result)
+
+        split = TrajectoryGenerationExperiment.restore(stored[0])
+        split.observe((103, *cue, 203), observation_id="cue:split",
+                      stream_id="another")
+        split.observe((10, 11, 12), observation_id="other:split",
+                      stream_id="separate")
+        self.assertEqual(split.generate((103, *cue, 203)).selected, target)
+
+    def test_exact_embedded_and_recurrent_routes_remain_separate(self):
+        memory = TrajectoryGenerationExperiment()
+        cue, recurrent, embedded, exact = (1, 2, 3), (7, 8, 9), (11, 12), (4, 5, 6)
+        memory.observe(cue, observation_id="embedded:source", stream_id="older")
+        memory.observe(embedded, observation_id="embedded:target", stream_id="older")
+        for index in range(2):
+            memory.observe((100 + index, *cue, 200 + index),
+                           observation_id=f"recurring:source:{index}",
+                           stream_id=f"episode:{index}")
+            memory.observe((300 + index, *recurrent, 400 + index),
+                           observation_id=f"recurring:target:{index}",
+                           stream_id=f"episode:{index}")
+        query = (102, *cue, 202)
+        memory.observe(query, observation_id="exact:source", stream_id="current")
+        memory.observe(exact, observation_id="exact:target", stream_id="current")
+
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "COMBINED_RECALL")
+        self.assertEqual([candidate.output for candidate in result.candidates],
+                         [exact, embedded, recurrent])
+        self.assertEqual([candidate.stop_reason for candidate in result.candidates],
+                         ["temporal_recall", "embedded_root_relation", "nodule_association"])
+        self.assertIsNone(result.selected)
+        self.assertEqual(result.temporal_evidence[0].streams, ("current",))
+        self.assertEqual(result.embedded_evidence.links[0].streams, ("older",))
+        self.assertIsNotNone(result.association_evidence)
+        narrow = memory.generate(query, beam_width=2)
+        self.assertTrue(narrow.truncated)
+        self.assertEqual([candidate.output for candidate in narrow.candidates],
+                         [exact, embedded])
+        self.assertIsNone(narrow.selected)
+
     def test_text_adapter_discovers_longer_recurrent_spans_without_word_rules(self):
         memory = TrajectoryGenerationExperiment()
         for i, text in enumerate((

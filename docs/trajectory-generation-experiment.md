@@ -133,19 +133,21 @@ Pesos brutos de escalas diferentes têm normalizações distintas; a ordem entre
 alvos de comprimentos e escalas diferentes ainda precisa de calibração.
 
 `generate` usa essa evocação (`NODULE_RECALL`) quando não encontra continuação
-nem evocação da raiz e a rota terminou sem saída nova. O nódulo evocado é
-mostrado separadamente; não se afirma que a frase toda tenha sido observada.
+nem outra evocação de raiz e a rota terminou sem saída nova. O nódulo evocado
+é mostrado separadamente; não se afirma que a frase toda tenha sido observada.
 
 Um payload completo conhecido já é uma raiz reutilizável mesmo que só tenha
 aparecido uma vez. Se uma consulta inédita contém essa sequência inteira,
 `embedded_root_relations` procura as raízes contidas mais longas e suas entradas
 posteriores **na mesma captura**.
 `EMBEDDED_TEMPORAL_RECALL` expõe a raiz de origem, cada raiz de destino, peso
-e capturas testemunhas quando não há candidato de nódulo recorrente. Quando
-os dois mecanismos trazem candidatos, `COMBINED_RECALL` expõe as duas famílias
-de evidência e une os destinos distintos sem somar seus pesos. A raiz inteira
-vem primeiro pela especificidade do trecho encontrado; os escores continuam
-relativos **dentro de cada família** e não são comparáveis entre elas. Um
+e capturas testemunhas quando não há outra família de candidatos. Uma consulta
+que coincide com a raiz completa pode evocar suas entradas posteriores por
+`TEMPORAL_RECALL`. Quando mais de uma família encontra candidatos,
+`COMBINED_RECALL` expõe todas as evidências e une os destinos distintos sem
+somar seus pesos. A raiz exata vem primeiro, seguida pela raiz embutida e pelos
+nódulos recorrentes; os escores continuam relativos **dentro de cada família**
+e não são comparáveis entre elas. Um
 destino coincidente é mostrado uma vez; destinos diferentes mantêm ambiguidade.
 Duas raízes ou dois destinos concorrentes também mantêm
 `ambiguous`; limite de busca mantém `truncated` e impede `selected`. O modo
@@ -154,9 +156,19 @@ Não usa `reply_to` e não converte proximidade temporal em fato: o sucessor
 pode ser uma distração. Raízes menores com relações não são consultadas se
 uma raiz contida maior prevalecer, mesmo que essa maior não tenha sucessor;
 é uma escolha conservadora ainda sem calibração. Se a união exceder o limite
-de candidatos, as duas evidências continuam inspecionáveis e o resultado
+de candidatos, todas as evidências continuam inspecionáveis e o resultado
 marca truncamento. O cálculo hoje ocorre durante a consulta. Organizá-lo em
 segundo plano continua sendo uma etapa futura.
+
+Na [prova cronológica](trajectory-episode-proof.md#prova-cronológica-de-evocação),
+duas capturas com pistas em contextos diferentes tornam um alvo evocável antes
+de observar a terceira captura. Uma entrada intermediária nova, logo após a
+terceira pista, ativa a raiz exata: anteriormente ela substituía o alvo antigo
+por essa entrada recente como única saída estrutural. Agora ambos aparecem,
+com suas capturas testemunhas, e `selected` fica vazio. O caso não informa à
+memória qual deles é resposta verdadeira. A rota de continuação, quando
+existe, ainda tem prioridade sobre essas evocações; suas concorrentes não
+são combinadas nesta versão.
 
 ## Escalas e inferência
 

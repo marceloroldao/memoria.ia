@@ -30,6 +30,14 @@ As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
 | Consultas com truncamento, antes / depois | 7 / 13 |
 | Saídas únicas diferentes de eco, antes / depois | 19 / 10 |
 
+Uma segunda passagem consulta **cada entrada original antes de aprendê-la**.
+Ela usa a mesma tabela fixa de endereços opacos para tokens, mas cada consulta
+vê somente as observações anteriores. Das 99 consultas online: 53 deram eco,
+16 continuação, 22 evocação de nódulo e 8 rotas combinadas; 39 mantiveram
+ambiguidade, 3 truncamento e 7 saídas estruturais únicas diferentes de eco.
+Não há rótulo de resposta para essas 99 entradas: esses números medem modos
+de operação, não acertos.
+
 O export contém **um** `reply_to` explícito resolúvel. Ele foi usado **só
 depois** do aprendizado para conferir a evocação; não foi passado a `observe`
 nem a `generate`. Sua pergunta de origem e o destino observado aparecem uma
@@ -39,6 +47,15 @@ apareceu como candidato único (`EMBEDDED_TEMPORAL_RECALL`), sem ambiguidade
 ou truncamento. Um prefixo inédito terminado na mesma pergunta também evoca
 esse destino. O modo indica sucessão testemunhada na mesma captura, não
 confirma que o destino seja uma resposta verdadeira.
+
+O único par vinculado está nas **duas últimas observações** do export. Na
+passagem cronológica, consultar a pergunta envolta em um contexto novo logo
+após a origem ainda dá `ECHO`; antes de aprender o destino também dá `ECHO`.
+Somente depois de observar o destino ela produz o candidato único. Portanto,
+esse par comprova recuperação de uma sequência já observada, **não** previsão
+de uma resposta ainda não vista ou estabilidade após futuras entradas. A
+[prova cronológica sintética](trajectory-episode-proof.md#prova-cronológica-de-evocação)
+verifica o comportamento online com novos contextos e uma entrada interposta.
 
 Entre as nove consultas sobre payloads com cópias, três agora expõem as duas
 famílias de rotas, uma evoca só nódulo recorrente e cinco dão eco. As cópias

@@ -102,3 +102,37 @@ calibra pesos entre escalas, interpreta perguntas ou fatos, nem demonstra
 aprendizado multimodal a partir de áudio e imagens brutos. O experimento
 Python continua fora da seleção de respostas do APK; os três controles
 pessoais nativos anteriores permanecem sem solução.
+
+## Prova cronológica de evocação
+
+O gate `trajectory_online_probe.py` treina com duas capturas distintas, cada
+uma com uma pista e um alvo em envoltórios novos. Consulta uma terceira pista
+**antes** de observar seu possível alvo. Depois observa essa pista e uma
+entrada intermediária única na mesma captura. A memória recebe só símbolos,
+ordem e origem; os papéis de alvo e distração existem apenas no avaliador.
+
+Antes da terceira captura, o trecho recorrente já evoca o alvo visto nas duas
+anteriores. Quando a entrada intermediária aparece, a raiz exata da terceira
+pista passa a evocá-la. Antes da correção, essa nova rota ocultava o alvo das
+capturas anteriores e `selected` apontava apenas para a entrada intermediária.
+Agora `COMBINED_RECALL` mantém os dois destinos e suas testemunhas, sem resposta
+única. Quando ambas as famílias apontam para o mesmo destino, ele aparece uma
+vez. Entrada em outra captura não cria relação temporal falsa com a raiz;
+cópias exatas não alteram pesos.
+
+| Critério, por lote de 12 cenários | Desenvolvimento `9271902` | Reserva `20260930` |
+| --- | ---: | ---: |
+| Evocação antes do terceiro alvo | 12 | 12 |
+| Interposição preserva os dois destinos e impede seleção única | 12 | 12 |
+| Alvo coincidente aparece uma vez | 12 | 12 |
+| Captura separada não cria ligação da raiz | 12 | 12 |
+| Limite de candidatos impede seleção | 12 | 12 |
+| Leitura, cópias e reabertura preservam o estado/resultado | 12 | 12 |
+
+Executar com `python scripts/trajectory_online_probe.py --seed 9271902` e
+`python scripts/trajectory_online_probe.py --seed 20260930`. Os lotes variam
+endereços e comprimentos, mas compartilham a mesma topologia de três capturas.
+A raiz exata com um único sucessor ainda pode produzir `selected` quando não
+há rota concorrente conhecida; esse campo indica unicidade estrutural, não
+verdade. Não há taxa de acerto factual, equivalência ao comportamento de uma
+LLM nem integração ao OFF.IA.
