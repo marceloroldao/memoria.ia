@@ -28,6 +28,8 @@ As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
 | Modos após recuo de raiz embutida sem sucessor: só nódulo / só raiz / ambos / eco | 13 / 17 / 32 / 6 |
 | Consultas com raiz menor ligada além da maior / destino adicional | 1 / 1 |
 | Novos destinos na geração / novos casos ambíguos / novos truncamentos | 1 / 0 / 0 |
+| Após verificação de nódulos menores: destinos novos / seleções suspensas | 7 / 2 |
+| Após verificação de nódulos menores: ambíguas / truncadas / saídas únicas | 55 / 19 / 7 |
 | Ambos com destinos disjuntos / algum destino comum | 31 / 1 |
 | Consultas com ambiguidade, antes / agora | 47 / 53 |
 | Consultas com truncamento, antes / agora | 13 / 15 |
@@ -66,6 +68,18 @@ ambiguidade ou truncamento mudou: a consulta já tinha alternativas. As 99
 consultas cronológicas e o único par explícito mantiveram seus agregados.
 Essa rota adicional tem testemunha de ordem na captura; o export não informa
 se ela seria uma resposta adequada.
+
+A verificação de nódulos recorrentes menores encontrou **7 consultas inéditas
+com destino adicional** e retirou `selected` de **2** que antes pareciam ter
+uma rota única. Os modos permanecem 13 só nódulo, 17 só raiz, 32 combinados e
+6 ecos. Ambiguidade passa de 53 para 55 e truncamento de 15 para 19; 7 saídas
+estruturais únicas diferentes de eco permanecem. Uma expansão completa em
+todas as consultas truncaria 27 leituras de associação, por isso ela fica
+disponível como diagnóstico e a geração a usa quando uma rota parece única.
+Na passagem cronológica, as 99 consultas mantêm os mesmos modos e 2 saídas
+únicas, com truncamento de 9 para 11. A avaliação do único par explícito não
+muda. Sem mais rótulos, não sabemos se as 7 rotas adicionais ajudam ou
+distraem em uma resposta.
 
 O export contém **um** `reply_to` explícito resolúvel. Ele foi usado **só
 depois** do aprendizado para conferir a evocação; não foi passado a `observe`

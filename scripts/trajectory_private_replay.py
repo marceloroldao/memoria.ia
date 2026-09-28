@@ -80,6 +80,14 @@ def replay(document: dict) -> dict:
         return (sentinel, *payload, sentinel + 1)
 
     outcomes = [memory.generate(query(payload)) for payload in distinct]
+    original_association = memory.associated_nodules
+    with patch.object(memory, "associated_nodules", side_effect=lambda payload, **options:
+                      original_association(payload, **{**options, "include_shorter": False})):
+        primary_only_outcomes = [memory.generate(query(payload)) for payload in distinct]
+    expanded_associations = [
+        memory.associated_nodules(query(payload), include_shorter=True)
+        for payload in distinct
+    ]
     original_embedded = memory.embedded_root_relations
     with patch.object(memory, "embedded_root_relations", side_effect=lambda payload, **options:
                       original_embedded(payload, **{**options, "include_shorter": False})):
@@ -141,6 +149,7 @@ def replay(document: dict) -> dict:
     # Labels are used for aggregation after the calls, never in observe.
     online = TrajectoryGenerationExperiment()
     online_outcomes = []
+    primary_only_online_outcomes = []
     after_source = []
     before_target = []
     after_target = []
@@ -155,6 +164,11 @@ def replay(document: dict) -> dict:
 
     for index, (row, payload) in enumerate(zip(rows, payloads)):
         online_outcomes.append(online.generate(payload))
+        original_online_association = online.associated_nodules
+        with patch.object(online, "associated_nodules", side_effect=lambda symbols, **options:
+                          original_online_association(
+                              symbols, **{**options, "include_shorter": False})):
+            primary_only_online_outcomes.append(online.generate(payload))
         before_target.extend(verdict(source, target) for source, target in resolved_pairs
                              if target == index)
         online.observe(payload, observation_id=f"row:{index}",
@@ -196,6 +210,30 @@ def replay(document: dict) -> dict:
             ),
             newly_ambiguous=sum(all_scales.ambiguous and not longest.ambiguous
                                 for all_scales, longest in zip(outcomes, longest_only_outcomes)),
+        ),
+        recurrent_scale_comparison=dict(
+            diagnostic_truncated=sum(result.truncated for result in expanded_associations),
+            novel_new_generated_destinations=sum(
+                bool({candidate.output for candidate in guarded.candidates} -
+                     {candidate.output for candidate in primary.candidates})
+                for guarded, primary in zip(outcomes, primary_only_outcomes)
+            ),
+            novel_selections_withheld=sum(
+                primary.selected is not None and guarded.selected is None
+                for guarded, primary in zip(outcomes, primary_only_outcomes)
+            ),
+            novel_newly_truncated=sum(
+                guarded.truncated and not primary.truncated
+                for guarded, primary in zip(outcomes, primary_only_outcomes)
+            ),
+            online_selections_withheld=sum(
+                primary.selected is not None and guarded.selected is None
+                for guarded, primary in zip(online_outcomes, primary_only_online_outcomes)
+            ),
+            online_newly_truncated=sum(
+                guarded.truncated and not primary.truncated
+                for guarded, primary in zip(online_outcomes, primary_only_online_outcomes)
+            ),
         ),
         recurrent_route_stability=dict(
             queries_with_candidates=sum(bool(result.candidates) for result in stability),

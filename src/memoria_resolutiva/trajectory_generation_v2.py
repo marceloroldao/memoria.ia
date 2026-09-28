@@ -419,19 +419,20 @@ class TrajectoryGenerationExperiment:
     def associated_nodules(
         self, payload: Iterable[int], *, hierarchy_id: str = "default",
         channel: str = "temporal", limit: int = 8,
+        include_shorter: bool = False,
     ) -> CompositionalRecall:
         """Rebuild associations at every discovered scale without learning.
 
         A newly discovered composition is projected over earlier unique input
         events. Each event contributes once in its original stream and order.
-        The longest recurring cue activates all scales representing it;
+        A recurring cue activates all depths representing the same span;
         identical targets are not reinforced merely by appearing at several
-        depths, and independent shorter targets remain visible.
+        depths. Shorter linked cues remain inspectable on request.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
         return self._compositional_view(hierarchy).recall(
-            query, channel=channel, limit=limit,
+            query, channel=channel, limit=limit, include_shorter=include_shorter,
         )
 
     def route_stability(
@@ -621,6 +622,16 @@ class TrajectoryGenerationExperiment:
             association = self.associated_nodules(
                 query, hierarchy_id=hierarchy, limit=beam_width,
             )
+            if association.selected is not None:
+                # An apparently unique route may conceal another witnessed
+                # destination behind a shorter cue. Inspect every width only
+                # in that case; ambiguous queries already refuse selection.
+                expanded = self.associated_nodules(
+                    query, hierarchy_id=hierarchy, limit=beam_width,
+                    include_shorter=True,
+                )
+                if expanded.ambiguous or expanded.truncated:
+                    association = expanded
             embedded = self.embedded_root_relations(
                 query, hierarchy_id=hierarchy, limit=beam_width,
             )
@@ -634,10 +645,15 @@ class TrajectoryGenerationExperiment:
                     )
                     for neighbor in neighbors[:beam_width]
                 )
+            nodule_totals: dict[int, float] = {}
+            for candidate in association.candidates:
+                nodule_totals[candidate.source_width] = (
+                    nodule_totals.get(candidate.source_width, 0.0) + candidate.rank_score
+                )
             nodule_recall = tuple(
                 GenerationCandidate(
                     candidate.symbols, (),
-                    log(candidate.rank_score / association.total_rank_score),
+                    log(candidate.rank_score / nodule_totals[candidate.source_width]),
                     "nodule_association", (),
                 )
                 for candidate in association.candidates

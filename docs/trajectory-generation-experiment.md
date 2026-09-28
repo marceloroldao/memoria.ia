@@ -127,6 +127,16 @@ mesmo trecho e reúne os alvos distintos. Um alvo já contido na própria
 consulta não vira outra evocação dela mesma. Uma representação repetida do
 mesmo alvo em outra escala não soma um novo voto; o campo `depth` informa a
 escala mais profunda do trecho usado. Exibe canal, escala, peso e origens.
+Com `include_shorter=True`, a consulta também reúne destinos testemunhados por
+trechos recorrentes mais curtos, mesmo se o trecho maior tiver uma saída. Um
+destino comum fica uma vez, com o peso da pista mais longa e a união das
+testemunhas; fragmentos de alvo com as mesmas testemunhas e sem maior peso
+cedem à versão que os contém. A pista mais longa aparece primeiro e o limite
+marca `truncated` se outras alternativas ficarem de fora. A leitura comum
+mantém `include_shorter=False` para não inundar os diagnósticos e as medidas
+de estabilidade com fragmentos ocasionais. `source_width` identifica o
+comprimento da pista primária; os escores de geração são normalizados apenas
+entre destinos desse mesmo comprimento.
 Nódulos curtos
 contidos em outro com **as mesmas origens** deixam de disputar com a versão
 maior; os que têm origens distintas permanecem. Para ordenar alternativas,
@@ -139,7 +149,11 @@ alvos de comprimentos e escalas diferentes ainda precisa de calibração.
 `generate` usa essa evocação (`NODULE_RECALL`) quando não encontra outra
 família de rota. Se houver continuação ou evocação de raiz simultânea, mantém
 as alternativas juntas. O nódulo evocado é mostrado separadamente; não se
-afirma que a frase toda tenha sido observada.
+afirma que a frase toda tenha sido observada. Se a leitura comum apresentar
+uma **única** rota de nódulo sem truncamento, `generate` consulta também as
+pistas menores: uma saída diferente ou um limite atingido impede `selected`.
+Consultas já ambíguas mantêm a leitura comum; a expansão completa pode ser
+inspecionada à parte. A prioridade entre comprimentos não é uma probabilidade.
 
 Um payload completo conhecido já é uma raiz reutilizável mesmo que só tenha
 aparecido uma vez. Se uma consulta inédita contém essa sequência inteira,

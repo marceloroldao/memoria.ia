@@ -90,6 +90,29 @@ def trial(rng: Random) -> dict[str, bool]:
     closer_result = closer_memory.embedded_root_relations(nested_query)
     closer_generated = closer_memory.generate(nested_query)
     closer_limited = closer_memory.generate(nested_query, beam_width=1)
+    layered_memory = TrajectoryGenerationExperiment()
+    layered_cue = wrapped(cue)
+    for episode in range(2):
+        layered_memory.observe(wrapped(layered_cue),
+                               observation_id=f"layered-long:{episode}",
+                               stream_id=f"layered-long:{episode}")
+        layered_memory.observe(wrapped(target),
+                               observation_id=f"layered-target:{episode}",
+                               stream_id=f"layered-long:{episode}")
+        layered_memory.observe(wrapped(cue),
+                               observation_id=f"layered-short:{episode}",
+                               stream_id=f"layered-short:{episode}")
+        layered_memory.observe(wrapped(interposed),
+                               observation_id=f"layered-other:{episode}",
+                               stream_id=f"layered-short:{episode}")
+    layered_query = wrapped(layered_cue)
+    layered_state = (layered_memory.snapshot(), layered_memory.learning_state())
+    layered_primary = layered_memory.associated_nodules(layered_query)
+    layered_expanded = layered_memory.associated_nodules(
+        layered_query, include_shorter=True,
+    )
+    layered_generated = layered_memory.generate(layered_query)
+    layered_limited = layered_memory.generate(layered_query, beam_width=1)
     split_embedded = TrajectoryGenerationExperiment()
     split_embedded.observe(cue, observation_id="cue", stream_id="one")
     split_embedded.observe(target, observation_id="target", stream_id="two")
@@ -173,6 +196,21 @@ def trial(rng: Random) -> dict[str, bool]:
             tuple(candidate.output for candidate in closer_limited.candidates)
             == (interposed,) and closer_limited.truncated
             and closer_limited.selected is None),
+        shorter_recurrent_route_blocks_apparent_unique=(
+            layered_primary.selected == target
+            and tuple(candidate.symbols for candidate in layered_expanded.candidates)
+            == (target, interposed)
+            and layered_generated.mode == "NODULE_RECALL"
+            and tuple(candidate.output for candidate in layered_generated.candidates)
+            == (target, interposed)
+            and layered_generated.ambiguous and layered_generated.selected is None
+            and (layered_memory.snapshot(), layered_memory.learning_state()) == layered_state
+            and TrajectoryGenerationExperiment.restore(layered_state[0])
+            .generate(layered_query) == layered_generated),
+        shorter_recurrent_limit_refuses_to_select=(
+            tuple(candidate.output for candidate in layered_limited.candidates)
+            == (target,) and layered_limited.truncated
+            and layered_limited.selected is None),
         split_embedded_capture_stays_unlinked=(
             split_embedded.generate(nested_query).mode == "ECHO"),
         after_input_before_interposition=(before_interposition.selected == target),

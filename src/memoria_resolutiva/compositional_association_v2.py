@@ -6,7 +6,7 @@ neither the original payload graph nor its observation order is changed.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import exp
 from typing import Iterable
 
@@ -44,6 +44,7 @@ class AssociatedNodule:
     cue_addresses: tuple[str, ...]
     # Within: the same payload on both sides. Temporal: earlier -> later.
     witnesses: tuple[tuple[str, str, str], ...]  # source, target, stream
+    source_width: int = 0  # Atomic span of the primary cue, not target length.
 
     @property
     def rank_score(self) -> float:
@@ -233,11 +234,14 @@ class CompositionalAssociationView:
 
     def recall(
         self, query: tuple[int, ...], *, channel: str = "temporal", limit: int = 8,
+        include_shorter: bool = False,
     ) -> CompositionalRecall:
         if channel not in ContinuousStructuralAssociationField.CHANNELS:
             raise ValueError("channel must be 'within' or 'temporal'")
         if type(limit) is not int or limit < 1:
             raise ValueError("limit must be a positive integer")
+        if type(include_shorter) is not bool:
+            raise ValueError("include_shorter must be a boolean")
         if not query or any(type(symbol) is not int or symbol < 0 for symbol in query):
             raise ValueError("query must contain non-negative symbol addresses")
         matched = [
@@ -253,6 +257,11 @@ class CompositionalAssociationView:
         if not matched:
             return CompositionalRecall(channel, 0, (), (), False, False)
         empty: CompositionalRecall | None = None
+        # Keep one displayed weight per destination. A shorter cue may supply
+        # another witness, but cannot multiply support already attributed to
+        # a more specific cue for the same destination.
+        routes: dict[tuple[int, ...], tuple[int, int, AssociatedNodule]] = {}
+        activated_cues: list[str] = []
         for size in sorted({width for width, _, _ in matched}, reverse=True):
             by_depth: dict[int, tuple[str, ...]] = {
                 depth: tuple(sorted(address for width, level, address in matched
@@ -264,9 +273,8 @@ class CompositionalAssociationView:
                 empty = CompositionalRecall(channel, max(by_depth), cues_at_width,
                                             (), False, False)
             # A cue can be represented at several depths. Keep each target
-            # once, and only fall back to a shorter cue if this entire width
-            # has no outgoing candidate. A longer repeated wrapper with no
-            # successor must not erase a previously witnessed shorter route.
+            # once per width; a shorter witnessed cue remains an alternative
+            # even when a longer cue already has a different destination.
             representatives: dict[tuple[int, ...], tuple[int, AssociatedNodule]] = {}
             for depth, cues in by_depth.items():
                 for candidate in self._recall_depth(depth, cues, channel):
@@ -288,14 +296,50 @@ class CompositionalAssociationView:
                 )
             )
             if candidates:
-                candidates = tuple(sorted(
-                    candidates, key=lambda item: (-item.rank_score, -item.weight, item.address),
-                ))
-                return CompositionalRecall(
-                    channel, max(by_depth), cues_at_width,
-                    candidates[:limit], len(candidates) > 1, len(candidates) > limit,
-                    sum(candidate.rank_score for candidate in candidates),
+                activated_cues.extend(cues_at_width)
+                for candidate in candidates:
+                    previous = routes.get(candidate.symbols)
+                    if previous is None:
+                        routes[candidate.symbols] = (
+                            size, max(by_depth), replace(candidate, source_width=size),
+                        )
+                    else:
+                        width, depth, primary = previous
+                        routes[candidate.symbols] = (width, depth, replace(
+                            primary,
+                            cue_addresses=tuple(sorted(set(primary.cue_addresses) |
+                                                       set(candidate.cue_addresses))),
+                            witnesses=tuple(sorted(set(primary.witnesses) |
+                                                   set(candidate.witnesses))),
+                        ))
+                if not include_shorter:
+                    break
+        if routes:
+            # A target fragment with the same witness set and no greater
+            # support than its enclosing target is a second view of one route.
+            available = tuple(routes.values())
+            survivors = tuple(
+                row for row in available
+                if not any(
+                    other_width >= row[0]
+                    and len(other.symbols) > len(row[2].symbols)
+                    and self._contained(row[2].symbols, other.symbols)
+                    and row[2].witnesses == other.witnesses
+                    and other.weight >= row[2].weight
+                    for other_width, _, other in available
                 )
+            )
+            survivors = tuple(sorted(
+                survivors, key=lambda row: (-row[0], -row[2].rank_score,
+                                            -row[2].weight, row[2].address),
+            ))
+            return CompositionalRecall(
+                channel, max(depth for _, depth, _ in survivors),
+                tuple(dict.fromkeys(activated_cues)),
+                tuple(candidate for _, _, candidate in survivors[:limit]),
+                len(survivors) > 1, len(survivors) > limit,
+                sum(candidate.rank_score for _, _, candidate in survivors),
+            )
         assert empty is not None
         return empty
 

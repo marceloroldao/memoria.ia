@@ -9,11 +9,13 @@ O avaliador conhece a construção dos cenários; a memória recebe apenas
 payloads, ordem e identificadores de captura, sem rótulos de resposta,
 vínculos manuais ou julgamento de verdade.
 
-O teste exige que cada pista completa evoque somente o alvo observado após
-ela, com quatro pares de payloads testemunhando a rota em quatro capturas.
+Na leitura direta de `associated_nodules`, cada pista completa evoca somente
+o alvo observado após ela, com quatro pares de payloads testemunhando a rota
+em quatro capturas.
 Ao consultar apenas a parte compartilhada das pistas, os dois alvos precisam
-permanecer disponíveis e `selected` deve ficar vazio. `generate` precisa
-evocar o nódulo por `NODULE_RECALL` sem gravar a saída como experiência.
+permanecer disponíveis e `selected` deve ficar vazio. `generate` evoca os
+dois alvos por `NODULE_RECALL` ao conferir a pista compartilhada contida,
+sem gravar a saída como experiência.
 
 Em outro conjunto de capturas, um terceiro nódulo aparece **depois** do
 alvo da primeira pista. Os dois nódulos ficam visíveis, sem resposta única;
@@ -36,12 +38,12 @@ resposta única seja declarada nesse caso.
 
 | Critério, por lote de 12 cenários | Desenvolvimento `4169` | Reserva inicial `20260928` | Desafio reservado `20260929` |
 | --- | ---: | ---: | ---: |
-| Pista A identifica só o alvo A | 12 | 12 | 12 |
-| Pista B identifica só o alvo B | 12 | 12 | 12 |
+| Leitura direta da pista A identifica só o alvo A | 12 | 12 | 12 |
+| Leitura direta da pista B identifica só o alvo B | 12 | 12 | 12 |
 | Três consultas inéditas | 12 | 12 | 12 |
 | Pista comum mantém as duas alternativas | 12 | 12 | 12 |
 | Quatro testemunhas de capturas independentes para A | 12 | 12 | 12 |
-| Geração associativa sem aprendizado da saída | 12 | 12 | 12 |
+| Geração mantém ambos os destinos sem aprender a saída | 12 | 12 | 12 |
 | Distração mantém o alvo mais próximo com maior peso e torna a saída ambígua | 12 | 12 | 12 |
 | Alvos continuam visíveis com a pista B interposta | 12 | 12 | 12 |
 | Pista interposta não produz seleção única | 12 | 12 | 12 |
@@ -137,6 +139,17 @@ ganha um sucessor observado diferente, sua rota aparece primeiro e a menor
 continua como alternativa, com ambiguidade e sem seleção única. Um limite
 estreito descarta a menor e marca truncamento. Capturas separadas não criam
 essa ligação.
+Outro controle usa duas capturas com uma pista recorrente maior seguida de A
+e duas capturas independentes com uma pista menor contida nela seguida de B.
+A leitura inicial da pista maior parecia única; a varredura diagnóstica e a
+geração agora expõem A e B, sem escolher um deles. Com limite 1, A fica
+visível, B é truncado e nenhuma saída é selecionada. Ordem, reabertura e
+captura separada são verificadas sem atribuir verdade a A ou B.
+No gate de episódios A/B já existente, a leitura direta de uma pista específica
+continua apontando só para seu alvo. A geração, que poderia antes escolher A,
+agora encontra também B pela pista compartilhada contida na consulta e mostra
+ambos, sem seleção. Isso corrige a expectativa antiga do gate; B é uma rota
+testemunhada, ainda que possa ser irrelevante para a pergunta específica.
 
 | Critério, por lote de 12 cenários | Desenvolvimento `9271902` | Reserva `20260930` |
 | --- | ---: | ---: |
@@ -148,6 +161,8 @@ essa ligação.
 | Raiz maior sem sucessor preserva a raiz contida com ligação | 12 | 12 |
 | Raiz maior com sucessor mantém também o destino menor e a origem | 12 | 12 |
 | Limite estreito sinaliza rota menor descartada | 12 | 12 |
+| Pista recorrente menor impede falsa saída única | 12 | 12 |
+| Limite estreito recusa seleção com nódulo menor | 12 | 12 |
 | Interposição preserva os dois destinos e impede seleção única | 12 | 12 |
 | Alvo coincidente aparece uma vez | 12 | 12 |
 | Captura separada não cria ligação da raiz | 12 | 12 |
@@ -156,7 +171,7 @@ essa ligação.
 
 Executar com `python scripts/trajectory_online_probe.py --seed 9271902` e
 `python scripts/trajectory_online_probe.py --seed 20260930`. Os lotes variam
-endereços e comprimentos, mas compartilham a mesma topologia de três capturas.
+endereços e comprimentos em topologias determinísticas de capturas separadas.
 A raiz exata com um único sucessor ainda pode produzir `selected` quando não
 há rota concorrente conhecida; esse campo indica unicidade estrutural, não
 verdade. Não há taxa de acerto factual, equivalência ao comportamento de uma

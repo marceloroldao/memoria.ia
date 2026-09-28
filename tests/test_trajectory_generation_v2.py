@@ -546,6 +546,82 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertEqual(reversed_memory.generate((90, *a, 91)).mode, "ECHO")
         self.assertEqual(memory.generate((90, 1, 91)).mode, "ECHO")
 
+    def test_shorter_recurrent_cue_checks_apparent_unique_destination(self):
+        memory = TrajectoryGenerationExperiment()
+        short = (1, 2, 3)
+        long = (90, *short, 91)
+        a, b = (4, 5, 6), (7, 8, 9)
+        for i in range(2):
+            memory.observe((100 + i, *long, 200 + i),
+                           observation_id=f"long:{i}", stream_id=f"long:{i}")
+            memory.observe((300 + i, *a, 400 + i),
+                           observation_id=f"a:{i}", stream_id=f"long:{i}")
+            memory.observe((500 + i, *short, 600 + i),
+                           observation_id=f"short:{i}", stream_id=f"short:{i}")
+            memory.observe((700 + i, *b, 800 + i),
+                           observation_id=f"b:{i}", stream_id=f"short:{i}")
+        query = (88, *long, 92)
+        stored = memory.snapshot(), memory.learning_state()
+        primary = memory.associated_nodules(query)
+        self.assertEqual(primary.selected, a)
+        layered = memory.associated_nodules(query, include_shorter=True)
+        self.assertEqual([candidate.symbols for candidate in layered.candidates], [a, b])
+        self.assertTrue(layered.ambiguous)
+        self.assertFalse(layered.truncated)
+        self.assertEqual({stream for candidate in layered.candidates
+                          for _, _, stream in candidate.witnesses},
+                         {"long:0", "long:1", "short:0", "short:1"})
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "NODULE_RECALL")
+        self.assertEqual([candidate.output for candidate in result.candidates], [a, b])
+        self.assertEqual([candidate.log_score for candidate in result.candidates],
+                         [0.0, 0.0])
+        self.assertEqual([candidate.source_width for candidate in
+                          layered.candidates], [len(long), len(short)])
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        self.assertEqual(result.association_evidence, layered)
+        limited = memory.generate(query, beam_width=1)
+        self.assertEqual([candidate.output for candidate in limited.candidates], [a])
+        self.assertTrue(limited.truncated)
+        self.assertIsNone(limited.selected)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), stored)
+        for i in range(3):
+            memory.observe((100, *long, 200), observation_id=f"copy:{i}",
+                           stream_id=f"copy:{i}")
+        self.assertEqual(memory.learning_state(), stored[1])
+        self.assertEqual(memory.generate(query), result)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).generate(query), result)
+
+        split = TrajectoryGenerationExperiment()
+        split.observe((100, *long, 200), observation_id="long", stream_id="long")
+        split.observe((300, *a, 400), observation_id="a", stream_id="long")
+        split.observe((101, *long, 201), observation_id="long:2", stream_id="long:2")
+        split.observe((301, *a, 401), observation_id="a:2", stream_id="long:2")
+        split.observe((500, *short, 600), observation_id="short", stream_id="short")
+        split.observe((700, *b, 800), observation_id="b", stream_id="elsewhere")
+        self.assertEqual([candidate.output for candidate in split.generate(query).candidates],
+                         [a])
+
+        converged = TrajectoryGenerationExperiment()
+        for i in range(2):
+            converged.observe((100 + i, *long, 200 + i),
+                              observation_id=f"long:{i}", stream_id=f"long:{i}")
+            converged.observe((300 + i, *a, 400 + i),
+                              observation_id=f"a:{i}", stream_id=f"long:{i}")
+            converged.observe((500 + i, *short, 600 + i),
+                              observation_id=f"short:{i}", stream_id=f"short:{i}")
+            converged.observe((700 + i, *a, 800 + i),
+                              observation_id=f"same:{i}", stream_id=f"short:{i}")
+        direct = converged.associated_nodules(query)
+        all_scales = converged.associated_nodules(query, include_shorter=True)
+        self.assertEqual([candidate.symbols for candidate in all_scales.candidates], [a])
+        self.assertEqual(all_scales.candidates[0].weight, direct.candidates[0].weight)
+        self.assertEqual(len(all_scales.candidates[0].witnesses), 4)
+        self.assertEqual(all_scales.selected, a)
+        self.assertEqual(converged.generate(query).selected, a)
+
     def test_full_root_and_shorter_recurrent_cue_keep_distinct_targets(self):
         memory = TrajectoryGenerationExperiment()
         source, direct, recurrent = (1, 2, 3, 4), (7, 8, 9), (5, 6)

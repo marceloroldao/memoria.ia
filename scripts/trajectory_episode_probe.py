@@ -111,8 +111,12 @@ def trial(rng: Random, index: int) -> dict[str, bool]:
             and {stream for _, _, stream in target.witnesses}
             == {f"a:{episode}" for episode in range(4)}
         ),
-        "generated_from_nodule": (generated.mode == "NODULE_RECALL"
-                                  and generated.selected == target_a and read_only),
+        "generated_keeps_shared_alternative": (
+            generated.mode == "NODULE_RECALL"
+            and tuple(candidate.output for candidate in generated.candidates)
+            == (target_a, target_b)
+            and generated.ambiguous and not generated.truncated
+            and generated.selected is None and read_only),
         "distractor_ambiguous": (
             noisy_target is not None and noisy_distractor is not None
             and noisy_target.weight > noisy_distractor.weight
@@ -172,7 +176,7 @@ def probe(*, seed: int, trials: int) -> dict:
     results = [trial(rng, index) for index in range(trials)]
     totals = {key: sum(int(row[key]) for row in results) for key in results[0]}
     positives = ("specific_a", "specific_b", "novel_queries", "shared_cue_ambiguous",
-                 "four_independent_witnesses", "generated_from_nodule",
+                 "four_independent_witnesses", "generated_keeps_shared_alternative",
                  "distractor_ambiguous", "interposed_targets_visible",
                  "interposed_refuses_single_answer",
                  "joined_route_in_four_captures", "no_stitched_cross_capture_route")
