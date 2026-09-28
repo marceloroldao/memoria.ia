@@ -82,6 +82,12 @@ def replay(document: dict) -> dict:
     outcomes = [memory.generate(query(payload)) for payload in distinct]
     repeated_outcomes = [memory.generate(query(payload)) for payload in repeated]
     by_mode = lambda results: dict(sorted(Counter(result.mode for result in results).items()))
+    combined = [result for result in outcomes if result.mode == "COMBINED_RECALL"]
+    combined_disjoint = sum(
+        not ({candidate.symbols for candidate in result.association_evidence.candidates} &
+             {neighbor.symbols for neighbor in result.embedded_evidence.neighbors})
+        for result in combined
+    )
 
     # reply_to provides evaluation labels only. We never pass them to observe.
     by_origin = {(row["hierarchy_id"], row["source_id"], row["sequence"]): index
@@ -127,6 +133,8 @@ def replay(document: dict) -> dict:
             unique_modes=by_mode(outcomes), repeated_modes=by_mode(repeated_outcomes),
             ambiguous=sum(result.ambiguous for result in outcomes),
             truncated=sum(result.truncated for result in outcomes),
+            combined_disjoint_targets=combined_disjoint,
+            combined_shared_targets=len(combined) - combined_disjoint,
             selected_non_echo=sum(result.selected is not None and result.mode != "ECHO"
                                   for result in outcomes),
         ),

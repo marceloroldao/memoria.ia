@@ -375,6 +375,65 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertEqual(reversed_memory.generate((90, *a, 91)).mode, "ECHO")
         self.assertEqual(memory.generate((90, 1, 91)).mode, "ECHO")
 
+    def test_full_root_and_shorter_recurrent_cue_keep_distinct_targets(self):
+        memory = TrajectoryGenerationExperiment()
+        source, direct, recurrent = (1, 2, 3, 4), (7, 8, 9), (5, 6)
+        events = (
+            (source, "direct"), (direct, "direct"),
+            ((90, 2, 3, 91), "recurrent"), ((93, *recurrent, 94), "recurrent"),
+            ((92, 2, 3, 95), "recurrent"), ((96, *recurrent, 97), "recurrent"),
+        )
+        for index, (payload, stream) in enumerate(events):
+            memory.observe(payload, observation_id=str(index), stream_id=stream)
+        query = (100, *source, 101)
+        before = memory.snapshot(), memory.learning_state()
+
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "COMBINED_RECALL")
+        self.assertEqual([candidate.output for candidate in result.candidates],
+                         [direct, recurrent])
+        self.assertEqual([candidate.stop_reason for candidate in result.candidates],
+                         ["embedded_root_relation", "nodule_association"])
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        self.assertEqual(result.embedded_evidence.links[0].streams, ("direct",))
+        witnesses = result.association_evidence.candidates[0].witnesses
+        self.assertTrue(witnesses)
+        self.assertEqual({stream for _, _, stream in witnesses}, {"recurrent"})
+        narrow = memory.generate(query, beam_width=1)
+        self.assertEqual([candidate.output for candidate in narrow.candidates], [direct])
+        self.assertTrue(narrow.truncated)
+        self.assertIsNone(narrow.selected)
+        self.assertEqual(narrow.association_evidence.candidates[0].symbols, recurrent)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+        for index in range(6):
+            memory.observe(source, observation_id=f"copy:{index}",
+                           stream_id=f"unrelated:{index}")
+        self.assertEqual(memory.learning_state(), before[1])
+        self.assertEqual(memory.generate(query), result)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).generate(query), result)
+
+    def test_same_target_from_full_and_recurrent_cues_is_not_double_counted(self):
+        memory = TrajectoryGenerationExperiment()
+        source, target = (1, 2, 3, 4), (7, 8, 9)
+        events = (
+            (source, "direct"), (target, "direct"),
+            ((90, 2, 3, 91), "recurrent"), ((93, *target, 94), "recurrent"),
+            ((92, 2, 3, 95), "recurrent"), ((96, *target, 97), "recurrent"),
+        )
+        for index, (payload, stream) in enumerate(events):
+            memory.observe(payload, observation_id=str(index), stream_id=stream)
+
+        result = memory.generate((100, *source, 101))
+        self.assertEqual(result.mode, "COMBINED_RECALL")
+        self.assertEqual([candidate.output for candidate in result.candidates], [target])
+        self.assertEqual(result.selected, target)
+        self.assertFalse(result.ambiguous)
+        self.assertFalse(result.truncated)
+        self.assertEqual(result.embedded_evidence.neighbors[0].symbols, target)
+        self.assertEqual(result.association_evidence.candidates[0].symbols, target)
+
     def test_text_adapter_discovers_longer_recurrent_spans_without_word_rules(self):
         memory = TrajectoryGenerationExperiment()
         for i, text in enumerate((

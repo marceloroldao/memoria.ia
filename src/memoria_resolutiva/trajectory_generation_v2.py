@@ -137,7 +137,7 @@ class EmbeddedRootRecall:
 
 @dataclass(frozen=True, slots=True)
 class GenerationResult:
-    mode: str  # ECHO, CONTINUATION, TEMPORAL_RECALL, NODULE_RECALL, EMBEDDED_TEMPORAL_RECALL.
+    mode: str  # ECHO, CONTINUATION, TEMPORAL_RECALL, NODULE_RECALL, EMBEDDED_TEMPORAL_RECALL, COMBINED_RECALL.
     candidates: tuple[GenerationCandidate, ...]
     ambiguous: bool
     truncated: bool
@@ -470,8 +470,8 @@ class TrajectoryGenerationExperiment:
         Auto scale maximizes matched atomic span, then prefers the deeper view.
         A known end competes with continuation and prevents unbounded backoff.
         Whole-payload temporal recall is tried first. If no continuation
-        exists, a recurring nodule or an embedded observed payload can evoke
-        related nodules. Neither operation establishes a fact.
+        exists, a recurring nodule and an embedded observed payload can evoke
+        alternatives together. Neither operation establishes a fact.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
@@ -549,34 +549,52 @@ class TrajectoryGenerationExperiment:
             association = self.associated_nodules(
                 query, hierarchy_id=hierarchy, limit=beam_width,
             )
-            if association.candidates:
-                recall = tuple(
-                    GenerationCandidate(
-                        candidate.symbols, (),
-                        log(candidate.rank_score / association.total_rank_score),
-                        "nodule_association", (),
-                    )
-                    for candidate in association.candidates
-                )
-                return GenerationResult(
-                    "NODULE_RECALL", recall, association.ambiguous,
-                    association.truncated, association.depth,
-                    association_evidence=association,
-                )
             embedded = self.embedded_root_relations(
                 query, hierarchy_id=hierarchy, limit=beam_width,
             )
+            nodule_recall = tuple(
+                GenerationCandidate(
+                    candidate.symbols, (),
+                    log(candidate.rank_score / association.total_rank_score),
+                    "nodule_association", (),
+                )
+                for candidate in association.candidates
+            )
+            embedded_recall: tuple[GenerationCandidate, ...] = ()
             if embedded.neighbors:
                 total = sum(neighbor.weight for neighbor in embedded.neighbors)
-                recall = tuple(
+                embedded_recall = tuple(
                     GenerationCandidate(
                         neighbor.symbols, (), log(neighbor.weight / total),
                         "embedded_root_relation", (),
                     )
                     for neighbor in embedded.neighbors
                 )
+            if nodule_recall and embedded_recall:
+                # Scores are relative within each route family, not additive.
+                # A full observed cue comes first; all distinct nodule targets
+                # remain alternatives rather than silently disappearing.
+                combined: list[GenerationCandidate] = []
+                seen: set[tuple[int, ...]] = set()
+                for candidate in (*embedded_recall, *nodule_recall):
+                    if candidate.output not in seen:
+                        seen.add(candidate.output)
+                        combined.append(candidate)
                 return GenerationResult(
-                    "EMBEDDED_TEMPORAL_RECALL", recall, embedded.ambiguous,
+                    "COMBINED_RECALL", tuple(combined[:beam_width]),
+                    association.ambiguous or embedded.ambiguous or len(combined) > 1,
+                    association.truncated or embedded.truncated or len(combined) > beam_width,
+                    association.depth, embedded.neighbors, association, embedded,
+                )
+            if nodule_recall:
+                return GenerationResult(
+                    "NODULE_RECALL", nodule_recall, association.ambiguous,
+                    association.truncated, association.depth,
+                    association_evidence=association,
+                )
+            if embedded_recall:
+                return GenerationResult(
+                    "EMBEDDED_TEMPORAL_RECALL", embedded_recall, embedded.ambiguous,
                     embedded.truncated, 0, embedded.neighbors,
                     embedded_evidence=embedded,
                 )
