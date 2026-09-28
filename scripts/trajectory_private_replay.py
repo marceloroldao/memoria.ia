@@ -80,6 +80,15 @@ def replay(document: dict) -> dict:
         return (sentinel, *payload, sentinel + 1)
 
     outcomes = [memory.generate(query(payload)) for payload in distinct]
+    original_embedded = memory.embedded_root_relations
+    with patch.object(memory, "embedded_root_relations", side_effect=lambda payload, **options:
+                      original_embedded(payload, **{**options, "include_shorter": False})):
+        longest_only_outcomes = [memory.generate(query(payload)) for payload in distinct]
+    multiscale = [
+        (memory.embedded_root_relations(query(payload)),
+         memory.embedded_root_relations(query(payload), include_shorter=False))
+        for payload in distinct
+    ]
     repeated_outcomes = [memory.generate(query(payload)) for payload in repeated]
     stability = [memory.route_stability(query(payload)) for payload in distinct]
     by_mode = lambda results: dict(sorted(Counter(result.mode for result in results).items()))
@@ -167,6 +176,26 @@ def replay(document: dict) -> dict:
             combined_shared_targets=len(combined) - combined_disjoint,
             selected_non_echo=sum(result.selected is not None and result.mode != "ECHO"
                                   for result in outcomes),
+        ),
+        embedded_scale_comparison=dict(
+            queries_with_additional_cues=sum(
+                len(all_scales.cue_payload_ids) > len(longest.cue_payload_ids)
+                for all_scales, longest in multiscale
+            ),
+            queries_with_additional_destinations=sum(
+                bool({neighbor.payload_id for neighbor in all_scales.neighbors} -
+                     {neighbor.payload_id for neighbor in longest.neighbors})
+                for all_scales, longest in multiscale
+            ),
+            newly_truncated=sum(all_scales.truncated and not longest.truncated
+                                for all_scales, longest in multiscale),
+            queries_with_new_generated_destinations=sum(
+                bool({candidate.output for candidate in all_scales.candidates} -
+                     {candidate.output for candidate in longest.candidates})
+                for all_scales, longest in zip(outcomes, longest_only_outcomes)
+            ),
+            newly_ambiguous=sum(all_scales.ambiguous and not longest.ambiguous
+                                for all_scales, longest in zip(outcomes, longest_only_outcomes)),
         ),
         recurrent_route_stability=dict(
             queries_with_candidates=sum(bool(result.candidates) for result in stability),

@@ -422,7 +422,11 @@ class TrajectoryGenerationTests(unittest.TestCase):
         closer = TrajectoryGenerationExperiment.restore(before[0])
         closer.observe((4, 5, 6), observation_id="larger-successor", stream_id="other")
         self.assertEqual([neighbor.symbols for neighbor in
-                          closer.embedded_root_relations(query).neighbors], [(4, 5, 6)])
+                          closer.embedded_root_relations(query).neighbors],
+                         [(4, 5, 6), target])
+        self.assertEqual([neighbor.symbols for neighbor in
+                          closer.embedded_root_relations(
+                              query, include_shorter=False).neighbors], [(4, 5, 6)])
 
         peer = TrajectoryGenerationExperiment.restore(before[0])
         linked_peer = (4, 5, 6, 7, 8)  # Same length as the unlinked larger root.
@@ -433,7 +437,7 @@ class TrajectoryGenerationTests(unittest.TestCase):
         limited = peer.embedded_root_relations(mixed_query, limit=1)
         self.assertEqual(limited.cue_payload_ids, (peer_source.payload_id,))
         self.assertEqual([neighbor.symbols for neighbor in limited.neighbors], [peer_target])
-        self.assertFalse(limited.truncated)
+        self.assertTrue(limited.truncated)  # Shorter linked cue was outside the limit.
 
         split = TrajectoryGenerationExperiment()
         split.observe(cue, observation_id="source", stream_id="one")
@@ -446,6 +450,73 @@ class TrajectoryGenerationTests(unittest.TestCase):
         reversed_memory.observe(cue, observation_id="source", stream_id="one")
         reversed_memory.observe(larger, observation_id="larger", stream_id="other")
         self.assertEqual(reversed_memory.generate(query).mode, "ECHO")
+
+    def test_nested_linked_roots_keep_competing_destinations_across_scales(self):
+        memory = TrajectoryGenerationExperiment()
+        short, short_target = (1, 2, 3), (7, 8, 9)
+        long, long_target = (90, *short, 91), (4, 5, 6)
+        short_receipt = memory.observe(short, observation_id="short", stream_id="old")
+        memory.observe(short_target, observation_id="short-target", stream_id="old")
+        long_receipt = memory.observe(long, observation_id="long", stream_id="new")
+        memory.observe(long_target, observation_id="long-target", stream_id="new")
+        query = (88, *long, 92)
+        before = memory.snapshot(), memory.learning_state()
+
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "EMBEDDED_TEMPORAL_RECALL")
+        self.assertEqual([candidate.output for candidate in result.candidates],
+                         [long_target, short_target])
+        self.assertEqual([candidate.log_score for candidate in result.candidates],
+                         [0.0, 0.0])  # No cross-width probability ratio.
+        self.assertEqual(result.embedded_evidence.cue_payload_ids,
+                         (long_receipt.payload_id, short_receipt.payload_id))
+        self.assertEqual([link.streams for link in result.embedded_evidence.links],
+                         [("new",), ("old",)])
+        self.assertEqual([neighbor.weight for neighbor in
+                          result.embedded_evidence.neighbors], [1.0, 1.0])
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        narrow = memory.generate(query, beam_width=1)
+        self.assertEqual([candidate.output for candidate in narrow.candidates],
+                         [long_target])
+        self.assertTrue(narrow.truncated)
+        self.assertIsNone(narrow.selected)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+        for i in range(4):
+            memory.observe(long, observation_id=f"copy:{i}", stream_id=f"copy:{i}")
+        self.assertEqual(memory.learning_state(), before[1])
+        self.assertEqual(memory.generate(query), result)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).generate(query), result)
+
+        split = TrajectoryGenerationExperiment()
+        split.observe(short, observation_id="short", stream_id="old")
+        split.observe(short_target, observation_id="target", stream_id="elsewhere")
+        split.observe(long, observation_id="long", stream_id="new")
+        split.observe(long_target, observation_id="target-long", stream_id="new")
+        self.assertEqual([candidate.output for candidate in split.generate(query).candidates],
+                         [long_target])
+        reversed_memory = TrajectoryGenerationExperiment()
+        reversed_memory.observe(short_target, observation_id="target", stream_id="old")
+        reversed_memory.observe(short, observation_id="short", stream_id="old")
+        reversed_memory.observe(long, observation_id="long", stream_id="new")
+        reversed_memory.observe(long_target, observation_id="long-target", stream_id="new")
+        self.assertEqual([candidate.output for candidate in
+                          reversed_memory.generate(query).candidates], [long_target])
+
+        # One destination can be witnessed from both widths in a single
+        # capture. Its displayed weight comes from the longer cue once.
+        shared = TrajectoryGenerationExperiment()
+        shared.observe(short, observation_id="short", stream_id="shared")
+        shared.observe(long, observation_id="long", stream_id="shared")
+        shared.observe(short_target, observation_id="target", stream_id="shared")
+        shared_links = shared.embedded_root_relations(query)
+        matching = [neighbor for neighbor in shared_links.neighbors
+                    if neighbor.symbols == short_target]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0].weight, 1.0)
+        self.assertEqual(sum(link.target_payload_id == matching[0].payload_id
+                             for link in shared_links.links), 2)
 
     def test_embedded_roots_expose_competition_and_capture_boundaries(self):
         memory = TrajectoryGenerationExperiment()

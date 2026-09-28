@@ -86,7 +86,10 @@ def trial(rng: Random) -> dict[str, bool]:
     nested_result = embedded_memory.generate(nested_query)
     closer_memory = TrajectoryGenerationExperiment.restore(embedded_state[0])
     closer_memory.observe(interposed, observation_id="larger-target", stream_id="second")
+    closer_state = (closer_memory.snapshot(), closer_memory.learning_state())
     closer_result = closer_memory.embedded_root_relations(nested_query)
+    closer_generated = closer_memory.generate(nested_query)
+    closer_limited = closer_memory.generate(nested_query, beam_width=1)
     split_embedded = TrajectoryGenerationExperiment()
     split_embedded.observe(cue, observation_id="cue", stream_id="one")
     split_embedded.observe(target, observation_id="target", stream_id="two")
@@ -155,9 +158,21 @@ def trial(rng: Random) -> dict[str, bool]:
             and nested_result.embedded_evidence.links[0].streams == ("first",)
             and (embedded_memory.snapshot(), embedded_memory.learning_state())
             == embedded_state),
-        linked_embedded_parent_takes_precedence=(
+        linked_embedded_parent_preserves_shorter_link=(
             tuple(neighbor.symbols for neighbor in closer_result.neighbors)
-            == (interposed,)),
+            == (interposed, target)
+            and closer_result.cue_payload_ids[1] == embedded_source.payload_id
+            and closer_generated.mode == "EMBEDDED_TEMPORAL_RECALL"
+            and tuple(candidate.output for candidate in closer_generated.candidates)
+            == (interposed, target)
+            and closer_generated.ambiguous and closer_generated.selected is None
+            and (closer_memory.snapshot(), closer_memory.learning_state()) == closer_state
+            and TrajectoryGenerationExperiment.restore(closer_state[0])
+            .generate(nested_query) == closer_generated),
+        nested_limit_refuses_to_select=(
+            tuple(candidate.output for candidate in closer_limited.candidates)
+            == (interposed,) and closer_limited.truncated
+            and closer_limited.selected is None),
         split_embedded_capture_stays_unlinked=(
             split_embedded.generate(nested_query).mode == "ECHO"),
         after_input_before_interposition=(before_interposition.selected == target),

@@ -26,6 +26,8 @@ As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
 | Modos após união anterior: só nódulo / só raiz / ambos / eco | 9 / 18 / 30 / 11 |
 | Modos com recuo a pistas menores: só nódulo / só raiz / ambos / eco | 14 / 17 / 31 / 6 |
 | Modos após recuo de raiz embutida sem sucessor: só nódulo / só raiz / ambos / eco | 13 / 17 / 32 / 6 |
+| Consultas com raiz menor ligada além da maior / destino adicional | 1 / 1 |
+| Novos destinos na geração / novos casos ambíguos / novos truncamentos | 1 / 0 / 0 |
 | Ambos com destinos disjuntos / algum destino comum | 31 / 1 |
 | Consultas com ambiguidade, antes / agora | 47 / 53 |
 | Consultas com truncamento, antes / agora | 13 / 15 |
@@ -57,6 +59,13 @@ exibe candidatos tanto de nódulo recorrente quanto de raiz contida, em vez
 de mostrar apenas o nódulo. As 99 consultas cronológicas e a avaliação do
 único par explícito não mudaram. Esse novo candidato também pode ser uma
 distração; o export não tem rótulos suficientes para medir acurácia.
+
+Na comparação seguinte, manter também raízes menores **já ligadas** acrescentou
+um destino em uma das 68 consultas inéditas. Nenhum modo, seleção, contagem de
+ambiguidade ou truncamento mudou: a consulta já tinha alternativas. As 99
+consultas cronológicas e o único par explícito mantiveram seus agregados.
+Essa rota adicional tem testemunha de ordem na captura; o export não informa
+se ela seria uma resposta adequada.
 
 O export contém **um** `reply_to` explícito resolúvel. Ele foi usado **só
 depois** do aprendizado para conferir a evocação; não foi passado a `observe`

@@ -5,6 +5,7 @@ No semantic labels, manual reply links, language model, or truth promotion.
 """
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import asdict, dataclass
 from hashlib import blake2b
 import json
@@ -342,17 +343,21 @@ class TrajectoryGenerationExperiment:
 
     def embedded_root_relations(
         self, payload: Iterable[int], *, hierarchy_id: str = "default",
-        limit: int = 8,
+        limit: int = 8, include_shorter: bool = True,
     ) -> EmbeddedRootRecall:
         """Evoked whole-payload roots contained in a new input, read-only.
 
         One observed root is already a nodule. Exact copies cannot add votes;
-        use the longest width that has a witnessed temporal successor.
+        linked roots at different widths remain distinct witnesses. A target
+        shared across widths inherits its most specific root's weight rather
+        than counting the same destination twice.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
         if type(limit) is not int or limit < 1:
             raise ValueError("limit must be a positive integer")
+        if type(include_shorter) is not bool:
+            raise ValueError("include_shorter must be a boolean")
         matches = []
         for hid, address in self._learned:
             if hid != hierarchy:
@@ -366,39 +371,47 @@ class TrajectoryGenerationExperiment:
         if not matches:
             return EmbeddedRootRecall((), (), (), False, False)
         matches.sort(key=lambda item: item[1])
-        linked: list[tuple[str, tuple[int, ...], tuple[TemporalNeighbor, ...]]] = []
+        linked: list[tuple[int, str, tuple[TemporalNeighbor, ...]]] = []
         for width in sorted({size for size, _, _ in matches}, reverse=True):
-            linked = [
-                (address, pattern, neighbors)
+            at_width = [
+                (width, address, neighbors)
                 for size, address, pattern in matches
                 if size == width
                 if (neighbors := self.temporal_neighbors(pattern, hierarchy_id=hierarchy))
             ]
-            if linked:
+            linked.extend(at_width)
+            if at_width and not include_shorter:
                 break
         if not linked:
             return EmbeddedRootRecall((), (), (), False, False)
         truncated = len(linked) > limit
         active = linked[:limit]
         links: list[EmbeddedRootLink] = []
-        weights: dict[str, float] = {}
+        # Compare weights only among cues of the same width. Cross-width
+        # weights are not calibrated, so specificity orders the layers.
+        width_counts = Counter(width for width, _, _ in active)
+        ranks: dict[str, tuple[int, float]] = {}
         streams: dict[str, set[str]] = {}
-        for address, _pattern, neighbors in active:
+        for width, address, neighbors in active:
             for neighbor in neighbors:
                 links.append(EmbeddedRootLink(
                     address, neighbor.payload_id, neighbor.weight, neighbor.streams,
                 ))
-                weights[neighbor.payload_id] = (
-                    weights.get(neighbor.payload_id, 0.0) + neighbor.weight / len(active)
-                )
+                rank = (width, neighbor.weight / width_counts[width])
+                previous = ranks.get(neighbor.payload_id)
+                if previous is None or rank[0] > previous[0]:
+                    ranks[neighbor.payload_id] = rank
+                elif rank[0] == previous[0]:
+                    ranks[neighbor.payload_id] = (width, previous[1] + rank[1])
                 streams.setdefault(neighbor.payload_id, set()).update(neighbor.streams)
         targets = tuple(
-            TemporalNeighbor(address, self.expand(address), weight,
+            TemporalNeighbor(address, self.expand(address), ranks[address][1],
                              tuple(sorted(streams[address])))
-            for address, weight in sorted(weights.items(), key=lambda item: (-item[1], item[0]))
+            for address in sorted(ranks, key=lambda address:
+                                  (-ranks[address][0], -ranks[address][1], address))
         )
         return EmbeddedRootRecall(
-            tuple(address for address, _, _ in active), tuple(links), targets[:limit],
+            tuple(address for _, address, _ in active), tuple(links), targets[:limit],
             len(linked) > 1 or len(targets) > 1,
             truncated or len(targets) > limit,
         )
@@ -631,10 +644,20 @@ class TrajectoryGenerationExperiment:
             )
             embedded_recall: tuple[GenerationCandidate, ...] = ()
             if embedded.neighbors:
-                total = sum(neighbor.weight for neighbor in embedded.neighbors)
+                source_width: dict[str, int] = {}
+                for link in embedded.links:
+                    width = len(self.expand(link.cue_payload_id))
+                    source_width[link.target_payload_id] = max(
+                        source_width.get(link.target_payload_id, 0), width,
+                    )
+                totals: dict[int, float] = {}
+                for neighbor in embedded.neighbors:
+                    width = source_width[neighbor.payload_id]
+                    totals[width] = totals.get(width, 0.0) + neighbor.weight
                 embedded_recall = tuple(
                     GenerationCandidate(
-                        neighbor.symbols, (), log(neighbor.weight / total),
+                        neighbor.symbols, (),
+                        log(neighbor.weight / totals[source_width[neighbor.payload_id]]),
                         "embedded_root_relation", (),
                     )
                     for neighbor in embedded.neighbors

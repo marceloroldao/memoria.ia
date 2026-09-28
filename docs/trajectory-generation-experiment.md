@@ -147,6 +147,16 @@ aparecido uma vez. Se uma consulta inédita contém essa sequência inteira,
 entrada posterior na mesma captura**. Se as raízes maiores não tiverem
 sucessor, recua para o próximo comprimento. Raízes sem ligação não consomem
 o limite de candidatos nem diluem o peso de outras raízes do mesmo tamanho.
+Mesmo que uma raiz maior tenha sucessor, as raízes menores contidas também
+preservam suas próprias ligações. Os destinos da raiz maior aparecem primeiro;
+pesos só são comparados entre raízes do mesmo comprimento. Um destino que
+aparece em mais de uma escala é listado uma vez, com o peso da escala mais
+específica e as testemunhas de ambas nas ligações. O limite descarta primeiro
+as raízes menores e marca truncamento, sem permitir seleção única. O parâmetro
+`include_shorter=False` reproduz a leitura anterior de uma só escala para
+comparação diagnóstica. O escore de geração da raiz embutida é normalizado
+somente dentro do comprimento de origem; não representa probabilidade entre
+comprimentos diferentes.
 `EMBEDDED_TEMPORAL_RECALL` expõe a raiz de origem, cada raiz de destino, peso
 e capturas testemunhas quando não há outra família de candidatos. Uma consulta
 que coincide com a raiz completa pode evocar suas entradas posteriores por
@@ -167,11 +177,10 @@ Duas raízes ou dois destinos concorrentes também mantêm
 `ambiguous`; limite de busca mantém `truncated` e impede `selected`. O modo
 também cobre uma nova consulta que termina exatamente com a raiz conhecida.
 Não usa `reply_to` e não converte proximidade temporal em fato: o sucessor
-pode ser uma distração. Raízes menores com relações não são consultadas se
-uma raiz contida maior **já tiver sucessor**; comparar destinos de comprimentos
-diferentes exige calibração. Se a união exceder o limite
-de candidatos, todas as evidências continuam inspecionáveis e o resultado
-marca truncamento. O cálculo hoje ocorre durante a consulta. Organizá-lo em
+pode ser uma distração. A prioridade por comprimento é uma ordem de exibição,
+sem calibração de pesos entre escalas. Se a união exceder o limite
+de candidatos, as evidências efetivamente coletadas continuam inspecionáveis e
+o resultado marca truncamento. O cálculo hoje ocorre durante a consulta. Organizá-lo em
 segundo plano continua sendo uma etapa futura.
 
 Na [prova cronológica](trajectory-episode-proof.md#prova-cronológica-de-evocação),
