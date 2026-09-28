@@ -12,6 +12,7 @@ on:
       - 'scripts/trajectory_episode_probe.py'
       - 'scripts/trajectory_online_probe.py'
       - 'scripts/trajectory_private_replay.py'
+      - 'scripts/trajectory_stability_probe.py'
       - '.github/workflows/trajectory-generation-proof.yml'
   workflow_dispatch:
 
@@ -45,6 +46,10 @@ jobs:
         run: |
           python scripts/trajectory_online_probe.py --seed 9271902
           python scripts/trajectory_online_probe.py --seed 20260930
+      - name: Recurrent route stability without factual selection
+        run: |
+          python scripts/trajectory_stability_probe.py --seed 9281903
+          python scripts/trajectory_stability_probe.py --seed 20261001
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field

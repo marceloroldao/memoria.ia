@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from hashlib import blake2b
 import json
-from math import isfinite, log
+from math import isclose, isfinite, log
 from typing import Iterable
 
 from .compositional_association_v2 import (
@@ -133,6 +133,43 @@ class EmbeddedRootRecall:
     neighbors: tuple[TemporalNeighbor, ...]
     ambiguous: bool
     truncated: bool
+
+
+@dataclass(frozen=True, slots=True)
+class RouteStabilityCandidate:
+    symbols: tuple[int, ...]
+    weight: float
+    weight_share: float
+    rank_share: float
+    witness_pairs: int
+    independent_streams: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class RouteStability:
+    candidates: tuple[RouteStabilityCandidate, ...]
+    ambiguous: bool
+    truncated: bool
+
+    @property
+    def strongest(self) -> tuple[int, ...] | None:
+        """Unique highest structural rank, without asserting truth."""
+        if not self.candidates or self.truncated:
+            return None
+        first = self.candidates[0]
+        if len(self.candidates) > 1 and isclose(
+            first.rank_share, self.candidates[1].rank_share,
+        ):
+            return None
+        return first.symbols
+
+    @property
+    def cross_stream_strongest(self) -> tuple[int, ...] | None:
+        """Unique strongest route witnessed in at least two captures."""
+        strongest = self.strongest
+        if strongest is None or len(self.candidates[0].independent_streams) < 2:
+            return None
+        return strongest
 
 
 @dataclass(frozen=True, slots=True)
@@ -373,6 +410,32 @@ class TrajectoryGenerationExperiment:
         return self._compositional_view(hierarchy).recall(
             query, channel=channel, limit=limit,
         )
+
+    def route_stability(
+        self, payload: Iterable[int], *, hierarchy_id: str = "default",
+        limit: int = 8,
+    ) -> RouteStability:
+        """Measure recurrent temporal routes without promoting one to fact.
+
+        Each witness is an ordered pair of distinct payload roots in one
+        capture. Exact payload copies never enter the derived learning view.
+        Rank shares are relative structural evidence, not probabilities.
+        """
+        recall = self.associated_nodules(
+            payload, hierarchy_id=hierarchy_id, channel="temporal", limit=limit,
+        )
+        total_weight = sum(candidate.weight for candidate in recall.candidates)
+        candidates = tuple(
+            RouteStabilityCandidate(
+                candidate.symbols, candidate.weight,
+                candidate.weight / total_weight,
+                candidate.rank_score / recall.total_rank_score,
+                len(candidate.witnesses),
+                tuple(sorted({stream for _, _, stream in candidate.witnesses})),
+            )
+            for candidate in recall.candidates
+        )
+        return RouteStability(candidates, recall.ambiguous, recall.truncated)
 
     def trace_nodule_paths(
         self, payload: Iterable[int], *, hierarchy_id: str = "default",

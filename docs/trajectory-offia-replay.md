@@ -29,6 +29,9 @@ As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
 | Consultas com ambiguidade, antes / depois | 38 / 47 |
 | Consultas com truncamento, antes / depois | 7 / 13 |
 | Saídas únicas diferentes de eco, antes / depois | 19 / 10 |
+| Consultas com rotas recorrentes / ambíguas | 39 / 27 |
+| Liderança estrutural sem empate / entre duas ou mais capturas | 32 / 8 |
+| Máximo de capturas independentes para uma rota | 5 |
 
 Uma segunda passagem consulta **cada entrada original antes de aprendê-la**.
 Ela usa a mesma tabela fixa de endereços opacos para tokens, mas cada consulta
@@ -37,6 +40,12 @@ vê somente as observações anteriores. Das 99 consultas online: 53 deram eco,
 ambiguidade, 3 truncamento e 7 saídas estruturais únicas diferentes de eco.
 Não há rótulo de resposta para essas 99 entradas: esses números medem modos
 de operação, não acertos.
+
+A medição `route_stability` encontra um primeiro colocado estrutural em 32
+consultas, mas somente 8 deles são testemunhados em duas ou mais capturas.
+Esse contraste impede interpretar automaticamente o maior peso como consenso.
+Detalhes e controles estão na
+[prova de estabilidade](trajectory-stability-proof.md).
 
 O export contém **um** `reply_to` explícito resolúvel. Ele foi usado **só
 depois** do aprendizado para conferir a evocação; não foi passado a `observe`

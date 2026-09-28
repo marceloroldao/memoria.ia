@@ -81,6 +81,7 @@ def replay(document: dict) -> dict:
 
     outcomes = [memory.generate(query(payload)) for payload in distinct]
     repeated_outcomes = [memory.generate(query(payload)) for payload in repeated]
+    stability = [memory.route_stability(query(payload)) for payload in distinct]
     by_mode = lambda results: dict(sorted(Counter(result.mode for result in results).items()))
     combined = [result for result in outcomes if result.mode == "COMBINED_RECALL"]
     combined_disjoint = sum(
@@ -166,6 +167,19 @@ def replay(document: dict) -> dict:
             combined_shared_targets=len(combined) - combined_disjoint,
             selected_non_echo=sum(result.selected is not None and result.mode != "ECHO"
                                   for result in outcomes),
+        ),
+        recurrent_route_stability=dict(
+            queries_with_candidates=sum(bool(result.candidates) for result in stability),
+            ambiguous=sum(result.ambiguous for result in stability),
+            unique_strongest=sum(result.strongest is not None for result in stability),
+            cross_stream_strongest=sum(
+                result.cross_stream_strongest is not None for result in stability
+            ),
+            maximum_independent_streams=max(
+                (len(candidate.independent_streams)
+                 for result in stability for candidate in result.candidates),
+                default=0,
+            ),
         ),
         online_before_observe=dict(
             modes=by_mode(online_outcomes),

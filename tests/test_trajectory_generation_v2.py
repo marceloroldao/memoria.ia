@@ -523,6 +523,60 @@ class TrajectoryGenerationTests(unittest.TestCase):
                          [exact, embedded])
         self.assertIsNone(narrow.selected)
 
+    def test_route_stability_counts_distinct_contexts_without_deciding_truth(self):
+        memory = TrajectoryGenerationExperiment()
+        cue, frequent, competing = (1, 2, 3), (7, 8, 9), (4, 5, 6)
+        observation = 0
+        for label, target, count in (("frequent", frequent, 4),
+                                     ("competing", competing, 2)):
+            for index in range(count):
+                stream = f"{label}:{index}"
+                memory.observe((1000 + observation, *cue, 2000 + observation),
+                               observation_id=f"{observation}:source", stream_id=stream)
+                memory.observe((3000 + observation, *target, 4000 + observation),
+                               observation_id=f"{observation}:target", stream_id=stream)
+                observation += 1
+        query = (9000, *cue, 9001)
+        before = memory.route_stability(query)
+
+        self.assertTrue(before.ambiguous)
+        self.assertFalse(before.truncated)
+        self.assertEqual(before.strongest, frequent)
+        self.assertEqual(before.cross_stream_strongest, frequent)
+        self.assertEqual([candidate.symbols for candidate in before.candidates],
+                         [frequent, competing])
+        self.assertEqual([candidate.witness_pairs for candidate in before.candidates],
+                         [4, 2])
+        self.assertEqual([len(candidate.independent_streams)
+                          for candidate in before.candidates], [4, 2])
+        self.assertAlmostEqual(before.candidates[0].weight_share, 2 / 3)
+        self.assertAlmostEqual(before.candidates[1].weight_share, 1 / 3)
+        self.assertAlmostEqual(before.candidates[0].rank_share, 2 / 3)
+        self.assertAlmostEqual(before.candidates[1].rank_share, 1 / 3)
+        generated = memory.generate(query)
+        self.assertEqual(generated.mode, "NODULE_RECALL")
+        self.assertTrue(generated.ambiguous)
+        self.assertIsNone(generated.selected)
+
+        learned = memory.learning_state()
+        repeated_payload = (1000, *cue, 2000)
+        for index in range(12):
+            memory.observe(repeated_payload, observation_id=f"copy:{index}",
+                           stream_id=f"copy-stream:{index}")
+        self.assertEqual(memory.learning_state(), learned)
+        self.assertEqual(memory.route_stability(query), before)
+
+        stream = "frequent:new"
+        memory.observe((8000, *cue, 8001), observation_id="new:source", stream_id=stream)
+        memory.observe((8002, *frequent, 8003), observation_id="new:target", stream_id=stream)
+        after = memory.route_stability(query)
+        self.assertEqual([candidate.witness_pairs for candidate in after.candidates], [5, 2])
+        self.assertGreater(after.candidates[0].rank_share, before.candidates[0].rank_share)
+        self.assertTrue(after.ambiguous)
+        self.assertIsNone(memory.generate(query).selected)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).route_stability(query), after)
+
     def test_text_adapter_discovers_longer_recurrent_spans_without_word_rules(self):
         memory = TrajectoryGenerationExperiment()
         for i, text in enumerate((
