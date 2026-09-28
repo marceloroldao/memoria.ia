@@ -252,41 +252,52 @@ class CompositionalAssociationView:
         ]
         if not matched:
             return CompositionalRecall(channel, 0, (), (), False, False)
-        size = max(width for width, _, _ in matched)
-        by_depth: dict[int, tuple[str, ...]] = {
-            depth: tuple(sorted(address for width, level, address in matched
-                                if width == size and level == depth))
-            for depth in sorted({level for width, level, _ in matched if width == size})
-        }
-        # An identical atomic cue can exist at several abstraction levels.
-        # A deeper catalogue need not contain every shorter associated target:
-        # merge alternatives without adding the same evidence more than once.
-        representatives: dict[tuple[int, ...], tuple[int, AssociatedNodule]] = {}
-        for depth, cues in by_depth.items():
-            for candidate in self._recall_depth(depth, cues, channel):
-                prior = representatives.get(candidate.symbols)
-                if prior is None or (candidate.weight, depth) > (prior[1].weight, prior[0]):
-                    representatives[candidate.symbols] = depth, candidate
-        candidates = tuple(candidate for _, candidate in representatives.values())
-        candidates = tuple(
-            candidate for candidate in candidates
-            if not any(
-                len(other.symbols) > len(candidate.symbols)
-                and self._contained(candidate.symbols, other.symbols)
-                and candidate.witnesses == other.witnesses
-                and other.weight >= candidate.weight
-                for other in candidates
+        empty: CompositionalRecall | None = None
+        for size in sorted({width for width, _, _ in matched}, reverse=True):
+            by_depth: dict[int, tuple[str, ...]] = {
+                depth: tuple(sorted(address for width, level, address in matched
+                                    if width == size and level == depth))
+                for depth in sorted({level for width, level, _ in matched if width == size})
+            }
+            cues_at_width = tuple(address for cues in by_depth.values() for address in cues)
+            if empty is None:
+                empty = CompositionalRecall(channel, max(by_depth), cues_at_width,
+                                            (), False, False)
+            # A cue can be represented at several depths. Keep each target
+            # once, and only fall back to a shorter cue if this entire width
+            # has no outgoing candidate. A longer repeated wrapper with no
+            # successor must not erase a previously witnessed shorter route.
+            representatives: dict[tuple[int, ...], tuple[int, AssociatedNodule]] = {}
+            for depth, cues in by_depth.items():
+                for candidate in self._recall_depth(depth, cues, channel):
+                    prior = representatives.get(candidate.symbols)
+                    if prior is None or (candidate.weight, depth) > (prior[1].weight, prior[0]):
+                        representatives[candidate.symbols] = depth, candidate
+            candidates = tuple(
+                candidate for _, candidate in representatives.values()
+                if not self._contained(candidate.symbols, query)
             )
-        )
-        candidates = tuple(sorted(
-            candidates, key=lambda item: (-item.rank_score, -item.weight, item.address),
-        ))
-        return CompositionalRecall(
-            channel, max(by_depth),
-            tuple(address for cues in by_depth.values() for address in cues),
-            candidates[:limit], len(candidates) > 1, len(candidates) > limit,
-            sum(candidate.rank_score for candidate in candidates),
-        )
+            candidates = tuple(
+                candidate for candidate in candidates
+                if not any(
+                    len(other.symbols) > len(candidate.symbols)
+                    and self._contained(candidate.symbols, other.symbols)
+                    and candidate.witnesses == other.witnesses
+                    and other.weight >= candidate.weight
+                    for other in candidates
+                )
+            )
+            if candidates:
+                candidates = tuple(sorted(
+                    candidates, key=lambda item: (-item.rank_score, -item.weight, item.address),
+                ))
+                return CompositionalRecall(
+                    channel, max(by_depth), cues_at_width,
+                    candidates[:limit], len(candidates) > 1, len(candidates) > limit,
+                    sum(candidate.rank_score for candidate in candidates),
+                )
+        assert empty is not None
+        return empty
 
     def _recall_depth(
         self, depth: int, cues: tuple[str, ...], channel: str,

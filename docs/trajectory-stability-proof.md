@@ -42,13 +42,15 @@ python scripts/trajectory_stability_probe.py --seed 9281903
 python scripts/trajectory_stability_probe.py --seed 20261001
 ```
 
-No replay agregado do export real, 39 das 68 consultas inéditas possuem rotas
-recorrentes, 27 têm mais de um destino e 32 possuem um primeiro colocado sem
-empate. Apenas 8 primeiros colocados têm testemunhas em pelo menos duas
-capturas; o máximo observado foi 5 capturas. Isso mostra por que liderança de
+No replay agregado do export real, 45 das 68 consultas inéditas possuem rotas
+recorrentes, 33 têm mais de um destino e 35 possuem um primeiro colocado sem
+empate. Apenas 6 primeiros colocados têm testemunhas em pelo menos duas
+capturas; o máximo observado foi 5 capturas. O recuo para uma pista menor
+sem relação no trecho maior mudou esses números (antes: 39, 27, 32 e 8,
+respectivamente). Isso mostra por que liderança de
 peso, recorrência entre capturas e seleção de resposta precisam permanecer
 medidas distintas. O export tem somente um vínculo explícito e não permite
-medir acurácia desses 39 casos.
+medir acurácia desses 45 casos.
 
 O peso ainda depende do decaimento por distância e o escore de ordenação usa
 um prior de comprimento do destino. Não há calibração estatística, confiança

@@ -119,11 +119,15 @@ de aprendizado. Origens `(payload anterior, payload posterior, captura)`
 acompanham as relações encontradas; relações internas usam o mesmo payload
 nas duas pontas. Essas origens são estruturais, não votos de verdade.
 
-`associated_nodules` retorna os nódulos ligados ao trecho recorrente mais
-longo contido na consulta. Consulta todas as escalas que representam esse
-mesmo trecho e reúne os alvos distintos. Uma representação repetida do mesmo
-alvo em outra escala não soma um novo voto; o campo `depth` informa a escala
-mais profunda consultada. Exibe canal, escala, peso e origens. Nódulos curtos
+`associated_nodules` procura primeiro o trecho recorrente mais longo contido
+na consulta **que tenha um destino associado**. Se o trecho maior não tiver
+saída, recua para o próximo comprimento; não transforma a ausência de relação
+num bloqueio das rotas menores. Consulta todas as escalas que representam o
+mesmo trecho e reúne os alvos distintos. Um alvo já contido na própria
+consulta não vira outra evocação dela mesma. Uma representação repetida do
+mesmo alvo em outra escala não soma um novo voto; o campo `depth` informa a
+escala mais profunda do trecho usado. Exibe canal, escala, peso e origens.
+Nódulos curtos
 contidos em outro com **as mesmas origens** deixam de disputar com a versão
 maior; os que têm origens distintas permanecem. Para ordenar alternativas,
 usa `peso × comprimento do alvo`: um prior de especificidade não calibrado.
@@ -149,7 +153,10 @@ que coincide com a raiz completa pode evocar suas entradas posteriores por
 somar seus pesos. A raiz exata vem primeiro, seguida pela raiz embutida e pelos
 nódulos recorrentes. Se uma continuação também existe, o modo é
 `COMBINED_ROUTES`: as ramificações de continuação aparecem primeiro, inclusive
-o término observado concorrente, seguidas pelas evocações. Os passos da
+o término observado concorrente, seguidas pelas evocações. Se o limite da
+busca descartar uma continuação e restar somente o término observado, a rota
+evocada ainda aparece como evidência; o resultado permanece truncado e sem
+seleção. Os passos da
 continuação e as testemunhas das evocações permanecem inspecionáveis; os
 escores continuam relativos **dentro de cada família** e não são comparáveis
 entre elas. Um destino coincidente é mostrado uma vez; destinos diferentes
@@ -223,10 +230,12 @@ Limites iniciais, configuráveis:
 
 A busca informa limites de passos e descarte de hipóteses com `truncated`.
 Não transforma um desempate por endereço em resposta confirmada. Ainda pode
-produzir continuações sem sentido por coincidência estrutural. Quando a busca
-de continuação termina somente em ramificações ambíguas ou truncadas sem
-avançar, a evocação associativa ainda não é consultada; essa fronteira permanece
-explícita na versão experimental.
+produzir continuações sem sentido por coincidência estrutural. Quando o trecho
+maior tem **alguma** saída, a busca por nódulos não reúne automaticamente
+destinos dos trechos menores; comparar a evidência entre comprimentos exige
+uma calibração posterior. A busca de continuações também pode cortar rotas;
+as testemunhas de uma evocação independente continuam inspecionáveis, mas
+não recuperam a ramificação descartada.
 
 ## Evidência do gate
 

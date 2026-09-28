@@ -57,6 +57,22 @@ def trial(rng: Random) -> dict[str, bool]:
         continuation_memory.learning_state() == continuation_state[1]
         and continuation_memory.generate(new_input) == with_continuation
     )
+    longer_cue_memory = TrajectoryGenerationExperiment.restore(continuation_state[0])
+    longer_cue_memory.observe(new_input, observation_id="longer-cue",
+                              stream_id="new-capture")
+    longer_association = longer_cue_memory.associated_nodules(new_input)
+    longer_result = longer_cue_memory.generate(new_input)
+
+    pruned_memory = TrajectoryGenerationExperiment()
+    pruned_memory.observe(new_input, observation_id="source", stream_id="live")
+    pruned_memory.observe(interposed, observation_id="successor", stream_id="live")
+    pruned_memory.observe(continuation_source, observation_id="extension",
+                          stream_id="unrelated")
+    for index in range(3):
+        pruned_memory.observe((rng.randrange(5_000_000, 6_000_000), *new_input),
+                              observation_id=f"end:{index}", stream_id=f"end:{index}")
+    pruned_state = (pruned_memory.snapshot(), pruned_memory.learning_state())
+    pruned_result = pruned_memory.generate(new_input, beam_width=1)
     memory.observe(new_input, observation_id="cue:2", stream_id="episode:2")
     before_interposition = memory.generate(new_input)
     prefix = memory.snapshot()
@@ -100,6 +116,19 @@ def trial(rng: Random) -> dict[str, bool]:
         continuation_reopen_matches=(
             TrajectoryGenerationExperiment.restore(continuation_state[0])
             .generate(new_input) == with_continuation),
+        longer_cue_without_successor_keeps_shorter_route=(
+            longer_association.selected == target
+            and longer_result.mode == "COMBINED_ROUTES"
+            and target in (candidate.output for candidate in longer_result.candidates)
+            and longer_result.selected is None),
+        pruned_end_keeps_root_successor=(
+            pruned_result.mode == "COMBINED_ROUTES"
+            and tuple(candidate.output for candidate in pruned_result.candidates)
+            == (new_input,)
+            and pruned_result.temporal_evidence[0].symbols == interposed
+            and pruned_result.ambiguous and pruned_result.truncated
+            and pruned_result.selected is None
+            and (pruned_memory.snapshot(), pruned_memory.learning_state()) == pruned_state),
         after_input_before_interposition=(before_interposition.selected == target),
         unrelated_capture_does_not_create_exact_root_link=(
             split_result.mode == "NODULE_RECALL" and split_result.selected == target),

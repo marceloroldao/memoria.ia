@@ -589,11 +589,9 @@ class TrajectoryGenerationExperiment:
                 query + continuation, continuation, score, reason or "step_limit", evidence,
             ))
         has_continuation = any(candidate.continuation for candidate in candidates)
-        can_recall = has_continuation or (
-            not ambiguous and not truncated and all(
-                candidate.stop_reason in ("no_route", "observed_end")
-                for candidate in candidates
-            )
+        can_recall = has_continuation or all(
+            candidate.stop_reason in ("no_route", "observed_end")
+            for candidate in candidates
         )
         if can_recall:
             neighbors = self.temporal_neighbors(query, hierarchy_id=hierarchy)
@@ -631,9 +629,14 @@ class TrajectoryGenerationExperiment:
                     )
                     for neighbor in embedded.neighbors
                 )
-            continuation_candidates = tuple(candidates) if has_continuation else ()
+            # A pruned search may retain only an observed end. Keep that
+            # surviving branch beside independent recall evidence; pruning
+            # still prevents a unique selection.
+            frontier_candidates = tuple(candidates) if (
+                has_continuation or ambiguous or truncated
+            ) else ()
             family_count = sum(bool(family) for family in (
-                continuation_candidates, temporal_recall, embedded_recall, nodule_recall,
+                frontier_candidates, temporal_recall, embedded_recall, nodule_recall,
             ))
             if family_count > 1:
                 # Scores are relative within each route family, not additive.
@@ -642,13 +645,13 @@ class TrajectoryGenerationExperiment:
                 # adjacent payload hides an older cross-capture route.
                 combined: list[GenerationCandidate] = []
                 seen: set[tuple[int, ...]] = set()
-                for candidate in (*continuation_candidates,
+                for candidate in (*frontier_candidates,
                                   *temporal_recall, *embedded_recall, *nodule_recall):
                     if candidate.output not in seen:
                         seen.add(candidate.output)
                         combined.append(candidate)
                 return GenerationResult(
-                    "COMBINED_ROUTES" if has_continuation else "COMBINED_RECALL",
+                    "COMBINED_ROUTES" if frontier_candidates else "COMBINED_RECALL",
                     tuple(combined[:beam_width]),
                     ambiguous or len(neighbors) > 1 or association.ambiguous or
                     embedded.ambiguous or len(combined) > 1,

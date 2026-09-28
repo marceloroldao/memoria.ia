@@ -23,30 +23,30 @@ As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
 | Payloads distintos que têm cópias | 9 |
 | Endereços opacos de tokens | 140 |
 | Consultas inéditas com prefixo e sufixo, uma por payload distinto | 68 |
-| Modos antes da união: nódulo recorrente / raiz embutida / eco | 39 / 18 / 11 |
-| Modos após a união: só nódulo / só raiz / ambos / eco | 9 / 18 / 30 / 11 |
-| Ambos com destinos disjuntos / algum destino comum | 29 / 1 |
-| Consultas com ambiguidade, antes / depois | 38 / 47 |
-| Consultas com truncamento, antes / depois | 7 / 13 |
-| Saídas únicas diferentes de eco, antes / depois | 19 / 10 |
-| Consultas com rotas recorrentes / ambíguas | 39 / 27 |
-| Liderança estrutural sem empate / entre duas ou mais capturas | 32 / 8 |
+| Modos após união anterior: só nódulo / só raiz / ambos / eco | 9 / 18 / 30 / 11 |
+| Modos com recuo a pistas menores: só nódulo / só raiz / ambos / eco | 14 / 17 / 31 / 6 |
+| Ambos com destinos disjuntos / algum destino comum | 30 / 1 |
+| Consultas com ambiguidade, antes / agora | 47 / 53 |
+| Consultas com truncamento, antes / agora | 13 / 15 |
+| Saídas únicas diferentes de eco, antes / agora | 10 / 9 |
+| Consultas com rotas recorrentes / ambíguas, antes / agora | 39 / 27 → 45 / 33 |
+| Liderança estrutural sem empate / entre duas ou mais capturas, agora | 35 / 6 |
 | Máximo de capturas independentes para uma rota | 5 |
 
 Uma segunda passagem consulta **cada entrada original antes de aprendê-la**.
 Ela usa a mesma tabela fixa de endereços opacos para tokens, mas cada consulta
-vê somente as observações anteriores. Das 99 consultas online: 53 deram eco,
-4 só continuação, 12 combinação de continuação e evocação, 22 só evocação de
-nódulo e 8 combinação de evocações. Ficaram 44 com ambiguidade, 8 com
-truncamento e 2 saídas estruturais únicas diferentes de eco. Antes de
-preservar as evocações simultâneas à continuação, as 12 combinações apareciam
-como parte das 16 continuações; havia 39 ambíguas, 3 truncadas e 7 saídas
-únicas. A queda de seleções reflete a exposição de rotas concorrentes, não
-uma medida de erro ou acerto. Não há rótulo de resposta para essas 99
-entradas: esses números medem modos de operação.
+vê somente as observações anteriores. Das 99 consultas online, antes do recuo
+a pistas menores houve 53 ecos, 4 só continuações, 12 combinações de
+continuação e evocação, 22 só evocações de nódulo e 8 combinações de
+evocações. Agora são 40 ecos, 4 continuações, 12 combinações com continuação,
+35 evocações de nódulo e 8 combinações de evocações. São 57 consultas
+ambíguas, 9 truncadas e 2 saídas estruturais únicas diferentes de eco
+(antes: 44, 8 e 2). O recuo substitui 13 ecos por evocações em entradas
+reais, mas não existe rótulo de resposta para avaliá-las. Esses números
+medem modos de operação, não acertos.
 
-A medição `route_stability` encontra um primeiro colocado estrutural em 32
-consultas, mas somente 8 deles são testemunhados em duas ou mais capturas.
+A medição `route_stability` encontra um primeiro colocado estrutural em 35
+consultas, mas somente 6 deles são testemunhados em duas ou mais capturas.
 Esse contraste impede interpretar automaticamente o maior peso como consenso.
 Detalhes e controles estão na
 [prova de estabilidade](trajectory-stability-proof.md).
@@ -70,15 +70,15 @@ de uma resposta ainda não vista ou estabilidade após futuras entradas. A
 [prova cronológica sintética](trajectory-episode-proof.md#prova-cronológica-de-evocação)
 verifica o comportamento online com novos contextos e uma entrada interposta.
 
-Entre as nove consultas sobre payloads com cópias, três agora expõem as duas
-famílias de rotas, uma evoca só nódulo recorrente e cinco dão eco. As cópias
-não reforçaram pesos. As 19 saídas únicas anteriores caíram para 10 porque
+Entre as nove consultas sobre payloads com cópias, três expõem as duas
+famílias de rotas, quatro evocam só nódulo recorrente e duas dão eco. As cópias
+não reforçaram pesos. As 10 saídas únicas anteriores caíram para 9 porque
 alternativas antes encobertas agora impedem uma seleção estrutural única.
 Isso não é uma medida de acerto: só um par possui avaliação explícita, e as
 demais rotas podem ser irrelevantes. A raiz inteira aparece primeiro, porém
 o método preserva os concorrentes e não soma os pesos de famílias diferentes.
 A ordenação entre famílias ainda não foi calibrada; mais alternativas podem
-ser distrações, e seis consultas adicionais sinalizam truncamento.
+ser distrações, e duas consultas adicionais sinalizam truncamento.
 
 Isso prova uma capacidade estrutural pequena no host Python, com um caso real
 rotulado pelo export. O aplicativo OFF.IA não usa esse gerador, o gate pessoal

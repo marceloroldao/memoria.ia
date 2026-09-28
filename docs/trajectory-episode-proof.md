@@ -125,12 +125,19 @@ terceira pista: um novo contexto permite completar os símbolos da consulta.
 Essa continuação antes escondia o destino recorrente. `COMBINED_ROUTES` agora
 mostra as duas hipóteses e as origens da associação sem chamar nenhuma de
 verdadeira. Um limite estreito preserva a evidência e recusa `selected`.
+Dois controles adicionais repetem a pista nova dentro de um contexto maior
+sem sucessor observado: a busca pelo nódulo menor ainda encontra a relação
+antiga. Em outro cenário, a poda retém só o término observado e descarta a
+continuação; a evocação exata ainda fica visível nas evidências, com
+`truncated` e sem resposta escolhida.
 
 | Critério, por lote de 12 cenários | Desenvolvimento `9271902` | Reserva `20260930` |
 | --- | ---: | ---: |
 | Evocação antes do terceiro alvo | 12 | 12 |
 | Continuação preserva a rota anterior e recusa seleção única | 12 | 12 |
 | Limite, leitura, cópias e reabertura na continuação | 12 | 12 |
+| Pista maior sem sucessor preserva a rota menor | 12 | 12 |
+| Poda da continuação preserva a evocação independente | 12 | 12 |
 | Interposição preserva os dois destinos e impede seleção única | 12 | 12 |
 | Alvo coincidente aparece uma vez | 12 | 12 |
 | Captura separada não cria ligação da raiz | 12 | 12 |

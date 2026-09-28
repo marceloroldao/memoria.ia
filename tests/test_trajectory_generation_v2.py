@@ -169,6 +169,37 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertTrue(result.ambiguous)  # The observed end still competes.
         self.assertIsNone(result.selected)
 
+    def test_pruned_continuation_does_not_erase_independent_root_recall(self):
+        memory = TrajectoryGenerationExperiment()
+        query, target = (1, 2, 3, 4, 5), (7, 8, 9)
+        memory.observe(query, observation_id="cue", stream_id="episode")
+        memory.observe(target, observation_id="target", stream_id="episode")
+        memory.observe((80, *query, 6), observation_id="extension", stream_id="other")
+        for index in range(3):
+            memory.observe((90 + index, *query), observation_id=f"end:{index}",
+                           stream_id=f"end:{index}")
+
+        full = memory.generate(query)
+        self.assertEqual(full.mode, "COMBINED_ROUTES")
+        self.assertEqual({candidate.output for candidate in full.candidates},
+                         {query, (*query, 6), target})
+        stored = memory.snapshot(), memory.learning_state()
+        narrow = memory.generate(query, beam_width=1)
+        self.assertEqual(narrow.mode, "COMBINED_ROUTES")
+        self.assertEqual([candidate.output for candidate in narrow.candidates], [query])
+        self.assertEqual(narrow.temporal_evidence[0].symbols, target)
+        self.assertEqual(narrow.temporal_evidence[0].streams, ("episode",))
+        self.assertTrue(narrow.ambiguous)
+        self.assertTrue(narrow.truncated)
+        self.assertIsNone(narrow.selected)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), stored)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            stored[0]).generate(query, beam_width=1), narrow)
+
+        memory.observe(query, observation_id="copy", stream_id="replay")
+        self.assertEqual(memory.learning_state(), stored[1])
+        self.assertEqual(memory.generate(query, beam_width=1), narrow)
+
     def test_beam_pruning_and_cycles_are_explicit_and_bounded(self):
         memory = TrajectoryGenerationExperiment(GenerationConfig(max_context=2))
         memory.observe((1, 2, 1, 2, 3), observation_id="a")
@@ -554,6 +585,35 @@ class TrajectoryGenerationTests(unittest.TestCase):
         isolated.observe(continuation_source, observation_id="continuation",
                          stream_id="other")
         self.assertEqual(isolated.generate(query).mode, "CONTINUATION")
+
+    def test_new_longer_cue_without_successor_keeps_older_shorter_route(self):
+        memory = TrajectoryGenerationExperiment()
+        cue, target = (1, 2, 3), (7, 8, 9)
+        for index in range(2):
+            stream = f"episode:{index}"
+            memory.observe((100 + index, *cue, 200 + index),
+                           observation_id=f"cue:{index}", stream_id=stream)
+            memory.observe((300 + index, *target, 400 + index),
+                           observation_id=f"target:{index}", stream_id=stream)
+        query = (102, *cue, 202)
+        self.assertEqual(memory.associated_nodules(query).selected, target)
+
+        memory.observe(query, observation_id="new-cue", stream_id="current")
+        memory.observe((88, *query, 42), observation_id="extension",
+                       stream_id="separate")
+        before = memory.snapshot(), memory.learning_state()
+        association = memory.associated_nodules(query)
+        self.assertEqual(association.selected, target)
+        self.assertEqual({stream for _, _, stream in association.candidates[0].witnesses},
+                         {"episode:0", "episode:1"})
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "COMBINED_ROUTES")
+        self.assertEqual({candidate.output for candidate in result.candidates},
+                         {query, (*query, 42), target})
+        self.assertIsNone(result.selected)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            before[0]).generate(query), result)
 
     def test_exact_embedded_and_recurrent_routes_remain_separate(self):
         memory = TrajectoryGenerationExperiment()
