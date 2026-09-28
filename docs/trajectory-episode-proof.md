@@ -120,9 +120,17 @@ Agora `COMBINED_RECALL` mantém os dois destinos e suas testemunhas, sem respost
 vez. Entrada em outra captura não cria relação temporal falsa com a raiz;
 cópias exatas não alteram pesos.
 
+O gate também testa uma ramificação independente **antes** de aprender a
+terceira pista: um novo contexto permite completar os símbolos da consulta.
+Essa continuação antes escondia o destino recorrente. `COMBINED_ROUTES` agora
+mostra as duas hipóteses e as origens da associação sem chamar nenhuma de
+verdadeira. Um limite estreito preserva a evidência e recusa `selected`.
+
 | Critério, por lote de 12 cenários | Desenvolvimento `9271902` | Reserva `20260930` |
 | --- | ---: | ---: |
 | Evocação antes do terceiro alvo | 12 | 12 |
+| Continuação preserva a rota anterior e recusa seleção única | 12 | 12 |
+| Limite, leitura, cópias e reabertura na continuação | 12 | 12 |
 | Interposição preserva os dois destinos e impede seleção única | 12 | 12 |
 | Alvo coincidente aparece uma vez | 12 | 12 |
 | Captura separada não cria ligação da raiz | 12 | 12 |

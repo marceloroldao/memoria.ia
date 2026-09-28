@@ -132,9 +132,10 @@ verdade. Só há `selected` quando resta uma única alternativa sem truncamento.
 Pesos brutos de escalas diferentes têm normalizações distintas; a ordem entre
 alvos de comprimentos e escalas diferentes ainda precisa de calibração.
 
-`generate` usa essa evocação (`NODULE_RECALL`) quando não encontra continuação
-nem outra evocação de raiz e a rota terminou sem saída nova. O nódulo evocado
-é mostrado separadamente; não se afirma que a frase toda tenha sido observada.
+`generate` usa essa evocação (`NODULE_RECALL`) quando não encontra outra
+família de rota. Se houver continuação ou evocação de raiz simultânea, mantém
+as alternativas juntas. O nódulo evocado é mostrado separadamente; não se
+afirma que a frase toda tenha sido observada.
 
 Um payload completo conhecido já é uma raiz reutilizável mesmo que só tenha
 aparecido uma vez. Se uma consulta inédita contém essa sequência inteira,
@@ -146,9 +147,13 @@ que coincide com a raiz completa pode evocar suas entradas posteriores por
 `TEMPORAL_RECALL`. Quando mais de uma família encontra candidatos,
 `COMBINED_RECALL` expõe todas as evidências e une os destinos distintos sem
 somar seus pesos. A raiz exata vem primeiro, seguida pela raiz embutida e pelos
-nódulos recorrentes; os escores continuam relativos **dentro de cada família**
-e não são comparáveis entre elas. Um
-destino coincidente é mostrado uma vez; destinos diferentes mantêm ambiguidade.
+nódulos recorrentes. Se uma continuação também existe, o modo é
+`COMBINED_ROUTES`: as ramificações de continuação aparecem primeiro, inclusive
+o término observado concorrente, seguidas pelas evocações. Os passos da
+continuação e as testemunhas das evocações permanecem inspecionáveis; os
+escores continuam relativos **dentro de cada família** e não são comparáveis
+entre elas. Um destino coincidente é mostrado uma vez; destinos diferentes
+mantêm ambiguidade.
 Duas raízes ou dois destinos concorrentes também mantêm
 `ambiguous`; limite de busca mantém `truncated` e impede `selected`. O modo
 também cobre uma nova consulta que termina exatamente com a raiz conhecida.
@@ -166,9 +171,13 @@ de observar a terceira captura. Uma entrada intermediária nova, logo após a
 terceira pista, ativa a raiz exata: anteriormente ela substituía o alvo antigo
 por essa entrada recente como única saída estrutural. Agora ambos aparecem,
 com suas capturas testemunhas, e `selected` fica vazio. O caso não informa à
-memória qual deles é resposta verdadeira. A rota de continuação, quando
-existe, ainda tem prioridade sobre essas evocações; suas concorrentes não
-são combinadas nesta versão.
+memória qual deles é resposta verdadeira. Outro controle aprende uma
+continuação em um contexto separado depois das duas primeiras capturas: a
+consulta inédita agora mostra tanto a continuação quanto o destino recorrente.
+São 24 variações com endereços opacos em duas sementes do gate online. Cópias
+exatas não alteram os resultados, reabertura reproduz a saída e limite curto
+marca truncamento sem selecionar uma resposta. Isso prova a preservação de
+evidências no experimento; não prova qual rota é verdadeira.
 
 ## Escalas e inferência
 
@@ -187,8 +196,8 @@ O mesmo mecanismo de continuação opera sobre símbolos e composições:
 - Mantém ramificações, acumula suporte e repete o processo.
 - Pode combinar passos de ocorrências diferentes. Cada passo identifica suas
   testemunhas; a trajetória completa resultante é uma hipótese gerada.
-- Se faltar continuação e houver relação temporal da raiz consultada, evoca
-  payloads posteriores na mesma captura.
+- Se houver relação temporal da raiz consultada, evoca payloads posteriores
+  na mesma captura, mesmo quando existe continuação.
 - Sem alternativas, devolve a entrada (`ECHO`).
 
 A escolha automática de escala prefere a maior extensão atômica do contexto
@@ -200,7 +209,7 @@ Concorrentes continuam disponíveis mesmo quando um tem mais suporte. O campo
 `selected` só existe para uma hipótese única, sem ambiguidade nem truncamento.
 Um escore alto não determina verdade. `ECHO`, `CONTINUATION`,
 `TEMPORAL_RECALL`, `NODULE_RECALL`, `EMBEDDED_TEMPORAL_RECALL` e
-`COMBINED_RECALL` descrevem a operação realizada.
+`COMBINED_RECALL` ou `COMBINED_ROUTES` descrevem a operação realizada.
 
 Limites iniciais, configuráveis:
 
@@ -214,7 +223,10 @@ Limites iniciais, configuráveis:
 
 A busca informa limites de passos e descarte de hipóteses com `truncated`.
 Não transforma um desempate por endereço em resposta confirmada. Ainda pode
-produzir continuações sem sentido por coincidência estrutural.
+produzir continuações sem sentido por coincidência estrutural. Quando a busca
+de continuação termina somente em ramificações ambíguas ou truncadas sem
+avançar, a evocação associativa ainda não é consultada; essa fronteira permanece
+explícita na versão experimental.
 
 ## Evidência do gate
 

@@ -36,10 +36,14 @@ As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
 Uma segunda passagem consulta **cada entrada original antes de aprendê-la**.
 Ela usa a mesma tabela fixa de endereços opacos para tokens, mas cada consulta
 vê somente as observações anteriores. Das 99 consultas online: 53 deram eco,
-16 continuação, 22 evocação de nódulo e 8 rotas combinadas; 39 mantiveram
-ambiguidade, 3 truncamento e 7 saídas estruturais únicas diferentes de eco.
-Não há rótulo de resposta para essas 99 entradas: esses números medem modos
-de operação, não acertos.
+4 só continuação, 12 combinação de continuação e evocação, 22 só evocação de
+nódulo e 8 combinação de evocações. Ficaram 44 com ambiguidade, 8 com
+truncamento e 2 saídas estruturais únicas diferentes de eco. Antes de
+preservar as evocações simultâneas à continuação, as 12 combinações apareciam
+como parte das 16 continuações; havia 39 ambíguas, 3 truncadas e 7 saídas
+únicas. A queda de seleções reflete a exposição de rotas concorrentes, não
+uma medida de erro ou acerto. Não há rótulo de resposta para essas 99
+entradas: esses números medem modos de operação.
 
 A medição `route_stability` encontra um primeiro colocado estrutural em 32
 consultas, mas somente 8 deles são testemunhados em duas ou mais capturas.

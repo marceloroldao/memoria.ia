@@ -174,7 +174,7 @@ class RouteStability:
 
 @dataclass(frozen=True, slots=True)
 class GenerationResult:
-    mode: str  # ECHO, CONTINUATION, TEMPORAL_RECALL, NODULE_RECALL, EMBEDDED_TEMPORAL_RECALL, COMBINED_RECALL.
+    mode: str  # Operation label, including COMBINED_RECALL and COMBINED_ROUTES.
     candidates: tuple[GenerationCandidate, ...]
     ambiguous: bool
     truncated: bool
@@ -532,9 +532,9 @@ class TrajectoryGenerationExperiment:
 
         Auto scale maximizes matched atomic span, then prefers the deeper view.
         A known end competes with continuation and prevents unbounded backoff.
-        With no continuation, a whole-payload temporal route, a recurring
-        nodule and an embedded observed payload can evoke alternatives
-        together. Neither operation establishes a fact.
+        A whole-payload temporal route, a recurring nodule and an embedded
+        observed payload can evoke alternatives beside a continuation.
+        Neither operation establishes a fact.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
@@ -588,17 +588,15 @@ class TrajectoryGenerationExperiment:
             candidates.append(GenerationCandidate(
                 query + continuation, continuation, score, reason or "step_limit", evidence,
             ))
-        if any(candidate.continuation for candidate in candidates):
-            return GenerationResult("CONTINUATION", tuple(candidates), ambiguous, truncated, depth)
-
-        neighbors = (
-            self.temporal_neighbors(query, hierarchy_id=hierarchy)
-            if not ambiguous and not truncated else ()
+        has_continuation = any(candidate.continuation for candidate in candidates)
+        can_recall = has_continuation or (
+            not ambiguous and not truncated and all(
+                candidate.stop_reason in ("no_route", "observed_end")
+                for candidate in candidates
+            )
         )
-        if not ambiguous and not truncated and all(
-            candidate.stop_reason in ("no_route", "observed_end")
-            for candidate in candidates
-        ):
+        if can_recall:
+            neighbors = self.temporal_neighbors(query, hierarchy_id=hierarchy)
             association = self.associated_nodules(
                 query, hierarchy_id=hierarchy, limit=beam_width,
             )
@@ -633,26 +631,30 @@ class TrajectoryGenerationExperiment:
                     )
                     for neighbor in embedded.neighbors
                 )
-            family_count = sum(bool(family) for family in
-                               (temporal_recall, embedded_recall, nodule_recall))
+            continuation_candidates = tuple(candidates) if has_continuation else ()
+            family_count = sum(bool(family) for family in (
+                continuation_candidates, temporal_recall, embedded_recall, nodule_recall,
+            ))
             if family_count > 1:
                 # Scores are relative within each route family, not additive.
-                # The exact root comes first, then embedded roots and nodules.
-                # A newly adjacent payload cannot hide an older recurring
-                # route observed in other captures.
+                # Continuations come first, then the exact root, embedded
+                # roots and nodules. Neither a new continuation nor an
+                # adjacent payload hides an older cross-capture route.
                 combined: list[GenerationCandidate] = []
                 seen: set[tuple[int, ...]] = set()
-                for candidate in (*temporal_recall, *embedded_recall, *nodule_recall):
+                for candidate in (*continuation_candidates,
+                                  *temporal_recall, *embedded_recall, *nodule_recall):
                     if candidate.output not in seen:
                         seen.add(candidate.output)
                         combined.append(candidate)
                 return GenerationResult(
-                    "COMBINED_RECALL", tuple(combined[:beam_width]),
-                    len(neighbors) > 1 or association.ambiguous or
+                    "COMBINED_ROUTES" if has_continuation else "COMBINED_RECALL",
+                    tuple(combined[:beam_width]),
+                    ambiguous or len(neighbors) > 1 or association.ambiguous or
                     embedded.ambiguous or len(combined) > 1,
-                    len(neighbors) > beam_width or association.truncated or
+                    truncated or len(neighbors) > beam_width or association.truncated or
                     embedded.truncated or len(combined) > beam_width,
-                    association.depth if nodule_recall else depth,
+                    association.depth if nodule_recall and not has_continuation else depth,
                     neighbors[:beam_width] if neighbors else embedded.neighbors,
                     association if nodule_recall else None,
                     embedded if embedded_recall else None,
@@ -674,6 +676,8 @@ class TrajectoryGenerationExperiment:
                     embedded.truncated, 0, embedded.neighbors,
                     embedded_evidence=embedded,
                 )
+        if has_continuation:
+            return GenerationResult("CONTINUATION", tuple(candidates), ambiguous, truncated, depth)
         return GenerationResult("ECHO", tuple(candidates), ambiguous, truncated, depth)
 
     def respond(self, payload: Iterable[int], *, observation_id: str,

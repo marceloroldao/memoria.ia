@@ -156,6 +156,19 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertTrue(result.ambiguous)
         self.assertIsNone(result.selected)
 
+    def test_matching_continuation_and_temporal_target_are_not_two_votes(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2), observation_id="cue", stream_id="episode")
+        memory.observe((1, 2, 3), observation_id="target", stream_id="episode")
+        result = memory.generate((1, 2))
+        self.assertEqual(result.mode, "COMBINED_ROUTES")
+        self.assertEqual([candidate.output for candidate in result.candidates],
+                         [(1, 2, 3), (1, 2)])
+        self.assertEqual(result.temporal_evidence[0].symbols, (1, 2, 3))
+        self.assertEqual(result.candidates[0].continuation, (3,))
+        self.assertTrue(result.ambiguous)  # The observed end still competes.
+        self.assertIsNone(result.selected)
+
     def test_beam_pruning_and_cycles_are_explicit_and_bounded(self):
         memory = TrajectoryGenerationExperiment(GenerationConfig(max_context=2))
         memory.observe((1, 2, 1, 2, 3), observation_id="a")
@@ -490,6 +503,57 @@ class TrajectoryGenerationTests(unittest.TestCase):
         split.observe((10, 11, 12), observation_id="other:split",
                       stream_id="separate")
         self.assertEqual(split.generate((103, *cue, 203)).selected, target)
+
+    def test_continuation_cannot_hide_recurrent_route_from_other_captures(self):
+        memory = TrajectoryGenerationExperiment()
+        cue, target = (1, 2, 3), (7, 8, 9)
+        for index in range(2):
+            stream = f"episode:{index}"
+            memory.observe((100 + index, *cue, 200 + index),
+                           observation_id=f"cue:{index}", stream_id=stream)
+            memory.observe((300 + index, *target, 400 + index),
+                           observation_id=f"target:{index}", stream_id=stream)
+        query = (102, *cue, 202)
+        self.assertEqual(memory.generate(query).selected, target)
+
+        continuation_source = (88, *query, 42)
+        memory.observe(continuation_source, observation_id="continuation", stream_id="other")
+        stored = memory.snapshot(), memory.learning_state()
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "COMBINED_ROUTES")
+        self.assertEqual([candidate.output for candidate in result.candidates],
+                         [(*query, 42), target])
+        self.assertEqual(result.candidates[0].continuation, (42,))
+        self.assertEqual(result.candidates[1].stop_reason, "nodule_association")
+        self.assertEqual({stream for _, _, stream in
+                          result.association_evidence.candidates[0].witnesses},
+                         {"episode:0", "episode:1"})
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), stored)
+
+        narrow = memory.generate(query, beam_width=1)
+        self.assertEqual(narrow.mode, "COMBINED_ROUTES")
+        self.assertEqual([candidate.output for candidate in narrow.candidates],
+                         [(*query, 42)])
+        self.assertTrue(narrow.truncated)
+        self.assertIsNone(narrow.selected)
+        self.assertEqual(narrow.association_evidence.candidates[0].symbols, target)
+
+        for index in range(5):
+            memory.observe(continuation_source, observation_id=f"copy:{index}",
+                           stream_id=f"copy:{index}")
+        self.assertEqual(memory.learning_state(), stored[1])
+        self.assertEqual(memory.generate(query), result)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).generate(query), result)
+
+        isolated = TrajectoryGenerationExperiment()
+        isolated.observe((100, *cue, 200), observation_id="cue", stream_id="a")
+        isolated.observe((300, *target, 400), observation_id="target", stream_id="b")
+        isolated.observe(continuation_source, observation_id="continuation",
+                         stream_id="other")
+        self.assertEqual(isolated.generate(query).mode, "CONTINUATION")
 
     def test_exact_embedded_and_recurrent_routes_remain_separate(self):
         memory = TrajectoryGenerationExperiment()

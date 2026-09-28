@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Online adversarial probe for exact-root and recurrent-nodule competition."""
+"""Online probe for exact-root, continuation and recurrent-nodule competition."""
 from __future__ import annotations
 
 import argparse
@@ -33,6 +33,30 @@ def trial(rng: Random) -> dict[str, bool]:
 
     new_input = wrapped(cue)
     before_input = memory.generate(new_input)
+    continuation_memory = TrajectoryGenerationExperiment.restore(memory.snapshot())
+    continuation_tail = rng.randrange(4_000_000, 5_000_000)
+    continuation_source = (rng.randrange(3_000_000, 4_000_000),
+                           *new_input, continuation_tail)
+    continuation_memory.observe(continuation_source, observation_id="continuation",
+                                stream_id="unrelated")
+    continuation_state = (continuation_memory.snapshot(),
+                          continuation_memory.learning_state())
+    with_continuation = continuation_memory.generate(new_input)
+    continuation_limited = continuation_memory.generate(new_input, beam_width=1)
+    continuation_witnesses = (
+        with_continuation.association_evidence.candidates[0].witnesses
+        if with_continuation.association_evidence else ()
+    )
+    continuation_read_only = (
+        continuation_memory.snapshot(), continuation_memory.learning_state()
+    ) == continuation_state
+    for index in range(3):
+        continuation_memory.observe(continuation_source, observation_id=f"repeat:{index}",
+                                    stream_id=f"repeat:{index}")
+    continuation_duplicates_unchanged = (
+        continuation_memory.learning_state() == continuation_state[1]
+        and continuation_memory.generate(new_input) == with_continuation
+    )
     memory.observe(new_input, observation_id="cue:2", stream_id="episode:2")
     before_interposition = memory.generate(new_input)
     prefix = memory.snapshot()
@@ -61,6 +85,21 @@ def trial(rng: Random) -> dict[str, bool]:
     return dict(
         before_input_learns_from_prior_captures=(
             before_input.mode == "NODULE_RECALL" and before_input.selected == target),
+        continuation_keeps_prior_route=(
+            with_continuation.mode == "COMBINED_ROUTES"
+            and tuple(candidate.output for candidate in with_continuation.candidates)
+            == ((*new_input, continuation_tail), target)
+            and with_continuation.ambiguous and with_continuation.selected is None
+            and {stream for _, _, stream in continuation_witnesses}
+            == {"episode:0", "episode:1"}),
+        continuation_limit_refuses_to_select=(
+            continuation_limited.truncated and continuation_limited.selected is None
+            and continuation_limited.association_evidence is not None),
+        continuation_is_read_only=continuation_read_only,
+        continuation_duplicates_do_not_reinforce=continuation_duplicates_unchanged,
+        continuation_reopen_matches=(
+            TrajectoryGenerationExperiment.restore(continuation_state[0])
+            .generate(new_input) == with_continuation),
         after_input_before_interposition=(before_interposition.selected == target),
         unrelated_capture_does_not_create_exact_root_link=(
             split_result.mode == "NODULE_RECALL" and split_result.selected == target),
