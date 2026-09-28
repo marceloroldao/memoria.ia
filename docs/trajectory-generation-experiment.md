@@ -226,7 +226,12 @@ conversas reais e modalidades não textuais ainda exigem provas próprias.
 
 Uma [prova entre conversas sintéticas](trajectory-episode-proof.md) também
 verifica rotas concorrentes, testemunhas por captura e ambiguidade após
-distração sem vínculos manuais. O armazenamento SQLite foi exercitado neste
+distração sem vínculos manuais. `trace_nodule_paths` pode encadear até dois
+saltos quando o alvo do primeiro e a origem do segundo são o **mesmo payload
+observado na mesma captura**. Expõe as sequências de IDs que testemunham cada
+caminho, sem escolher resposta factual nem juntar duas conversas por terem um
+nódulo parecido. O limite de candidatos por salto e o truncamento ficam
+visíveis. O armazenamento SQLite foi exercitado neste
 gate; BDR e integração nativa
 precisam de validação própria. Otimização, organização em segundo plano e
 integração ao ciclo de respostas do aplicativo são etapas posteriores.

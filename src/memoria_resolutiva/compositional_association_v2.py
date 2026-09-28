@@ -69,6 +69,25 @@ class CompositionalRecall:
         return None
 
 
+@dataclass(frozen=True, slots=True)
+class WitnessedNodulePath:
+    # The query is the starting cue; these are its successive evoked nodules.
+    nodules: tuple[tuple[int, ...], ...]
+    # Capture ID and the exact ordered input payload IDs at each hop.
+    witnesses: tuple[tuple[str, tuple[str, ...]], ...]
+
+    @property
+    def supporting_streams(self) -> tuple[str, ...]:
+        return tuple(sorted({stream for stream, _ in self.witnesses}))
+
+
+@dataclass(frozen=True, slots=True)
+class NodulePathTrace:
+    first_hop: CompositionalRecall
+    paths: tuple[WitnessedNodulePath, ...]
+    truncated: bool
+
+
 class CompositionalAssociationView:
     """Read-only projection derived from a hierarchy and unique input events."""
 
@@ -307,6 +326,59 @@ class CompositionalAssociationView:
             )
         )
         return candidates
+
+    def trace_paths(
+        self, query: tuple[int, ...], *, max_hops: int = 2, limit: int = 8,
+    ) -> NodulePathTrace:
+        """Join observed edges through the same middle payload and capture.
+
+        This is a structural route trace, not an answer selector. It does not
+        multiply edge weights or infer a link across two separate captures.
+        """
+        if type(max_hops) is not int or max_hops not in (1, 2):
+            raise ValueError("max_hops must be 1 or 2")
+        first = self.recall(query, channel="temporal", limit=limit)
+        routes: dict[
+            tuple[tuple[int, ...], ...], set[tuple[str, tuple[str, ...]]]
+        ] = {}
+        truncated = first.truncated
+        for candidate in first.candidates:
+            chains = {
+                (stream, (source, target))
+                for source, target, stream in candidate.witnesses
+                if source != target
+            }
+            if not chains:
+                continue
+            routes.setdefault((candidate.symbols,), set()).update(chains)
+            if max_hops == 1:
+                continue
+            next_hop = self.recall(candidate.symbols, channel="temporal", limit=limit)
+            truncated |= next_hop.truncated
+            for following in next_hop.candidates:
+                if following.symbols == candidate.symbols:
+                    continue
+                joined = {
+                    (stream, payloads + (target,))
+                    for stream, payloads in chains
+                    for source, target, edge_stream in following.witnesses
+                    if edge_stream == stream and source == payloads[-1]
+                    and target not in payloads
+                }
+                if joined:
+                    routes.setdefault(
+                        (candidate.symbols, following.symbols), set()
+                    ).update(joined)
+        paths = tuple(
+            WitnessedNodulePath(nodules, tuple(sorted(chains)))
+            for nodules, chains in routes.items()
+        )
+        paths = tuple(sorted(
+            paths,
+            key=lambda path: (-len(path.supporting_streams),
+                              -len(path.witnesses), len(path.nodules), path.nodules),
+        ))
+        return NodulePathTrace(first, paths[:limit], truncated or len(paths) > limit)
 
     @staticmethod
     def _contained(part: tuple[int, ...], whole: tuple[int, ...]) -> bool:

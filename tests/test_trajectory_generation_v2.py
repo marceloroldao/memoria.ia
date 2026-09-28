@@ -470,6 +470,61 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertAlmostEqual(competing.total_rank_score,
                                sum(candidate.rank_score for candidate in competing.candidates))
 
+    def test_two_hop_nodule_path_requires_exact_middle_payload_and_capture(self):
+        memory = TrajectoryGenerationExperiment()
+        a, b = (1, 2, 3, 4, 5), (1, 2, 6, 7, 8)
+        target_a, target_b = (9, 10, 11), (12, 13, 14)
+        expected_chains = set()
+        for i in range(4):
+            source = memory.observe((100 + i, *a, 200 + i),
+                                    observation_id=f"a:{i}:0", stream_id=f"a:{i}")
+            middle = memory.observe((300 + i, *b, 400 + i),
+                                    observation_id=f"a:{i}:1", stream_id=f"a:{i}")
+            target = memory.observe((500 + i, *target_a, 600 + i),
+                                    observation_id=f"a:{i}:2", stream_id=f"a:{i}")
+            expected_chains.add((f"a:{i}",
+                                 (source.payload_id, middle.payload_id, target.payload_id)))
+            memory.observe((700 + i, *b, 800 + i),
+                           observation_id=f"b:{i}:0", stream_id=f"b:{i}")
+            memory.observe((900 + i, *target_b, 1000 + i),
+                           observation_id=f"b:{i}:1", stream_id=f"b:{i}")
+
+        query = (1100, *a, 1101)
+        before = memory.snapshot(), memory.learning_state()
+        traced = memory.trace_nodule_paths(query)
+        paths = {path.nodules: path for path in traced.paths}
+        self.assertEqual(set(paths), {(b,), (target_a,), (b, target_a)})
+        self.assertEqual(set(paths[(b, target_a)].witnesses), expected_chains)
+        self.assertEqual(paths[(b, target_a)].supporting_streams,
+                         tuple(f"a:{i}" for i in range(4)))
+        self.assertNotIn((b, target_b), paths)  # B→target B exists elsewhere.
+        self.assertFalse(traced.truncated)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+        self.assertEqual({path.nodules for path in memory.trace_nodule_paths(
+            query, max_hops=1).paths}, {(b,), (target_a,)})
+        self.assertTrue(memory.trace_nodule_paths(query, limit=1).truncated)
+
+        reopened = TrajectoryGenerationExperiment.restore(memory.snapshot())
+        self.assertEqual(reopened.trace_nodule_paths(query), traced)
+
+    def test_shared_nodule_does_not_stitch_two_different_captures(self):
+        memory = TrajectoryGenerationExperiment()
+        a, b, c = (1, 2, 3), (4, 5, 6), (7, 8, 9)
+        for i in range(2):
+            memory.observe((100 + i, *a, 200 + i),
+                           observation_id=f"x:{i}:a", stream_id=f"x:{i}")
+            memory.observe((300 + i, *b, 400 + i),
+                           observation_id=f"x:{i}:b", stream_id=f"x:{i}")
+            memory.observe((500 + i, *b, 600 + i),
+                           observation_id=f"y:{i}:b", stream_id=f"y:{i}")
+            memory.observe((700 + i, *c, 800 + i),
+                           observation_id=f"y:{i}:c", stream_id=f"y:{i}")
+        trace = memory.trace_nodule_paths((1000, *a, 1001))
+        self.assertEqual({path.nodules for path in trace.paths}, {(b,)})
+        self.assertEqual(memory.trace_nodule_paths((2000, 2001)).paths, ())
+        with self.assertRaises(ValueError):
+            memory.trace_nodule_paths((1000, *a, 1001), max_hops=3)
+
     def test_nodule_recall_survives_reopen_and_symbol_renaming(self):
         payloads = ((90, 1, 2, 3, 91), (94, 7, 8, 9, 95),
                     (92, 1, 2, 3, 93), (96, 7, 8, 9, 97))

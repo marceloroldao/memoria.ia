@@ -65,7 +65,32 @@ roda no workflow `trajectory generation proof`.
 python scripts/trajectory_episode_probe.py --seed 4169
 python scripts/trajectory_episode_probe.py --seed 20260928
 python scripts/trajectory_episode_probe.py --seed 20260929
+python scripts/trajectory_episode_probe.py --seed 9271901
 ```
+
+## Encadeamento com testemunhas da mesma captura
+
+Uma segunda consulta, `trace_nodule_paths(query, max_hops=2)`, parte dos
+nódulos evocados. Para estender A→B até A→B→alvo A, exige que o payload B
+que terminou o primeiro salto seja **exatamente o payload B** que iniciou o
+segundo, na mesma captura. Cada caminho expõe os nódulos sucessivos e os
+IDs ordenados de todos os payloads que o testemunharam. Assim, os quatro
+caminhos A→B→alvo A das capturas A são encontrados; nenhum A→B→alvo B é
+montado com os quatro B→alvo B das outras capturas. A rota direta B→alvo A
+continua presente e concorrendo com B→alvo B: o encadeamento não decide qual
+é um fato.
+
+| Critério, por lote de 12 cenários | `4169` | `20260928` | `20260929` | Nova reserva `9271901` |
+| --- | ---: | ---: | ---: | ---: |
+| A→B→alvo A: quatro cadeias de três payloads em quatro capturas | 12 | 12 | 12 | 12 |
+| Nenhum A→B→alvo B entre capturas; leitura sem alteração do estado | 12 | 12 | 12 | 12 |
+| B interposta em primeiro para A (diagnóstico, sem seleção factual) | 9 | 8 | 9 | 10 |
+
+O lote `9271901` foi consultado pela primeira vez após definir esta regra de
+junção. O limite atual é de um ou dois saltos; `truncated` sinaliza quando o
+limite de candidatos oculta alternativas. Um caminho com testemunhas prova a
+sequência observada, não que seu destino seja uma resposta verdadeira ou que
+deva ter prioridade sobre outra rota.
 
 Uma captura é apenas uma fronteira observacional: o teste não informa à
 memória que o evento seguinte é uma resposta verdadeira. Uma pista comum ou

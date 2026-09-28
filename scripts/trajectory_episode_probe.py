@@ -82,8 +82,14 @@ def trial(rng: Random, index: int) -> dict[str, bool]:
     split_memory = learn("split")
     noisy_a = learn("distractor").associated_nodules(query_a)
     interposed = learn("interposed")
+    interposed_state = interposed.snapshot(), interposed.learning_state()
     interposed_a = interposed.associated_nodules(query_a)
     interposed_b = interposed.associated_nodules(query_b)
+    path_a = interposed.trace_nodule_paths(query_a)
+    path_b = interposed.trace_nodule_paths(query_b)
+    a_paths = {path.nodules: path for path in path_a.paths}
+    b_paths = {path.nodules: path for path in path_b.paths}
+    chain = a_paths.get((source_b, target_a))
     target = next((candidate for candidate in a.candidates
                    if candidate.symbols == target_a), None)
     noisy_target = next((candidate for candidate in noisy_a.candidates
@@ -121,6 +127,17 @@ def trial(rng: Random, index: int) -> dict[str, bool]:
             interposed_a.ambiguous and interposed_a.selected is None
             and interposed_b.ambiguous and interposed_b.selected is None
         ),
+        "joined_route_in_four_captures": (
+            chain is not None and len(chain.witnesses) == 4
+            and chain.supporting_streams == tuple(f"a:{i}" for i in range(4))
+            and all(len(payloads) == 3 and len(set(payloads)) == 3
+                    for _, payloads in chain.witnesses)
+        ),
+        "no_stitched_cross_capture_route": (
+            (source_b, target_b) not in a_paths
+            and {(target_a,), (target_b,)}.issubset(b_paths)
+            and (interposed.snapshot(), interposed.learning_state()) == interposed_state
+        ),
         # Report-only limits: proximity alone cannot distinguish the sibling
         # cue from an answer, or choose B's target when B appears in A's stream.
         "interposed_sibling_first": (
@@ -157,7 +174,8 @@ def probe(*, seed: int, trials: int) -> dict:
     positives = ("specific_a", "specific_b", "novel_queries", "shared_cue_ambiguous",
                  "four_independent_witnesses", "generated_from_nodule",
                  "distractor_ambiguous", "interposed_targets_visible",
-                 "interposed_refuses_single_answer")
+                 "interposed_refuses_single_answer",
+                 "joined_route_in_four_captures", "no_stitched_cross_capture_route")
     negatives = ("reverse_false_positive", "split_false_positive",
                  "unrelated_false_positive", "exact_replay_changed_learning")
     passed = (all(totals[key] == trials for key in positives)
@@ -167,7 +185,7 @@ def probe(*, seed: int, trials: int) -> dict:
         "seed": seed, "trials": trials,
         "result": "PASS" if passed else "FAIL",
         "counts": totals,
-        "scope": "synthetic opaque multi-capture episodes; structural recall only",
+        "scope": "synthetic opaque multi-capture episodes; structural recall and witnessed paths only",
     }
 
 

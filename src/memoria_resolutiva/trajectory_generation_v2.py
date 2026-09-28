@@ -15,6 +15,7 @@ from .compositional_association_v2 import (
     CompositionObservation,
     CompositionalAssociationView,
     CompositionalRecall,
+    NodulePathTrace,
 )
 from .hierarchical_composition_v2 import (
     HierarchicalCompositionEngineV2,
@@ -296,8 +297,24 @@ class TrajectoryGenerationExperiment:
         identical targets are not reinforced merely by appearing at several
         depths, and independent shorter targets remain visible.
         """
-        hierarchy = _name(hierarchy_id)
         query = _symbols(payload)
+        hierarchy = _name(hierarchy_id)
+        return self._compositional_view(hierarchy).recall(
+            query, channel=channel, limit=limit,
+        )
+
+    def trace_nodule_paths(
+        self, payload: Iterable[int], *, hierarchy_id: str = "default",
+        max_hops: int = 2, limit: int = 8,
+    ) -> NodulePathTrace:
+        """Expose observed temporal paths; never select a fact from them."""
+        query = _symbols(payload)
+        hierarchy = _name(hierarchy_id)
+        return self._compositional_view(hierarchy).trace_paths(
+            query, max_hops=max_hops, limit=limit,
+        )
+
+    def _compositional_view(self, hierarchy: str) -> CompositionalAssociationView:
         observations: list[CompositionObservation] = []
         seen: set[str] = set()
         for row in self._observations.values():
@@ -308,7 +325,7 @@ class TrajectoryGenerationExperiment:
             observations.append(CompositionObservation(
                 address, row["stream_id"], self.expand(address),
             ))
-        field = CompositionalAssociationView(
+        return CompositionalAssociationView(
             self.levels(hierarchy_id=hierarchy), observations,
             within_decay=self.config.within_decay,
             temporal_decay=self.config.temporal_decay,
@@ -316,7 +333,6 @@ class TrajectoryGenerationExperiment:
             trace_floor=self.config.trace_floor,
             max_pattern_size=self.config.max_context,
         )
-        return field.recall(query, channel=channel, limit=limit)
 
     def _views(self, query: tuple[int, ...], hierarchy: str):
         trajectories = tuple(t for t in self._index.snapshot() if t.hierarchy_id == hierarchy)
