@@ -119,14 +119,32 @@ class TemporalNeighbor:
 
 
 @dataclass(frozen=True, slots=True)
+class EmbeddedRootLink:
+    cue_payload_id: str
+    target_payload_id: str
+    weight: float
+    streams: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddedRootRecall:
+    cue_payload_ids: tuple[str, ...]
+    links: tuple[EmbeddedRootLink, ...]
+    neighbors: tuple[TemporalNeighbor, ...]
+    ambiguous: bool
+    truncated: bool
+
+
+@dataclass(frozen=True, slots=True)
 class GenerationResult:
-    mode: str  # ECHO, CONTINUATION, TEMPORAL_RECALL, NODULE_RECALL.
+    mode: str  # ECHO, CONTINUATION, TEMPORAL_RECALL, NODULE_RECALL, EMBEDDED_TEMPORAL_RECALL.
     candidates: tuple[GenerationCandidate, ...]
     ambiguous: bool
     truncated: bool
     scale: int
     temporal_evidence: tuple[TemporalNeighbor, ...] = ()
     association_evidence: CompositionalRecall | None = None
+    embedded_evidence: EmbeddedRootRecall | None = None
 
     @property
     def selected(self) -> tuple[int, ...] | None:
@@ -285,6 +303,59 @@ class TrajectoryGenerationExperiment:
             for target, weight in sorted(weights.items(), key=lambda item: (-item[1], item[0]))
         )
 
+    def embedded_root_relations(
+        self, payload: Iterable[int], *, hierarchy_id: str = "default",
+        limit: int = 8,
+    ) -> EmbeddedRootRecall:
+        """Evoked whole-payload roots contained in a new input, read-only.
+
+        One observed root is already a nodule. Exact copies cannot add votes;
+        only roots of the longest matching width activate temporal neighbors.
+        """
+        query = _symbols(payload)
+        hierarchy = _name(hierarchy_id)
+        if type(limit) is not int or limit < 1:
+            raise ValueError("limit must be a positive integer")
+        matches = []
+        for hid, address in self._learned:
+            if hid != hierarchy:
+                continue
+            pattern = self.expand(address)
+            if not self.config.min_context <= len(pattern) < len(query):
+                continue
+            if any(query[start:start + len(pattern)] == pattern
+                   for start in range(len(query) - len(pattern) + 1)):
+                matches.append((len(pattern), address, pattern))
+        if not matches:
+            return EmbeddedRootRecall((), (), (), False, False)
+        longest = max(size for size, _, _ in matches)
+        cues = sorted((address, pattern) for size, address, pattern in matches
+                      if size == longest)
+        truncated = len(cues) > limit
+        active = cues[:limit]
+        links: list[EmbeddedRootLink] = []
+        weights: dict[str, float] = {}
+        streams: dict[str, set[str]] = {}
+        for address, pattern in active:
+            for neighbor in self.temporal_neighbors(pattern, hierarchy_id=hierarchy):
+                links.append(EmbeddedRootLink(
+                    address, neighbor.payload_id, neighbor.weight, neighbor.streams,
+                ))
+                weights[neighbor.payload_id] = (
+                    weights.get(neighbor.payload_id, 0.0) + neighbor.weight / len(active)
+                )
+                streams.setdefault(neighbor.payload_id, set()).update(neighbor.streams)
+        targets = tuple(
+            TemporalNeighbor(address, self.expand(address), weight,
+                             tuple(sorted(streams[address])))
+            for address, weight in sorted(weights.items(), key=lambda item: (-item[1], item[0]))
+        )
+        return EmbeddedRootRecall(
+            tuple(address for address, _ in active), tuple(links), targets[:limit],
+            len(cues) > 1 or len(targets) > 1,
+            truncated or len(targets) > limit,
+        )
+
     def associated_nodules(
         self, payload: Iterable[int], *, hierarchy_id: str = "default",
         channel: str = "temporal", limit: int = 8,
@@ -398,8 +469,9 @@ class TrajectoryGenerationExperiment:
 
         Auto scale maximizes matched atomic span, then prefers the deeper view.
         A known end competes with continuation and prevents unbounded backoff.
-        Whole-payload temporal recall is tried first. If no route exists, a
-        recurring nodule inside a new input can evoke related nodules.
+        Whole-payload temporal recall is tried first. If no continuation
+        exists, a recurring nodule or an embedded observed payload can evoke
+        related nodules. Neither operation establishes a fact.
         """
         query = _symbols(payload)
         hierarchy = _name(hierarchy_id)
@@ -471,7 +543,8 @@ class TrajectoryGenerationExperiment:
                 len(neighbors) > beam_width, depth, neighbors[:beam_width],
             )
         if not ambiguous and not truncated and all(
-            candidate.stop_reason == "no_route" for candidate in candidates
+            candidate.stop_reason in ("no_route", "observed_end")
+            for candidate in candidates
         ):
             association = self.associated_nodules(
                 query, hierarchy_id=hierarchy, limit=beam_width,
@@ -489,6 +562,23 @@ class TrajectoryGenerationExperiment:
                     "NODULE_RECALL", recall, association.ambiguous,
                     association.truncated, association.depth,
                     association_evidence=association,
+                )
+            embedded = self.embedded_root_relations(
+                query, hierarchy_id=hierarchy, limit=beam_width,
+            )
+            if embedded.neighbors:
+                total = sum(neighbor.weight for neighbor in embedded.neighbors)
+                recall = tuple(
+                    GenerationCandidate(
+                        neighbor.symbols, (), log(neighbor.weight / total),
+                        "embedded_root_relation", (),
+                    )
+                    for neighbor in embedded.neighbors
+                )
+                return GenerationResult(
+                    "EMBEDDED_TEMPORAL_RECALL", recall, embedded.ambiguous,
+                    embedded.truncated, 0, embedded.neighbors,
+                    embedded_evidence=embedded,
                 )
         return GenerationResult("ECHO", tuple(candidates), ambiguous, truncated, depth)
 

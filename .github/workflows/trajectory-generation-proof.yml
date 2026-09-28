@@ -10,6 +10,7 @@ on:
       - 'scripts/trajectory_generation_gate.py'
       - 'scripts/trajectory_holdout_probe.py'
       - 'scripts/trajectory_episode_probe.py'
+      - 'scripts/trajectory_private_replay.py'
       - '.github/workflows/trajectory-generation-proof.yml'
   workflow_dispatch:
 
@@ -27,6 +28,8 @@ jobs:
           python-version: '3.12'
       - name: Synthetic generative proof
         run: python scripts/trajectory_generation_gate.py
+      - name: Embedded root export adapter without private data
+        run: python scripts/trajectory_private_replay.py
       - name: Held-out structural scenarios and negative controls
         run: |
           python scripts/trajectory_holdout_probe.py --seed 4107

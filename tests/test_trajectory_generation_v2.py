@@ -321,6 +321,60 @@ class TrajectoryGenerationTests(unittest.TestCase):
                              for node in memory.snapshot()["nodes"]))
         self.assertEqual((memory.snapshot(), memory.learning_state()), before)
 
+    def test_single_observed_payload_is_evoked_inside_a_new_context(self):
+        memory = TrajectoryGenerationExperiment()
+        cue = (1, 2, 3, 4)
+        target = (7, 8, 9)
+        source = memory.observe(cue, observation_id="source", stream_id="episode")
+        answer = memory.observe(target, observation_id="later", stream_id="episode")
+        query = (90, *cue, 91)
+        before = memory.snapshot(), memory.learning_state()
+
+        self.assertEqual(memory.associated_nodules(query).candidates, ())
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "EMBEDDED_TEMPORAL_RECALL")
+        self.assertEqual(result.selected, target)
+        self.assertEqual(result.embedded_evidence.cue_payload_ids, (source.payload_id,))
+        self.assertEqual(result.embedded_evidence.links[0].target_payload_id,
+                         answer.payload_id)
+        self.assertEqual(result.embedded_evidence.links[0].streams, ("episode",))
+        self.assertEqual(memory.generate((90, *cue)).selected, target)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), before)
+        for i in range(8):
+            memory.observe(cue, observation_id=f"copy:{i}", stream_id=f"replay:{i}")
+        self.assertEqual(memory.learning_state(), before[1])
+        self.assertEqual(memory.generate(query), result)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).generate(query), result)
+
+    def test_embedded_roots_expose_competition_and_capture_boundaries(self):
+        memory = TrajectoryGenerationExperiment()
+        a, b = (1, 2, 3), (4, 5, 6)
+        target_a, target_b = (7, 8, 9), (10, 11, 12)
+        for i, (source, target) in enumerate(((a, target_a), (b, target_b))):
+            memory.observe(source, observation_id=f"s:{i}", stream_id=f"stream:{i}")
+            memory.observe(target, observation_id=f"t:{i}", stream_id=f"stream:{i}")
+        query = (90, *a, 91, *b, 92)
+        result = memory.generate(query)
+        self.assertEqual(result.mode, "EMBEDDED_TEMPORAL_RECALL")
+        self.assertEqual({candidate.output for candidate in result.candidates},
+                         {target_a, target_b})
+        self.assertTrue(result.ambiguous)
+        self.assertIsNone(result.selected)
+        self.assertEqual(len(result.embedded_evidence.cue_payload_ids), 2)
+        self.assertTrue(memory.generate(query, beam_width=1).truncated)
+        self.assertIsNone(memory.generate(query, beam_width=1).selected)
+
+        split = TrajectoryGenerationExperiment()
+        split.observe(a, observation_id="source", stream_id="one")
+        split.observe(target_a, observation_id="target", stream_id="two")
+        self.assertEqual(split.generate((90, *a, 91)).mode, "ECHO")
+        reversed_memory = TrajectoryGenerationExperiment()
+        reversed_memory.observe(target_a, observation_id="target", stream_id="one")
+        reversed_memory.observe(a, observation_id="source", stream_id="one")
+        self.assertEqual(reversed_memory.generate((90, *a, 91)).mode, "ECHO")
+        self.assertEqual(memory.generate((90, 1, 91)).mode, "ECHO")
+
     def test_text_adapter_discovers_longer_recurrent_spans_without_word_rules(self):
         memory = TrajectoryGenerationExperiment()
         for i, text in enumerate((

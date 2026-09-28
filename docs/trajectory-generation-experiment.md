@@ -132,11 +132,23 @@ verdade. Só há `selected` quando resta uma única alternativa sem truncamento.
 Pesos brutos de escalas diferentes têm normalizações distintas; a ordem entre
 alvos de comprimentos e escalas diferentes ainda precisa de calibração.
 
-`generate` usa essa evocação (`NODULE_RECALL`) como última opção quando não
-encontra continuação nem evocação da raiz e a rota terminou por falta de
-evidência. O nódulo evocado é mostrado separadamente; não se afirma que a
-frase toda tenha sido observada. O cálculo hoje ocorre durante a consulta.
-Organizá-lo em segundo plano continua sendo uma etapa futura.
+`generate` usa essa evocação (`NODULE_RECALL`) quando não encontra continuação
+nem evocação da raiz e a rota terminou sem saída nova. O nódulo evocado é
+mostrado separadamente; não se afirma que a frase toda tenha sido observada.
+
+Um payload completo conhecido já é uma raiz reutilizável mesmo que só tenha
+aparecido uma vez. Se uma consulta inédita contém essa sequência inteira, mas
+nenhum nódulo recorrente ofereceu candidato, `embedded_root_relations` procura
+as raízes contidas mais longas e suas entradas posteriores **na mesma captura**.
+`EMBEDDED_TEMPORAL_RECALL` expõe a raiz de origem, cada raiz de destino, peso
+e capturas testemunhas. Duas raízes ou dois destinos concorrentes mantêm
+`ambiguous`; limite de busca mantém `truncated` e impede `selected`. O modo
+também cobre uma nova consulta que termina exatamente com a raiz conhecida.
+Não usa `reply_to` e não converte proximidade temporal em fato: o sucessor
+pode ser uma distração. Raízes menores com relações não são consultadas se
+uma raiz contida maior prevalecer, mesmo que essa maior não tenha sucessor;
+é uma escolha conservadora ainda sem calibração. O cálculo hoje ocorre durante
+a consulta. Organizá-lo em segundo plano continua sendo uma etapa futura.
 
 ## Escalas e inferência
 
@@ -167,7 +179,8 @@ uma vez; os escores entre escalas não são probabilidades calibradas.
 Concorrentes continuam disponíveis mesmo quando um tem mais suporte. O campo
 `selected` só existe para uma hipótese única, sem ambiguidade nem truncamento.
 Um escore alto não determina verdade. `ECHO`, `CONTINUATION`,
-`TEMPORAL_RECALL` e `NODULE_RECALL` descrevem a operação realizada.
+`TEMPORAL_RECALL`, `NODULE_RECALL` e `EMBEDDED_TEMPORAL_RECALL` descrevem a
+operação realizada.
 
 Limites iniciais, configuráveis:
 
@@ -222,7 +235,9 @@ robusta em conversas reais. O mecanismo é próximo de um modelo de contexto
 variável com composições e evocação associativa. Testes sintéticos demonstram
 os contratos programados. A primeira [avaliação com contextos reservados](trajectory-holdout-proof.md)
 mede generalização estrutural e controles negativos em dois lotes pequenos;
-conversas reais e modalidades não textuais ainda exigem provas próprias.
+a [reprodução agregada de um export do OFF.IA](trajectory-offia-replay.md) mede
+um vínculo observado entre entradas reais. Mais conversas e modalidades não
+textuais ainda exigem provas próprias.
 
 Uma [prova entre conversas sintéticas](trajectory-episode-proof.md) também
 verifica rotas concorrentes, testemunhas por captura e ambiguidade após
