@@ -48,6 +48,7 @@ jobs:
           BDR_LIB="$(find /tmp/resolve-bdr-rc4/build-parity -name 'libbdr_atomic_c_api.so' -print -quit)"
           test -n "$BDR_LIB"
           echo "BDR_ATOMIC_LIBRARY=$BDR_LIB" >> "$GITHUB_ENV"
+          export BDR_ATOMIC_LIBRARY="$BDR_LIB"
           python - <<'PY'
           from bdr.atomic import AtomicBDR
           import os
@@ -60,9 +61,6 @@ jobs:
               db.close()
           print("PINNED_BDR_ABI_V2_OK")
           PY
-        # BDR_ATOMIC_LIBRARY set through GITHUB_ENV applies to next steps,
-        # not the shell where it was written. The inline probe below resolves
-        # the library directly from the build folder.
       - name: Native parity and durable replay tests
         run: |
           python -m pytest -q \
