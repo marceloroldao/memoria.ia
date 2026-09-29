@@ -23,27 +23,35 @@ def _client(root):
 
 
 def _payload(*, world_id="nov-live-autonomous-001", episode_id="plan:plan_1", tick=30):
-    episode = {
-        "episode_schema": "npc_episode_v1",
-        "episode_id": episode_id,
-        "npc_id": "nov",
-        "logical_tick": tick,
-        "need": "curiosity",
-        "target_entity_id": "ancient_tree",
-        "strategy_id": "via_shelter:shelter_marker",
-        "context": {
-            "period": "night", "weather": "clear", "region_id": "clearing",
-            "danger_level": 0.35,
-        },
-        "outcome": {
-            "satisfaction": 0.3, "observed_risk": 0.35, "elapsed_ticks": 3,
-            "preemptions": 0, "replans": 0,
-        },
+    plan_id = episode_id.removeprefix("plan:")
+    identity = {
+        "system": "live.infinita", "world_id": world_id,
+        "entity_id": "nov", "episode_id": episode_id,
     }
-    return {
-        "schema": FORMAT, "source_system": "live.infinita", "world_id": world_id,
-        "episode": episode, "episode_sha256": sha256(canonical(episode)).hexdigest(),
+    unsigned = {
+        "schema": FORMAT,
+        "record_key": sha256(canonical(identity)).hexdigest(),
+        "source": {
+            **identity, "source_schema": "npc_episode_v1",
+            "source_kind": "need_outcome", "plan_id": plan_id,
+            "proposal_id": "pr_1", "plan_revision": 0,
+        },
+        "observation": {
+            "logical_tick": tick, "need": "curiosity",
+            "target_entity_id": "ancient_tree",
+            "strategy_id": "via_shelter:shelter_marker",
+            "context": {
+                "period": "night", "weather": "clear", "region_id": "clearing",
+                "danger_level": 0.35,
+            },
+            "outcome": {
+                "satisfaction": 0.3, "observed_risk": 0.35,
+                "elapsed_ticks": 3, "preemptions": 0, "replans": 0,
+            },
+        },
+        "authority": "observed-outcome-only", "world_write_authority": False,
     }
+    return {**unsigned, "content_sha256": sha256(canonical(unsigned)).hexdigest()}
 
 
 def test_external_observation_is_not_user_or_assistant_episode_and_survives_restart(tmp_path):
@@ -55,7 +63,8 @@ def test_external_observation_is_not_user_or_assistant_episode_and_survives_rest
     assert response.status_code == 201, response.text
     receipt = response.json()
     assert receipt["ack"] is True and receipt["stored"] is True
-    assert receipt["episode_sha256"] == payload["episode_sha256"]
+    assert receipt["record_key"] == payload["record_key"]
+    assert receipt["content_sha256"] == payload["content_sha256"]
     assert receipt["persistence"]["backend"] == "sqlite"
     assert receipt["persistence"]["state_id"]
     assert receipt["persistence"]["sha256"]
@@ -67,8 +76,7 @@ def test_external_observation_is_not_user_or_assistant_episode_and_survives_rest
     assert rows[0].predicate == "observed_experience"
     assert rows[0].epoch == 30
     stored_payload = json.loads(rows[0].source_text)
-    assert stored_payload["episode"] == payload["episode"]
-    assert stored_payload["schema"] == FORMAT
+    assert stored_payload == {k: v for k, v in payload.items() if k != "content_sha256"}
     assert "role" not in stored_payload and "user" not in stored_payload
     assert "assistant" not in stored_payload
     assert service.receipt is not None
@@ -90,8 +98,10 @@ def test_changed_observation_same_source_episode_id_conflicts(tmp_path):
     first = _payload()
     assert client.post("/api/v1/external/episodes", json=first, headers=HEADERS).status_code == 201
     changed = deepcopy(first)
-    changed["episode"]["outcome"]["satisfaction"] = 0.9
-    changed["episode_sha256"] = sha256(canonical(changed["episode"])).hexdigest()
+    changed["observation"]["outcome"]["satisfaction"] = 0.9
+    changed["content_sha256"] = sha256(canonical({
+        k: v for k, v in changed.items() if k != "content_sha256"
+    })).hexdigest()
     response = client.post("/api/v1/external/episodes", json=changed, headers=HEADERS)
     assert response.status_code == 409
     assert len(service.core.evidence_history(namespace="live:nov-live-autonomous-001")) == 1
@@ -106,9 +116,11 @@ def test_changed_observation_same_source_episode_id_conflicts(tmp_path):
 def test_rejects_invented_fields_bad_digest_or_wrong_origin(tmp_path):
     client, service = _client(tmp_path / "evidence")
     bad = _payload()
-    bad["episode"]["source"] = {"role": "assistant", "text": "fabricated"}
+    bad["source"]["role"] = "assistant"
     assert client.post("/api/v1/external/episodes", json=bad, headers=HEADERS).status_code == 422
-    assert client.post("/api/v1/external/episodes", json={**_payload(), "episode_sha256": "0"*64},
+    assert client.post("/api/v1/external/episodes", json={**_payload(), "content_sha256": "0"*64},
+                       headers=HEADERS).status_code == 422
+    assert client.post("/api/v1/external/episodes", json={**_payload(), "record_key": "0"*64},
                        headers=HEADERS).status_code == 422
     assert client.post("/api/v1/external/episodes", json={**_payload(), "source_system": "chatgpt"},
                        headers=HEADERS).status_code == 422
