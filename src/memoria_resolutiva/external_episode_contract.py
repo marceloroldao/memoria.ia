@@ -8,7 +8,6 @@ from __future__ import annotations
 from hashlib import sha256
 import hmac
 import json
-from pathlib import Path
 from threading import RLock
 from typing import Literal
 
@@ -67,17 +66,8 @@ class ExternalEpisodeRequest(BaseModel):
 def attach_external_episode_routes(app: FastAPI, *, api_key: str, evidence: ProductEvidenceService) -> None:
     """Idempotent durable receipt; source identity and bytes are immutable."""
     lock = RLock()
-    # The persisted Product EvidenceCore is the storage of record. The lookup is
-    # only a process-local acceleration and is rebuilt from that core on restart.
-    entries = {
-        row.evidence_id: row
-        for row in evidence.core.evidence_history(namespace=None)
-        if row.evidence_id.startswith("live-obs:")
-    }
-    # EvidenceCore namespace filtering requires exact namespace. Instead of
-    # deriving a new index from a private member, load the per-app registry lazily:
-    # all IDs are checked directly against their scoped evidence history below.
-    del entries
+    # Only a process-local accelerator: scope is read from the persisted
+    # EvidenceCore on first use and restored automatically after restart.
     cache: dict[tuple[str, str], object] = {}
     pending: set[tuple[str, str]] = set()
 
