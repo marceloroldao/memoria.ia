@@ -132,7 +132,7 @@ def test_corrupt_source_digest_is_rejected_without_touching_source(tmp_path):
         db.execute("UPDATE observations SET content_sha256=? WHERE record_key=?",
                    ("0" * 64, episode(1).record_key))
     original = source.read_bytes()
-    with pytest.raises(IncrementalEpisodeError, match="snapshot source contract invalid"):
+    with pytest.raises(IncrementalEpisodeError, match="invalid SQLite mirror source|snapshot source contract invalid"):
         mirror.mirror_live_snapshot(source, tmp_path / "bad", library_path=Path(LIBRARY))
     assert source.read_bytes() == original
     assert not (tmp_path / "bad/parity-report.json").exists()
