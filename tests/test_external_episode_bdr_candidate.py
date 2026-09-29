@@ -152,8 +152,8 @@ def test_sqlite_mirror_is_copy_only_and_idempotent(tmp_path):
     sqlite = IncrementalExternalEpisodeStore(tmp_path / "sqlite")
     for i in range(25):
         sqlite.observe(request(i))
-    before = (tmp_path / "sqlite/external-episodes.sqlite3").stat()
     sqlite.close()
+    before = (tmp_path / "sqlite/external-episodes.sqlite3").stat()
     bdr = open_bdr(tmp_path / "bdr")
     original = tmp_path / "sqlite/external-episodes.sqlite3"
     assert bdr.mirror_sqlite_snapshot(original) == 25
