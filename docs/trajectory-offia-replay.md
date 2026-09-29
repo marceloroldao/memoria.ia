@@ -13,13 +13,17 @@ O adaptador tokeniza aproximadamente como a versão nativa v1, dobra caixa e
 atribui endereços inteiros opacos aos tokens. A equivalência exata com a
 tokenização do APK não foi demonstrada. O replay preserva a ordem do export,
 separa as capturas e alimenta o experimento somente com as entradas do usuário.
-As cópias exatas normalizadas criam ocorrências sem voto de aprendizado.
+As cópias exatas normalizadas criam ocorrências sem voto de **conteúdo**; uma
+ocorrência pode testemunhar um par temporal ainda inédito.
+
+As medidas a seguir registram as etapas anteriores à inclusão das ocorrências
+repetidas no relógio das raízes. A seção final traz o estado atual.
 
 | Medida agregada | Resultado |
 | --- | ---: |
 | Observações estruturais / capturas | 99 / 28 |
 | Payloads normalizados distintos | 68 |
-| Ocorrências duplicadas sem reforço | 31 |
+| Ocorrências duplicadas sem voto de conteúdo | 31 |
 | Payloads distintos que têm cópias | 9 |
 | Endereços opacos de tokens | 140 |
 | Consultas inéditas com prefixo e sufixo, uma por payload distinto | 68 |
@@ -114,3 +118,28 @@ Isso prova uma capacidade estrutural pequena no host Python, com um caso real
 rotulado pelo export. O aplicativo OFF.IA não usa esse gerador, o gate pessoal
 nativo ainda tem três casos pendentes, e não há evidência de compreensão
 factual, desempenho geral em diálogos ou processamento em segundo plano.
+
+## Ocorrências repetidas na ordem temporal das raízes (29/09/2026)
+
+O experimento agora conserva todas as 99 posições da ordem das 28 capturas
+para evocar relações entre raízes. Os 68 payloads normalizados distintos
+continuam armazenados uma vez, e as 31 cópias não reforçam o conteúdo. Uma
+cópia pode formar um **par ordenado novo** com um payload anterior da mesma
+captura; cada par tem no máximo um testemunho por hierarquia. Na leitura deste
+export, nasceram 176 pares: 155 em entradas de conteúdo distinto e 21 em
+ocorrências de conteúdo reutilizado. Os pares não foram passados manualmente.
+
+| Leitura agregada | Antes | Com ocorrências na ordem |
+| --- | ---: | ---: |
+| 68 consultas inéditas: só nódulo / só raiz / ambos / eco | 13 / 17 / 32 / 6 | 8 / 18 / 37 / 5 |
+| 68 consultas inéditas: ambíguas / truncadas / únicas sem eco | 55 / 19 / 7 | 56 / 24 / 7 |
+| 99 consultas antes de observar a entrada: eco / continuação / continuação e evocação | 40 / 4 / 12 | 39 / 4 / 12 |
+| 99 consultas antes de observar: só nódulo / combinações de evocação / só raiz temporal | 35 / 8 / 0 | 16 / 27 / 1 |
+| 99 consultas antes de observar: ambíguas / truncadas / únicas sem eco | 57 / 11 / 2 | 57 / 22 / 3 |
+
+O único `reply_to` explícito permanece uma checagem retrospectiva: antes do
+destino observado ainda há eco; depois, a consulta que contém a origem evoca
+esse destino como candidato único. O aumento de rotas também elevou os casos
+truncados, sobretudo na passagem cronológica. O export não traz rótulos para
+decidir se as outras rotas novas ajudam ou distraem. O suporte de nódulos
+intermediários ainda usa payloads distintos e não incorporou essas cópias.

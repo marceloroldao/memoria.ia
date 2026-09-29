@@ -67,10 +67,17 @@ def replay(document: dict) -> dict:
     sentinel = len(dictionary)
     memory = TrajectoryGenerationExperiment()
     learned = 0
+    duplicate_relation_votes = 0
+    distinct_relation_votes = 0
     for index, (row, payload) in enumerate(zip(rows, payloads)):
-        learned += memory.observe(
+        receipt = memory.observe(
             payload, observation_id=f"row:{index}", stream_id=row["hierarchy_id"],
-        ).learned
+        )
+        learned += receipt.learned
+        if receipt.learned:
+            distinct_relation_votes += receipt.new_relations
+        else:
+            duplicate_relation_votes += receipt.new_relations
 
     frequencies = Counter(payloads)
     distinct = list(dict.fromkeys(payloads))
@@ -181,6 +188,11 @@ def replay(document: dict) -> dict:
     return dict(
         observations=len(rows), captures=len(first_stream),
         distinct_payloads=len(distinct), exact_duplicate_occurrences=len(rows) - learned,
+        novel_ordered_root_pairs=dict(
+            from_distinct_payloads=distinct_relation_votes,
+            from_reused_payloads=duplicate_relation_votes,
+            total=memory.learning_state()["root_relations"],
+        ),
         distinct_repeated_payloads=len(repeated), opaque_symbol_addresses=len(dictionary),
         novel_wrapper=dict(
             unique_modes=by_mode(outcomes), repeated_modes=by_mode(repeated_outcomes),

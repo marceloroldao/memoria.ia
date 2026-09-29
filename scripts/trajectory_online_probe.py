@@ -117,6 +117,30 @@ def trial(rng: Random) -> dict[str, bool]:
     split_embedded.observe(cue, observation_id="cue", stream_id="one")
     split_embedded.observe(target, observation_id="target", stream_id="two")
     split_embedded.observe(unlinked_larger, observation_id="larger", stream_id="three")
+
+    # A known payload appears after a new cue in another capture. Its content
+    # stays unique, but this previously unseen ordered pair is learned.
+    reused_memory = TrajectoryGenerationExperiment()
+    reused_memory.observe(target, observation_id="known-target", stream_id="archive")
+    reused_source = wrapped(cue)
+    reused_memory.observe(reused_source, observation_id="new-cue", stream_id="live")
+    reused_query = wrapped(reused_source)
+    reused_before = reused_memory.generate(reused_query)
+    reused_content_count = reused_memory.learning_state()["learned_payloads"]
+    reused_receipt = reused_memory.observe(target, observation_id="known-again",
+                                           stream_id="live")
+    reused_after = reused_memory.generate(reused_query)
+    reused_link = reused_memory.temporal_neighbors(reused_source)
+    reused_state = (reused_memory.snapshot(), reused_memory.learning_state())
+    reused_memory.observe(reused_source, observation_id="another-cue",
+                          stream_id="other")
+    reused_same_pair = reused_memory.observe(target, observation_id="another-target",
+                                             stream_id="other")
+    reverse_memory = TrajectoryGenerationExperiment()
+    reverse_memory.observe(target, observation_id="known", stream_id="archive")
+    reverse_memory.observe(target, observation_id="earlier", stream_id="reverse")
+    reverse_memory.observe(reused_source, observation_id="later", stream_id="reverse")
+
     memory.observe(new_input, observation_id="cue:2", stream_id="episode:2")
     before_interposition = memory.generate(new_input)
     prefix = memory.snapshot()
@@ -213,6 +237,22 @@ def trial(rng: Random) -> dict[str, bool]:
             and layered_limited.selected is None),
         split_embedded_capture_stays_unlinked=(
             split_embedded.generate(nested_query).mode == "ECHO"),
+        reused_target_forms_new_pair_without_content_vote=(
+            reused_before.mode == "ECHO"
+            and not reused_receipt.learned and reused_receipt.new_relations == 1
+            and reused_memory.learning_state()["learned_payloads"] == reused_content_count
+            and reused_after.mode == "EMBEDDED_TEMPORAL_RECALL"
+            and reused_after.selected == target
+            and len(reused_link) == 1 and reused_link[0].symbols == target
+            and reused_link[0].streams == ("live",)),
+        reused_pair_does_not_reinforce=(
+            reused_same_pair.new_relations == 0
+            and reused_memory.learning_state() == reused_state[1]
+            and reused_memory.generate(reused_query) == reused_after
+            and TrajectoryGenerationExperiment.restore(reused_state[0])
+            .generate(reused_query) == reused_after),
+        reverse_reuse_does_not_create_forward_pair=(
+            reverse_memory.temporal_neighbors(reused_source) == ()),
         after_input_before_interposition=(before_interposition.selected == target),
         unrelated_capture_does_not_create_exact_root_link=(
             split_result.mode == "NODULE_RECALL" and split_result.selected == target),

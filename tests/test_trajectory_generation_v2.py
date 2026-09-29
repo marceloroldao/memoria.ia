@@ -53,6 +53,46 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertEqual(memory.learning_state()["learned_payloads"], 2)
         self.assertTrue(memory.levels())
 
+    def test_repeated_target_can_form_new_ordered_relation_without_payload_vote(self):
+        memory = TrajectoryGenerationExperiment()
+        source, target, later = (1, 2, 3), (7, 8, 9), (4, 5, 6)
+        memory.observe(target, observation_id="known", stream_id="archive")
+        memory.observe(source, observation_id="new-context", stream_id="live")
+        content_count = memory.learning_state()["learned_payloads"]
+        duplicate = memory.observe(target, observation_id="reused-target", stream_id="live")
+        self.assertFalse(duplicate.learned)
+        self.assertEqual(duplicate.new_relations, 1)
+        self.assertEqual(memory.learning_state()["learned_payloads"], content_count)
+        self.assertEqual(len(memory.snapshot()["nodes"]), content_count)
+        self.assertEqual([neighbor.symbols for neighbor in memory.temporal_neighbors(source)],
+                         [target])
+        self.assertEqual(memory.temporal_neighbors(source)[0].streams, ("live",))
+        query = (90, *source, 91)
+        self.assertEqual(memory.generate(query).selected, target)
+        first_weight = memory.temporal_neighbors(source)[0].weight
+        before = memory.learning_state()
+        memory.observe(source, observation_id="repeat-source", stream_id="other")
+        same_pair = memory.observe(target, observation_id="repeat-target", stream_id="other")
+        self.assertEqual(same_pair.new_relations, 0)
+        self.assertEqual(memory.learning_state(), before)
+        self.assertEqual(memory.temporal_neighbors(source)[0].weight, first_weight)
+
+        memory.observe(later, observation_id="later", stream_id="live")
+        neighbors = {item.symbols: item for item in memory.temporal_neighbors(source)}
+        self.assertAlmostEqual(neighbors[target].weight, 1.0)
+        self.assertAlmostEqual(neighbors[later].weight, exp(-0.35))
+        saved = memory.snapshot()
+        self.assertEqual(TrajectoryGenerationExperiment.restore(saved).generate(query),
+                         memory.generate(query))
+        self.assertEqual(TrajectoryGenerationExperiment.restore(saved).learning_state(),
+                         memory.learning_state())
+
+        reverse = TrajectoryGenerationExperiment()
+        reverse.observe(target, observation_id="known", stream_id="archive")
+        reverse.observe(target, observation_id="copy", stream_id="live")
+        reverse.observe(source, observation_id="source", stream_id="live")
+        self.assertEqual(reverse.temporal_neighbors(source), ())
+
     def test_same_kernel_forms_multiple_scales_and_preserves_every_position(self):
         memory = TrajectoryGenerationExperiment()
         core = (1, 1, 2, 3, 4, 5, 6, 7, 8)

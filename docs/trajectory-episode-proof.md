@@ -120,7 +120,7 @@ capturas anteriores e `selected` apontava apenas para a entrada intermediária.
 Agora `COMBINED_RECALL` mantém os dois destinos e suas testemunhas, sem resposta
 única. Quando ambas as famílias apontam para o mesmo destino, ele aparece uma
 vez. Entrada em outra captura não cria relação temporal falsa com a raiz;
-cópias exatas não alteram pesos.
+cópias exatas de um par já testemunhado não alteram pesos.
 
 O gate também testa uma ramificação independente **antes** de aprender a
 terceira pista: um novo contexto permite completar os símbolos da consulta.
@@ -151,6 +151,13 @@ agora encontra também B pela pista compartilhada contida na consulta e mostra
 ambos, sem seleção. Isso corrige a expectativa antiga do gate; B é uma rota
 testemunhada, ainda que possa ser irrelevante para a pergunta específica.
 
+Um controle novo guarda um destino numa captura antiga, observa uma pista
+inédita e então recebe de novo aquele destino na mesma captura da pista. A
+consulta antes da repetição dá eco; depois evoca o destino pela ordem recém
+testemunhada. O payload continua único e o par ganha só um voto. Repetir o
+par em outra captura não altera peso ou resultado; observar o destino antes
+da pista não cria relação pista → destino. Reabrir o estado reproduz a evocação.
+
 | Critério, por lote de 12 cenários | Desenvolvimento `9271902` | Reserva `20260930` |
 | --- | ---: | ---: |
 | Evocação antes do terceiro alvo | 12 | 12 |
@@ -166,6 +173,9 @@ testemunhada, ainda que possa ser irrelevante para a pergunta específica.
 | Interposição preserva os dois destinos e impede seleção única | 12 | 12 |
 | Alvo coincidente aparece uma vez | 12 | 12 |
 | Captura separada não cria ligação da raiz | 12 | 12 |
+| Destino reutilizado forma par novo sem voto de conteúdo | 12 | 12 |
+| Repetir o par não reforça; reabertura preserva a saída | 12 | 12 |
+| Ordem invertida não forma a relação de avanço | 12 | 12 |
 | Limite de candidatos impede seleção | 12 | 12 |
 | Leitura, cópias e reabertura preservam o estado/resultado | 12 | 12 |
 

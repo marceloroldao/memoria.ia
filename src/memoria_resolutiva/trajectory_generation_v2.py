@@ -9,7 +9,7 @@ from collections import Counter
 from dataclasses import asdict, dataclass
 from hashlib import blake2b
 import json
-from math import isclose, isfinite, log
+from math import exp, isclose, isfinite, log
 from typing import Iterable
 
 from .compositional_association_v2 import (
@@ -92,6 +92,7 @@ class ObservationReceipt:
     payload_id: str
     learned: bool
     replayed: bool
+    new_relations: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,8 +197,9 @@ class TrajectoryGenerationExperiment:
 
     The durable graph stores each payload once as atoms/references to existing
     payloads. Occurrences only reference roots. Derived indexes/fields can be
-    rebuilt by replay. Learning support is unique content per hierarchy; an
-    identical payload, even from another stream, supplies no second vote.
+    rebuilt by replay. Content support is unique per hierarchy. A repeated
+    payload does not vote for its content again, but its occurrence may form
+    a previously unseen ordered root pair in its capture.
     """
 
     def __init__(self, config: GenerationConfig | None = None) -> None:
@@ -217,9 +219,27 @@ class TrajectoryGenerationExperiment:
             trace_floor=self.config.trace_floor,
         )
         self._symbol_field = ContinuousStructuralAssociationField(**field_options)
-        self._root_field = ContinuousStructuralAssociationField(**field_options)
         self._streams: dict[tuple[str, str], str] = {}
-        self._roots: dict[int, str] = {}
+        # Content is interned once; every occurrence still advances its own
+        # capture order. A root pair gets one structural vote per hierarchy.
+        self._root_history: dict[tuple[str, str], list[str]] = {}
+        self._root_pairs: dict[tuple[str, str, str], tuple[float, str, int]] = {}
+
+    def _record_root_occurrence(self, hierarchy: str, stream: str, address: str) -> int:
+        history = self._root_history.setdefault((hierarchy, stream), [])
+        learned = 0
+        for lag, source in enumerate(reversed(history[-self._symbol_field.temporal_horizon:]),
+                                     start=1):
+            weight = exp(-self.config.temporal_decay * (lag - 1))
+            if weight < self.config.trace_floor:
+                break
+            pair = hierarchy, source, address
+            if source == address or pair in self._root_pairs:
+                continue
+            self._root_pairs[pair] = weight, stream, len(history) + 1
+            learned += 1
+        history.append(address)
+        return learned
 
     def expand(self, address: ScaleAddress) -> tuple[int, ...]:
         """Lossless expansion of a stored root, including repeated symbols."""
@@ -273,13 +293,12 @@ class TrajectoryGenerationExperiment:
                 raise ValueError("observation identity reused with different content or scope")
             return ObservationReceipt(address, learned=False, replayed=True)
 
-        root_symbol = int(address.removeprefix("payload:"), 16)
-        if root_symbol in self._roots and self._roots[root_symbol] != address:
-            raise ValueError("root symbol collision")
         address = self._intern(symbols)
         self._observations[observation] = row
+        new_relations = self._record_root_occurrence(hierarchy, stream, address)
         if (hierarchy, address) in self._learned:
-            return ObservationReceipt(address, learned=False, replayed=False)
+            return ObservationReceipt(address, learned=False, replayed=False,
+                                      new_relations=new_relations)
 
         # Capture boundaries are provenance, not manually authored relations.
         field_scope = "stream:" + _digest([hierarchy, stream])
@@ -290,14 +309,13 @@ class TrajectoryGenerationExperiment:
             event={"trail": symbols}, provenance={"hierarchy_id": field_scope},
         )
         self._symbol_field.observe(envelope)
-        self._root_field.observe({**envelope, "event": {"trail": (root_symbol,)}})
-        self._roots[root_symbol] = address
         self._index.ingest_addresses(
             symbols, hierarchy_id=hierarchy, source_id=address,
             sequence=0, observation_id=event_id,
         )
         self._learned.add((hierarchy, address))
-        return ObservationReceipt(address, learned=True, replayed=False)
+        return ObservationReceipt(address, learned=True, replayed=False,
+                                  new_relations=new_relations)
 
     def levels(self, *, hierarchy_id: str = "default") -> tuple[HierarchyLevelV2, ...]:
         return self._hierarchy.build(hierarchy_id=_name(hierarchy_id))
@@ -322,20 +340,17 @@ class TrajectoryGenerationExperiment:
         address = _payload_id(_symbols(payload))
         if (hierarchy, address) not in self._learned:
             return ()
-        symbol = int(address.removeprefix("payload:"), 16)
         weights: dict[str, float] = {}
         streams: dict[str, set[str]] = {}
-        for (hid, stream), scope in self._streams.items():
-            if hid != hierarchy:
+        for (hid, source, target), (base_weight, stream, tick) in self._root_pairs.items():
+            if hid != hierarchy or source != address:
                 continue
-            for edge in self._root_field.strongest(
-                scope, symbol, channel="temporal", top_k=max(1, len(self._roots)),
-            ):
-                if edge.weight < self.config.trace_floor:
-                    continue
-                target = self._roots[edge.target]
-                weights[target] = weights.get(target, 0.0) + edge.weight
-                streams.setdefault(target, set()).add(stream)
+            age = len(self._root_history[(hierarchy, stream)]) - tick
+            weight = base_weight * exp(-self.config.forgetting_rate * age)
+            if weight < self.config.trace_floor:
+                continue
+            weights[target] = weight
+            streams[target] = {stream}
         return tuple(
             TemporalNeighbor(target, self.expand(target), weight, tuple(sorted(streams[target])))
             for target, weight in sorted(weights.items(), key=lambda item: (-item[1], item[0]))
@@ -746,7 +761,8 @@ class TrajectoryGenerationExperiment:
         """Derived diagnostics exclude mere occurrence metadata."""
         return dict(
             learned_payloads=len(self._learned), trajectories=self._index.count,
-            symbol_field=self._symbol_field.snapshot(), root_field=self._root_field.snapshot(),
+            symbol_field=self._symbol_field.snapshot(),
+            root_relations=len(self._root_pairs),
         )
 
     def snapshot(self) -> dict:

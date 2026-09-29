@@ -55,9 +55,12 @@ composições fica para uma etapa posterior. Não se promete compressão ótima.
 ## Quando aprende
 
 Dentro de uma hierarquia, o mesmo conteúdo completo contribui uma única vez:
-cópias em outra ocorrência ou outra captura não aumentam pesos, suporte,
-relógio de aprendizado ou número de trajetórias. Uma hierarquia nova aprende
-separadamente, compartilhando a tabela de conteúdo armazenado.
+cópias não aumentam seus pesos, suporte ou número de trajetórias. Cada
+ocorrência, inclusive de conteúdo já conhecido, ocupa uma posição na ordem
+da sua captura. Se um payload conhecido vier depois de outro com o qual ainda
+não havia um par ordenado, esse **par novo** ganha uma relação; repetir o
+mesmo par não lhe dá outro voto. Uma hierarquia nova aprende separadamente,
+compartilhando a tabela de conteúdo armazenado.
 
 Uma entrada diferente que contém N1 é um novo contexto. Ela aumenta o suporte
 das rotas compartilhadas e cria relações com o entorno. A estrutura de N1
@@ -75,7 +78,8 @@ somente leitura, inclusive para hierarquias desconhecidas.
 | --- | --- | --- |
 | Próximo endereço após um contexto | Número de payloads distintos que testemunham a opção / soma desses suportes | Peso relativo na geração; produto acumulado em log |
 | Símbolos separados por distância d dentro de uma entrada nova | `exp(-0.35 * (d - 1))` por ocorrência posicional | Campo de associação inspecionável |
-| Entradas novas separadas por k eventos na mesma captura | `exp(-0.35 * (k - 1))` | Campo temporal e evocação de payloads |
+| Raízes em duas ocorrências separadas por k posições na mesma captura | `exp(-0.35 * (k - 1))`, só no primeiro testemunho do par ordenado por hierarquia | Evocação temporal de payloads |
+| Entradas de conteúdo novo separadas por k eventos no campo de símbolos | `exp(-0.35 * (k - 1))` | Associação temporal entre símbolos |
 | Símbolos entre entradas | Kernel temporal multiplicado pelas frequências normalizadas dos símbolos em cada entrada | Associação temporal inspecionável |
 | Esquecimento | Desativado por padrão (`forgetting_rate=0`) | Configurável, ainda sem calibração empírica |
 
@@ -86,17 +90,18 @@ autorrelações. São medidas diferentes e são expostas separadamente.
 
 Os parâmetros são hipóteses de engenharia, não pesos aprendidos por gradiente
 ou valores biologicamente validados. Os pesos de distância entre símbolos
-ainda não são combinados com o escore de continuação. O campo de raízes fornece
-evocação temporal quando a continuação não encontra alternativa.
+ainda não são combinados com o escore de continuação. Os pares ordenados de
+raízes fornecem evocação temporal quando a continuação não encontra alternativa.
 
-O tempo usado aqui é a **ordem das entradas novas**, não segundos de relógio.
+O tempo das raízes é a **ordem de todas as ocorrências**, não segundos de relógio.
 Capturas (`stream_id`) separam histórias temporais automaticamente a partir
-da origem. Não criam uma associação semântica. Cópias excluídas do aprendizado
-também não consomem posições temporais: é uma escolha explícita desta versão.
-Como cada raiz contribui uma vez por hierarquia, a evocação temporal entre
-raízes ainda não acumula repetidas ocorrências do mesmo par. A recorrência
-entre contextos diferentes já aparece no campo de símbolos e nos suportes
-das continuações. A nova projeção de nódulos intermediários recupera relações
+da origem. Não criam uma associação semântica. O primeiro testemunho de cada
+par `(origem, destino)` por hierarquia fixa peso e captura de origem; novos
+testemunhos desse mesmo par não somam pesos nem origens. Uma ocorrência
+repetida pode, porém, aproximar ou afastar pares **ainda inéditos** na mesma
+captura. O campo de símbolos e a projeção de nódulos intermediários continuam
+derivados das entradas de conteúdo único; os suportes de continuação seguem
+esse mesmo critério. A projeção de nódulos intermediários recupera relações
 entre composições, reconstruindo os campos a partir das entradas únicas;
 ela ainda não substitui a evocação entre raízes quando a consulta é um
 payload completo já conhecido.
@@ -114,8 +119,9 @@ os níveis posteriores. O limite usa `max_context` e pode ser configurado.
 Cada ocorrência mantém o intervalo `[início, fim)` dentro do payload.
 Composições sobrepostas não geram relação direcional de proximidade espacial.
 Entre entradas de uma mesma captura, o peso temporal preserva a ordem e o
-decaimento por distância entre eventos. Payload repetido não avança o relógio
-de aprendizado. Origens `(payload anterior, payload posterior, captura)`
+decaimento por distância entre eventos de conteúdo novo. Payload repetido não
+avança esse relógio de **conteúdo**, embora avance a ordem das **ocorrências**
+usada pelas relações entre raízes. Origens `(payload anterior, payload posterior, captura)`
 acompanham as relações encontradas; relações internas usam o mesmo payload
 nas duas pontas. Essas origens são estruturais, não votos de verdade.
 
@@ -207,9 +213,17 @@ memória qual deles é resposta verdadeira. Outro controle aprende uma
 continuação em um contexto separado depois das duas primeiras capturas: a
 consulta inédita agora mostra tanto a continuação quanto o destino recorrente.
 São 24 variações com endereços opacos em duas sementes do gate online. Cópias
-exatas não alteram os resultados, reabertura reproduz a saída e limite curto
+em capturas separadas que não criam pares novos não alteram os resultados;
+reabertura reproduz a saída e limite curto
 marca truncamento sem selecionar uma resposta. Isso prova a preservação de
 evidências no experimento; não prova qual rota é verdadeira.
+
+O mesmo gate observa um destino armazenado primeiro numa captura antiga e
+depois de uma pista nova em outra captura. Antes da segunda ocorrência, a
+consulta que contém a pista devolve eco; depois, evoca o destino por uma
+ligação raiz embutida → destino. O conteúdo continua único. Repetir esse
+mesmo par em outra captura não soma peso; inverter a ordem não cria ligação
+na direção da pista para o destino. Isso passou nas 24 variações.
 
 ## Escalas e inferência
 
