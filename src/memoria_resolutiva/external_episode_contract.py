@@ -76,7 +76,7 @@ class ExternalEpisodeRequest(BaseModel):
     content_sha256: str = Field(min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$")
 
 
-def attach_external_episode_routes(app: FastAPI, *, api_key: str, evidence: ProductEvidenceService) -> None:
+def attach_external_episode_routes(app: FastAPI, *, api_key: str, evidence: ProductEvidenceService, incremental=None) -> None:
     """ACK is returned only after a durable snapshot, retry idempotent by source."""
     lock = RLock()
     # Scoped acceleration only; the persisted graph is re-read after restart.
@@ -103,6 +103,12 @@ def attach_external_episode_routes(app: FastAPI, *, api_key: str, evidence: Prod
         content_sha256 = sha256(canonical(unsigned)).hexdigest()
         if not hmac.compare_digest(content_sha256, request.content_sha256):
             raise HTTPException(status_code=422, detail="observation digest mismatch")
+        if incremental is not None:
+            try:
+                return incremental.observe(request)
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+            # Runtime/storage errors are deliberately not converted into ACKs.
         namespace = "live:" + source.world_id
         evidence_id = "live-obs:" + record_key[:40]
         source_payload = canonical(unsigned).decode("utf-8")
@@ -167,3 +173,13 @@ def attach_external_episode_routes(app: FastAPI, *, api_key: str, evidence: Prod
             "world_mutated": False,
             "selection_authority": False,
         }
+    @app.get("/api/v1/external/episodes/health", dependencies=[Depends(require_admin)])
+    def incremental_external_episode_health():
+        return {
+            "status": "ok",
+            "mode": "sqlite-incremental" if incremental is not None else "snapshot",
+            "observations": incremental.count if incremental is not None else None,
+            "world_mutated": False,
+            "selection_authority": False,
+        }
+

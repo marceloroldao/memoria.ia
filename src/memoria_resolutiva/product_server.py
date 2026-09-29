@@ -8,6 +8,7 @@ from .conversation_contract import attach_conversation_routes
 from .conversation_episodic_bridge import AutoEpisodicConversationService
 from .episodic_contract import attach_episodic_routes
 from .external_episode_contract import attach_external_episode_routes
+from .external_episode_incremental import IncrementalExternalEpisodeStore
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .native_conversation import NativeConversationService
@@ -168,6 +169,18 @@ def build_app():
 
     concept_namespace = os.getenv("MEMORIA_CONCEPT_NAMESPACE", "semantic").strip() or None
     evidence_service = ProductEvidenceService.open(data_dir / "evidence", backend=storage_backend, allow_fallback=storage_allow_fallback)
+    external_mode = os.getenv("MEMORIA_EXTERNAL_EPISODE_PERSISTENCE", "snapshot").strip().lower()
+    if external_mode not in {"snapshot", "sqlite-incremental"}:
+        raise RuntimeError("unsupported MEMORIA_EXTERNAL_EPISODE_PERSISTENCE")
+    external_incremental = None
+    if external_mode == "sqlite-incremental":
+        if storage_backend != "sqlite" or storage_allow_fallback:
+            raise RuntimeError("incremental external episodes require explicit sqlite without fallback")
+        external_incremental = IncrementalExternalEpisodeStore(data_dir / "external-episodes-incremental")
+        # Recover a failed earlier install that wrote a few canonical episodes
+        # into the old EvidenceCore snapshot. Its files remain untouched.
+        external_incremental.migrate_legacy(evidence_service)
+
     structural_service = ProductStructuralObservationService.open(
         data_dir / "structural-observations",
         backend=storage_backend,
@@ -258,6 +271,8 @@ def build_app():
                 conversation_backend.close()
             if isinstance(episodic_service, NativeEpisodicService):
                 episodic_service.close()
+            if external_incremental is not None:
+                external_incremental.close()
 
     chat_conversation_resolver = SemanticActivationConversationResolver(conversation_service)
     chat_service = _build_chat_service(service, configuration, conversation_resolver=chat_conversation_resolver)
@@ -285,6 +300,8 @@ def build_app():
             "portable_snapshot_fallback": bool(stats.get("portable_snapshot_fallback", False)),
             "evidence_backend": evidence_service.backend,
             "evidence_persisted": evidence_service.receipt is not None,
+            "external_episode_persistence": external_mode,
+            "external_episode_observations": external_incremental.count if external_incremental is not None else None,
             "structural_observation_backend": structural_service.store.backend,
             "structural_observations": structural_service.store.count,
             "structural_association_backend": structural_status["backend"],
@@ -312,7 +329,7 @@ def build_app():
     attach_structural_observation_routes(app, api_key=api_key, service=structural_service)
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_episodic_routes(app, api_key=api_key, service=episodic_service)
-    attach_external_episode_routes(app, api_key=api_key, evidence=evidence_service)
+    attach_external_episode_routes(app, api_key=api_key, evidence=evidence_service, incremental=external_incremental)
     if concept_relation_service is not None:
         from .product_concept_relations import attach_concept_relation_routes
         attach_concept_relation_routes(app, api_key=api_key, service=concept_relation_service)
