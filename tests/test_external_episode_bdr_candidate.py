@@ -100,7 +100,7 @@ def test_real_sqlite_bdr_parity_reopen_duplicate_and_conflict(tmp_path):
     changed = row.model_dump(mode="json")
     changed["observation"]["outcome"]["satisfaction"] = 0.95
     changed["content_sha256"] = sha256(canonical({
-        k: v for k, v in changed.items() if k != "content_sha256",
+        k: v for k, v in changed.items() if k != "content_sha256"
     })).hexdigest()
     with pytest.raises(IncrementalEpisodeError, match="different observed content"):
         bdr.observe(ExternalEpisodeRequest.model_validate(changed))
