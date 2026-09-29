@@ -16,11 +16,13 @@ def main() -> None:
     parser.add_argument("--output-directory", type=Path, required=True)
     parser.add_argument("--bdr-library", type=Path, required=True)
     parser.add_argument("--max-records", type=int, default=100_000)
+    parser.add_argument("--checkpoint", type=Path, default=None, help="optional read-only Nov checkpoint watermark")
     arguments = parser.parse_args()
     os.umask(0o077)
     result = create_verified_mirror(
         arguments.source_sqlite, arguments.output_directory,
         library_path=arguments.bdr_library, max_records=arguments.max_records,
+        checkpoint_path=arguments.checkpoint,
     )
     print("V2_BDR_READ_ONLY_MIRROR_OK " + json.dumps(
         result, sort_keys=True, separators=(",", ":"),

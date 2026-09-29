@@ -5,6 +5,7 @@ on:
     branches:
       - experiment/v2-bdr-incremental-parity
       - experiment/v2-bdr-online-mirror-gate
+      - feature/v2-bdr-mirror-checkpoint-gate
   pull_request:
     paths:
       - 'src/memoria_resolutiva/external_episode_bdr_candidate.py'
