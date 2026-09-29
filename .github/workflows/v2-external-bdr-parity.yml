@@ -4,11 +4,15 @@ on:
   push:
     branches:
       - experiment/v2-bdr-incremental-parity
+      - experiment/v2-bdr-online-mirror-gate
   pull_request:
     paths:
       - 'src/memoria_resolutiva/external_episode_bdr_candidate.py'
       - 'tests/test_external_episode_bdr_candidate.py'
       - 'scripts/benchmark_external_episode_bdr.py'
+      - 'src/memoria_resolutiva/external_episode_bdr_mirror.py'
+      - 'scripts/mirror_external_episodes_to_bdr.py'
+      - 'tests/test_external_episode_bdr_online_mirror.py'
       - '.github/workflows/v2-external-bdr-parity.yml'
 
 permissions:
