@@ -7,6 +7,7 @@ import os
 from .conversation_contract import attach_conversation_routes
 from .conversation_episodic_bridge import AutoEpisodicConversationService
 from .episodic_contract import attach_episodic_routes
+from .external_episode_contract import attach_external_episode_routes
 from .gemini_adapter import GeminiGenerateContentAdapter, GeminiPricing
 from .llm_adapter import MockLLMAdapter
 from .native_conversation import NativeConversationService
@@ -311,6 +312,7 @@ def build_app():
     attach_structural_observation_routes(app, api_key=api_key, service=structural_service)
     attach_conversation_routes(app, api_key=api_key, service=conversation_service)
     attach_episodic_routes(app, api_key=api_key, service=episodic_service)
+    attach_external_episode_routes(app, api_key=api_key, evidence=evidence_service)
     if concept_relation_service is not None:
         from .product_concept_relations import attach_concept_relation_routes
         attach_concept_relation_routes(app, api_key=api_key, service=concept_relation_service)
