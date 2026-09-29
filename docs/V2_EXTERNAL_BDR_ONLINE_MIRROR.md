@@ -24,6 +24,14 @@ checkpoint, Nov, Godot, or the central Memoria.ia server.
   record count, and durable sequence equality.
 - Write \`report.json\` only after all checks pass. If any check fails,
   leave isolated diagnostic files and emit **no success report**.
+- Optional `--checkpoint` reads the private Nov local checkpoint twice, never
+  writes it, and verifies that the *initial* last-acknowledged identity and
+  digest exist in the captured SQLite snapshot. The private report marks
+  whether the checkpoint moved while copying. A moving checkpoint is not a
+  cutover-ready watermark, even if the snapshot parity passes.
+- Guard a maximum 256 MiB SQLite+WAL+SHM source footprint and require
+  512 MiB available before copying. Fail before creating the output when
+  the source is too large, the checkpoint is invalid, or the input is a symlink.
 - Limit a run to 100,000 records, or a lower operator-selected bound. A
   live writer may append after the snapshot; the proof covers exactly its
   stated snapshot count and hash, not an unbounded moving database.
@@ -45,7 +53,8 @@ BDR_ATOMIC_LIBRARY="/path/to/pinned/libbdr_atomic_c_api.so" \
 python scripts/mirror_external_episodes_to_bdr.py \
   --source-sqlite /path/to/live/external-episodes.sqlite3 \
   --output-directory /path/to/new/private/mirror-run \
-  --bdr-library /path/to/pinned/libbdr_atomic_c_api.so
+  --bdr-library /path/to/pinned/libbdr_atomic_c_api.so \
+  --checkpoint /path/to/private/nov-ingest.checkpoint.json
 \`\`\`
 
 **No direct production cutover is implemented.** A dedicated deployment step
