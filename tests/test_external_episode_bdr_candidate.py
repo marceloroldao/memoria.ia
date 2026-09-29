@@ -169,6 +169,29 @@ def test_sqlite_mirror_is_copy_only_and_idempotent(tmp_path):
     sqlite_restored.close()
 
 
+def test_native_torn_bdw4_tail_discards_whole_episode_batch(tmp_path):
+    """A torn final transaction must not expose data without index/count."""
+    root = tmp_path / "torn-bdw4"
+    wal = root / "atomic.bdw4"
+    base = open_bdr(root)
+    base.observe(request(1))
+    base.close()
+    first_size = wal.stat().st_size
+    second = open_bdr(root)
+    second.observe(request(2))
+    second.close()
+    full_size = wal.stat().st_size
+    assert full_size > first_size
+    with wal.open("r+b") as fp:
+        fp.truncate(first_size + max(1, (full_size - first_size) // 2))
+    recovered = open_bdr(root)
+    assert recovered.count == 1
+    assert recovered.observe(request(1))["stored"] is False
+    assert recovered.observe(request(2))["stored"] is True
+    assert recovered._db.durable_sequence() == recovered._db.last_sequence()
+    recovered.close()
+
+
 def test_checkpoint_is_explicitly_not_migrated(tmp_path):
     sqlite = IncrementalExternalEpisodeStore(tmp_path / "sqlite")
     sqlite.observe(request(0))
