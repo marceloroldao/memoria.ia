@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - experiment/v2-bdr-incremental-parity
+      - experiment/v2-bdr-live-snapshot-parity
   pull_request:
     paths:
       - 'src/memoria_resolutiva/external_episode_bdr_candidate.py'
