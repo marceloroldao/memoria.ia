@@ -83,4 +83,22 @@ jobs:
           assert result["bdr_durable_sequence"]>=1000
           print("V2_NATIVE_BDR_1000_PARITY_OK")
           PY
+      - name: Scale and recover 10,000 identical episodes in both backends
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/benchmark_external_episode_bdr.py \
+            --bdr-library "$BDR_ATOMIC_LIBRARY" --scale 10000 \
+            | tee /tmp/nov-native-bdr-parity-10000.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path("/tmp/nov-native-bdr-parity-10000.json").read_text())
+          assert result["episodes"]==10000
+          assert result["graph_parity"] and result["identity_digest_parity"]
+          assert result["duplicate_idempotence"] and not result["production_modified"]
+          assert result["bdr_durable_sequence"]>=10000
+          print("V2_NATIVE_BDR_10000_PARITY_OK")
+          PY
+
 
