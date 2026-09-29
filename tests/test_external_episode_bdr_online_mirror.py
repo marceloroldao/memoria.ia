@@ -17,6 +17,7 @@ from memoria_resolutiva.external_episode_incremental import IncrementalExternalE
 from memoria_resolutiva.external_episode_bdr_mirror import (
     BdrMirrorVerificationError, _snapshot_live_sqlite, create_verified_mirror,
 )
+import memoria_resolutiva.external_episode_bdr_mirror as mirror_module
 
 LIBRARY = os.getenv("BDR_ATOMIC_LIBRARY", "")
 pytestmark = pytest.mark.skipif(
@@ -134,4 +135,96 @@ def test_refuse_record_count_limit_without_receipt(tmp_path):
     with pytest.raises(BdrMirrorVerificationError, match="snapshot_exceeds_record_limit"):
         create_verified_mirror(source, tmp_path / "bounded", library_path=LIBRARY, max_records=3)
     assert not (tmp_path / "bounded/report.json").exists()
+    store.close()
+
+
+def _checkpoint(path: Path, row: ExternalEpisodeRequest) -> None:
+    path.write_text(json.dumps({
+        "schema": "live-infinita-nov-local-memory-checkpoint/v1",
+        "world_id": row.source.world_id,
+        "ledger_identity": "fixture:inode",
+        "cursor": 4096,
+        "prefix_sha256": "f" * 64,
+        "last_line_sha256": "e" * 64,
+        "last_acked_record_key": row.record_key,
+        "last_acked_content_sha256": row.content_sha256,
+    }))
+    path.chmod(0o600)
+
+
+def test_read_only_checkpoint_watermark_in_original_mirror(tmp_path):
+    store, source = create_source(tmp_path, 12)
+    checkpoint = tmp_path / "nov-ingest.checkpoint.json"
+    _checkpoint(checkpoint, episode(11))
+    before = checkpoint.read_bytes()
+    result = create_verified_mirror(
+        source, tmp_path / "with-watermark",
+        library_path=LIBRARY, checkpoint_path=checkpoint,
+    )
+    assert result["source_snapshot_records"] == 12
+    assert result["checkpoint_watermark_present"] is True
+    assert result["checkpoint_unchanged_during_copy"] is True
+    assert result["checkpoint_cursor_at_start"] == 4096
+    assert result["sqlite_source_inode_unchanged"] is True
+    assert checkpoint.read_bytes() == before
+    assert store.observe(episode(12))["stored"]
+    store.close()
+
+
+def test_checkpoint_missing_from_source_blocks_without_success_report(tmp_path):
+    store, source = create_source(tmp_path, 4)
+    checkpoint = tmp_path / "nov-ingest.checkpoint.json"
+    _checkpoint(checkpoint, episode(99))
+    original = checkpoint.read_bytes()
+    with pytest.raises(BdrMirrorVerificationError, match="checkpoint_identity_missing"):
+        create_verified_mirror(
+            source, tmp_path / "bad-watermark",
+            library_path=LIBRARY, checkpoint_path=checkpoint,
+        )
+    assert checkpoint.read_bytes() == original
+    assert not (tmp_path / "bad-watermark/report.json").exists()
+    store.close()
+
+
+def test_moving_checkpoint_is_reported_not_advanced(tmp_path, monkeypatch):
+    store, source = create_source(tmp_path, 5)
+    checkpoint = tmp_path / "nov-ingest.checkpoint.json"
+    _checkpoint(checkpoint, episode(2))
+    real_copy = mirror_module._snapshot_live_sqlite
+
+    def change_checkpoint_after_copy(src: Path, dest: Path) -> None:
+        real_copy(src, dest)
+        _checkpoint(checkpoint, episode(4))
+
+    monkeypatch.setattr(mirror_module, "_snapshot_live_sqlite", change_checkpoint_after_copy)
+    report = create_verified_mirror(
+        source, tmp_path / "moving", library_path=LIBRARY,
+        checkpoint_path=checkpoint,
+    )
+    assert report["source_snapshot_records"] == 5
+    assert report["checkpoint_watermark_present"] is True
+    assert report["checkpoint_unchanged_during_copy"] is False
+    assert report["production_checkpoint_advanced"] is False
+    assert json.loads(checkpoint.read_text())["last_acked_record_key"] == episode(4).record_key
+    store.close()
+
+
+def test_source_size_symlink_and_checkpoint_corruption_fail_early(tmp_path, monkeypatch):
+    store, source = create_source(tmp_path, 2)
+    link = tmp_path / "source-link"
+    link.symlink_to(source)
+    with pytest.raises(BdrMirrorVerificationError, match="source_symlink"):
+        create_verified_mirror(link, tmp_path / "out1", library_path=LIBRARY)
+    monkeypatch.setattr(mirror_module, "MAX_SOURCE_BYTES", 1)
+    with pytest.raises(BdrMirrorVerificationError, match="source_exceeds_space_budget"):
+        create_verified_mirror(source, tmp_path / "out2", library_path=LIBRARY)
+    monkeypatch.undo()
+    ckpt = tmp_path / "bad-checkpoint"
+    ckpt.write_text("{}")
+    with pytest.raises(BdrMirrorVerificationError, match="checkpoint_schema_mismatch"):
+        create_verified_mirror(
+            source, tmp_path / "out3", library_path=LIBRARY, checkpoint_path=ckpt,
+        )
+    assert not (tmp_path / "out2").exists()
+    assert not (tmp_path / "out3").exists()
     store.close()
