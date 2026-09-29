@@ -157,6 +157,17 @@ consulta antes da repetição dá eco; depois evoca o destino pela ordem recém
 testemunhada. O payload continua único e o par ganha só um voto. Repetir o
 par em outra captura não altera peso ou resultado; observar o destino antes
 da pista não cria relação pista → destino. Reabrir o estado reproduz a evocação.
+O mesmo desenho agora funciona para **nódulos contidos** em payloads distintos:
+uma pista com um trecho recorrente seguida por um alvo armazenado anteriormente
+forma uma rota intermediária inédita. O alvo não ganha novo voto de conteúdo;
+repetir o mesmo par não aumenta o peso. Uma ocorrência interposta aumenta a
+distância e reduz o peso de uma relação nova. A projeção preserva a origem e
+não pressupõe qual destino seria uma resposta correta.
+
+No traçado de dois saltos, IDs iguais em uma captura não bastam: se B→C ocorreu
+antes de A→B usando outra ocorrência de B, A→B→C não aparece. Quando A, B e C
+ocorrem nessa ordem, o caminho aparece com sua captura, mesmo se o par A→B já
+foi visto antes e por isso não recebe outro voto.
 
 | Critério, por lote de 12 cenários | Desenvolvimento `9271902` | Reserva `20260930` |
 | --- | ---: | ---: |
@@ -176,6 +187,9 @@ da pista não cria relação pista → destino. Reabrir o estado reproduz a evoc
 | Destino reutilizado forma par novo sem voto de conteúdo | 12 | 12 |
 | Repetir o par não reforça; reabertura preserva a saída | 12 | 12 |
 | Ordem invertida não forma a relação de avanço | 12 | 12 |
+| Alvo reutilizado liga nódulos internos sem novo voto de conteúdo | 12 | 12 |
+| Repetir o par de nódulos não reforça; reabertura preserva a saída | 12 | 12 |
+| Ordem invertida não cria a relação intermediária | 12 | 12 |
 | Limite de candidatos impede seleção | 12 | 12 |
 | Leitura, cópias e reabertura preservam o estado/resultado | 12 | 12 |
 

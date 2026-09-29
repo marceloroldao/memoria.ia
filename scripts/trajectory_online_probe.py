@@ -141,6 +141,36 @@ def trial(rng: Random) -> dict[str, bool]:
     reverse_memory.observe(target, observation_id="earlier", stream_id="reverse")
     reverse_memory.observe(reused_source, observation_id="later", stream_id="reverse")
 
+    # Repeat an old wrapped target after a new wrapped cue. Shared inner spans
+    # become an intermediate-nodule route while the old payload stays unique.
+    inner_memory = TrajectoryGenerationExperiment()
+    inner_target = wrapped(target)
+    inner_memory.observe(inner_target, observation_id="old-target", stream_id="archive")
+    inner_memory.observe(wrapped(target), observation_id="other-target",
+                         stream_id="other-archive")
+    inner_memory.observe(wrapped(cue), observation_id="old-cue",
+                         stream_id="cue-archive")
+    inner_source = wrapped(cue)
+    inner_memory.observe(inner_source, observation_id="live-cue", stream_id="inner-live")
+    inner_query = wrapped(cue)
+    inner_before = inner_memory.generate(inner_query)
+    inner_reverse = TrajectoryGenerationExperiment.restore(inner_memory.snapshot())
+    inner_reverse.observe(inner_target, observation_id="reverse-target",
+                          stream_id="inner-reverse")
+    inner_reverse.observe(inner_source, observation_id="reverse-cue",
+                          stream_id="inner-reverse")
+    inner_payload_count = inner_memory.learning_state()["learned_payloads"]
+    inner_receipt = inner_memory.observe(inner_target, observation_id="live-target",
+                                         stream_id="inner-live")
+    inner_after = inner_memory.generate(inner_query)
+    inner_recall = inner_memory.associated_nodules(inner_query)
+    inner_weight = inner_recall.candidates[0].weight if inner_recall.candidates else None
+    inner_snapshot = inner_memory.snapshot()
+    inner_memory.observe(inner_source, observation_id="repeat-cue",
+                         stream_id="inner-repeat")
+    inner_memory.observe(inner_target, observation_id="repeat-target",
+                         stream_id="inner-repeat")
+
     memory.observe(new_input, observation_id="cue:2", stream_id="episode:2")
     before_interposition = memory.generate(new_input)
     prefix = memory.snapshot()
@@ -253,6 +283,21 @@ def trial(rng: Random) -> dict[str, bool]:
             .generate(reused_query) == reused_after),
         reverse_reuse_does_not_create_forward_pair=(
             reverse_memory.temporal_neighbors(reused_source) == ()),
+        reused_target_forms_intermediate_route_without_content_vote=(
+            inner_before.mode == "ECHO" and not inner_receipt.learned
+            and inner_memory.learning_state()["learned_payloads"] == inner_payload_count
+            and inner_after.mode == "NODULE_RECALL"
+            and inner_after.selected == target and inner_recall.selected == target
+            and len(inner_recall.candidates[0].witnesses) == 1),
+        repeated_intermediate_pair_does_not_reinforce=(
+            inner_weight is not None
+            and inner_memory.associated_nodules(inner_query).candidates[0].weight == inner_weight
+            and inner_memory.route_stability(inner_query).candidates[0].witness_pairs == 1
+            and inner_memory.generate(inner_query) == inner_after
+            and TrajectoryGenerationExperiment.restore(inner_snapshot)
+            .generate(inner_query) == inner_after),
+        reverse_intermediate_occurrences_stay_unlinked=(
+            inner_reverse.associated_nodules(inner_query).candidates == ()),
         after_input_before_interposition=(before_interposition.selected == target),
         unrelated_capture_does_not_create_exact_root_link=(
             split_result.mode == "NODULE_RECALL" and split_result.selected == target),

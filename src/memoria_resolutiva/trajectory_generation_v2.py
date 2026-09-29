@@ -438,8 +438,9 @@ class TrajectoryGenerationExperiment:
     ) -> CompositionalRecall:
         """Rebuild associations at every discovered scale without learning.
 
-        A newly discovered composition is projected over earlier unique input
-        events. Each event contributes once in its original stream and order.
+        A newly discovered composition is projected over earlier input events.
+        Unique content contributes to within-payload support once; each
+        previously unseen ordered payload pair can add temporal support.
         A recurring cue activates all depths representing the same span;
         identical targets are not reinforced merely by appearing at several
         depths. Shorter linked cues remain inspectable on request.
@@ -456,8 +457,9 @@ class TrajectoryGenerationExperiment:
     ) -> RouteStability:
         """Measure recurrent temporal routes without promoting one to fact.
 
-        Each witness is an ordered pair of distinct payload roots in one
-        capture. Exact payload copies never enter the derived learning view.
+        Each witness is a previously unseen ordered pair of distinct payload
+        roots in one capture. Copies only affect the order and can form new
+        pairs, but do not cast another vote for an existing pair.
         Rank shares are relative structural evidence, not probabilities.
         """
         recall = self.associated_nodules(
@@ -489,12 +491,10 @@ class TrajectoryGenerationExperiment:
 
     def _compositional_view(self, hierarchy: str) -> CompositionalAssociationView:
         observations: list[CompositionObservation] = []
-        seen: set[str] = set()
         for row in self._observations.values():
             address = row["payload_id"]
-            if row["hierarchy_id"] != hierarchy or address in seen:
+            if row["hierarchy_id"] != hierarchy:
                 continue
-            seen.add(address)
             observations.append(CompositionObservation(
                 address, row["stream_id"], self.expand(address),
             ))

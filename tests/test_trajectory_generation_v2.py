@@ -982,6 +982,58 @@ class TrajectoryGenerationTests(unittest.TestCase):
         self.assertGreater(target.weight, before.candidates[0].weight)
         self.assertGreater(len(target.witnesses), len(before.candidates[0].witnesses))
 
+    def test_reused_target_forms_new_intermediate_pair_without_reinforcing_old_pair(self):
+        memory = TrajectoryGenerationExperiment()
+        cue, target = (1, 2, 3), (7, 8, 9)
+        known_target = (70, *target, 71)
+        memory.observe(known_target, observation_id="known", stream_id="archive")
+        memory.observe((72, *target, 73), observation_id="other-target",
+                       stream_id="other-archive")
+        memory.observe((10, *cue, 11), observation_id="cue-pattern",
+                       stream_id="cue-archive")
+        novel_source = (12, *cue, 13)
+        source_receipt = memory.observe(novel_source, observation_id="new-source",
+                                        stream_id="live")
+        query = (90, *cue, 91)
+        self.assertEqual(memory.associated_nodules(query).candidates, ())
+        before_content = memory.learning_state()["learned_payloads"]
+        copy = memory.observe(known_target, observation_id="reused-target",
+                              stream_id="live")
+        self.assertFalse(copy.learned)
+        self.assertEqual(memory.learning_state()["learned_payloads"], before_content)
+        first = memory.associated_nodules(query)
+        self.assertEqual(first.selected, target)
+        self.assertIn((source_receipt.payload_id, copy.payload_id, "live"),
+                      first.candidates[0].witnesses)
+        first_weight = first.candidates[0].weight
+        memory.observe(novel_source, observation_id="repeat-source", stream_id="replay")
+        memory.observe(known_target, observation_id="repeat-target", stream_id="replay")
+        repeated = memory.associated_nodules(query)
+        self.assertAlmostEqual(repeated.candidates[0].weight, first_weight)
+        self.assertEqual(memory.route_stability(query).candidates[0].witness_pairs, 1)
+        self.assertEqual(TrajectoryGenerationExperiment.restore(memory.snapshot())
+                         .associated_nodules(query), repeated)
+
+        reverse = TrajectoryGenerationExperiment()
+        for i, payload in enumerate((known_target, (72, *target, 73),
+                                     (10, *cue, 11), novel_source)):
+            reverse.observe(payload, observation_id=f"base:{i}",
+                            stream_id=f"base:{i}")
+        reverse.observe(known_target, observation_id="target-first", stream_id="reverse")
+        reverse.observe(novel_source, observation_id="source-last", stream_id="reverse")
+        self.assertEqual(reverse.associated_nodules(query).candidates, ())
+
+        distant = TrajectoryGenerationExperiment()
+        for index, payload in enumerate((known_target, (72, *target, 73),
+                                         (10, *cue, 11), (80, 81, 82))):
+            distant.observe(payload, observation_id=f"known:{index}",
+                            stream_id=f"archive:{index}")
+        distant.observe(novel_source, observation_id="cue", stream_id="live")
+        distant.observe((80, 81, 82), observation_id="interposed", stream_id="live")
+        distant.observe(known_target, observation_id="target", stream_id="live")
+        self.assertAlmostEqual(distant.associated_nodules(query).candidates[0].weight,
+                               first_weight * exp(-0.35))
+
     def test_intermediate_association_is_directed_and_capture_local(self):
         forward = TrajectoryGenerationExperiment()
         reverse = TrajectoryGenerationExperiment()
@@ -1129,6 +1181,33 @@ class TrajectoryGenerationTests(unittest.TestCase):
 
         reopened = TrajectoryGenerationExperiment.restore(memory.snapshot())
         self.assertEqual(reopened.trace_nodule_paths(query), traced)
+
+    def test_repeated_middle_must_be_the_same_occurrence_in_a_two_hop_path(self):
+        memory = TrajectoryGenerationExperiment()
+        a, b, c = (1, 2, 3), (7, 8, 9), (4, 5, 6)
+        roots = ((10, *a, 11), (20, *b, 21), (30, *c, 31))
+        for index, motif in enumerate((a, b, c)):
+            memory.observe((40 + index, *motif, 50 + index),
+                           observation_id=f"pattern:{index}",
+                           stream_id=f"archive:{index}")
+        for index, root in enumerate(roots):
+            memory.observe(root, observation_id=f"known:{index}",
+                           stream_id=f"known:{index}")
+        # B->C occurs before A->B. The two B references name the same payload,
+        # but they are separate occurrences and cannot form an A->B->C path.
+        for index, root in enumerate((roots[1], roots[2], roots[0], roots[1])):
+            memory.observe(root, observation_id=f"reversed:{index}", stream_id="reversed")
+        query = (90, *a, 91)
+        wrong = memory.trace_nodule_paths(query)
+        self.assertFalse(any(path.nodules == (b, c) for path in wrong.paths))
+        before = memory.route_stability(query)
+        for index, root in enumerate(roots):
+            memory.observe(root, observation_id=f"valid:{index}", stream_id="valid")
+        paths = memory.trace_nodule_paths(query).paths
+        joined = next(path for path in paths if path.nodules == (b, c))
+        self.assertEqual(joined.supporting_streams, ("valid",))
+        self.assertEqual(memory.route_stability(query).candidates[0].weight,
+                         before.candidates[0].weight)
 
     def test_shared_nodule_does_not_stitch_two_different_captures(self):
         memory = TrajectoryGenerationExperiment()

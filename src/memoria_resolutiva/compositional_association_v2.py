@@ -1,12 +1,13 @@
 """Rebuildable associations among discovered structural compositions.
 
 Every scale uses the same positional and event-order kernels. A composition
-found later is projected onto earlier unique observations during rebuilding;
-neither the original payload graph nor its observation order is changed.
+found later is projected onto earlier observations during rebuilding. Content
+is counted once; later occurrences can create previously unseen ordered pairs.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from collections import Counter
+from dataclasses import dataclass, field, replace
 from math import exp
 from typing import Iterable
 
@@ -34,6 +35,7 @@ class _Occurrence:
 class _ProjectedEvent:
     payload_id: str
     occurrences: tuple[_Occurrence, ...]
+    profile: tuple[tuple[str, float], ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +47,11 @@ class AssociatedNodule:
     # Within: the same payload on both sides. Temporal: earlier -> later.
     witnesses: tuple[tuple[str, str, str], ...]  # source, target, stream
     source_width: int = 0  # Atomic span of the primary cue, not target length.
+    # Non-voting occurrence provenance is available for path joins, but does
+    # not change the equality of a recall result or its structural support.
+    occurrence_witnesses: tuple[tuple[str, str, str, int, int], ...] = field(
+        default=(), compare=False, repr=False,
+    )
 
     @property
     def rank_score(self) -> float:
@@ -90,7 +97,7 @@ class NodulePathTrace:
 
 
 class CompositionalAssociationView:
-    """Read-only projection derived from a hierarchy and unique input events."""
+    """Read-only projection of unique content and ordered occurrences."""
 
     def __init__(
         self,
@@ -110,6 +117,13 @@ class CompositionalAssociationView:
         self._witnesses: dict[
             tuple[int, str, str, str], set[tuple[str, str, str]]
         ] = {}
+        self._occurrence_witnesses: dict[
+            tuple[int, str, str, str], set[tuple[str, str, str, int, int]]
+        ] = {}
+        self._temporal_votes: dict[
+            tuple[int, str, str], dict[str, list[tuple[float, int]]]
+        ] = {}
+        self._ticks: dict[tuple[int, str], int] = {}
         events = tuple(observations)
         if type(max_pattern_size) is not int or max_pattern_size < 1:
             raise ValueError("max_pattern_size must be a positive integer")
@@ -161,26 +175,48 @@ class CompositionalAssociationView:
             self._fields[level.depth] = field
             self._streams[level.depth] = set()
             by_stream: dict[str, list[_ProjectedEvent]] = {}
+            seen_content: set[str] = set()
+            seen_pairs: set[tuple[str, str]] = set()
 
             for event in events:
                 occurrences = self._project(event.symbols, patterns)
                 scope = event.stream_id
                 self._streams[level.depth].add(scope)
-                envelope = {
-                    "observation_id": event.payload_id,
-                    "semantic_projection": False,
-                    "event": {"trail": tuple(identifiers[item.address] for item in occurrences)},
-                    "provenance": {"hierarchy_id": scope},
-                }
-                field.observe(
-                    envelope, spans=tuple((item.start, item.end) for item in occurrences),
-                )
                 prior_events = by_stream.setdefault(scope, [])
-                self._record_witnesses(
-                    level.depth, scope, event.payload_id, occurrences,
-                    prior_events, field,
+                tick = len(prior_events) + 1
+                self._ticks[(level.depth, scope)] = tick
+                if event.payload_id not in seen_content:
+                    seen_content.add(event.payload_id)
+                    envelope = {
+                        "observation_id": event.payload_id,
+                        "semantic_projection": False,
+                        "event": {"trail": tuple(identifiers[item.address]
+                                           for item in occurrences)},
+                        "provenance": {"hierarchy_id": scope},
+                    }
+                    field.observe(
+                        envelope, spans=tuple((item.start, item.end)
+                                              for item in occurrences),
+                    )
+                    self._record_within_witnesses(
+                        level.depth, scope, event.payload_id, occurrences, field,
+                    )
+                projected = _ProjectedEvent(
+                    event.payload_id, occurrences, self._profile(occurrences),
                 )
-                prior_events.append(_ProjectedEvent(event.payload_id, occurrences))
+                self._record_temporal_pairs(
+                    level.depth, scope, projected, prior_events, field,
+                    seen_pairs, tick,
+                )
+                prior_events.append(projected)
+
+    @staticmethod
+    def _profile(occurrences: tuple[_Occurrence, ...]) -> tuple[tuple[str, float], ...]:
+        if not occurrences:
+            return ()
+        counts = Counter(item.address for item in occurrences)
+        return tuple(sorted((address, count / len(occurrences))
+                            for address, count in counts.items()))
 
     @staticmethod
     def _project(
@@ -196,13 +232,12 @@ class CompositionalAssociationView:
         )
         return tuple(sorted(occurrences, key=lambda item: (item.start, item.end, item.address)))
 
-    def _record_witnesses(
+    def _record_within_witnesses(
         self,
         depth: int,
         stream: str,
         current_payload: str,
         occurrences: tuple[_Occurrence, ...],
-        previous: list[_ProjectedEvent],
         field: ContinuousStructuralAssociationField,
     ) -> None:
         for index, source in enumerate(occurrences):
@@ -218,19 +253,35 @@ class CompositionalAssociationView:
                 self._witnesses.setdefault(key, set()).add(
                     (current_payload, current_payload, stream)
                 )
-        if not occurrences:
-            return
-        for lag, past in enumerate(reversed(previous), start=1):
-            if lag > field.temporal_horizon:
+
+    def _record_temporal_pairs(
+        self, depth: int, stream: str, current: _ProjectedEvent,
+        previous: list[_ProjectedEvent], field: ContinuousStructuralAssociationField,
+        seen_pairs: set[tuple[str, str]], tick: int,
+    ) -> None:
+        for lag, past in enumerate(reversed(previous[-field.temporal_horizon:]), start=1):
+            kernel = exp(-field.temporal_decay * (lag - 1))
+            if kernel < field.trace_floor:
                 break
-            if exp(-field.temporal_decay * (lag - 1)) < field.trace_floor:
+            pair = past.payload_id, current.payload_id
+            if pair[0] == pair[1]:
                 continue
-            for source in past.occurrences:
-                for target in occurrences:
-                    key = (depth, source.address, target.address, "temporal")
-                    self._witnesses.setdefault(key, set()).add(
-                        (past.payload_id, current_payload, stream)
+            new_pair = pair not in seen_pairs
+            if new_pair:
+                seen_pairs.add(pair)
+            for source, source_mass in past.profile:
+                for target, target_mass in current.profile:
+                    key = (depth, source, target, "temporal")
+                    self._occurrence_witnesses.setdefault(key, set()).add(
+                        (pair[0], pair[1], stream, tick - lag, tick)
                     )
+                    if not new_pair:
+                        continue
+                    weight = kernel * source_mass * target_mass
+                    self._temporal_votes.setdefault(
+                        (depth, stream, source), {},
+                    ).setdefault(target, []).append((weight, tick))
+                    self._witnesses.setdefault(key, set()).add((pair[0], pair[1], stream))
 
     def recall(
         self, query: tuple[int, ...], *, channel: str = "temporal", limit: int = 8,
@@ -311,6 +362,10 @@ class CompositionalAssociationView:
                                                        set(candidate.cue_addresses))),
                             witnesses=tuple(sorted(set(primary.witnesses) |
                                                    set(candidate.witnesses))),
+                            occurrence_witnesses=tuple(sorted(
+                                set(primary.occurrence_witnesses) |
+                                set(candidate.occurrence_witnesses)
+                            )),
                         ))
                 if not include_shorter:
                     break
@@ -353,16 +408,29 @@ class CompositionalAssociationView:
         sources: dict[str, set[str]] = {}
         for cue in cues:
             for scope in sorted(self._streams[depth]):
-                for edge in field.strongest(
-                    scope, identifiers[cue], channel=channel,
-                    top_k=max(1, len(identifiers)),
-                ):
-                    if edge.weight < field.trace_floor:
+                if channel == "within":
+                    edges = (
+                        (reverse[edge.target], edge.weight)
+                        for edge in field.strongest(
+                            scope, identifiers[cue], channel=channel,
+                            top_k=max(1, len(identifiers)),
+                        )
+                    )
+                else:
+                    now = self._ticks[(depth, scope)]
+                    edges = (
+                        (target, sum(weight * exp(-field.forgetting_rate * (now - tick))
+                                     for weight, tick in votes))
+                        for target, votes in self._temporal_votes.get(
+                            (depth, scope, cue), {},
+                        ).items()
+                    )
+                for target, weight in edges:
+                    if weight < field.trace_floor:
                         continue
-                    target = reverse[edge.target]
                     if target in cues:
                         continue
-                    scores[target] = scores.get(target, 0.0) + edge.weight / len(cues)
+                    scores[target] = scores.get(target, 0.0) + weight / len(cues)
                     sources.setdefault(target, set()).add(cue)
         cue_patterns = tuple(self._patterns[depth][cue] for cue in cues)
         candidates = tuple(
@@ -371,6 +439,10 @@ class CompositionalAssociationView:
                 weight=weight, cue_addresses=tuple(sorted(sources[address])),
                 witnesses=tuple(sorted(set().union(*(
                     self._witnesses.get((depth, cue, address, channel), set())
+                    for cue in sources[address]
+                )))),
+                occurrence_witnesses=tuple(sorted(set().union(*(
+                    self._occurrence_witnesses.get((depth, cue, address, channel), set())
                     for cue in sources[address]
                 )))),
             )
@@ -399,13 +471,16 @@ class CompositionalAssociationView:
         truncated = first.truncated
         for candidate in first.candidates:
             chains = {
-                (stream, (source, target))
-                for source, target, stream in candidate.witnesses
+                (stream, (source, target), target_tick)
+                for source, target, stream, _source_tick, target_tick
+                in candidate.occurrence_witnesses
                 if source != target
             }
             if not chains:
                 continue
-            routes.setdefault((candidate.symbols,), set()).update(chains)
+            routes.setdefault((candidate.symbols,), set()).update(
+                (stream, payloads) for stream, payloads, _tick in chains
+            )
             if max_hops == 1:
                 continue
             next_hop = self.recall(candidate.symbols, channel="temporal", limit=limit)
@@ -415,9 +490,11 @@ class CompositionalAssociationView:
                     continue
                 joined = {
                     (stream, payloads + (target,))
-                    for stream, payloads in chains
-                    for source, target, edge_stream in following.witnesses
+                    for stream, payloads, middle_tick in chains
+                    for source, target, edge_stream, source_tick, _target_tick
+                    in following.occurrence_witnesses
                     if edge_stream == stream and source == payloads[-1]
+                    and source_tick == middle_tick
                     and target not in payloads
                 }
                 if joined:

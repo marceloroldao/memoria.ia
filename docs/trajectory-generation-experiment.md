@@ -96,13 +96,14 @@ raízes fornecem evocação temporal quando a continuação não encontra altern
 O tempo das raízes é a **ordem de todas as ocorrências**, não segundos de relógio.
 Capturas (`stream_id`) separam histórias temporais automaticamente a partir
 da origem. Não criam uma associação semântica. O primeiro testemunho de cada
-par `(origem, destino)` por hierarquia fixa peso e captura de origem; novos
-testemunhos desse mesmo par não somam pesos nem origens. Uma ocorrência
-repetida pode, porém, aproximar ou afastar pares **ainda inéditos** na mesma
-captura. O campo de símbolos e a projeção de nódulos intermediários continuam
-derivados das entradas de conteúdo único; os suportes de continuação seguem
-esse mesmo critério. A projeção de nódulos intermediários recupera relações
-entre composições, reconstruindo os campos a partir das entradas únicas;
+par `(origem, destino)` por hierarquia fixa seu voto e peso; novos testemunhos
+desse mesmo par não somam suporte. Uma ocorrência repetida pode, porém,
+aproximar ou afastar pares **ainda inéditos** na mesma captura. O campo de
+símbolos e os suportes de continuação continuam derivados das entradas de
+conteúdo único. A projeção de nódulos intermediários usa conteúdo único para
+definir padrões e relações dentro de cada payload, mas todas as ocorrências
+para formar pares temporais inéditos entre payloads. Ela reconstrói os campos
+a partir da ordem preservada, sem alterar os nódulos armazenados;
 ela ainda não substitui a evocação entre raízes quando a consulta é um
 payload completo já conhecido.
 
@@ -119,11 +120,14 @@ os níveis posteriores. O limite usa `max_context` e pode ser configurado.
 Cada ocorrência mantém o intervalo `[início, fim)` dentro do payload.
 Composições sobrepostas não geram relação direcional de proximidade espacial.
 Entre entradas de uma mesma captura, o peso temporal preserva a ordem e o
-decaimento por distância entre eventos de conteúdo novo. Payload repetido não
-avança esse relógio de **conteúdo**, embora avance a ordem das **ocorrências**
-usada pelas relações entre raízes. Origens `(payload anterior, payload posterior, captura)`
-acompanham as relações encontradas; relações internas usam o mesmo payload
-nas duas pontas. Essas origens são estruturais, não votos de verdade.
+decaimento por distância entre **todas** as ocorrências. O primeiro testemunho
+de cada par de payloads distintos contribui uma vez, também quando uma das
+pontas reutiliza conteúdo conhecido. Repetições posteriores desse mesmo par
+preservam a posição e a proveniência para traçar caminhos, sem reforçar peso.
+As relações internas ainda usam cada payload distinto uma vez. Origens
+`(payload anterior, payload posterior, captura)` acompanham os votos; um
+caminho de dois saltos exige também a **mesma ocorrência intermediária** na
+mesma captura. Essas origens são estruturais, não votos de verdade.
 
 `associated_nodules` procura primeiro o trecho recorrente mais longo contido
 na consulta **que tenha um destino associado**. Se o trecho maior não tiver
@@ -269,10 +273,11 @@ Limites iniciais, configuráveis:
 
 A busca informa limites de passos e descarte de hipóteses com `truncated`.
 Não transforma um desempate por endereço em resposta confirmada. Ainda pode
-produzir continuações sem sentido por coincidência estrutural. Quando o trecho
-maior tem **alguma** saída, a busca por nódulos não reúne automaticamente
-destinos dos trechos menores; comparar a evidência entre comprimentos exige
-uma calibração posterior. A busca de continuações também pode cortar rotas;
+produzir continuações sem sentido por coincidência estrutural. Quando a leitura
+principal já é ambígua, a geração conserva os destinos do trecho maior. Se
+parecer única, verifica também pistas menores e suspende a seleção diante de
+outra rota ou truncamento; comparar pesos entre comprimentos ainda exige
+calibração. A busca de continuações também pode cortar rotas;
 as testemunhas de uma evocação independente continuam inspecionáveis, mas
 não recuperam a ramificação descartada.
 
@@ -322,8 +327,8 @@ textuais ainda exigem provas próprias.
 Uma [prova entre conversas sintéticas](trajectory-episode-proof.md) também
 verifica rotas concorrentes, testemunhas por captura e ambiguidade após
 distração sem vínculos manuais. `trace_nodule_paths` pode encadear até dois
-saltos quando o alvo do primeiro e a origem do segundo são o **mesmo payload
-observado na mesma captura**. Expõe as sequências de IDs que testemunham cada
+saltos quando o alvo do primeiro e a origem do segundo são a **mesma ocorrência
+do mesmo payload na mesma captura**. Expõe as sequências de IDs que testemunham cada
 caminho, sem escolher resposta factual nem juntar duas conversas por terem um
 nódulo parecido. O limite de candidatos por salto e o truncamento ficam
 visíveis. O armazenamento SQLite foi exercitado neste

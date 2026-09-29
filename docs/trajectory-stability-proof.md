@@ -55,3 +55,10 @@ medir acurácia desses 45 casos.
 O peso ainda depende do decaimento por distância e o escore de ordenação usa
 um prior de comprimento do destino. Não há calibração estatística, confiança
 factual, tratamento de dependência entre fontes ou integração ao OFF.IA.
+
+Depois de incluir ocorrências de conteúdo reutilizado na ordem dos nódulos
+intermediários (29/09/2026), a mesma leitura agregada mantém 45 consultas com
+rotas recorrentes; 32 são ambíguas, 33 têm líder sem empate e 11 líderes usam
+pares de conteúdo distinto em pelo menos duas capturas (máximo 8 capturas).
+Repetir um par exato não acrescenta voto nem nova captura ao suporte dessa
+rota. O aumento de testemunhas distintas é estrutural; não mede acerto.

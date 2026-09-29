@@ -141,5 +141,33 @@ O único `reply_to` explícito permanece uma checagem retrospectiva: antes do
 destino observado ainda há eco; depois, a consulta que contém a origem evoca
 esse destino como candidato único. O aumento de rotas também elevou os casos
 truncados, sobretudo na passagem cronológica. O export não traz rótulos para
-decidir se as outras rotas novas ajudam ou distraem. O suporte de nódulos
-intermediários ainda usa payloads distintos e não incorporou essas cópias.
+decidir se as outras rotas novas ajudam ou distraem. Nessa etapa, o suporte de
+nódulos intermediários ainda usava apenas payloads distintos.
+
+## Ocorrências repetidas na projeção dos nódulos (29/09/2026)
+
+Agora a projeção conserva a ordem completa também para relações temporais entre
+nódulos internos. Padrões recorrentes e relações dentro de um payload ainda
+exigem conteúdo distinto. Para relações entre entradas, um par de **payloads
+distintos** recebe peso no primeiro testemunho em qualquer captura; outra
+ocorrência do mesmo par só mantém sua posição para traçar caminhos causais.
+Assim, uma cópia de um destino conhecido pode criar relações novas com uma
+pista diferente anterior sem reforçar as relações antigas. O traçado de dois
+saltos exige a mesma ocorrência intermediária, além do mesmo payload e captura.
+
+| Leitura agregada | Somente raízes com ocorrências | Também nódulos internos |
+| --- | ---: | ---: |
+| Payloads distintos / cópias sem voto de conteúdo | 68 / 31 | 68 / 31 |
+| Pares de raízes ordenados inéditos | 176 | 176 |
+| 68 consultas inéditas: só nódulo / só raiz / ambos / eco | 8 / 18 / 37 / 5 | 8 / 18 / 37 / 5 |
+| 68 consultas inéditas: ambíguas / truncadas / únicas sem eco | 56 / 24 / 7 | 57 / 26 / 6 |
+| 99 consultas cronológicas: ambíguas / truncadas / únicas sem eco | 57 / 22 / 3 | 57 / 29 / 3 |
+| 68 consultas com rota recorrente / ambíguas nessas rotas | 45 / 33 | 45 / 32 |
+| Liderança sem empate / com suporte de pelo menos duas capturas | 35 / 6 | 33 / 11 |
+
+O único `reply_to` explícito continua recuperado **depois** da observação do
+destino, sem fornecer uma regra ao aprendizado. As 11 lideranças entre capturas
+testemunham pares de conteúdo distinto; não validam suas respostas. O aumento
+de truncamentos e a perda de uma saída única mostram que mais relações podem
+trazer alternativas irrelevantes. O export não permite medir acurácia dessas
+rotas e os dados pessoais permanecem fora do repositório.
