@@ -1,0 +1,104 @@
+name: V2 external episode native BDR parity (experimental)
+
+on:
+  push:
+    branches:
+      - experiment/v2-bdr-incremental-parity
+  pull_request:
+    paths:
+      - 'src/memoria_resolutiva/external_episode_bdr_candidate.py'
+      - 'tests/test_external_episode_bdr_candidate.py'
+      - 'scripts/benchmark_external_episode_bdr.py'
+      - '.github/workflows/v2-external-bdr-parity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-bdr-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install native build and test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq cmake g++ zlib1g-dev
+          python -m pip install -e '.[product,test]'
+      - name: Clone exact published BDR v1.2 RC4 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone -q --filter=blob:none --depth 1 \
+            --branch v1.2.0-rc4 https://github.com/marceloroldao/resolutive-DB.git /tmp/resolve-bdr-rc4
+          test "$(git -C /tmp/resolve-bdr-rc4 rev-parse HEAD)" = \
+            317882a00f041fc1568ff986af8016b09453f21a
+          python -m pip install -e /tmp/resolve-bdr-rc4
+      - name: Build genuine Atomic C ABI v2 bridge (no mocked native storage)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S /tmp/resolve-bdr-rc4/experimental/api_v86 \
+            -B /tmp/resolve-bdr-rc4/build-parity -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/resolve-bdr-rc4/build-parity --parallel 2 \
+            --target bdr_atomic_c_api_shared
+          BDR_LIB="$(find /tmp/resolve-bdr-rc4/build-parity -name 'libbdr_atomic_c_api.so' -print -quit)"
+          test -n "$BDR_LIB"
+          echo "BDR_ATOMIC_LIBRARY=$BDR_LIB" >> "$GITHUB_ENV"
+          export BDR_ATOMIC_LIBRARY="$BDR_LIB"
+          python - <<'PY'
+          from bdr.atomic import AtomicBDR
+          import os
+          from tempfile import TemporaryDirectory
+          with TemporaryDirectory() as root:
+              db=AtomicBDR.open(root,library_path=os.environ["BDR_ATOMIC_LIBRARY"])
+              assert db._lib.bdr_atomic_c_abi_version()==2
+              assert db.put_many({"probe":b"atomic"}).durable
+              assert db.get("probe")==b"atomic"
+              db.close()
+          print("PINNED_BDR_ABI_V2_OK")
+          PY
+      - name: Native parity and durable replay tests
+        run: |
+          python -m pytest -q \
+            tests/test_external_episode_incremental.py \
+            tests/test_external_episode_bdr_candidate.py
+      - name: Compare same 1,000 observations in native BDR and SQLite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/benchmark_external_episode_bdr.py \
+            --bdr-library "$BDR_ATOMIC_LIBRARY" --scale 1000 \
+            | tee /tmp/nov-native-bdr-parity-1000.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path("/tmp/nov-native-bdr-parity-1000.json").read_text())
+          assert result["episodes"]==1000
+          assert result["graph_parity"] and result["identity_digest_parity"]
+          assert result["duplicate_idempotence"] and not result["production_modified"]
+          assert result["bdr_durable_sequence"]>=1000
+          print("V2_NATIVE_BDR_1000_PARITY_OK")
+          PY
+      - name: Scale and recover 10,000 identical episodes in both backends
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/benchmark_external_episode_bdr.py \
+            --bdr-library "$BDR_ATOMIC_LIBRARY" --scale 10000 \
+            | tee /tmp/nov-native-bdr-parity-10000.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path("/tmp/nov-native-bdr-parity-10000.json").read_text())
+          assert result["episodes"]==10000
+          assert result["graph_parity"] and result["identity_digest_parity"]
+          assert result["duplicate_idempotence"] and not result["production_modified"]
+          assert result["bdr_durable_sequence"]>=10000
+          print("V2_NATIVE_BDR_10000_PARITY_OK")
+          PY
+
+
