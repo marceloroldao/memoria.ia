@@ -83,5 +83,21 @@ python scripts/benchmark_external_episode_bdr.py \
   --bdr-library /path/to/libbdr_atomic_c_api.so --scale 1000
 \`\`\`
 
-Until these gates are satisfied, the SQLite incremental local memory remains
-the only deployed persistence backend.
+## First native benchmark result (isolated GitHub Actions, Python 3.12)
+
+Identical input envelopes, one EvidenceCore relation per episode; values are
+from the 10,000-record CI run, counting the SQLite WAL files during ingestion:
+
+| Observations | SQLite live bytes | BDR live bytes | SQLite ingest | BDR ingest |
+|---:|---:|---:|---:|---:|
+| 1,000 | 5,287,512 | 1,009,524 | 0.250 s | 0.385 s |
+| 10,000 | 16,436,872 | 10,144,525 | 2.431 s | 4.467 s |
+
+For 10,000 records, cold reopen and true V2 EvidenceCore reconstruction
+took 0.394 s for SQLite and 0.606 s for native BDR. BDR's last/durable
+sequence both reached 10,000. Exact graph and envelope-hash parity,
+idempotence, torn-BDW4 recovery, and read-only SQLite mirror tests passed.
+This is one test machine and workload, not proof of superiority in all cases.
+
+Until the full operational and recovery gates are satisfied, the SQLite
+incremental local memory remains the only deployed persistence backend.
