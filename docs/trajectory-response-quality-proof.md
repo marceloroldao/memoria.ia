@@ -95,3 +95,6 @@ As alternativas e os controles de ausência precisam continuar visíveis.
 O gerador segue experimental, fora do OFF.IA. Os três controles funcionais
 pessoais nativos anteriores continuam pendentes; este scorecard não os substitui.
 O PR permanece rascunho.
+
+
+Validação remota no commit `2bb892b`: [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36669816456) passou nos contratos de integridade, nos cinco testes do avaliador e nos lotes sintéticos. Foram aprovados também 59 testes do gerador e 66 regressões (um BDR opcional pulado). Os relatórios remotos mantiveram `quality_status: FAIL` nos dois lotes; esse resultado continua pendente.
