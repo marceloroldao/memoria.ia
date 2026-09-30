@@ -95,3 +95,6 @@ A próxima investigação pode comparar quais pistas distinguem os destinos e
 quais acompanham vários destinos, usando estas mesmas testemunhas. A seleção
 precisa preservar os controles positivos de evocação transportada e de contexto
 novo, além de resolver ausência. O PR permanece rascunho.
+
+
+Validação remota: [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36741812816) passou no commit `6cd805c`: 59 testes anteriores do gerador, seis testes do contraste, cinco do scorecard, três de especificidade e 66 regressões (um BDR opcional pulado). Os três lotes de contraste e os controles opacos foram reproduzidos. O scorecard original mantém `FAIL`; os diagnósticos mantêm `UNRESOLVED`. A integridade aprovada não significa qualidade de resposta aprovada.
