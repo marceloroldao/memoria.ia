@@ -90,3 +90,13 @@ Relatórios completos, com entradas fictícias, recibos, candidatos e contextos:
 O motor, pesos e seleção padrão não foram alterados. A nova bateria expõe uma
 limitação antes não coberta. Não mede acurácia real, cognição ou substituição de LLM.
 PR permanece draft; os três gates pessoais nativos anteriores seguem pendentes.
+
+## Confirmação remota
+
+O [workflow 36793046530](https://github.com/marceloroldao/memoria.ia/actions/runs/36793046530)
+passou no commit `ea662b20c0acc0582e8d7b3ac698c4f060964632`: 59 testes do gerador,
+10 da hipótese, quatro do novo avaliador e 66 regressões passaram; um teste BDR
+nativo opcional foi pulado. Os três relatórios completos extraídos dos logs coincidem
+exatamente com os JSONs publicados, incluindo candidatos, pesos e testemunhas.
+O sucesso remoto confirma integridade/reprodução; os três gates de qualidade
+novos continuam **FAIL**.
