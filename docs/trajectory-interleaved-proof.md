@@ -61,6 +61,15 @@ A baseline foi executada com a classe do commit `d2f70cb` carregada em um
 módulo isolado, usando os mesmos cenários e comparações frias. A versão atual
 exige as contagens da tabela, sem impor limiares de tempo dependentes da máquina.
 
+## Confirmação remota
+
+O [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36665300532)
+passou no commit `544e8ff8c969fc9790db3e225c4f494f492a400d`: 56 testes do
+gerador e 66 regressões aprovados, com um teste de BDR nativo opcional pulado.
+Os dois lotes intercalados e todos os controles anteriores também passaram.
+Os nove arquivos publicados foram conferidos como idênticos aos validados
+localmente.
+
 ## Limites e próximo trabalho
 
 Esta é uma redução de redescoberta de conteúdo, não atualização incremental
