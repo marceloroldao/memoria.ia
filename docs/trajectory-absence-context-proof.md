@@ -39,8 +39,42 @@ retorna código 1 se qualquer critério obrigatório da hipótese falhar. Os qua
 desafios de caixa por lote continuam fora desses critérios: ausência de resposta
 nesses desafios não é acerto de generalização linguística.
 
-O ambiente local está indisponível nesta etapa. A validação será feita pelo
-workflow do PR; não há execução local nem resultados novos aprovados ainda.
+O ambiente local esteve indisponível nesta etapa; não houve execução local.
+A validação remota [passou](https://github.com/marceloroldao/memoria.ia/actions/runs/36763251672)
+no commit `d170522`: dez testes da hipótese (três novos), 59 testes anteriores
+do gerador e 66 regressões passaram (um BDR opcional pulado), além dos contratos
+de scorecard, especificidade e contraste temporal. O lote novo executou
+`--strict-quality` com código de saída zero.
+
+## Resultados remotos
+
+| Medida | 20260930 | 20261004 | 20261007 | Novo lote 20261008 |
+|---|---:|---:|---:|---:|
+| Respostas corretas na hipótese opcional | 24/28 | 24/28 | 24/28 | 24/28 |
+| Abstenções nos controles de ausência | 24/24 | 24/24 | 24/24 | 24/24 |
+| Hipóteses únicas incorretas | 0 | 0 | 0 | 0 |
+| Conflitos preservados sem hipótese única | 4/4 | 4/4 | 4/4 | 4/4 |
+| Critérios obrigatórios satisfeitos | 52/52 | 52/52 | 52/52 | 52/52 |
+| Controles positivos de transferência preservados | 24/24 | 24/24 | 24/24 | 24/24 |
+| Gate obrigatório da hipótese | PASS | PASS | PASS | PASS |
+
+Cada lote tem 56 consultas. As quatro consultas com mudança de caixa continuam
+sem resposta correta: agora há abstenção, não aprendizagem de equivalência de
+caixa. São desafios adicionais fora dos 52 critérios obrigatórios. O total de
+respostas corretas é 24/28, e não 28/28.
+
+A geração padrão continua em 8/28 respostas corretas, com as seleções indevidas
+anteriores. Todos os campos originais dos 112 casos dos dois primeiros
+scorecards coincidem com os relatórios publicados antes desta revisão. A hipótese
+preserva os candidatos e os contextos bloqueados para inspeção.
+
+Os 24 controles positivos são os mesmos por lote, não 96 independentes.
+O lote 20261008 muda os nomes/códigos nas mesmas famílias sintéticas; não é
+avaliação em conversas reais nem uma taxa de acerto factual.
+
+Relatórios completos extraídos dos logs remotos, sem dados privados:
+`benchmark-results/trajectory-absence-context-{development,heldout,prior-reserved,reserved}.json`.
+
 Os relatórios anteriores correspondem à implementação `7d77018` e continuam
 registrados como histórico, com seus gates FAIL.
 

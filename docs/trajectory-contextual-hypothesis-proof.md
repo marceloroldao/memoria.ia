@@ -120,4 +120,4 @@ Validação remota: [workflow dedicado](https://github.com/marceloroldao/memoria
 A [revisão de contexto nas rotas únicas](trajectory-absence-context-proof.md)
 passa a verificar também os fragmentos antes aceitos diretamente como hipótese.
 Os relatórios desta página são históricos da implementação `7d77018`; os novos
-resultados da revisão serão registrados separadamente.
+resultados da revisão foram registrados separadamente.
