@@ -22,6 +22,8 @@ on:
       - 'tests/test_temporal_nodule_contrast.py'
       - 'scripts/trajectory_transition_contrast_probe.py'
       - 'scripts/trajectory_contextual_hypothesis_probe.py'
+      - 'scripts/trajectory_observed_variant_probe.py'
+      - 'tests/test_trajectory_observed_variant_probe.py'
       - 'tests/test_contextual_route_hypothesis.py'
       - 'tests/test_trajectory_response_quality_probe.py'
       - 'benchmark-results/trajectory-incremental-reference.json'
@@ -94,6 +96,12 @@ jobs:
           python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261004
           python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261007
           python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261008 --strict-quality
+      - name: Observed symbol variants integrity (quality failures reported)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_observed_variant_probe.py
+          python scripts/trajectory_observed_variant_probe.py --seed 20260930
+          python scripts/trajectory_observed_variant_probe.py --seed 20261009
+          python scripts/trajectory_observed_variant_probe.py --seed 20261010
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
