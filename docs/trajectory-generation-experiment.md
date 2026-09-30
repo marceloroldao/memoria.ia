@@ -369,3 +369,10 @@ A leitura [de contraste temporal](trajectory-transition-contrast-proof.md)
 expõe posições do candidato na origem/destino e separa pares que introduzem ou
 transportam o trecho. Não muda o aprendizado nem a seleção. O veto experimental
 por ausência de novidade foi rejeitado porque também bloqueia evocação válida.
+
+
+A [hipótese contextual opcional](trajectory-contextual-hypothesis-proof.md)
+consolida fragmentos sustentados pelos mesmos destinos, preservando a geração
+original. Passa de 8/28 para 24/28 respostas esperadas nos três lotes, mas mantém
+as escolhas indevidas em ausência. Seu gate segue FAIL e a seleção padrão não
+foi alterada.

@@ -232,6 +232,15 @@ class GenerationResult:
         return None
 
 
+@dataclass(frozen=True, slots=True)
+class ContextualRouteHypothesis:
+    generation: GenerationResult
+    hypothesis: tuple[int, ...] | None
+    reason: str
+    contextual_fragments: tuple[tuple[int, ...], ...] = ()
+    shared_source_contexts: tuple[tuple[int, ...], ...] = ()
+
+
 class TrajectoryGenerationExperiment:
     """Small inspectable experiment, not the native/mobile response runtime.
 
@@ -579,6 +588,124 @@ class TrajectoryGenerationExperiment:
             ) for candidate in recall.candidates
         )
         return TemporalNoduleContrast(recall, candidates)
+
+    def contextual_route_hypothesis(
+        self, payload: Iterable[int], *, hierarchy_id: str = "default",
+        **generation_options,
+    ) -> ContextualRouteHypothesis:
+        """Opt-in structural hypothesis, preserving the full original output.
+
+        A nested view of the same destination, or a carried context fragment
+        supported solely by a subset of the same root pairs, need not be a
+        separate temporal outcome. Only a single nodule that is introduced
+        in at least one pair can consolidate all those views. Other route
+        families, truncation and distinct witness outcomes are left alone.
+        This is provisional; a carried fragment can still contain useful
+        information, so every original candidate remains visible.
+        """
+        query = _symbols(payload)
+        generation = self.generate(query, hierarchy_id=hierarchy_id, **generation_options)
+        if generation.mode == "ECHO":
+            return ContextualRouteHypothesis(generation, None, "ECHO_ONLY")
+        if generation.selected is not None:
+            return ContextualRouteHypothesis(generation, generation.selected, "EXISTING_UNIQUE_ROUTE")
+        if generation.mode != "NODULE_RECALL" or generation.truncated:
+            return ContextualRouteHypothesis(generation, None, "COMPETING_OR_BOUNDED_ROUTES")
+        association = generation.association_evidence
+        assert association is not None
+        expanded_roots: dict[str, tuple[int, ...]] = {}
+
+        def root(address):
+            if address not in expanded_roots:
+                expanded_roots[address] = self.expand(address)
+            return expanded_roots[address]
+
+        def contains(part, whole):
+            return any(whole[i:i + len(part)] == part
+                       for i in range(len(whole) - len(part) + 1))
+
+        witnesses = {c.symbols: set(c.witnesses) for c in association.candidates}
+        carried = {
+            c.symbols: all(contains(c.symbols, root(source))
+                           for source, _, _ in c.witnesses)
+            for c in association.candidates
+        }
+        view = self._compositional_view(_name(hierarchy_id))
+        pattern_map = {address: pattern for patterns in view._patterns.values()
+                       for address, pattern in patterns.items()}
+        eligible = []
+        unmatched = False
+        unmatched_contexts = []
+        for candidate in association.candidates:
+            if not candidate.witnesses or carried[candidate.symbols]:
+                continue
+            if all(
+                other.symbols == candidate.symbols or (
+                    bool(witnesses[other.symbols])
+                    and witnesses[other.symbols] <= witnesses[candidate.symbols]
+                    and (contains(other.symbols, candidate.symbols) or carried[other.symbols])
+                ) for other in association.candidates
+            ):
+                # Preserve the largest observed common source context around
+                # the active primary cue. A generic fragment is insufficient
+                # to consolidate a destination learned from a different cue.
+                cues = tuple(pattern_map[address] for address in candidate.cue_addresses
+                             if len(pattern_map[address]) == candidate.source_width)
+                sources = tuple(root(address) for address in sorted(
+                    {source for source, _, _ in candidate.witnesses}
+                ))
+                shared = {
+                    pattern for start in range(len(sources[0]))
+                    for end in range(start + candidate.source_width,
+                                     min(len(sources[0]), start + self.config.max_context) + 1)
+                    for pattern in (sources[0][start:end],)
+                    if any(contains(cue, pattern) for cue in cues)
+                    and all(contains(pattern, source) for source in sources[1:])
+                }
+                maximum = max(map(len, shared), default=0)
+                shared_affixes = tuple(
+                    other.symbols for other in association.candidates
+                    if carried[other.symbols]
+                    and witnesses[other.symbols] == witnesses[candidate.symbols]
+                )
+                pending = {p for p in shared if len(p) == maximum}
+                visited = set()
+                context_patterns = set()
+                while pending:
+                    pattern = pending.pop()
+                    if pattern in visited:
+                        continue
+                    visited.add(pattern)
+                    remainders = {
+                        remainder for affix in shared_affixes
+                        for remainder in (
+                            pattern[len(affix):] if pattern[:len(affix)] == affix else (),
+                            pattern[:-len(affix)] if pattern[-len(affix):] == affix else (),
+                        )
+                        if len(remainder) >= candidate.source_width
+                        and any(contains(cue, remainder) for cue in cues)
+                    }
+                    if remainders:
+                        pending.update(remainders)
+                    else:
+                        context_patterns.add(pattern)
+                contexts = tuple(sorted(context_patterns))
+                if contexts and all(contains(context, query) for context in contexts):
+                    eligible.append((candidate.symbols, contexts))
+                else:
+                    unmatched = True
+                    unmatched_contexts.extend(contexts)
+        if len(eligible) != 1:
+            return ContextualRouteHypothesis(generation, None,
+                                            "UNMATCHED_SHARED_SOURCE_CONTEXT" if unmatched
+                                            else "DISTINCT_DESTINATION_EVIDENCE",
+                                            shared_source_contexts=tuple(sorted(set(unmatched_contexts))))
+        hypothesis, contexts = eligible[0]
+        return ContextualRouteHypothesis(
+            generation, hypothesis, "SHARED_DESTINATION_CONTEXT",
+            tuple(c.symbols for c in association.candidates if c.symbols != hypothesis),
+            contexts,
+        )
 
     def trace_nodule_paths(
         self, payload: Iterable[int], *, hierarchy_id: str = "default",
