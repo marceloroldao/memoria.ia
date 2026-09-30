@@ -35,9 +35,16 @@ semântica, seleção factual, LLM ou integração ao OFF.IA.
   Tempos são descritivos; o gate exige paridade e contagem de reconstruções,
   sem impor limite de velocidade dependente da máquina.
 
-As 66 regressões do workflow dedicado exigem pytest, indisponível no ambiente
-local desta execução. A execução remota deve confirmar esse conjunto após o
-commit; não contar regressões antigas como validação da alteração nova.
+## Validação remota
+
+O [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36663160139)
+passou no commit `d2f70cb3ffdb915af3d903ef5ba7bbec13ba636a`: 55 testes do
+gerador, todos os lotes sintéticos, o novo probe de projeção e 66 regressões
+passaram. Um teste do backend BDR nativo opcional foi pulado. Pytest não estava
+disponível localmente; esse conjunto foi confirmado nos logs da execução remota.
+O probe remoto também produziu dez reconstruções contra uma, com paridade;
+mediu 0,063841 s com descarte e 0,032390 s com reuso. Os seis arquivos publicados
+foram verificados como byte a byte idênticos aos arquivos locais validados.
 
 ## Limites e próxima etapa
 
