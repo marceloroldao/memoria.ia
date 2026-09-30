@@ -97,7 +97,7 @@ class NodulePathTrace:
 
 
 class CompositionalAssociationView:
-    """Read-only projection of unique content and ordered occurrences."""
+    """Derived projection; reads are pure, known occurrences can be appended."""
 
     def __init__(
         self,
@@ -125,6 +125,11 @@ class CompositionalAssociationView:
         ] = {}
         self._ticks: dict[tuple[int, str], int] = {}
         events = tuple(observations)
+        self._known_payloads = {event.payload_id: event.symbols for event in events}
+        self._histories: dict[int, dict[str, list[_ProjectedEvent]]] = {}
+        self._seen_content: dict[int, set[str]] = {}
+        self._seen_pairs: dict[int, set[tuple[str, str]]] = {}
+        self._projected_events: dict[tuple[int, str], _ProjectedEvent] = {}
         if type(max_pattern_size) is not int or max_pattern_size < 1:
             raise ValueError("max_pattern_size must be a positive integer")
         # The greedy trajectory view is useful for generation, but its packing
@@ -174,41 +179,56 @@ class CompositionalAssociationView:
             self._identifiers[level.depth] = identifiers
             self._fields[level.depth] = field
             self._streams[level.depth] = set()
-            by_stream: dict[str, list[_ProjectedEvent]] = {}
-            seen_content: set[str] = set()
-            seen_pairs: set[tuple[str, str]] = set()
+            self._histories[level.depth] = {}
+            self._seen_content[level.depth] = set()
+            self._seen_pairs[level.depth] = set()
 
             for event in events:
-                occurrences = self._project(event.symbols, patterns)
-                scope = event.stream_id
-                self._streams[level.depth].add(scope)
-                prior_events = by_stream.setdefault(scope, [])
-                tick = len(prior_events) + 1
-                self._ticks[(level.depth, scope)] = tick
-                if event.payload_id not in seen_content:
-                    seen_content.add(event.payload_id)
-                    envelope = {
-                        "observation_id": event.payload_id,
-                        "semantic_projection": False,
-                        "event": {"trail": tuple(identifiers[item.address]
-                                           for item in occurrences)},
-                        "provenance": {"hierarchy_id": scope},
-                    }
-                    field.observe(
-                        envelope, spans=tuple((item.start, item.end)
-                                              for item in occurrences),
-                    )
-                    self._record_within_witnesses(
-                        level.depth, scope, event.payload_id, occurrences, field,
-                    )
-                projected = _ProjectedEvent(
-                    event.payload_id, occurrences, self._profile(occurrences),
-                )
-                self._record_temporal_pairs(
-                    level.depth, scope, projected, prior_events, field,
-                    seen_pairs, tick,
-                )
-                prior_events.append(projected)
+                self._append_event(level.depth, event)
+
+    def append_known_occurrence(self, event: CompositionObservation) -> None:
+        """Update only occurrence order under this projection's fixed catalogue.
+
+        New content requires a full rebuild, including retrospective discovery.
+        The owner handles observation-ID idempotence before calling this method.
+        """
+        if self._known_payloads.get(event.payload_id) != event.symbols:
+            raise ValueError("incremental occurrence requires unchanged known content")
+        for depth in self._patterns:
+            self._append_event(depth, event)
+
+    def _append_event(self, depth: int, event: CompositionObservation) -> None:
+        field = self._fields[depth]
+        identifiers = self._identifiers[depth]
+        key = depth, event.payload_id
+        projected = self._projected_events.get(key)
+        if projected is None:
+            occurrences = self._project(event.symbols, self._patterns[depth])
+            projected = _ProjectedEvent(event.payload_id, occurrences, self._profile(occurrences))
+            self._projected_events[key] = projected
+        occurrences = projected.occurrences
+        scope = event.stream_id
+        self._streams[depth].add(scope)
+        prior_events = self._histories[depth].setdefault(scope, [])
+        tick = self._ticks.get((depth, scope), 0) + 1
+        self._ticks[(depth, scope)] = tick
+        if event.payload_id not in self._seen_content[depth]:
+            self._seen_content[depth].add(event.payload_id)
+            envelope = {
+                "observation_id": event.payload_id,
+                "semantic_projection": False,
+                "event": {"trail": tuple(identifiers[item.address] for item in occurrences)},
+                "provenance": {"hierarchy_id": scope},
+            }
+            field.observe(envelope, spans=tuple((item.start, item.end) for item in occurrences))
+            self._record_within_witnesses(depth, scope, event.payload_id, occurrences, field)
+        self._record_temporal_pairs(
+            depth, scope, projected, prior_events, field, self._seen_pairs[depth], tick,
+        )
+        prior_events.append(projected)
+        # Absolute occurrence ticks preserve witness identity after pruning.
+        if len(prior_events) > field.temporal_horizon:
+            del prior_events[:-field.temporal_horizon]
 
     @staticmethod
     def _profile(occurrences: tuple[_Occurrence, ...]) -> tuple[tuple[str, float], ...]:

@@ -84,8 +84,11 @@ def run_case(seed, pairs, cycles, workload):
 
     builds = method_calls("compositional_association_v2.py", "__init__")
     catalogue_builds = method_calls("hierarchical_composition_v2.py", "build")
-    assert builds == (0 if workload == "idempotent_id" else cycles)
+    assert builds == (cycles if workload == "new_content" else 0)
     assert catalogue_builds == (cycles if workload == "new_content" else 0)
+    span_calls = method_calls("compositional_association_v2.py", "_project")
+    if workload != "new_content":
+        assert span_calls == 0
     if workload == "idempotent_id":
         assert memory.snapshot() == initial
     else:
@@ -97,7 +100,7 @@ def run_case(seed, pairs, cycles, workload):
         content_learned=content_learned, new_root_relations=new_root_relations,
         projection_builds=builds,
         catalogue_builds=catalogue_builds,
-        span_projection_calls=method_calls("compositional_association_v2.py", "_project"),
+        span_projection_calls=span_calls,
         profiled_observe_seconds=round(observe_seconds, 6),
         profiled_read_seconds=round(read_seconds, 6),
         cold_and_warm_parity=True, includes_occurrence_witnesses=True,

@@ -226,7 +226,7 @@ class TrajectoryGenerationExperiment:
         self._root_pairs: dict[tuple[str, str, str], tuple[float, str, int]] = {}
         # Retain at most the last active hierarchy's disposable read view.
         # Derived data is never part of learning state or durable snapshots.
-        # Even a reused payload can change occurrence order or create a path.
+        # Known occurrences update it; new content requires retrospective rebuild.
         self._compositional_views: dict[str, CompositionalAssociationView] = {}
         # Composition discovery depends on unique content, not occurrences.
         # Keep one immutable catalogue; temporal projection has its own lifetime.
@@ -302,12 +302,15 @@ class TrajectoryGenerationExperiment:
 
         address = self._intern(symbols)
         self._observations[observation] = row
-        self._compositional_views.pop(hierarchy, None)
         new_relations = self._record_root_occurrence(hierarchy, stream, address)
         if (hierarchy, address) in self._learned:
+            cached = self._compositional_views.get(hierarchy)
+            if cached is not None:
+                cached.append_known_occurrence(CompositionObservation(address, stream, symbols))
             return ObservationReceipt(address, learned=False, replayed=False,
                                       new_relations=new_relations)
 
+        self._compositional_views.pop(hierarchy, None)
         self._level_views.pop(hierarchy, None)
         # Capture boundaries are provenance, not manually authored relations.
         field_scope = "stream:" + _digest([hierarchy, stream])

@@ -284,15 +284,17 @@ não recuperam a ramificação descartada.
 ## Reuso da projeção de leitura
 
 Sem nova ocorrência, consultas sucessivas reutilizam a projeção derivada da
-última hierarquia ativa. Uma ocorrência com ID novo invalida essa projeção,
-inclusive quando reutiliza conteúdo; reexecução do mesmo ID não altera o
-cache nem o aprendizado. O cache não é persistido. A prova de paridade e seus
+última hierarquia ativa. Conteúdo novo invalida essa projeção; uma ocorrência
+de conteúdo conhecido a atualiza incrementalmente. Reexecução do mesmo ID não
+altera o cache nem o aprendizado. O cache não é persistido. A prova inicial e seus
 limites estão em [trajectory-projection-reuse-proof.md](trajectory-projection-reuse-proof.md).
 
 O [teste de consultas intercaladas com aprendizado](trajectory-interleaved-proof.md)
 mede também ocorrências novas. O catálogo de composições agora é reutilizado
-até mudar o conteúdo único; a projeção temporal continua sendo invalidada por
-qualquer ocorrência nova. A prova compara reconstrução fria, resultados e
+até mudar o conteúdo único. A etapa seguinte de
+[atualização incremental de ocorrências](trajectory-incremental-occurrence-proof.md)
+elimina a reconstrução temporal para conteúdo conhecido, mantendo reconstrução
+completa diante de conteúdo novo. As provas comparam reconstrução fria, resultados e
 testemunhas sem modificar a política de ambiguidade.
 
 ## Evidência do gate

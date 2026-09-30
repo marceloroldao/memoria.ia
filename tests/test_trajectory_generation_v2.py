@@ -17,6 +17,65 @@ def text_symbols(text):
 
 
 class TrajectoryGenerationTests(unittest.TestCase):
+    def test_known_occurrence_updates_warm_projection_without_rebuild_or_reprojection(self):
+        from dataclasses import asdict
+        from unittest.mock import patch
+
+        memory = TrajectoryGenerationExperiment()
+        cue, target = (10, 1, 2, 3, 11), (20, 7, 8, 9, 21)
+        for i, root in enumerate((cue, target, (30, 1, 2, 3, 31), (40, 7, 8, 9, 41))):
+            memory.observe(root, observation_id=f"root:{i}", stream_id=f"archive:{i}")
+        query = (50, 1, 2, 3, 51)
+        self.assertEqual(memory.associated_nodules(query).candidates, ())
+        view = memory._compositional_views["default"]
+        with patch.object(view, "_project", wraps=view._project) as project:
+            memory.observe(cue, observation_id="active:cue", stream_id="active")
+            receipt = memory.observe(target, observation_id="active:target", stream_id="active")
+            result = memory.associated_nodules(query)
+            self.assertEqual(result.selected, (7, 8, 9))
+            self.assertFalse(receipt.learned)
+            self.assertIs(memory._compositional_views["default"], view)
+            self.assertEqual(project.call_count, 0)
+        cold = TrajectoryGenerationExperiment.restore(memory.snapshot())
+        self.assertEqual(asdict(result), asdict(cold.associated_nodules(query)))
+
+    def test_incremental_view_rejects_unknown_or_changed_content_before_mutation(self):
+        from dataclasses import asdict
+        from memoria_resolutiva.compositional_association_v2 import CompositionObservation
+
+        memory = TrajectoryGenerationExperiment()
+        receipt = memory.observe((1, 2, 3), observation_id="one")
+        memory.observe((1, 2, 4), observation_id="two")
+        query = (90, 1, 2, 91)
+        before = asdict(memory.associated_nodules(query)), memory.snapshot()
+        view = memory._compositional_views["default"]
+        for event in (CompositionObservation("unknown", "stream", (1, 2, 3)),
+                      CompositionObservation(receipt.payload_id, "stream", (3, 2, 1))):
+            with self.assertRaises(ValueError):
+                view.append_known_occurrence(event)
+            self.assertEqual((asdict(memory.associated_nodules(query)), memory.snapshot()), before)
+
+    def test_bounded_incremental_history_keeps_absolute_occurrence_ticks(self):
+        from dataclasses import asdict
+
+        memory = TrajectoryGenerationExperiment(GenerationConfig(
+            temporal_decay=1.0, forgetting_rate=0.01, trace_floor=0.01))
+        roots = ((10, 1, 2, 3, 11), (20, 7, 8, 9, 21), (30, 4, 5, 6, 31),
+                 (40, 1, 2, 3, 41), (50, 7, 8, 9, 51), (60, 4, 5, 6, 61))
+        for index, root in enumerate(roots):
+            memory.observe(root, observation_id=f"root:{index}", stream_id=f"archive:{index}")
+        query = (90, 1, 2, 3, 91)
+        memory.associated_nodules(query)
+        for index in range(30):
+            memory.observe(roots[index % 3], observation_id=f"repeat:{index}", stream_id="active")
+        view = memory._compositional_views["default"]
+        for depth, streams in view._histories.items():
+            self.assertLessEqual(len(streams["active"]), view._fields[depth].temporal_horizon)
+            self.assertEqual(view._ticks[(depth, "active")], 30)
+        cold = TrajectoryGenerationExperiment.restore(memory.snapshot())
+        self.assertEqual(asdict(memory.trace_nodule_paths(query)), asdict(cold.trace_nodule_paths(query)))
+        self.assertEqual(asdict(memory.associated_nodules(query)), asdict(cold.associated_nodules(query)))
+
     def test_composition_catalogue_reused_until_unique_content_changes(self):
         from unittest.mock import patch
 
@@ -64,7 +123,7 @@ class TrajectoryGenerationTests(unittest.TestCase):
             self.assertEqual(rebuild.call_count, 1)
         self.assertEqual((memory.snapshot(), memory.learning_state()), (state, learned))
 
-    def test_cached_projection_invalidates_for_reused_target_and_forgetting(self):
+    def test_cached_projection_updates_for_reused_target_and_forgetting(self):
         memory = TrajectoryGenerationExperiment(GenerationConfig(forgetting_rate=0.05))
         cue, target = (1, 2, 3), (7, 8, 9)
         root = (20, *target, 21)

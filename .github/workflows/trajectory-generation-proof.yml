@@ -15,6 +15,8 @@ on:
       - 'scripts/trajectory_stability_probe.py'
       - 'scripts/trajectory_projection_probe.py'
       - 'scripts/trajectory_interleaved_probe.py'
+      - 'scripts/trajectory_incremental_probe.py'
+      - 'benchmark-results/trajectory-incremental-reference.json'
       - '.github/workflows/trajectory-generation-proof.yml'
   workflow_dispatch:
 
@@ -40,6 +42,8 @@ jobs:
         run: |
           python scripts/trajectory_interleaved_probe.py --seed 20260930
           python scripts/trajectory_interleaved_probe.py --seed 20261002
+      - name: Incremental occurrence order and pinned pre-change reference
+        run: python scripts/trajectory_incremental_probe.py
       - name: Held-out structural scenarios and negative controls
         run: |
           python scripts/trajectory_holdout_probe.py --seed 4107
