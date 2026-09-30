@@ -89,3 +89,6 @@ dados privados, alteração do OFF.IA ou resolução dos três gates nativos pen
 A próxima hipótese deve considerar a pista na sua região/ocorrência e a evidência
 que distingue destinos, mantendo um controle positivo de transferência com
 contexto novo. Aumentar apenas o tamanho exigido da pista não resolve o problema.
+
+
+Validação remota: [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36671018305) passou no commit `f58181c`: 59 testes do gerador, cinco testes do scorecard, três testes deste diagnóstico e 66 regressões (um BDR opcional pulado). Os três lotes e os controles opacos foram reproduzidos; o scorecard de qualidade continua `FAIL`, e a ablação mantém `UNRESOLVED`. Localmente, todos os campos originais dos 112 casos dos dois lotes anteriores coincidiram com os relatórios publicados antes desta etapa.
