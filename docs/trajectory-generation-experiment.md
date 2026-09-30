@@ -363,3 +363,9 @@ A [avaliação textual de respostas](trajectory-response-quality-proof.md) separ
 retenção do alvo, seleção correta, ausência e conflito. Os dois lotes falham no
 gate de qualidade: recuperar um trecho entre candidatos ainda não produz uma
 resposta confiável. Os rótulos ficam exclusivamente no avaliador.
+
+
+A leitura [de contraste temporal](trajectory-transition-contrast-proof.md)
+expõe posições do candidato na origem/destino e separa pares que introduzem ou
+transportam o trecho. Não muda o aprendizado nem a seleção. O veto experimental
+por ausência de novidade foi rejeitado porque também bloqueia evocação válida.

@@ -175,6 +175,46 @@ class RouteStability:
 
 
 @dataclass(frozen=True, slots=True)
+class TransitionWitnessContrast:
+    source_payload_id: str
+    target_payload_id: str
+    stream_id: str
+    source_spans: tuple[tuple[int, int], ...]
+    target_spans: tuple[tuple[int, int], ...]
+    query_source_spans: tuple[tuple[int, int], ...]
+
+    @property
+    def introduced_in_pair(self) -> bool:
+        """Absent from this source, present at its witnessed destination."""
+        return not self.source_spans and bool(self.target_spans)
+
+    @property
+    def carried_in_pair(self) -> bool:
+        return bool(self.source_spans and self.target_spans)
+
+
+@dataclass(frozen=True, slots=True)
+class NoduleTransitionContrast:
+    symbols: tuple[int, ...]
+    source_width: int
+    witnesses: tuple[TransitionWitnessContrast, ...]
+
+    @property
+    def introduced_pairs(self) -> int:
+        return sum(witness.introduced_in_pair for witness in self.witnesses)
+
+    @property
+    def carried_pairs(self) -> int:
+        return sum(witness.carried_in_pair for witness in self.witnesses)
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalNoduleContrast:
+    recall: CompositionalRecall
+    candidates: tuple[NoduleTransitionContrast, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class GenerationResult:
     mode: str  # Operation label, including COMBINED_RECALL and COMBINED_ROUTES.
     candidates: tuple[GenerationCandidate, ...]
@@ -496,6 +536,49 @@ class TrajectoryGenerationExperiment:
             for candidate in recall.candidates
         )
         return RouteStability(candidates, recall.ambiguous, recall.truncated)
+
+    def temporal_nodule_contrast(
+        self, payload: Iterable[int], *, hierarchy_id: str = "default",
+        limit: int = 8, include_shorter: bool = False,
+    ) -> TemporalNoduleContrast:
+        """Describe source/destination spans without changing route selection.
+
+        New-in-pair is structural, not new knowledge or factual confidence.
+        A target already present in its source can still be a valid recall.
+        Counts describe the returned root-pair witnesses, not new votes or
+        independent captures. The underlying recall retains its limits.
+        """
+        query = _symbols(payload)
+        recall = self.associated_nodules(
+            query, hierarchy_id=hierarchy_id, channel="temporal", limit=limit,
+            include_shorter=include_shorter,
+        )
+        expanded: dict[str, tuple[int, ...]] = {}
+
+        def root(address):
+            if address not in expanded:
+                expanded[address] = self.expand(address)
+            return expanded[address]
+
+        def spans(pattern, symbols):
+            return tuple(
+                (start, start + len(pattern))
+                for start in range(len(symbols) - len(pattern) + 1)
+                if symbols[start:start + len(pattern)] == pattern
+            )
+
+        candidates = tuple(
+            NoduleTransitionContrast(
+                candidate.symbols, candidate.source_width,
+                tuple(TransitionWitnessContrast(
+                    source, target, stream,
+                    spans(candidate.symbols, root(source)),
+                    spans(candidate.symbols, root(target)),
+                    spans(query, root(source)),
+                ) for source, target, stream in candidate.witnesses),
+            ) for candidate in recall.candidates
+        )
+        return TemporalNoduleContrast(recall, candidates)
 
     def trace_nodule_paths(
         self, payload: Iterable[int], *, hierarchy_id: str = "default",
