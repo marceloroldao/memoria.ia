@@ -224,6 +224,10 @@ class TrajectoryGenerationExperiment:
         # capture order. A root pair gets one structural vote per hierarchy.
         self._root_history: dict[tuple[str, str], list[str]] = {}
         self._root_pairs: dict[tuple[str, str, str], tuple[float, str, int]] = {}
+        # Retain at most the last active hierarchy's disposable read view.
+        # Derived data is never part of learning state or durable snapshots.
+        # Even a reused payload can change occurrence order or create a path.
+        self._compositional_views: dict[str, CompositionalAssociationView] = {}
 
     def _record_root_occurrence(self, hierarchy: str, stream: str, address: str) -> int:
         history = self._root_history.setdefault((hierarchy, stream), [])
@@ -295,6 +299,7 @@ class TrajectoryGenerationExperiment:
 
         address = self._intern(symbols)
         self._observations[observation] = row
+        self._compositional_views.pop(hierarchy, None)
         new_relations = self._record_root_occurrence(hierarchy, stream, address)
         if (hierarchy, address) in self._learned:
             return ObservationReceipt(address, learned=False, replayed=False,
@@ -436,7 +441,7 @@ class TrajectoryGenerationExperiment:
         channel: str = "temporal", limit: int = 8,
         include_shorter: bool = False,
     ) -> CompositionalRecall:
-        """Rebuild associations at every discovered scale without learning.
+        """Read associations at every discovered scale without learning.
 
         A newly discovered composition is projected over earlier input events.
         Unique content contributes to within-payload support once; each
@@ -490,6 +495,9 @@ class TrajectoryGenerationExperiment:
         )
 
     def _compositional_view(self, hierarchy: str) -> CompositionalAssociationView:
+        cached = self._compositional_views.get(hierarchy)
+        if cached is not None:
+            return cached
         observations: list[CompositionObservation] = []
         for row in self._observations.values():
             address = row["payload_id"]
@@ -498,7 +506,7 @@ class TrajectoryGenerationExperiment:
             observations.append(CompositionObservation(
                 address, row["stream_id"], self.expand(address),
             ))
-        return CompositionalAssociationView(
+        view = CompositionalAssociationView(
             self.levels(hierarchy_id=hierarchy), observations,
             within_decay=self.config.within_decay,
             temporal_decay=self.config.temporal_decay,
@@ -506,6 +514,10 @@ class TrajectoryGenerationExperiment:
             trace_floor=self.config.trace_floor,
             max_pattern_size=self.config.max_context,
         )
+        if observations:
+            self._compositional_views.clear()
+            self._compositional_views[hierarchy] = view
+        return view
 
     def _views(self, query: tuple[int, ...], hierarchy: str):
         trajectories = tuple(t for t in self._index.snapshot() if t.hierarchy_id == hierarchy)

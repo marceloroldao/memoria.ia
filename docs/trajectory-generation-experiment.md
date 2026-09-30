@@ -281,6 +281,14 @@ calibração. A busca de continuações também pode cortar rotas;
 as testemunhas de uma evocação independente continuam inspecionáveis, mas
 não recuperam a ramificação descartada.
 
+## Reuso da projeção de leitura
+
+Sem nova ocorrência, consultas sucessivas reutilizam a projeção derivada da
+última hierarquia ativa. Uma ocorrência com ID novo invalida essa projeção,
+inclusive quando reutiliza conteúdo; reexecução do mesmo ID não altera o
+cache nem o aprendizado. O cache não é persistido. A prova de paridade e seus
+limites estão em [trajectory-projection-reuse-proof.md](trajectory-projection-reuse-proof.md).
+
 ## Evidência do gate
 
 Primeira etapa em 27/09/2026: 22 testes novos e 64 regressões passaram no

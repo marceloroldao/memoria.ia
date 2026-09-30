@@ -13,6 +13,7 @@ on:
       - 'scripts/trajectory_online_probe.py'
       - 'scripts/trajectory_private_replay.py'
       - 'scripts/trajectory_stability_probe.py'
+      - 'scripts/trajectory_projection_probe.py'
       - '.github/workflows/trajectory-generation-proof.yml'
   workflow_dispatch:
 
@@ -32,6 +33,8 @@ jobs:
         run: python scripts/trajectory_generation_gate.py
       - name: Embedded root export adapter without private data
         run: python scripts/trajectory_private_replay.py
+      - name: Reused read projection and cold parity
+        run: python scripts/trajectory_projection_probe.py
       - name: Held-out structural scenarios and negative controls
         run: |
           python scripts/trajectory_holdout_probe.py --seed 4107

@@ -17,6 +17,69 @@ def text_symbols(text):
 
 
 class TrajectoryGenerationTests(unittest.TestCase):
+    def test_read_projection_reuse_matches_cold_reconstruction(self):
+        from unittest.mock import patch
+        from memoria_resolutiva.compositional_association_v2 import CompositionalAssociationView
+
+        memory = TrajectoryGenerationExperiment()
+        for index, payload in enumerate(((90, 1, 2, 3, 91), (92, 7, 8, 9, 93),
+                                          (94, 1, 2, 3, 95), (96, 7, 8, 9, 97))):
+            memory.observe(payload, observation_id=str(index))
+        query = (100, 1, 2, 3, 101)
+        state, learned = memory.snapshot(), memory.learning_state()
+        cold = TrajectoryGenerationExperiment.restore(state)
+        expected = (cold.associated_nodules(query), cold.route_stability(query),
+                    cold.trace_nodule_paths(query), cold.generate(query))
+        with patch("memoria_resolutiva.trajectory_generation_v2.CompositionalAssociationView",
+                   wraps=CompositionalAssociationView) as rebuild:
+            for _ in range(3):
+                actual = (memory.associated_nodules(query), memory.route_stability(query),
+                          memory.trace_nodule_paths(query), memory.generate(query))
+                self.assertEqual(actual, expected)
+            self.assertEqual(rebuild.call_count, 1)
+        self.assertEqual((memory.snapshot(), memory.learning_state()), (state, learned))
+
+    def test_cached_projection_invalidates_for_reused_target_and_forgetting(self):
+        memory = TrajectoryGenerationExperiment(GenerationConfig(forgetting_rate=0.05))
+        cue, target = (1, 2, 3), (7, 8, 9)
+        root = (20, *target, 21)
+        for index, payload in enumerate(((10, *cue, 11), root, (30, *cue, 31),
+                                          (40, *target, 41))):
+            memory.observe(payload, observation_id=f"known:{index}", stream_id=f"old:{index}")
+        query = (90, *cue, 91)
+        self.assertEqual(memory.associated_nodules(query).candidates, ())
+        memory.observe((50, *cue, 51), observation_id="new:cue", stream_id="new")
+        self.assertEqual(memory.associated_nodules(query).candidates, ())
+        receipt = memory.observe(root, observation_id="new:target", stream_id="new")
+        self.assertFalse(receipt.learned)
+        recalled = memory.associated_nodules(query)
+        self.assertEqual(recalled.selected, target)
+        self.assertEqual(recalled, TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).associated_nodules(query))
+        # Even an occurrence with no new content/pair advances the forgetting clock.
+        memory.observe(root, observation_id="new:copy", stream_id="new")
+        decayed = memory.associated_nodules(query)
+        self.assertLess(decayed.candidates[0].weight, recalled.candidates[0].weight)
+        self.assertEqual(decayed, TrajectoryGenerationExperiment.restore(
+            memory.snapshot()).associated_nodules(query))
+
+    def test_projection_replay_rejection_and_other_hierarchy_preserve_warm_view(self):
+        from unittest.mock import patch
+        from memoria_resolutiva.compositional_association_v2 import CompositionalAssociationView
+
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3), observation_id="first", hierarchy_id="one")
+        memory.observe((7, 8, 9), observation_id="second", hierarchy_id="one")
+        with patch("memoria_resolutiva.trajectory_generation_v2.CompositionalAssociationView",
+                   wraps=CompositionalAssociationView) as rebuild:
+            original = memory.associated_nodules((1, 2, 3), hierarchy_id="one")
+            memory.observe((1, 2, 3), observation_id="first", hierarchy_id="one")
+            with self.assertRaises(ValueError):
+                memory.observe((3, 2, 1), observation_id="first", hierarchy_id="one")
+            memory.observe((4, 5, 6), observation_id="other", hierarchy_id="two")
+            self.assertEqual(memory.associated_nodules((1, 2, 3), hierarchy_id="one"), original)
+            self.assertEqual(rebuild.call_count, 1)
+
     def test_empty_memory_echoes_without_learning_output(self):
         memory = TrajectoryGenerationExperiment()
         for i, text in enumerate(("oi", "hoje o dia está bonito", "hoje está quente")):
