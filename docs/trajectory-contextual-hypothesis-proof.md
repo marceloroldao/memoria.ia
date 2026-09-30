@@ -112,3 +112,6 @@ os três gates pessoais nativos pendentes; o PR permanece rascunho.
 A próxima etapa deve tratar as rotas já únicas sem confundir contexto novo com
 ausência e sem perder evocação transportada. Esta etapa melhora a hipótese de
 resposta em contexto, mas não torna o sistema um respondedor confiável.
+
+
+Validação remota: [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36754159273) passou no commit `7d77018`: sete testes novos, 59 anteriores do gerador e 66 regressões (um BDR opcional pulado), além dos testes/controles de scorecard, especificidade e contraste temporal. Os três lotes reproduziram 24/28 hipóteses corretas, 24 controles preservados e o gate `FAIL` por ausência. A integridade aprovada não é aprovação da qualidade de resposta.
