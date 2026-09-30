@@ -77,6 +77,15 @@ Resultados completos:
 - [Segundo lote](../benchmark-results/trajectory-incremental-heldout.json).
 - [Sequências longas](../benchmark-results/trajectory-incremental-long-proof.json).
 
+## Validação remota
+
+O [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36667186015)
+passou no commit `d1467deaffe63115582b076e8f0754cd06ab1e43`: 59 testes do
+gerador, 66 regressões, os dois lotes intercalados, a referência anterior e
+todos os controles anteriores passaram. Um teste de BDR nativo opcional foi
+pulado. Os 12 arquivos publicados foram conferidos como idênticos aos arquivos
+validados localmente.
+
 ## Limites
 
 Esta atualização atende ocorrências de conteúdo conhecido sob catálogo fixo.
