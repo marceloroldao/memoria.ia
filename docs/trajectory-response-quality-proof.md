@@ -98,3 +98,9 @@ O PR permanece rascunho.
 
 
 Validação remota no commit `2bb892b`: [workflow dedicado](https://github.com/marceloroldao/memoria.ia/actions/runs/36669816456) passou nos contratos de integridade, nos cinco testes do avaliador e nos lotes sintéticos. Foram aprovados também 59 testes do gerador e 66 regressões (um BDR opcional pulado). Os relatórios remotos mantiveram `quality_status: FAIL` nos dois lotes; esse resultado continua pendente.
+
+
+A [ablação de cobertura da pista](trajectory-query-specificity-proof.md) testa
+um possível veto fora do motor. Suspende as seleções incorretas de três lotes,
+mas também bloqueia evocações válidas em contexto novo mais comprido. A proposta
+foi rejeitada como política; o scorecard original continua reprovado.

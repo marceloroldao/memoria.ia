@@ -1,0 +1,5875 @@
+{
+  "format": "memoria.ia-query-specificity-ablation-v1",
+  "seed": 20261004,
+  "integrity_status": "PASS",
+  "engine_policy_changed": false,
+  "quality_status": "UNRESOLVED",
+  "threshold_sweep": [
+    {
+      "threshold": 0.0,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 10,
+      "absence_false_unique": 6,
+      "suspended_selections": 0,
+      "lost_opaque_transfers": 0
+    },
+    {
+      "threshold": 0.25,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 10,
+      "lost_opaque_transfers": 4
+    },
+    {
+      "threshold": 0.5,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 10,
+      "lost_opaque_transfers": 6
+    },
+    {
+      "threshold": 0.75,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 10,
+      "lost_opaque_transfers": 8
+    },
+    {
+      "threshold": 1.0,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 10,
+      "lost_opaque_transfers": 8
+    }
+  ],
+  "opaque_transfer_controls": [
+    {
+      "renamed": false,
+      "padding": 1,
+      "query": [
+        100,
+        1,
+        2,
+        3,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.6,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": false,
+      "padding": 4,
+      "query": [
+        100,
+        100,
+        100,
+        100,
+        1,
+        2,
+        3,
+        101,
+        101,
+        101,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2727272727272727,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": false,
+      "padding": 8,
+      "query": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        1,
+        2,
+        3,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.15789473684210525,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": false,
+      "padding": 16,
+      "query": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        1,
+        2,
+        3,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.08571428571428572,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 1,
+      "query": [
+        10117,
+        118,
+        219,
+        320,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.6,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 4,
+      "query": [
+        10117,
+        10117,
+        10117,
+        10117,
+        118,
+        219,
+        320,
+        10218,
+        10218,
+        10218,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2727272727272727,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 8,
+      "query": [
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        118,
+        219,
+        320,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.15789473684210525,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 16,
+      "query": [
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        118,
+        219,
+        320,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.08571428571428572,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2,
+          "witnesses": [
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 9,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.13333333333333333,
+          "witnesses": [
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.09523809523809523,
+          "witnesses": [
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 4,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Luma?",
+      "expected": [
+        "Luma: 381."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            76,
+            117,
+            109,
+            97,
+            58,
+            32,
+            51,
+            56,
+            49,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:91518dd72a3adc573476683c3944221ec635aa6e",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:9d6cf83821f85b9787a0b57786feca2252f1a671",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:91518dd72a3adc573476683c3944221ec635aa6e",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:9d6cf83821f85b9787a0b57786feca2252f1a671",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:91518dd72a3adc573476683c3944221ec635aa6e",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:9d6cf83821f85b9787a0b57786feca2252f1a671",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            76,
+            117,
+            109,
+            97,
+            58,
+            32,
+            51,
+            56,
+            49,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:91518dd72a3adc573476683c3944221ec635aa6e",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:9d6cf83821f85b9787a0b57786feca2252f1a671",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:91518dd72a3adc573476683c3944221ec635aa6e",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:9d6cf83821f85b9787a0b57786feca2252f1a671",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:91518dd72a3adc573476683c3944221ec635aa6e",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:9d6cf83821f85b9787a0b57786feca2252f1a671",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502.",
+        "Neri: 635."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 502.",
+        "Neri: 635.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.26666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:f659c4037120b5fbdec842ebf7f5a6d7fe8756ce",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.1875,
+          "witnesses": [
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.125,
+          "witnesses": [
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.09523809523809523,
+          "witnesses": [
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 4,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:d47d708bcb6d895b5af7481ebfc57fd1671a7668",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Luma?",
+      "expected": [
+        "Luma: 381."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            76,
+            117,
+            109,
+            97,
+            58,
+            32,
+            51,
+            56,
+            49,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4333e944c6203a81dcb6a62b20f5ddb1fd9d2a89",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7b4451585a3a3091cc8a16821ae76ba143ec5d0f",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4333e944c6203a81dcb6a62b20f5ddb1fd9d2a89",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7b4451585a3a3091cc8a16821ae76ba143ec5d0f",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7b4451585a3a3091cc8a16821ae76ba143ec5d0f",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4333e944c6203a81dcb6a62b20f5ddb1fd9d2a89",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            76,
+            117,
+            109,
+            97,
+            58,
+            32,
+            51,
+            56,
+            49,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:4333e944c6203a81dcb6a62b20f5ddb1fd9d2a89",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7b4451585a3a3091cc8a16821ae76ba143ec5d0f",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:4333e944c6203a81dcb6a62b20f5ddb1fd9d2a89",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7b4451585a3a3091cc8a16821ae76ba143ec5d0f",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7b4451585a3a3091cc8a16821ae76ba143ec5d0f",
+              "target": "payload:197b59c0b81b86d16e64c36557a5e2a7c4e323db",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:215f031388554e31bd661e28f82c170925fbf7ce",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:dff8ad80a111ed6b1432ce317674c77191b5f807",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:4333e944c6203a81dcb6a62b20f5ddb1fd9d2a89",
+              "target": "payload:9f9f86eaa0983c5d2aa1b77ba56c39368b26a523",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502.",
+        "Neri: 635."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 502.",
+        "Neri: 635.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.25,
+          "witnesses": [
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:d293e476dd5056a4b2add4bf9ee7b8fc12a7ee01",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:f659c4037120b5fbdec842ebf7f5a6d7fe8756ce",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2,
+          "witnesses": [
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:c018febfd76f216c25a986b630f01b04305b1a0c",
+              "stream": "capture:0",
+              "shared_span": 9,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.09523809523809523,
+          "witnesses": [
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:c018febfd76f216c25a986b630f01b04305b1a0c",
+              "stream": "capture:0",
+              "shared_span": 4,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:2540f6912c71cbd4f46d7444334759d6eb26f922",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": Neri: 248.",
+        ": ",
+        "ri: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            105,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:71e46b85c2922a22c81808049c265aa9d7fc84f1",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:5601b6f39817231d16ae35a99db57fbb345cb911",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248.",
+        "Neri: 711."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 711.",
+        "Neri: 248.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.26666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:9fde5d7eccf6b4170d4948c771178fd0c8b90add",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:3ceaf34f0139a140e3d1037aac138063e0b9bdee",
+              "target": "payload:c018febfd76f216c25a986b630f01b04305b1a0c",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.1875,
+          "witnesses": [
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:c018febfd76f216c25a986b630f01b04305b1a0c",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.09523809523809523,
+          "witnesses": [
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:c018febfd76f216c25a986b630f01b04305b1a0c",
+              "stream": "capture:0",
+              "shared_span": 4,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:b0715254a88d167ec02e92c43e2a06028558dfe0",
+              "target": "payload:f66b43451e3cea07fa75028f76201b64d2e227e3",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": Neri: 248.",
+        ": ",
+        "ri: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            53,
+            48,
+            50,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            78,
+            101,
+            114,
+            105,
+            58,
+            32,
+            50,
+            52,
+            56,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            105,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:da0018f12fbc5d61db5808e5fc0beb8639cdbf55",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:e500419a220244dbaf867c2079c46d598c03c92d",
+              "target": "payload:65ec598e37cb660e6b91dda16b140aeec3fdccc7",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:0b1adcdc31d993058e4e8f804957512662cbf1f7",
+              "target": "payload:29c91ef35f9acb5cf4330056a2962a584f817438",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:20406d6e054e00e6ed025c94b38133e9661770a1",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248.",
+        "Neri: 711."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 711.",
+        "Neri: 248.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            78,
+            101,
+            114,
+            105,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.25,
+          "witnesses": [
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:9fde5d7eccf6b4170d4948c771178fd0c8b90add",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:e152eb900b11e3e70cbc75ae2531059f5ee00742",
+              "target": "payload:c018febfd76f216c25a986b630f01b04305b1a0c",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    }
+  ]
+}
