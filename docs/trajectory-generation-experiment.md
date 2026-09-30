@@ -357,3 +357,9 @@ peso, participação relativa, pares testemunhas e capturas independentes. Ela
 mostra que contextos diferentes acumulam evidência, uma ocorrência isolada
 não forma rota recorrente e cópias exatas não reforçam. Uma liderança de peso
 continua sendo diagnóstico; candidatos concorrentes mantêm `selected` vazio.
+
+
+A [avaliação textual de respostas](trajectory-response-quality-proof.md) separa
+retenção do alvo, seleção correta, ausência e conflito. Os dois lotes falham no
+gate de qualidade: recuperar um trecho entre candidatos ainda não produz uma
+resposta confiável. Os rótulos ficam exclusivamente no avaliador.
