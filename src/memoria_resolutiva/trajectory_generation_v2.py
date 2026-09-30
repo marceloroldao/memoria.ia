@@ -228,6 +228,9 @@ class TrajectoryGenerationExperiment:
         # Derived data is never part of learning state or durable snapshots.
         # Even a reused payload can change occurrence order or create a path.
         self._compositional_views: dict[str, CompositionalAssociationView] = {}
+        # Composition discovery depends on unique content, not occurrences.
+        # Keep one immutable catalogue; temporal projection has its own lifetime.
+        self._level_views: dict[str, tuple[HierarchyLevelV2, ...]] = {}
 
     def _record_root_occurrence(self, hierarchy: str, stream: str, address: str) -> int:
         history = self._root_history.setdefault((hierarchy, stream), [])
@@ -305,6 +308,7 @@ class TrajectoryGenerationExperiment:
             return ObservationReceipt(address, learned=False, replayed=False,
                                       new_relations=new_relations)
 
+        self._level_views.pop(hierarchy, None)
         # Capture boundaries are provenance, not manually authored relations.
         field_scope = "stream:" + _digest([hierarchy, stream])
         self._streams[(hierarchy, stream)] = field_scope
@@ -323,7 +327,14 @@ class TrajectoryGenerationExperiment:
                                   new_relations=new_relations)
 
     def levels(self, *, hierarchy_id: str = "default") -> tuple[HierarchyLevelV2, ...]:
-        return self._hierarchy.build(hierarchy_id=_name(hierarchy_id))
+        hierarchy = _name(hierarchy_id)
+        cached = self._level_views.get(hierarchy)
+        if cached is not None:
+            return cached
+        levels = self._hierarchy.build(hierarchy_id=hierarchy)
+        self._level_views.clear()
+        self._level_views[hierarchy] = levels
+        return levels
 
     def association(
         self, source: int, target: int, *, hierarchy_id: str = "default",

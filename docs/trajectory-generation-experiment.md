@@ -289,6 +289,12 @@ inclusive quando reutiliza conteúdo; reexecução do mesmo ID não altera o
 cache nem o aprendizado. O cache não é persistido. A prova de paridade e seus
 limites estão em [trajectory-projection-reuse-proof.md](trajectory-projection-reuse-proof.md).
 
+O [teste de consultas intercaladas com aprendizado](trajectory-interleaved-proof.md)
+mede também ocorrências novas. O catálogo de composições agora é reutilizado
+até mudar o conteúdo único; a projeção temporal continua sendo invalidada por
+qualquer ocorrência nova. A prova compara reconstrução fria, resultados e
+testemunhas sem modificar a política de ambiguidade.
+
 ## Evidência do gate
 
 Primeira etapa em 27/09/2026: 22 testes novos e 64 regressões passaram no

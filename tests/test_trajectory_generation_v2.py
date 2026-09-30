@@ -17,6 +17,31 @@ def text_symbols(text):
 
 
 class TrajectoryGenerationTests(unittest.TestCase):
+    def test_composition_catalogue_reused_until_unique_content_changes(self):
+        from unittest.mock import patch
+
+        memory = TrajectoryGenerationExperiment()
+        memory.observe((1, 2, 3, 4), observation_id="one")
+        memory.observe((1, 2, 6, 7), observation_id="two")
+        with patch.object(memory._hierarchy, "build", wraps=memory._hierarchy.build) as build:
+            before = memory.levels()
+            memory.observe((1, 2, 3, 4), observation_id="copy")
+            memory.associated_nodules((90, 1, 2, 91))
+            memory.generate((90, 1, 2, 91))
+            self.assertEqual(memory.levels(), before)
+            self.assertEqual(build.call_count, 1)
+            memory.observe((8, 6, 7, 9), observation_id="new-context")
+            after = memory.levels()
+            self.assertNotEqual(after, before)
+            self.assertEqual(after, TrajectoryGenerationExperiment.restore(memory.snapshot()).levels())
+            self.assertEqual(build.call_count, 2)
+            memory.observe((1, 2, 3, 4), observation_id="other", hierarchy_id="other")
+            self.assertEqual(memory.levels(), after)
+            self.assertEqual(build.call_count, 2)
+            self.assertEqual(memory.levels(hierarchy_id="other"), ())
+            self.assertEqual(memory.levels(), after)
+            self.assertEqual(build.call_count, 4)
+
     def test_read_projection_reuse_matches_cold_reconstruction(self):
         from unittest.mock import patch
         from memoria_resolutiva.compositional_association_v2 import CompositionalAssociationView
