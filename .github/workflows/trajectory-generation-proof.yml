@@ -87,12 +87,13 @@ jobs:
           python scripts/trajectory_transition_contrast_probe.py --seed 20260930
           python scripts/trajectory_transition_contrast_probe.py --seed 20261004
           python scripts/trajectory_transition_contrast_probe.py --seed 20261006
-      - name: Opt in contextual hypothesis and remaining absence failures
+      - name: Opt in contextual hypothesis and source context absence gate
         run: |
           python -m unittest discover -s tests -p test_contextual_route_hypothesis.py
           python scripts/trajectory_contextual_hypothesis_probe.py --seed 20260930
           python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261004
           python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261007
+          python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261008 --strict-quality
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field

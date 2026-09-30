@@ -80,5 +80,44 @@ class ContextualRouteHypothesisTests(unittest.TestCase):
         self.assertEqual(len(positive_controls()), 24)
 
 
+    def test_unique_generic_fragment_is_withheld_without_erasing_it(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe(encode('Código de Daro?', 'unicode'), observation_id='source')
+        memory.observe(encode('Daro: 791.', 'unicode'), observation_id='target')
+        query = encode('Temperatura de Marte?', 'unicode')
+        baseline = memory.generate(query)
+        self.assertEqual(baseline.mode, 'NODULE_RECALL')
+        self.assertEqual(baseline.selected, encode('Daro', 'unicode'))
+        result = read(memory, query)
+        self.assertIsNone(result.hypothesis)
+        self.assertEqual(result.reason, 'UNMATCHED_SHARED_SOURCE_CONTEXT')
+        self.assertEqual(asdict(result.generation), asdict(baseline))
+        self.assertTrue(result.shared_source_contexts)
+        self.assertEqual(memory.generate(query).selected, baseline.selected)
+
+    def test_case_change_is_absence_of_supported_context_not_a_normalized_answer(self):
+        memory = TrajectoryGenerationExperiment()
+        memory.observe(encode('Código de Daro?', 'unicode'), observation_id='source')
+        memory.observe(encode('Daro: 791.', 'unicode'), observation_id='target')
+        result = read(memory, encode('código de daro?', 'unicode'))
+        self.assertIsNone(result.hypothesis)
+        self.assertEqual(result.reason, 'UNMATCHED_SHARED_SOURCE_CONTEXT')
+
+    def test_unique_supported_nodule_exposes_its_context_under_symbol_renaming(self):
+        for rename in (False, True):
+            transform = lambda xs: tuple(10000 - x if rename else x for x in xs)
+            memory = TrajectoryGenerationExperiment()
+            for i in range(2):
+                memory.observe(transform((90+i, 7, 8, 9, 1, 2, 3, 100+i)),
+                               observation_id=f'{i}:s', stream_id=str(i))
+                memory.observe(transform((200+i, 7, 8, 9, 300+i)),
+                               observation_id=f'{i}:t', stream_id=str(i))
+            query = transform((1000,) * 16 + (1, 2, 3) + (1001,) * 16)
+            result = read(memory, query)
+            self.assertEqual(result.hypothesis, transform((7, 8, 9)))
+            self.assertEqual(result.reason, 'SOURCE_CONTEXT_SUPPORTED_ROUTE')
+            self.assertEqual(result.shared_source_contexts, (transform((1, 2, 3)),))
+
+
 if __name__ == '__main__':
     unittest.main()

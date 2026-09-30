@@ -600,6 +600,8 @@ class TrajectoryGenerationExperiment:
         separate temporal outcome. Only a single nodule that is introduced
         in at least one pair can consolidate all those views. Other route
         families, truncation and distinct witness outcomes are left alone.
+        Unique nodule routes must also match their shared source context;
+        a carried target may be removed as an affix while preserving the cue.
         This is provisional; a carried fragment can still contain useful
         information, so every original candidate remains visible.
         """
@@ -607,7 +609,7 @@ class TrajectoryGenerationExperiment:
         generation = self.generate(query, hierarchy_id=hierarchy_id, **generation_options)
         if generation.mode == "ECHO":
             return ContextualRouteHypothesis(generation, None, "ECHO_ONLY")
-        if generation.selected is not None:
+        if generation.selected is not None and generation.mode != "NODULE_RECALL":
             return ContextualRouteHypothesis(generation, generation.selected, "EXISTING_UNIQUE_ROUTE")
         if generation.mode != "NODULE_RECALL" or generation.truncated:
             return ContextualRouteHypothesis(generation, None, "COMPETING_OR_BOUNDED_ROUTES")
@@ -637,7 +639,9 @@ class TrajectoryGenerationExperiment:
         unmatched = False
         unmatched_contexts = []
         for candidate in association.candidates:
-            if not candidate.witnesses or carried[candidate.symbols]:
+            if not candidate.witnesses or (
+                carried[candidate.symbols] and generation.selected is None
+            ):
                 continue
             if all(
                 other.symbols == candidate.symbols or (
@@ -702,7 +706,9 @@ class TrajectoryGenerationExperiment:
                                             shared_source_contexts=tuple(sorted(set(unmatched_contexts))))
         hypothesis, contexts = eligible[0]
         return ContextualRouteHypothesis(
-            generation, hypothesis, "SHARED_DESTINATION_CONTEXT",
+            generation, hypothesis,
+            "SOURCE_CONTEXT_SUPPORTED_ROUTE" if generation.selected is not None
+            else "SHARED_DESTINATION_CONTEXT",
             tuple(c.symbols for c in association.candidates if c.symbols != hypothesis),
             contexts,
         )

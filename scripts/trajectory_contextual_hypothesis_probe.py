@@ -89,5 +89,9 @@ def probe(seed):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=20260930)
+    parser.add_argument('--strict-quality', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(probe(args.seed), ensure_ascii=False, separators=(',', ':')))
+    report = probe(args.seed)
+    print(json.dumps(report, ensure_ascii=False, separators=(',', ':')))
+    if args.strict_quality and report['hypothesis_quality_status'] != 'PASS':
+        raise SystemExit(1)
