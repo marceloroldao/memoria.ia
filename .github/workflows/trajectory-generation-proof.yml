@@ -32,6 +32,8 @@ on:
       - 'scripts/trajectory_analogy_boundary_probe.py'
       - 'scripts/trajectory_analogy_copy_probe.py'
       - 'scripts/trajectory_analogy_value_probe.py'
+      - 'scripts/trajectory_analogy_unmarked_probe.py'
+      - 'tests/test_trajectory_analogy_unmarked_probe.py'
       - 'tests/test_trajectory_analogy_value_probe.py'
       - 'tests/test_trajectory_analogy_copy_probe.py'
       - 'tests/test_trajectory_analogy_boundary_probe.py'
@@ -192,6 +194,11 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_analogy_value_probe.py
           python scripts/trajectory_analogy_value_probe.py --seed 20261026
           python scripts/trajectory_analogy_value_probe.py --seed 20261027
+      - name: Unmarked field role counterexamples and observational equivalence (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_unmarked_probe.py
+          python scripts/trajectory_analogy_unmarked_probe.py --seed 20261028
+          python scripts/trajectory_analogy_unmarked_probe.py --seed 20261029
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
