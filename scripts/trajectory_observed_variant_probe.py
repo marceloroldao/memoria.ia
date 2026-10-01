@@ -112,9 +112,10 @@ def probe(seed, trials=2):
             absence_cases=sum(r['kind'] == 'absence' for r in group),
             absence_abstentions=sum(r['kind'] == 'absence' and r['result']['hypothesis'] is None
                                     for r in group), false_unique=sum(r['false_unique'] for r in group))
-    return dict(format='memoria.ia-observed-variant-v1', seed=seed, trials=trials,
+    return dict(format='memoria.ia-observed-variant-v2', seed=seed, trials=trials,
                 integrity_status='PASS', quality_status='PASS' if all(r['quality_pass'] for r in rows) else 'FAIL',
-                engine_changed=False, default_selection_changed=False, counts=dict(counts),
+                engine_changed=True, hypothesis_revision='source-ending-root-context-v1',
+                default_selection_changed=False, counts=dict(counts),
                 by_stage=by_stage, observations=observations, cases=rows)
 
 

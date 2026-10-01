@@ -76,6 +76,65 @@ class ContextualRouteHypothesisTests(unittest.TestCase):
         self.assertEqual(tuple(10000 - x for x in a.hypothesis), b.hypothesis)
         self.assertEqual(a.reason, b.reason)
 
+    def test_observed_variant_uses_one_root_destination_without_changing_generation(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, query in enumerate(('Código de Daro?', 'código de daro?')):
+            memory.observe(encode(query, 'unicode'), observation_id=f'{i}:s', stream_id=str(i))
+            memory.observe(encode('Daro: 791.', 'unicode'), observation_id=f'{i}:t', stream_id=str(i))
+        for query in ('código de daro?', 'Lembre: código de daro?'):
+            result = read(memory, encode(query, 'unicode'))
+            self.assertEqual(result.generation.mode, 'COMBINED_RECALL')
+            self.assertIsNone(result.generation.selected)
+            self.assertEqual(result.hypothesis, encode('Daro: 791.', 'unicode'))
+            self.assertEqual(result.reason, 'OBSERVED_ROOT_DESTINATION_CONTEXT')
+            self.assertTrue(result.contextual_fragments)
+        for query in ('código de Neri?', 'Temperatura de Marte?'):
+            self.assertIsNone(read(memory, encode(query, 'unicode')).hypothesis)
+
+    def test_conserved_source_ending_preserves_opaque_identity_and_order(self):
+        for renamed in (False, True):
+            transform = lambda xs: tuple(10000 - x if renamed else x for x in xs)
+            memory = TrajectoryGenerationExperiment()
+            for i in range(2):
+                memory.observe(transform((90+i, 1, 2, 3, 41+10*i, 42, 43)),
+                               observation_id=f'{i}:s', stream_id=str(i))
+                memory.observe(transform((94+i, 7, 8, 9, 96+i)),
+                               observation_id=f'{i}:t', stream_id=str(i))
+            self.assertEqual(read(memory, transform((1, 2, 3, 42, 43))).hypothesis,
+                             transform((7, 8, 9)))
+            absent = read(memory, transform((1, 2, 3, 62, 63)))
+            self.assertIsNone(absent.hypothesis)
+            self.assertIn(transform((42, 43)), absent.shared_source_contexts)
+            self.assertIsNone(read(memory, transform((42, 43, 1, 2, 3))).hypothesis)
+
+    def test_different_root_destinations_prevent_fragment_consolidation(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, (query, target) in enumerate((
+            ('Código de Daro?', 'Daro: 791.'),
+            ('código de daro?', 'Daro: 791.'),
+            ('código de daro?', 'Daro: 415.'),
+        )):
+            memory.observe(encode(query, 'unicode'), observation_id=f'{i}:s', stream_id=str(i))
+            memory.observe(encode(target, 'unicode'), observation_id=f'{i}:t', stream_id=str(i))
+        for query in ('Código de Daro?', 'código de daro?', 'Lembre: código de daro?'):
+            result = read(memory, encode(query, 'unicode'))
+            self.assertIsNone(result.hypothesis)
+            outputs = {c.output for c in result.generation.candidates}
+            if query != 'Código de Daro?':
+                self.assertIn(encode('Daro: 791.', 'unicode'), outputs)
+                self.assertIn(encode('Daro: 415.', 'unicode'), outputs)
+        bounded = read(memory, encode('código de daro?', 'unicode'))
+        self.assertIsNone(bounded.hypothesis)
+
+    def test_root_consolidation_does_not_use_a_truncated_candidate_set(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, query in enumerate(('Código de Daro?', 'código de daro?')):
+            memory.observe(encode(query, 'unicode'), observation_id=f'{i}:s', stream_id=str(i))
+            memory.observe(encode('Daro: 791.', 'unicode'), observation_id=f'{i}:t', stream_id=str(i))
+        result = memory.contextual_route_hypothesis(encode('código de daro?', 'unicode'), beam_width=1)
+        self.assertTrue(result.generation.truncated)
+        self.assertIsNone(result.hypothesis)
+
     def test_all_existing_novel_carried_and_mixed_transfer_controls_survive(self):
         self.assertEqual(len(positive_controls()), 24)
 

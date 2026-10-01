@@ -602,13 +602,41 @@ class TrajectoryGenerationExperiment:
         families, truncation and distinct witness outcomes are left alone.
         Unique nodule routes must also match their shared source context;
         a carried target may be removed as an affix while preserving the cue.
+        Conserved source endings remain ordered anchors when the central
+        context changes. Mixed recall can consolidate one root destination
+        only if all competing fragments have that same witnessed destination.
         This is provisional; a carried fragment can still contain useful
         information, so every original candidate remains visible.
         """
         query = _symbols(payload)
         generation = self.generate(query, hierarchy_id=hierarchy_id, **generation_options)
+        def contains(part, whole):
+            return any(whole[i:i + len(part)] == part
+                       for i in range(len(whole) - len(part) + 1))
+
         if generation.mode == "ECHO":
             return ContextualRouteHypothesis(generation, None, "ECHO_ONLY")
+        if generation.mode == "COMBINED_RECALL" and not generation.truncated:
+            # Consolidate only views of one actually observed root outcome.
+            # Matching symbol fragments alone cannot erase other root outcomes.
+            embedded = generation.embedded_evidence
+            targets = {n.payload_id for n in generation.temporal_evidence}
+            if embedded is not None:
+                targets.update(link.target_payload_id for link in embedded.links)
+            association = generation.association_evidence
+            if len(targets) == 1 and association is not None:
+                target = next(iter(targets))
+                symbols = self.expand(target)
+                if all(contains(c.output, symbols) for c in generation.candidates) and all(
+                    c.witnesses and all(destination == target for _, destination, _ in c.witnesses)
+                    for c in association.candidates
+                ):
+                    return ContextualRouteHypothesis(
+                        generation, symbols, "OBSERVED_ROOT_DESTINATION_CONTEXT",
+                        tuple(c.output for c in generation.candidates if c.output != symbols),
+                        (query,) if embedded is None else tuple(
+                            sorted({self.expand(link.cue_payload_id) for link in embedded.links})),
+                    )
         if generation.selected is not None and generation.mode != "NODULE_RECALL":
             return ContextualRouteHypothesis(generation, generation.selected, "EXISTING_UNIQUE_ROUTE")
         if generation.mode != "NODULE_RECALL" or generation.truncated:
@@ -621,10 +649,6 @@ class TrajectoryGenerationExperiment:
             if address not in expanded_roots:
                 expanded_roots[address] = self.expand(address)
             return expanded_roots[address]
-
-        def contains(part, whole):
-            return any(whole[i:i + len(part)] == part
-                       for i in range(len(whole) - len(part) + 1))
 
         witnesses = {c.symbols: set(c.witnesses) for c in association.candidates}
         carried = {
@@ -694,11 +718,49 @@ class TrajectoryGenerationExperiment:
                     else:
                         context_patterns.add(pattern)
                 contexts = tuple(sorted(context_patterns))
-                if contexts and all(contains(context, query) for context in contexts):
-                    eligible.append((candidate.symbols, contexts))
+                # A shared central cue may lose a conserved source ending when
+                # other symbols vary. Keep that ending as an ordered anchor.
+                # Carried destination affixes may still be omitted from a cue.
+                suffix = ()
+                for width in range(1, min(self.config.max_context, min(map(len, sources))) + 1):
+                    part = sources[0][-width:]
+                    if not all(source[-width:] == part for source in sources[1:]):
+                        break
+                    suffix = part
+                endings = {suffix}
+                while True:
+                    reduced = {
+                        remainder for ending in endings for affix in shared_affixes
+                        for remainder in (
+                            ending[:-len(affix)] if ending[-len(affix):] == affix else None,
+                            ending[len(affix):] if ending[:len(affix)] == affix else None,
+                        ) if remainder is not None
+                    }
+                    terminal = {ending for ending in endings if not any(
+                        ending[-len(affix):] == affix or ending[:len(affix)] == affix
+                        for affix in shared_affixes)}
+                    if not reduced:
+                        endings = terminal
+                        break
+                    endings = reduced | terminal
+                endings = tuple(sorted(e for e in endings if len(e) >= self.config.min_context))
+                def anchored(context):
+                    return any(
+                        all(any(query[j:j + len(ending)] == ending
+                                for j in range(i, len(query) - len(ending) + 1))
+                            for ending in endings)
+                        for i in range(len(query) - len(context) + 1)
+                        if query[i:i + len(context)] == context
+                    )
+                conditions = tuple(sorted(set(contexts) | {
+                    ending for ending in endings
+                    if not any(contains(ending, context) for context in contexts)
+                }))
+                if contexts and all(anchored(context) for context in contexts):
+                    eligible.append((candidate.symbols, conditions))
                 else:
                     unmatched = True
-                    unmatched_contexts.extend(contexts)
+                    unmatched_contexts.extend(conditions)
         if len(eligible) != 1:
             return ContextualRouteHypothesis(generation, None,
                                             "UNMATCHED_SHARED_SOURCE_CONTEXT" if unmatched
