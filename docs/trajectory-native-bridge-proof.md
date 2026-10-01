@@ -34,9 +34,9 @@ o turno do assistente e unir a pergunta à resposta do usuário que veio depois.
 O mapa de raízes mantém todos os endereços de origem de conteúdo reutilizado.
 Nenhum `reply_to` manual ou resposta esperada entra no aprendizado.
 
-## Cenários e pré-verificação local
+## Cenários e resultados
 
-| Cenário | Situação | Critérios locais |
+| Cenário | Situação | Critérios confirmados no CI |
 | --- | --- | --- |
 | legacy_isolated | Os dez registros iniciais do gate pessoal, sem relações ordenadas pergunta/resposta entre capturas | 2/8, FAIL |
 | ordered_pairs | Pergunta/resposta observadas na mesma captura para drone e robô | 2/8, FAIL |
@@ -45,9 +45,10 @@ Nenhum `reply_to` manual ou resposta esperada entra no aprendizado.
 
 São quatro consultas em dois adaptadores por cenário: conhecida, prefixo novo,
 outro sujeito e recombinação ausente. Os adaptadores do mesmo texto não são casos
-independentes. Antes da execução nativa, o adaptador com os mesmos registros
-fornecidos localmente dá 18/32 critérios, 2/16 respostas corretas e zero hipóteses
-indevidas. Esta pré-verificação não comprova leitura de BDR nem execução da ABI.
+independentes. A pré-verificação local deu 18/32 critérios, 2/16 respostas corretas e zero
+hipóteses indevidas. A execução da ABI/BDR confirmou os mesmos resultados. Os
+32 casos completos do adaptador local coincidem exatamente com a comparação
+alimentada pelas janelas nativas reabertas; a integridade passa, a qualidade falha.
 
 Na memória isolada, a inferência dá eco sem hipótese; não existe par temporal
 para aprender a resposta de uma pergunta armazenada em outra captura. Nos pares
@@ -77,3 +78,26 @@ O relatório emitido contém contagens, motivos, hipóteses fictícias e condiç
 endereço, sem export pessoal. O diagnóstico nativo permanece não qualificado.
 OFF.IA continua sem a política; o PR permanece draft e os três gates nativos
 originais não são declarados resolvidos.
+
+## Confirmação remota
+
+O [workflow 36800155214](https://github.com/marceloroldao/memoria.ia/actions/runs/36800155214)
+passou no commit `a6561e721181b92f709e4448e1544b0311f569c6`. O job native-bridge
+passou nos cinco testes do adaptador, compilou a biblioteca com BDR fixado,
+executou o gate pessoal original e verificou a ponte após reabrir BDR. Gate
+original: 23/26, com FAIL em known_answer_first, other_subject_first e
+absent_recombination_empty. Nos registros isolados, os primeiros candidatos
+continuam near-echo, echo-1 e motor-power, respectivamente, sempre sem qualificação.
+
+A nova comparação confirma FAIL 18/32, respostas 2/16, ausência 12/12,
+conflitos 4/4 e zero hipóteses indevidas. Todas as janelas e resoluções nativas
+ficaram iguais após reabertura; todas as testemunhas Python foram endereçáveis.
+O job proof preservou os cinco lotes anteriores PASS 150/150 e passou em
+18 testes da hipótese, 59 do gerador e 66 regressões (1 BDR opcional pulado).
+Os outros workflows aplicáveis também passaram.
+
+Relatórios fictícios completos extraídos dos logs, sem export pessoal:
+`benchmark-results/trajectory-native-bridge-report.json` e
+`benchmark-results/trajectory-native-bridge-reference.json`.
+O primeiro registra a ponte e todos os casos; o segundo registra o gate nativo
+original. Sucesso do CI não aprova os gates de qualidade que continuam FAIL.
