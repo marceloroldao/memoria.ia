@@ -592,6 +592,7 @@ class TrajectoryGenerationExperiment:
 
     def contextual_route_hypothesis(
         self, payload: Iterable[int], *, hierarchy_id: str = "default",
+        transported_source_scope: bool = False,
         **generation_options,
     ) -> ContextualRouteHypothesis:
         """Opt-in structural hypothesis, preserving the full original output.
@@ -609,6 +610,11 @@ class TrajectoryGenerationExperiment:
         are scoped to distinct complete sources with separate support for it.
         This is provisional; a carried fragment can still contain useful
         information, so every original candidate remains visible.
+        The experimental transported_source_scope option additionally requires
+        a retrieved discriminator carried by each exact competing root pair,
+        absent from the query, supporting cues and selected destination.
+        Root destinations containing a retrieved fragment are audited even
+        when composition discovery no longer returns their pair as a witness.
         """
         query = _symbols(payload)
         generation = self.generate(query, hierarchy_id=hierarchy_id, **generation_options)
@@ -635,6 +641,21 @@ class TrajectoryGenerationExperiment:
                 if embedded is None or self.temporal_neighbors(query, hierarchy_id=hierarchy_id):
                     root_cues.add(query)
                 scoped_out = set()
+                discriminated_pairs = set()
+                if transported_source_scope:
+                    for fragment in association.candidates:
+                        if (not fragment.witnesses
+                            or contains(fragment.symbols, symbols)
+                            or contains(fragment.symbols, query)
+                            or any(contains(fragment.symbols, cue) for cue in root_cues)
+                            or not all(
+                                destination != target
+                                and fragment.symbols != self.expand(destination)
+                                and contains(fragment.symbols, self.expand(source))
+                                for source, destination, _ in fragment.witnesses
+                            )):
+                            continue
+                        discriminated_pairs.update(fragment.witnesses)
                 def supported(candidate):
                     if not candidate.witnesses:
                         return False
@@ -645,17 +666,58 @@ class TrajectoryGenerationExperiment:
                         if destination == target:
                             continue
                         source_symbols = self.expand(source)
-                        if (source not in same_destination_sources
+                        if ((source not in same_destination_sources
+                             and (source, destination, stream) not in discriminated_pairs)
                             or contains(source_symbols, query)
                             or any(contains(cue, source_symbols) for cue in root_cues)):
                             return False
                         scoped_out.add((source, destination, stream))
                     return True
-                if all(contains(c.output, symbols) for c in generation.candidates) and all(
+                def contained_or_scoped(output):
+                    return contains(output, symbols) or any(
+                        output == fragment.symbols and fragment.witnesses
+                        and all(pair in discriminated_pairs for pair in fragment.witnesses)
+                        and all(contains(output, self.expand(source))
+                                for source, _, _ in fragment.witnesses)
+                        and not contains(output, query)
+                        and not any(contains(output, cue) for cue in root_cues)
+                        and all(output != self.expand(destination)
+                                for _, destination, _ in fragment.witnesses)
+                        for fragment in association.candidates
+                    )
+                def root_competition_covered():
+                    if not scoped_out & discriminated_pairs:
+                        return True
+                    pairs = {
+                        (source, destination, stream)
+                        for (scope, source, destination), (_, stream, _) in self._root_pairs.items()
+                        if scope == hierarchy_id
+                    }
+                    own_sources = {source for source, destination, _ in pairs if destination == target}
+                    for source, destination, stream in pairs:
+                        if destination == target:
+                            continue
+                        # Discovery can stop returning a former candidate after
+                        # another unique payload changes composition boundaries.
+                        # Also check root pairs whose destinations contain any
+                        # currently retrieved fragment, including hidden pairs.
+                        if not any(contains(c.symbols, self.expand(destination))
+                                   for c in association.candidates):
+                            continue
+                        source_symbols = self.expand(source)
+                        if (contains(source_symbols, query)
+                            or any(contains(cue, source_symbols) for cue in root_cues)
+                            or (source not in own_sources
+                                and (source, destination, stream) not in discriminated_pairs)):
+                            return False
+                        scoped_out.add((source, destination, stream))
+                    return True
+                if all(contained_or_scoped(c.output) for c in generation.candidates) and all(
                     supported(c) for c in association.candidates
-                ):
+                ) and root_competition_covered():
                     return ContextualRouteHypothesis(
-                        generation, symbols, "SOURCE_SCOPED_ROOT_DESTINATION" if scoped_out
+                        generation, symbols, "TRANSPORTED_SOURCE_SCOPE" if scoped_out & discriminated_pairs
+                        else "SOURCE_SCOPED_ROOT_DESTINATION" if scoped_out
                         else "OBSERVED_ROOT_DESTINATION_CONTEXT",
                         tuple(c.output for c in generation.candidates if c.output != symbols),
                         tuple(sorted(root_cues)), tuple(sorted(scoped_out)),

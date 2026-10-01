@@ -24,6 +24,8 @@ on:
       - 'scripts/trajectory_contextual_hypothesis_probe.py'
       - 'scripts/trajectory_native_bridge_probe.py'
       - 'scripts/trajectory_fragment_scope_probe.py'
+      - 'scripts/trajectory_transported_scope_probe.py'
+      - 'tests/test_trajectory_transported_scope_probe.py'
       - 'tests/test_trajectory_fragment_scope_probe.py'
       - 'tests/test_trajectory_native_bridge_probe.py'
       - 'scripts/mobile_region_replay.py'
@@ -64,6 +66,8 @@ jobs:
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Native cold BDR windows versus trajectory hypotheses (quality failures reported)
         run: python scripts/trajectory_native_bridge_probe.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Experimental transported source scope with native cold windows (quality failures reported)
+        run: python scripts/trajectory_transported_scope_probe.py --library build/trajectory-native/libmemoria_mobile.so
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -138,6 +142,8 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_trajectory_fragment_scope_probe.py
           python scripts/trajectory_fragment_scope_probe.py
+      - name: Transported source discriminator contracts (experimental opt in)
+        run: python -m unittest discover -s tests -p test_trajectory_transported_scope_probe.py
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
