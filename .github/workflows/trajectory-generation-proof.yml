@@ -23,6 +23,8 @@ on:
       - 'scripts/trajectory_transition_contrast_probe.py'
       - 'scripts/trajectory_contextual_hypothesis_probe.py'
       - 'scripts/trajectory_native_bridge_probe.py'
+      - 'scripts/trajectory_fragment_scope_probe.py'
+      - 'tests/test_trajectory_fragment_scope_probe.py'
       - 'tests/test_trajectory_native_bridge_probe.py'
       - 'scripts/mobile_region_replay.py'
       - 'scripts/mobile_personal_proof_gate.py'
@@ -132,6 +134,10 @@ jobs:
           python scripts/trajectory_observed_variant_probe.py --seed 20261010
           python scripts/trajectory_observed_variant_probe.py --seed 20261012
           python scripts/trajectory_observed_variant_probe.py --seed 20261013 --strict-quality
+      - name: Rejected fragment scope shadow policy (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_fragment_scope_probe.py
+          python scripts/trajectory_fragment_scope_probe.py
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
