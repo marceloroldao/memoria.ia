@@ -22,6 +22,10 @@ on:
       - 'tests/test_temporal_nodule_contrast.py'
       - 'scripts/trajectory_transition_contrast_probe.py'
       - 'scripts/trajectory_contextual_hypothesis_probe.py'
+      - 'scripts/trajectory_native_bridge_probe.py'
+      - 'tests/test_trajectory_native_bridge_probe.py'
+      - 'scripts/mobile_region_replay.py'
+      - 'scripts/mobile_personal_proof_gate.py'
       - 'scripts/trajectory_observed_variant_probe.py'
       - 'tests/test_trajectory_observed_variant_probe.py'
       - 'tests/test_contextual_route_hypothesis.py'
@@ -34,6 +38,30 @@ permissions:
   contents: read
 
 jobs:
+  native-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Raw native window adapter and assistant barrier contracts
+        run: python -m unittest discover -s tests -p test_trajectory_native_bridge_probe.py
+      - name: Checkout pinned durable BDR
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 317882a00f041fc1568ff986af8016b09453f21a
+          path: deps/resolutive-DB
+      - name: Build unchanged native host runtime
+        run: |
+          cmake -S native/mobile -B build/trajectory-native -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
+          cmake --build build/trajectory-native --target memoria_mobile --parallel 2
+      - name: Original native personal gates (quality failures reported)
+        run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Native cold BDR windows versus trajectory hypotheses (quality failures reported)
+        run: python scripts/trajectory_native_bridge_probe.py --library build/trajectory-native/libmemoria_mobile.so
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 10
