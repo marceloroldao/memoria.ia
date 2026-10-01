@@ -94,9 +94,13 @@ class ProductStructuralObservationService:
             return envelope, duplicate, 0
         return envelope, duplicate, self.sync_associations()
 
-    def sync_associations(self) -> int:
+    def sync_associations(
+        self,
+        *,
+        max_observations: int | None = None,
+    ) -> int:
         try:
-            return self.associations.sync()
+            return self.associations.sync(max_observations=max_observations)
         except Exception as exc:
             raise RuntimeError("structural association sync failed") from exc
 
@@ -201,10 +205,15 @@ def attach_structural_observation_routes(
         return service.associations.status()
 
     @app.post("/api/v1/structural/associations/sync", dependencies=[Depends(require_admin)])
-    def structural_association_sync():
-        replayed = service.sync_associations()
+    def structural_association_sync(
+        max_observations: int | None = Query(default=None, ge=1, le=256),
+    ):
+        replayed = service.sync_associations(
+            max_observations=max_observations,
+        )
         return {
             "association_sync_observations": replayed,
+            "max_observations": max_observations,
             "associations": service.associations.status(),
         }
 

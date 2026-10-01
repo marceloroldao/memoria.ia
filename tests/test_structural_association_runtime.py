@@ -231,3 +231,30 @@ def test_runtime_can_defer_replay_on_open_and_sync_later(tmp_path):
     assert deferred.sync() == 1
     assert deferred.status()["pending_observations"] == 0
     assert deferred.cursor_count == 2
+
+def test_runtime_sync_can_bound_pending_suffix(tmp_path):
+    raw = StructuralObservationStore(
+        tmp_path / "raw",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    for sequence in range(5):
+        _append(raw, sequence, [sequence + 1])
+
+    runtime = StructuralAssociationRuntime(
+        raw,
+        tmp_path / "derived",
+        backend="sqlite",
+        allow_fallback=False,
+        replay_on_open=False,
+    )
+    assert runtime.cursor_count == 0
+    assert runtime.sync(max_observations=2) == 2
+    assert runtime.cursor_count == 2
+    assert runtime.status()["pending_observations"] == 3
+    assert runtime.sync(max_observations=2) == 2
+    assert runtime.cursor_count == 4
+    assert runtime.status()["pending_observations"] == 1
+    assert runtime.sync(max_observations=2) == 1
+    assert runtime.cursor_count == 5
+    assert runtime.status()["pending_observations"] == 0

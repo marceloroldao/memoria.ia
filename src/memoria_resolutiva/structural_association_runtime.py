@@ -230,10 +230,15 @@ class StructuralAssociationRuntime:
         os.replace(tmp, self.pointer_path)
         return receipt
 
-    def sync(self) -> int:
+    def sync(self, *, max_observations: int | None = None) -> int:
+        if max_observations is not None and max_observations < 1:
+            raise ValueError("max_observations must be >= 1")
         with self._lock:
             self._validate_cursor()
-            pending = self.observations.ordered_from(self.cursor_count)
+            pending = self.observations.ordered_from(
+                self.cursor_count,
+                limit=max_observations,
+            )
             if not pending and self.pointer_path.is_file():
                 return 0
             for envelope in pending:

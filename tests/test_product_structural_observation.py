@@ -228,3 +228,46 @@ def test_structural_ingest_can_defer_associations_and_sync_explicitly(tmp_path):
     assert synced.status_code == 200
     assert synced.json()["association_sync_observations"] == 1
     assert synced.json()["associations"]["pending_observations"] == 0
+
+def test_structural_association_sync_endpoint_can_bound_work(tmp_path):
+    service = ProductStructuralObservationService.open(
+        tmp_path / "structural",
+        backend="sqlite",
+        allow_fallback=False,
+        replay_associations_on_open=False,
+    )
+    app = FastAPI()
+    attach_structural_observation_routes(app, api_key="secret", service=service)
+    client = TestClient(app)
+    headers = {"X-Memoria-Key": "secret"}
+
+    for sequence in range(3):
+        response = client.post(
+            "/api/v1/structural/observations?defer_associations=true",
+            headers=headers,
+            json={
+                "event": _event(sequence, [sequence + 1]),
+                "provenance": {
+                    "hierarchy_id": "hierarchy:test",
+                    "capture_id": f"bounded-{sequence}",
+                },
+            },
+        )
+        assert response.status_code == 201
+
+    first = client.post(
+        "/api/v1/structural/associations/sync?max_observations=2",
+        headers=headers,
+    )
+    assert first.status_code == 200
+    assert first.json()["association_sync_observations"] == 2
+    assert first.json()["max_observations"] == 2
+    assert first.json()["associations"]["pending_observations"] == 1
+
+    second = client.post(
+        "/api/v1/structural/associations/sync?max_observations=2",
+        headers=headers,
+    )
+    assert second.status_code == 200
+    assert second.json()["association_sync_observations"] == 1
+    assert second.json()["associations"]["pending_observations"] == 0

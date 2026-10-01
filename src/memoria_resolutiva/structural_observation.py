@@ -306,11 +306,19 @@ class StructuralObservationStore:
         with self._lock:
             return self._order[index]
 
-    def ordered_from(self, offset: int = 0) -> tuple[dict[str, Any], ...]:
+    def ordered_from(
+        self,
+        offset: int = 0,
+        *,
+        limit: int | None = None,
+    ) -> tuple[dict[str, Any], ...]:
         if offset < 0:
             raise ValueError("offset must be >= 0")
+        if limit is not None and limit < 1:
+            raise ValueError("limit must be >= 1")
+        stop = None if limit is None else offset + limit
         with self._lock:
-            ids = tuple(self._order[offset:])
+            ids = tuple(self._order[offset:stop])
             receipts = tuple(self._entries[observation_id]["receipt"] for observation_id in ids)
             payloads = self.persistence.load_many(receipts)
         out: list[dict[str, Any]] = []
