@@ -25,6 +25,8 @@ on:
       - 'scripts/trajectory_native_bridge_probe.py'
       - 'scripts/trajectory_fragment_scope_probe.py'
       - 'scripts/trajectory_transported_scope_probe.py'
+      - 'scripts/trajectory_analogy_frame_probe.py'
+      - 'tests/test_trajectory_analogy_frame_probe.py'
       - 'tests/test_trajectory_transported_scope_probe.py'
       - 'tests/test_trajectory_fragment_scope_probe.py'
       - 'tests/test_trajectory_native_bridge_probe.py'
@@ -68,6 +70,10 @@ jobs:
         run: python scripts/trajectory_native_bridge_probe.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Experimental transported source scope with native cold windows (quality failures reported)
         run: python scripts/trajectory_transported_scope_probe.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Read only frame analogy with native cold windows (quality failures reported)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_frame_probe.py
+          python scripts/trajectory_analogy_frame_probe.py --library build/trajectory-native/libmemoria_mobile.so
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 10
