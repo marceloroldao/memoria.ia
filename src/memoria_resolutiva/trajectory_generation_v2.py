@@ -239,6 +239,7 @@ class ContextualRouteHypothesis:
     reason: str
     contextual_fragments: tuple[tuple[int, ...], ...] = ()
     shared_source_contexts: tuple[tuple[int, ...], ...] = ()
+    scoped_out_witnesses: tuple[tuple[str, str, str], ...] = ()
 
 
 class TrajectoryGenerationExperiment:
@@ -604,7 +605,8 @@ class TrajectoryGenerationExperiment:
         a carried target may be removed as an affix while preserving the cue.
         Conserved source endings remain ordered anchors when the central
         context changes. Mixed recall can consolidate one root destination
-        only if all competing fragments have that same witnessed destination.
+        only if competing fragments have that destination, or their conflicts
+        are scoped to distinct complete sources with separate support for it.
         This is provisional; a carried fragment can still contain useful
         information, so every original candidate remains visible.
         """
@@ -618,7 +620,9 @@ class TrajectoryGenerationExperiment:
             return ContextualRouteHypothesis(generation, None, "ECHO_ONLY")
         if generation.mode == "COMBINED_RECALL" and not generation.truncated:
             # Consolidate only views of one actually observed root outcome.
-            # Matching symbol fragments alone cannot erase other root outcomes.
+            # Preserve different complete cues and expose every scoped witness.
+            # A different source must separately support the selected outcome;
+            # matching symbols alone never grant that support.
             embedded = generation.embedded_evidence
             targets = {n.payload_id for n in generation.temporal_evidence}
             if embedded is not None:
@@ -627,15 +631,34 @@ class TrajectoryGenerationExperiment:
             if len(targets) == 1 and association is not None:
                 target = next(iter(targets))
                 symbols = self.expand(target)
+                root_cues = {self.expand(link.cue_payload_id) for link in embedded.links} if embedded else set()
+                if embedded is None or self.temporal_neighbors(query, hierarchy_id=hierarchy_id):
+                    root_cues.add(query)
+                scoped_out = set()
+                def supported(candidate):
+                    if not candidate.witnesses:
+                        return False
+                    same_destination_sources = {
+                        source for source, destination, _ in candidate.witnesses if destination == target
+                    }
+                    for source, destination, stream in candidate.witnesses:
+                        if destination == target:
+                            continue
+                        source_symbols = self.expand(source)
+                        if (source not in same_destination_sources
+                            or contains(source_symbols, query)
+                            or any(contains(cue, source_symbols) for cue in root_cues)):
+                            return False
+                        scoped_out.add((source, destination, stream))
+                    return True
                 if all(contains(c.output, symbols) for c in generation.candidates) and all(
-                    c.witnesses and all(destination == target for _, destination, _ in c.witnesses)
-                    for c in association.candidates
+                    supported(c) for c in association.candidates
                 ):
                     return ContextualRouteHypothesis(
-                        generation, symbols, "OBSERVED_ROOT_DESTINATION_CONTEXT",
+                        generation, symbols, "SOURCE_SCOPED_ROOT_DESTINATION" if scoped_out
+                        else "OBSERVED_ROOT_DESTINATION_CONTEXT",
                         tuple(c.output for c in generation.candidates if c.output != symbols),
-                        (query,) if embedded is None else tuple(
-                            sorted({self.expand(link.cue_payload_id) for link in embedded.links})),
+                        tuple(sorted(root_cues)), tuple(sorted(scoped_out)),
                     )
         if generation.selected is not None and generation.mode != "NODULE_RECALL":
             return ContextualRouteHypothesis(generation, generation.selected, "EXISTING_UNIQUE_ROUTE")

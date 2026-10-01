@@ -107,7 +107,7 @@ class ContextualRouteHypothesisTests(unittest.TestCase):
             self.assertIn(transform((42, 43)), absent.shared_source_contexts)
             self.assertIsNone(read(memory, transform((42, 43, 1, 2, 3))).hypothesis)
 
-    def test_different_root_destinations_prevent_fragment_consolidation(self):
+    def test_distinct_full_cues_scope_one_root_and_preserve_real_conflict(self):
         memory = TrajectoryGenerationExperiment()
         for i, (query, target) in enumerate((
             ('Código de Daro?', 'Daro: 791.'),
@@ -118,13 +118,75 @@ class ContextualRouteHypothesisTests(unittest.TestCase):
             memory.observe(encode(target, 'unicode'), observation_id=f'{i}:t', stream_id=str(i))
         for query in ('Código de Daro?', 'código de daro?', 'Lembre: código de daro?'):
             result = read(memory, encode(query, 'unicode'))
-            self.assertIsNone(result.hypothesis)
             outputs = {c.output for c in result.generation.candidates}
-            if query != 'Código de Daro?':
+            if query == 'Código de Daro?':
+                self.assertEqual(result.hypothesis, encode('Daro: 791.', 'unicode'))
+                self.assertEqual(result.reason, 'SOURCE_SCOPED_ROOT_DESTINATION')
+                self.assertEqual(len(result.scoped_out_witnesses), 1)
+                self.assertIsNone(result.generation.selected)
+                self.assertTrue(result.generation.ambiguous)
+                witness = result.scoped_out_witnesses[0]
+                self.assertEqual(memory.expand(witness[0]), encode('código de daro?', 'unicode'))
+                self.assertEqual(memory.expand(witness[1]), encode('Daro: 415.', 'unicode'))
+            else:
+                self.assertIsNone(result.hypothesis)
                 self.assertIn(encode('Daro: 791.', 'unicode'), outputs)
                 self.assertIn(encode('Daro: 415.', 'unicode'), outputs)
-        bounded = read(memory, encode('código de daro?', 'unicode'))
-        self.assertIsNone(bounded.hypothesis)
+
+    def test_source_scope_requires_own_support_for_the_observed_root_destination(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, (query, target) in enumerate((('Código de Daro?', 'Daro: 791.'),
+                                           ('código de daro?', 'Daro: 415.'))):
+            memory.observe(encode(query, 'unicode'), observation_id=f'{i}:s', stream_id=str(i))
+            memory.observe(encode(target, 'unicode'), observation_id=f'{i}:t', stream_id=str(i))
+        result = read(memory, encode('Código de Daro?', 'unicode'))
+        self.assertEqual(result.generation.mode, 'COMBINED_RECALL')
+        self.assertIsNone(result.hypothesis)
+        self.assertFalse(result.scoped_out_witnesses)
+
+    def test_source_containing_the_full_root_cue_cannot_be_scoped_out(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, (query, target) in enumerate((
+            ('Código de Daro?', 'Daro: 791.'),
+            ('extra: Código de Daro?', 'Daro: 791.'),
+            ('extra: Código de Daro?', 'Daro: 415.'),
+        )):
+            memory.observe(encode(query, 'unicode'), observation_id=f'{i}:s', stream_id=str(i))
+            memory.observe(encode(target, 'unicode'), observation_id=f'{i}:t', stream_id=str(i))
+        result = read(memory, encode('Código de Daro?', 'unicode'))
+        self.assertIsNone(result.hypothesis)
+        self.assertFalse(result.scoped_out_witnesses)
+
+    def test_source_scope_is_invariant_under_numeric_renaming_and_new_prefix(self):
+        for renamed in (False, True):
+            transform = lambda text: tuple(10000 - x if renamed else x for x in encode(text, 'unicode'))
+            memory = TrajectoryGenerationExperiment()
+            for i, (query, target) in enumerate((
+                ('Código de Daro?', 'Daro: 791.'),
+                ('código de daro?', 'Daro: 791.'),
+                ('código de daro?', 'Daro: 415.'),
+            )):
+                memory.observe(transform(query), observation_id=f'{i}:s', stream_id=str(i))
+                memory.observe(transform(target), observation_id=f'{i}:t', stream_id=str(i))
+            result = read(memory, transform('Lembre: Código de Daro?'))
+            self.assertEqual(result.hypothesis, transform('Daro: 791.'))
+            self.assertEqual(result.reason, 'SOURCE_SCOPED_ROOT_DESTINATION')
+            self.assertEqual(len(result.scoped_out_witnesses), 1)
+            self.assertIsNone(result.generation.selected)
+
+    def test_full_destination_competition_is_not_hidden_by_a_known_root(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, (query, target) in enumerate((((1, 2, 3, 4), (17, 18, 19)),
+                                           ((1, 2, 3, 5), (90, 7, 8, 9, 91)),
+                                           ((1, 2, 3, 6), (92, 7, 8, 9, 93)))):
+            memory.observe(query, observation_id=f'{i}:s', stream_id=str(i))
+            memory.observe(target, observation_id=f'{i}:t', stream_id=str(i))
+        result = read(memory, (1, 2, 3, 4))
+        self.assertEqual(result.generation.mode, 'COMBINED_RECALL')
+        self.assertIsNone(result.hypothesis)
+        self.assertFalse(result.scoped_out_witnesses)
+        self.assertIn((17, 18, 19), {c.output for c in result.generation.candidates})
+        self.assertIn((7, 8, 9), {c.output for c in result.generation.candidates})
 
     def test_root_consolidation_does_not_use_a_truncated_candidate_set(self):
         memory = TrajectoryGenerationExperiment()
