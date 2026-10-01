@@ -96,3 +96,14 @@ Esta proteção cobre finais conservados; variações de terminação, distinç�
 internas, limites de contexto e múltiplos destinos ainda exigem investigação.
 Não se afirma ausência geral de erro, acurácia real ou equivalência a uma LLM.
 OFF.IA não recebe a política; três gates pessoais nativos seguem pendentes, PR draft.
+
+## Confirmação remota
+
+O [workflow 36794163320](https://github.com/marceloroldao/memoria.ia/actions/runs/36794163320)
+passou no commit `b7fe09e7d508cb820d0137ed4c09f4f2e4de725f`: 14 testes da hipótese,
+59 do gerador, quatro do avaliador e 66 regressões passaram; um BDR nativo
+opcional foi pulado. Todas as outras validações aplicáveis desse commit passaram.
+Os quatro relatórios completos extraídos dos logs coincidem exatamente com os
+JSONs publicados, incluindo candidatos, pesos e testemunhas. O sucesso do CI
+confirma contratos e reprodução, enquanto o gate de qualidade permanece FAIL
+146/150 em todos os lotes.
