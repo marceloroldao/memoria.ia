@@ -88,3 +88,15 @@ O pytest local continua indisponível; a regressão completa está no workflow.
 Os resultados não garantem segurança factual, recuperação de todas as rotas,
 equivalência linguística ou inteligência geral. OFF.IA não recebe a política;
 os três gates pessoais nativos continuam pendentes e o PR permanece draft.
+
+## Confirmação remota
+
+O [workflow 36797386507](https://github.com/marceloroldao/memoria.ia/actions/runs/36797386507)
+passou no commit `32c3c21b79fc72688b08316fdd608c83a8e02995`: 18 testes da hipótese,
+59 do gerador, quatro do avaliador e 66 regressões passaram; um teste BDR nativo
+opcional foi pulado. Todos os outros workflows aplicáveis desse commit passaram.
+Os cinco relatórios completos dos logs coincidem exatamente com os JSONs publicados,
+com candidatos, pesos, contextos e testemunhas dentro e fora do escopo. O novo seed
+20261013 passou no modo estrito de qualidade; os controles anteriores também passaram.
+Esta aprovação fecha a bateria sintética descrita, sem resolver os gates pessoais
+nativos nem autorizar integração em OFF.IA.
