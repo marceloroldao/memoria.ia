@@ -26,6 +26,8 @@ on:
       - 'scripts/trajectory_fragment_scope_probe.py'
       - 'scripts/trajectory_transported_scope_probe.py'
       - 'scripts/trajectory_analogy_frame_probe.py'
+      - 'scripts/trajectory_analogy_stress_probe.py'
+      - 'tests/test_trajectory_analogy_stress_probe.py'
       - 'tests/test_trajectory_analogy_frame_probe.py'
       - 'tests/test_trajectory_transported_scope_probe.py'
       - 'tests/test_trajectory_fragment_scope_probe.py'
@@ -150,6 +152,11 @@ jobs:
           python scripts/trajectory_fragment_scope_probe.py
       - name: Transported source discriminator contracts (experimental opt in)
         run: python -m unittest discover -s tests -p test_trajectory_transported_scope_probe.py
+      - name: Frame analogy opaque stress and mixed relation counterexample (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_stress_probe.py
+          python scripts/trajectory_analogy_stress_probe.py --seed 20261016
+          python scripts/trajectory_analogy_stress_probe.py --seed 20261017
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
