@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import zlib
 from threading import RLock
 from typing import Any
 
@@ -17,6 +18,8 @@ from .structural_observation import StructuralObservationStore
 
 RUNTIME_FORMAT = "memoria.ia-structural-association-runtime-v1"
 POINTER_FORMAT = "memoria.ia-structural-association-pointer-v1"
+COMPACT_POINTER_FORMAT = "memoria.ia-structural-association-pointer-v2"
+COMPACT_STATE_ENCODING = "zlib-json-v1"
 
 
 def _canonical_json(value: object) -> bytes:
@@ -135,6 +138,8 @@ class StructuralAssociationRuntime:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
         self.pointer_path = self.root / "current.json"
+        self.compact_root = self.root / "compact-states"
+        self.compact_root.mkdir(parents=True, exist_ok=True)
         self.persistence = StructuralAssociationPersistence(
             self.root / "persistence",
             backend=backend,
@@ -150,6 +155,7 @@ class StructuralAssociationRuntime:
         self.cursor_observation_id: str | None = None
         self.replay_on_open = bool(replay_on_open)
         self.replayed_on_open = 0
+        self.checkpoint_format: str | None = None
         self._load_if_present()
         if self.replay_on_open:
             self.replayed_on_open = self.sync()
@@ -180,16 +186,42 @@ class StructuralAssociationRuntime:
         if expected != self.cursor_observation_id:
             raise ValueError("structural association cursor does not match raw observation prefix")
 
+    def _load_compact_payload(self, pointer: dict[str, Any]) -> bytes:
+        state = pointer.get("state")
+        if not isinstance(state, dict):
+            raise ValueError("structural association compact pointer state is invalid")
+        if state.get("encoding") != COMPACT_STATE_ENCODING:
+            raise ValueError("unsupported structural association compact encoding")
+        digest = str(state.get("sha256") or "").strip().lower()
+        if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+            raise ValueError("structural association compact digest is invalid")
+        state_path = self.compact_root / f"{digest}.json.zlib"
+        compressed = state_path.read_bytes()
+        try:
+            payload = zlib.decompress(compressed)
+        except zlib.error as exc:
+            raise ValueError("structural association compact state is corrupt") from exc
+        if hashlib.sha256(payload).hexdigest() != digest:
+            raise ValueError("structural association compact state checksum mismatch")
+        return payload
+
     def _load_if_present(self) -> None:
         if not self.pointer_path.is_file():
             return
         pointer = json.loads(self.pointer_path.read_text("utf-8"))
-        if not isinstance(pointer, dict) or pointer.get("format") != POINTER_FORMAT:
+        if not isinstance(pointer, dict):
+            raise ValueError("structural association pointer is invalid")
+        pointer_format = pointer.get("format")
+        if pointer_format == POINTER_FORMAT:
+            receipt = pointer.get("receipt")
+            if not isinstance(receipt, dict):
+                raise ValueError("structural association pointer receipt is invalid")
+            raw_payload = self.persistence.load(receipt)
+        elif pointer_format == COMPACT_POINTER_FORMAT:
+            raw_payload = self._load_compact_payload(pointer)
+        else:
             raise ValueError("unsupported structural association pointer format")
-        receipt = pointer.get("receipt")
-        if not isinstance(receipt, dict):
-            raise ValueError("structural association pointer receipt is invalid")
-        payload = json.loads(self.persistence.load(receipt).decode("utf-8"))
+        payload = json.loads(raw_payload.decode("utf-8"))
         if not isinstance(payload, dict) or payload.get("format") != RUNTIME_FORMAT:
             raise ValueError("unsupported structural association runtime format")
         self.cursor_count, self.cursor_observation_id = self._parse_cursor(payload.get("cursor"))
@@ -197,6 +229,7 @@ class StructuralAssociationRuntime:
         if not isinstance(field_state, dict):
             raise ValueError("structural association field state is invalid")
         self.field = StructuralAssociationField.from_state(field_state)
+        self.checkpoint_format = str(pointer_format)
         self._validate_cursor()
 
     def _payload(self) -> bytes:
@@ -211,11 +244,43 @@ class StructuralAssociationRuntime:
             }
         )
 
-    def _checkpoint(self) -> StructuralAssociationStateReceipt:
-        receipt = self.persistence.store(self._payload())
+    def _write_compact_state(self, payload: bytes) -> str:
+        digest = hashlib.sha256(payload).hexdigest()
+        final_path = self.compact_root / f"{digest}.json.zlib"
+        if final_path.is_file():
+            try:
+                existing = zlib.decompress(final_path.read_bytes())
+            except (OSError, zlib.error):
+                existing = b""
+            if existing == payload:
+                return digest
+        tmp_path = self.compact_root / f".{digest}.tmp"
+        compressed = zlib.compress(payload, level=6)
+        with tmp_path.open("wb") as fh:
+            fh.write(compressed)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_path, final_path)
+        return digest
+
+    def _prune_compact_states(self, keep_digest: str) -> None:
+        keep_name = f"{keep_digest}.json.zlib"
+        for path in self.compact_root.glob("*.json.zlib"):
+            if path.name != keep_name:
+                try:
+                    path.unlink()
+                except FileNotFoundError:
+                    pass
+
+    def _checkpoint(self) -> str:
+        payload = self._payload()
+        digest = self._write_compact_state(payload)
         pointer = {
-            "format": POINTER_FORMAT,
-            "receipt": receipt.as_dict(),
+            "format": COMPACT_POINTER_FORMAT,
+            "state": {
+                "encoding": COMPACT_STATE_ENCODING,
+                "sha256": digest,
+            },
             "cursor": {
                 "count": self.cursor_count,
                 "observation_id": self.cursor_observation_id,
@@ -228,7 +293,9 @@ class StructuralAssociationRuntime:
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, self.pointer_path)
-        return receipt
+        self.checkpoint_format = COMPACT_POINTER_FORMAT
+        self._prune_compact_states(digest)
+        return digest
 
     def sync(self, *, max_observations: int | None = None) -> int:
         if max_observations is not None and max_observations < 1:
@@ -286,6 +353,7 @@ class StructuralAssociationRuntime:
             return {
                 "schema": RUNTIME_FORMAT,
                 "backend": self.persistence.last_backend or self.persistence.backend or "auto",
+                "checkpoint_format": self.checkpoint_format,
                 "cursor": {
                     "count": self.cursor_count,
                     "observation_id": self.cursor_observation_id,
@@ -305,6 +373,7 @@ class StructuralAssociationRuntime:
             return {
                 "schema": RUNTIME_FORMAT,
                 "backend": self.persistence.last_backend or self.persistence.backend or "auto",
+                "checkpoint_format": self.checkpoint_format,
                 "cursor": {
                     "count": self.cursor_count,
                     "observation_id": self.cursor_observation_id,

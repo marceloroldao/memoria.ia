@@ -1,6 +1,16 @@
 from __future__ import annotations
 
-from memoria_resolutiva.structural_association_runtime import StructuralAssociationRuntime
+import json
+
+from memoria_resolutiva.structural_association_field import StructuralAssociationField
+from memoria_resolutiva.structural_association_runtime import (
+    COMPACT_POINTER_FORMAT,
+    POINTER_FORMAT,
+    RUNTIME_FORMAT,
+    StructuralAssociationPersistence,
+    StructuralAssociationRuntime,
+    _canonical_json,
+)
 from memoria_resolutiva.structural_observation import StructuralObservationStore
 
 
@@ -258,3 +268,106 @@ def test_runtime_sync_can_bound_pending_suffix(tmp_path):
     assert runtime.sync(max_observations=2) == 1
     assert runtime.cursor_count == 5
     assert runtime.status()["pending_observations"] == 0
+
+def test_runtime_compact_checkpoint_is_restart_safe_and_prunes_old_state(tmp_path):
+    raw = StructuralObservationStore(
+        tmp_path / "raw",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    for sequence in range(3):
+        _append(raw, sequence, [sequence + 1, sequence + 10])
+
+    derived = tmp_path / "derived"
+    runtime = StructuralAssociationRuntime(
+        raw,
+        derived,
+        backend="sqlite",
+        allow_fallback=False,
+        replay_on_open=False,
+    )
+    assert runtime.sync(max_observations=2) == 2
+
+    pointer = json.loads((derived / "current.json").read_text("utf-8"))
+    assert pointer["format"] == COMPACT_POINTER_FORMAT
+    compact_files = list((derived / "compact-states").glob("*.json.zlib"))
+    assert len(compact_files) == 1
+    before = runtime.snapshot()
+
+    restarted_raw = StructuralObservationStore(
+        tmp_path / "raw",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    restarted = StructuralAssociationRuntime(
+        restarted_raw,
+        derived,
+        backend="sqlite",
+        allow_fallback=False,
+        replay_on_open=False,
+    )
+    assert restarted.checkpoint_format == COMPACT_POINTER_FORMAT
+    assert restarted.cursor_count == 2
+    assert restarted.status()["pending_observations"] == 1
+    assert restarted.field.snapshot() == before["field"]
+
+    assert restarted.sync(max_observations=1) == 1
+    compact_files_after = list((derived / "compact-states").glob("*.json.zlib"))
+    assert len(compact_files_after) == 1
+    assert restarted.cursor_count == 3
+    assert restarted.status()["pending_observations"] == 0
+
+
+def test_runtime_reads_legacy_pointer_and_migrates_on_next_checkpoint(tmp_path):
+    raw = StructuralObservationStore(
+        tmp_path / "raw",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    envelope = _append(raw, 0, [7, 8])
+    field = StructuralAssociationField()
+    field.observe(envelope)
+
+    derived = tmp_path / "derived"
+    derived.mkdir(parents=True)
+    persistence = StructuralAssociationPersistence(
+        derived / "persistence",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    payload = _canonical_json({
+        "format": RUNTIME_FORMAT,
+        "cursor": {
+            "count": 1,
+            "observation_id": envelope["observation_id"],
+        },
+        "field": field.export_state(),
+    })
+    receipt = persistence.store(payload)
+    (derived / "current.json").write_text(
+        json.dumps({
+            "format": POINTER_FORMAT,
+            "receipt": receipt.as_dict(),
+            "cursor": {
+                "count": 1,
+                "observation_id": envelope["observation_id"],
+            },
+        }),
+        encoding="utf-8",
+    )
+
+    loaded = StructuralAssociationRuntime(
+        raw,
+        derived,
+        backend="sqlite",
+        allow_fallback=False,
+        replay_on_open=False,
+    )
+    assert loaded.checkpoint_format == POINTER_FORMAT
+    assert loaded.cursor_count == 1
+
+    _append(raw, 1, [8, 9])
+    assert loaded.sync(max_observations=1) == 1
+    migrated = json.loads((derived / "current.json").read_text("utf-8"))
+    assert migrated["format"] == COMPACT_POINTER_FORMAT
+    assert loaded.checkpoint_format == COMPACT_POINTER_FORMAT

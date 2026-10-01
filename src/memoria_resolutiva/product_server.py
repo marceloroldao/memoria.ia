@@ -309,6 +309,7 @@ def build_app():
             "structural_observation_backend": structural_service.store.backend,
             "structural_observations": structural_service.store.count,
             "structural_association_backend": structural_status["backend"],
+            "structural_association_checkpoint_format": structural_status["checkpoint_format"],
             "structural_association_observations": structural_status["derived_observations"],
             "structural_association_edges": structural_status["derived_edges"],
             "structural_association_pending": structural_status["pending_observations"],
