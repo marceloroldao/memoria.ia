@@ -182,3 +182,49 @@ def test_structural_ingest_requires_hierarchy_namespace(tmp_path):
         },
     )
     assert response.status_code == 422
+
+def test_structural_ingest_can_defer_associations_and_sync_explicitly(tmp_path):
+    service = ProductStructuralObservationService.open(
+        tmp_path / "structural",
+        backend="sqlite",
+        allow_fallback=False,
+        replay_associations_on_open=False,
+    )
+    app = FastAPI()
+    attach_structural_observation_routes(app, api_key="secret", service=service)
+    client = TestClient(app)
+    headers = {"X-Memoria-Key": "secret"}
+    payload = {
+        "event": _event(99, [10, 20]),
+        "provenance": {
+            "hierarchy_id": "hierarchy:test",
+            "capture_id": "deferred",
+        },
+    }
+
+    response = client.post(
+        "/api/v1/structural/observations?defer_associations=true",
+        headers=headers,
+        json=payload,
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["stored"] is True
+    assert body["association_sync_observations"] == 0
+    assert body["association_sync_deferred"] is True
+
+    status = client.get(
+        "/api/v1/structural/associations/status",
+        headers=headers,
+    ).json()
+    assert status["pending_observations"] == 1
+    assert status["derived_observations"] == 0
+    assert status["replay_on_open"] is False
+
+    synced = client.post(
+        "/api/v1/structural/associations/sync",
+        headers=headers,
+    )
+    assert synced.status_code == 200
+    assert synced.json()["association_sync_observations"] == 1
+    assert synced.json()["associations"]["pending_observations"] == 0

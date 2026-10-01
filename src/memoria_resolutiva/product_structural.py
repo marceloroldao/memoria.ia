@@ -63,6 +63,7 @@ class ProductStructuralObservationService:
         *,
         backend: str | None = None,
         allow_fallback: bool = True,
+        replay_associations_on_open: bool = True,
     ) -> "ProductStructuralObservationService":
         root = Path(root)
         store = StructuralObservationStore(
@@ -75,19 +76,29 @@ class ProductStructuralObservationService:
             root / "associations",
             backend=backend,
             allow_fallback=allow_fallback,
+            replay_on_open=replay_associations_on_open,
         )
         return cls(store, associations)
 
-    def ingest(self, request: StructuralObservationRequest) -> tuple[dict[str, Any], bool, int]:
+    def ingest(
+        self,
+        request: StructuralObservationRequest,
+        *,
+        defer_associations: bool = False,
+    ) -> tuple[dict[str, Any], bool, int]:
         envelope, duplicate = self.store.append(
             request.event.model_dump(),
             provenance=request.provenance.model_dump(),
         )
+        if defer_associations:
+            return envelope, duplicate, 0
+        return envelope, duplicate, self.sync_associations()
+
+    def sync_associations(self) -> int:
         try:
-            replayed = self.associations.sync()
+            return self.associations.sync()
         except Exception as exc:
             raise RuntimeError("structural association sync failed") from exc
-        return envelope, duplicate, replayed
 
 
 def attach_structural_observation_routes(
@@ -115,9 +126,15 @@ def attach_structural_observation_routes(
         }
 
     @app.post("/api/v1/structural/observations", status_code=201, dependencies=[Depends(require_admin)])
-    def ingest_structural_observation(request: StructuralObservationRequest):
+    def ingest_structural_observation(
+        request: StructuralObservationRequest,
+        defer_associations: bool = Query(default=False),
+    ):
         try:
-            envelope, duplicate, replayed = service.ingest(request)
+            envelope, duplicate, replayed = service.ingest(
+                request,
+                defer_associations=defer_associations,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {
@@ -125,6 +142,7 @@ def attach_structural_observation_routes(
             "duplicate": duplicate,
             "observation_id": envelope["observation_id"],
             "association_sync_observations": replayed,
+            "association_sync_deferred": defer_associations,
             "semantic_projection": False,
             "backend": service.store.backend,
         }
@@ -181,6 +199,14 @@ def attach_structural_observation_routes(
     @app.get("/api/v1/structural/associations/status", dependencies=[Depends(require_admin)])
     def structural_association_status():
         return service.associations.status()
+
+    @app.post("/api/v1/structural/associations/sync", dependencies=[Depends(require_admin)])
+    def structural_association_sync():
+        replayed = service.sync_associations()
+        return {
+            "association_sync_observations": replayed,
+            "associations": service.associations.status(),
+        }
 
     @app.get("/api/v1/structural/associations", dependencies=[Depends(require_admin)])
     def structural_associations(

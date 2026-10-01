@@ -193,3 +193,41 @@ def test_runtime_second_restart_does_not_reinforce_replayed_suffix_again(tmp_pat
         channel="temporal",
     ) == weight
     assert restarted_again.field.snapshot()["observations"] == 2
+
+def test_runtime_can_defer_replay_on_open_and_sync_later(tmp_path):
+    raw = StructuralObservationStore(
+        tmp_path / "raw",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    _append(raw, 0, [11])
+    first = StructuralAssociationRuntime(
+        raw,
+        tmp_path / "derived",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    assert first.cursor_count == 1
+
+    _append(raw, 1, [22])
+    restarted_raw = StructuralObservationStore(
+        tmp_path / "raw",
+        backend="sqlite",
+        allow_fallback=False,
+    )
+    deferred = StructuralAssociationRuntime(
+        restarted_raw,
+        tmp_path / "derived",
+        backend="sqlite",
+        allow_fallback=False,
+        replay_on_open=False,
+    )
+    status = deferred.status()
+    assert status["replay_on_open"] is False
+    assert status["replayed_on_open"] == 0
+    assert status["pending_observations"] == 1
+    assert deferred.cursor_count == 1
+
+    assert deferred.sync() == 1
+    assert deferred.status()["pending_observations"] == 0
+    assert deferred.cursor_count == 2

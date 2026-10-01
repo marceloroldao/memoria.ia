@@ -129,6 +129,7 @@ class StructuralAssociationRuntime:
         max_within_distance: int = 8,
         max_event_lag: int = 4,
         forgetting_rate: float = 0.01,
+        replay_on_open: bool = True,
     ) -> None:
         self.observations = observations
         self.root = Path(root)
@@ -147,9 +148,11 @@ class StructuralAssociationRuntime:
         )
         self.cursor_count = 0
         self.cursor_observation_id: str | None = None
+        self.replay_on_open = bool(replay_on_open)
         self.replayed_on_open = 0
         self._load_if_present()
-        self.replayed_on_open = self.sync()
+        if self.replay_on_open:
+            self.replayed_on_open = self.sync()
 
     @staticmethod
     def _parse_cursor(value: object) -> tuple[int, str | None]:
@@ -284,6 +287,7 @@ class StructuralAssociationRuntime:
                 },
                 "raw_observations": self.observations.count,
                 "pending_observations": self.observations.count - self.cursor_count,
+                "replay_on_open": self.replay_on_open,
                 "replayed_on_open": self.replayed_on_open,
                 "derived_observations": self.field.observation_count,
                 "derived_edges": self.field.edge_count,
@@ -302,6 +306,7 @@ class StructuralAssociationRuntime:
                 },
                 "raw_observations": self.observations.count,
                 "pending_observations": self.observations.count - self.cursor_count,
+                "replay_on_open": self.replay_on_open,
                 "replayed_on_open": self.replayed_on_open,
                 "field": self.field.snapshot(),
             }

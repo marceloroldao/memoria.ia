@@ -185,6 +185,10 @@ def build_app():
         data_dir / "structural-observations",
         backend=storage_backend,
         allow_fallback=storage_allow_fallback,
+        replay_associations_on_open=_env_bool(
+            "MEMORIA_STRUCTURAL_ASSOCIATIONS_REPLAY_ON_OPEN",
+            True,
+        ),
     )
     native_shared_data_dir = _native_shared_data_dir(data_dir)
     conversation_backend = _build_conversation_service(
