@@ -11,6 +11,40 @@ from trajectory_response_quality_probe import TrajectoryGenerationExperiment, en
 
 
 class TransportedScopeTests(unittest.TestCase):
+    def test_mixed_fragment_scopes_the_other_subject_without_hiding_root_conflict(self):
+        for adapter in ('unicode', 'utf8'):
+            for renamed in (False, True):
+                transform = lambda text: tuple(10000 - x if renamed else x for x in encode(text, adapter))
+                memory = TrajectoryGenerationExperiment()
+                for i, (query, answer) in enumerate((('Qual nome do meu drone?', 'Meu drone se chama Auri.'),
+                                                     ('Qual nome do meu robô?', 'Meu robô se chama Lumo.'),
+                                                     ('Qual nome do meu drone?', 'Meu drone se chama Boreal.'))):
+                    memory.observe(transform(query), observation_id=f'{i}:q', stream_id=str(i))
+                    memory.observe(transform(answer), observation_id=f'{i}:a', stream_id=str(i))
+                for prefix in ('', 'Lembre: '):
+                    result = checked_read(memory, transform(prefix + 'Qual nome do meu robô?'))
+                    self.assertEqual(result.hypothesis, transform('Meu robô se chama Lumo.'))
+                    self.assertEqual(result.reason, 'TRANSPORTED_SOURCE_SCOPE')
+                    self.assertEqual(len(result.scoped_out_witnesses), 2)
+                    self.assertIn(transform('Meu drone se chama '),
+                                  {c.output for c in result.generation.candidates})
+                    conflict = checked_read(memory, transform(prefix + 'Qual nome do meu drone?'))
+                    self.assertIsNone(conflict.hypothesis)
+                    self.assertTrue({transform('Meu drone se chama Auri.'), transform('Meu drone se chama Boreal.')}
+                                    <= {c.output for c in conflict.generation.candidates})
+
+    def test_different_carried_subspans_cannot_be_combined_across_witnesses(self):
+        memory = TrajectoryGenerationExperiment()
+        for i, (query, answer) in enumerate((((1, 2, 3, 4), (17, 18, 19)),
+                                            ((1, 2, 3, 5, 13, 14), (90, 13, 14, 15, 16, 91)),
+                                            ((1, 2, 3, 6, 15, 16), (92, 13, 14, 15, 16, 93)))):
+            memory.observe(query, observation_id=f'{i}:q', stream_id=str(i))
+            memory.observe(answer, observation_id=f'{i}:a', stream_id=str(i))
+        result = checked_read(memory, (1, 2, 3, 4))
+        self.assertIn((13, 14, 15, 16), {c.output for c in result.generation.candidates})
+        self.assertIsNone(result.hypothesis)
+        self.assertFalse(result.scoped_out_witnesses)
+
     def test_ordered_pairs_recover_with_raw_adapters_and_bijective_renaming(self):
         for adapter in ('unicode', 'utf8'):
             for renamed in (False, True):

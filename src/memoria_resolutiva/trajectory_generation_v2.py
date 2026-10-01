@@ -611,7 +611,8 @@ class TrajectoryGenerationExperiment:
         This is provisional; a carried fragment can still contain useful
         information, so every original candidate remains visible.
         The experimental transported_source_scope option additionally requires
-        a retrieved discriminator carried by each exact competing root pair,
+        a discriminator inside a retrieved fragment, carried by each exact
+        competing root pair and at least min_context symbols long,
         absent from the query, supporting cues and selected destination.
         Root destinations containing a retrieved fragment are audited even
         when composition discovery no longer returns their pair as a witness.
@@ -645,17 +646,30 @@ class TrajectoryGenerationExperiment:
                 if transported_source_scope:
                     for fragment in association.candidates:
                         if (not fragment.witnesses
-                            or contains(fragment.symbols, symbols)
-                            or contains(fragment.symbols, query)
-                            or any(contains(fragment.symbols, cue) for cue in root_cues)
                             or not all(
                                 destination != target
                                 and fragment.symbols != self.expand(destination)
-                                and contains(fragment.symbols, self.expand(source))
                                 for source, destination, _ in fragment.witnesses
                             )):
                             continue
-                        discriminated_pairs.update(fragment.witnesses)
+                        # A discovered destination fragment may include both
+                        # copied source context and newly introduced symbols.
+                        # Require one common ordered subspan carried by every
+                        # exact pair; never borrow a discriminator from a pair
+                        # that does not witness this fragment.
+                        has_discriminator = any(
+                            not contains(span, symbols)
+                            and not contains(span, query)
+                            and not any(contains(span, cue) for cue in root_cues)
+                            and all(contains(span, self.expand(source))
+                                    and contains(span, self.expand(destination))
+                                    for source, destination, _ in fragment.witnesses)
+                            for width in range(len(fragment.symbols), self.config.min_context - 1, -1)
+                            for start in range(len(fragment.symbols) - width + 1)
+                            for span in (fragment.symbols[start:start + width],)
+                        )
+                        if has_discriminator:
+                            discriminated_pairs.update(fragment.witnesses)
                 def supported(candidate):
                     if not candidate.witnesses:
                         return False
@@ -677,8 +691,6 @@ class TrajectoryGenerationExperiment:
                     return contains(output, symbols) or any(
                         output == fragment.symbols and fragment.witnesses
                         and all(pair in discriminated_pairs for pair in fragment.witnesses)
-                        and all(contains(output, self.expand(source))
-                                for source, _, _ in fragment.witnesses)
                         and not contains(output, query)
                         and not any(contains(output, cue) for cue in root_cues)
                         and all(output != self.expand(destination)

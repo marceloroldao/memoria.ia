@@ -77,7 +77,8 @@ def probe(library=None):
             assert stage['experimental'] == next(
                 s for s in native['stages'] if s['stage'] == stage['stage'])['trajectory']
     experimental_counts = counts('experimental')
-    return dict(format='memoria.ia-transported-source-scope-v1', integrity_status='PASS',
+    return dict(format='memoria.ia-transported-source-scope-v2', integrity_status='PASS',
+                hypothesis_revision='transported-common-subspan-v1',
                 quality_status='PASS' if experimental_counts['passed'] == experimental_counts['cases'] else 'FAIL',
                 policy_status='EXPERIMENTAL_OPT_IN', default_hypothesis_changed=False,
                 default_generation_changed=False, native_changed=False, inference_activated_in_native=False,
