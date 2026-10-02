@@ -8,7 +8,7 @@ from trajectory_analogy_alignment_probe import checked
 from trajectory_response_quality_probe import TrajectoryGenerationExperiment
 
 
-def evaluate(seed, fixed_slot, renamed=False):
+def evaluate(seed, fixed_slot, renamed=False, *, reader=checked):
     symbols = iter(Random(seed).sample(range(1000, 100000), 40))
     p, s, sep, t, u, between, end = (next(symbols) for _ in range(7))
     ids, tags, values = ([next(symbols) for _ in range(8)] for _ in range(3))
@@ -51,7 +51,7 @@ def evaluate(seed, fixed_slot, renamed=False):
             ('held_out', query, 'conflict' if competing else 'answer', required),
             ('new_prefix', (ids[7],)+query, 'conflict' if competing else 'answer', required),
             ('changed_fixed_cue', changed, 'absence', ())):
-            result = checked(memory, transform(q))
+            result = reader(memory, transform(q))
             targets = tuple(transform(x) for x in expected)
             outputs = {c['output'] for c in result['candidates']}
             addressed = {root for c in result['candidates'] for a, z, _ in c['witnesses'] for root in (a, z)}
