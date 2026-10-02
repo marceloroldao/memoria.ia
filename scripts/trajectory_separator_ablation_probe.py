@@ -42,7 +42,7 @@ def score(result,kind,expected):
         false_unique=hypothesis is not None and (hypothesis not in expected or kind=='conflict'))
 
 
-def evaluate(seed,mode,renamed=False):
+def evaluate(seed,mode,renamed=False,*,reader=checked_packet):
     pairs,facts,rival,queries=fixture(seed,mode,renamed)
     memory=TrajectoryGenerationExperiment()
     def pair(q,a,address):
@@ -59,7 +59,7 @@ def evaluate(seed,mode,renamed=False):
             expected=(facts[0],rival) if conflict and query_name in ('first','new_prefix') else (
                 (facts[0],) if query_name in ('first','new_prefix') else (facts[1],) if query_name=='second' else ())
             kind='conflict' if len(expected)>1 else 'answer' if expected else 'absence'
-            result=checked_packet(memory,query)
+            result=reader(memory,query)
             assert not result['observed_continuations']
             cases.append(dict(name=query_name,query=query,kind=kind,expected=expected,
                 packet=result,**score(result,kind,expected)))
