@@ -41,6 +41,8 @@ on:
       - 'tests/test_trajectory_evidence_packet_probe.py'
       - 'scripts/trajectory_relation_contrast_probe.py'
       - 'tests/test_trajectory_relation_contrast_probe.py'
+      - 'scripts/trajectory_separator_ablation_probe.py'
+      - 'tests/test_trajectory_separator_ablation_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -241,6 +243,11 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_relation_contrast_probe.py
           python scripts/trajectory_relation_contrast_probe.py --seed 20261109
           python scripts/trajectory_relation_contrast_probe.py --seed 20261110
+      - name: Source separator ablation with fixed destination roots (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_separator_ablation_probe.py
+          python scripts/trajectory_separator_ablation_probe.py --seed 20261111
+          python scripts/trajectory_separator_ablation_probe.py --seed 20261112
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
