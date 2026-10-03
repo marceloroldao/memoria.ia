@@ -48,3 +48,5 @@ Seis testes novos verificam resultados positivos ainda falhando, igualdade dos m
 Runtime nativo, seletores anteriores, OFF.IA e gaps dos gates pessoais permanecem inalterados. Próxima direção: testar contexto adicional efetivamente observado e transportado entre origem e destino, com controles cruzados que separem resposta de outro evento. A distinção precisa aparecer no fluxo; não pode vir apenas do nome do caso, de uma etiqueta do avaliador ou da quantidade de quadros que repetem a mesma informação.
 
 Validação local: **210 testes passaram, um teste opcional de BDR foi pulado**, incluindo os seis novos testes, os probes anteriores e os consumidores estruturais. Os dois lotes reproduziram os mesmos agregados; o modo estrito foi confirmado retornando 1, com integridade PASS e qualidade de resposta FAIL. `git diff --check` passou.
+
+O contexto adicional observado foi investigado em [Contexto observado e discriminação de raízes](trajectory-observed-context-proof.md). O transporte discrimina destinos com códigos de contexto distintos, mantendo a autorização semântica suspensa e as falhas deste diagnóstico de gêmeos.
