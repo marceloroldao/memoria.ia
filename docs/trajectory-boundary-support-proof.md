@@ -30,3 +30,5 @@ Relatórios completos: `benchmark-results/trajectory-boundary-support-{developme
 Runtime, aprendizagem, geração padrão, seletores anteriores, OFF.IA e gates pessoais nativos permanecem inalterados. A enumeração mantém o custo e as hipóteses restritas do leitor anterior. Cobertura mede apenas cortes enumerados dentro dos quadros aceitos; não representa todas as interpretações possíveis. Próxima investigação: observações iguais com papéis latentes distintos, inclusive quando todos os cortes concordam, para delimitar o que este suporte consegue identificar sem informação adicional.
 
 Validação local: **204 testes passaram, um teste opcional de BDR foi pulado**, incluindo seis testes novos, os probes anteriores e os consumidores estruturais existentes. Ambos os relatórios reproduziram 20/20 controles do diagnóstico. `git diff --check` passou.
+
+O limite da concordância completa foi testado em [Concordância completa e papéis não observados](trajectory-boundary-roles-proof.md), incluindo sequências exatas iguais sob contratos diferentes e as falhas de resposta dos dois comparadores.
