@@ -33,3 +33,5 @@ Relatórios completos: `benchmark-results/trajectory-boundary-candidates-{develo
 Validação local: sete novos testes e 157 testes anteriores passaram, com um teste opcional de BDR pulado. Ambos os lotes reproduziram os mesmos agregados e o modo estrito foi confirmado retornando 1 para as respostas ainda suspensas. O controle de âncora interna usa o marcador entre duas partes variáveis da cauda; um marcador na borda fixa pertence à ponte e não é uma âncora interna.
 
 Próxima investigação: intervenções que tragam raízes para outras divisões candidatas e distingam suporte parcial, convergência para a mesma raiz e conflito entre raízes. Apenas repetir o mesmo quadro ou assumir comprimentos fixos não estabelece essa discriminação.
+
+A investigação de preenchimento dos cortes foi registrada em [Suporte observado entre divisões concorrentes](trajectory-boundary-support-proof.md). Seus diagnósticos são separados da qualidade 98/126 FAIL e não autorizam respostas.
