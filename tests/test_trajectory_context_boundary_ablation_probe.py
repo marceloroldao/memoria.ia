@@ -39,6 +39,35 @@ class ContextBoundaryAblationTests(unittest.TestCase):
         self.assertEqual(explicit_cross['passed'], explicit_cross['cases'])
         self.assertEqual(r['semantic_quality_status'], 'UNQUALIFIED')
 
+    def test_reserved_seed_freezes_boundary_ablation_quality_baseline(self):
+        r = report()
+        self.assertEqual(
+            {mode: (row['passed'], row['cases'], row['correct_answers'],
+                    row['all_targets_retained'], row['false_unique'])
+             for mode, row in r['by_mode'].items()},
+            {
+                'explicit': (56, 56, 22, 24, 0),
+                'absent': (34, 56, 0, 24, 0),
+                'ambiguous': (34, 56, 0, 24, 0),
+            },
+        )
+        self.assertEqual(
+            {mode: (row['passed'], row['cases'], row['correct_answers'],
+                    row['conflicts_preserved'])
+             for mode, row in r['cross_control_by_mode'].items()},
+            {
+                'explicit': (6, 6, 4, 2),
+                'absent': (2, 6, 0, 2),
+                'ambiguous': (6, 6, 4, 2),
+            },
+        )
+        self.assertEqual(
+            (r['counts']['passed'], r['counts']['cases'],
+             r['counts']['all_targets_retained'], r['counts']['false_unique']),
+            (124, 168, 72, 0),
+        )
+        self.assertEqual(r['structural_quality_status'], 'FAIL')
+
     def test_every_candidate_is_an_observed_root_and_never_authorized(self):
         for ev in report()['evaluations']:
             for stage in ev['stages']:
