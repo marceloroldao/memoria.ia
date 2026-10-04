@@ -80,6 +80,10 @@ memoria_mobile_status memoria_mobile_activate_relations_json(
  *   "query":"...",
  *   "top_k":3
  * }
+ * Optional mode "linked_reply_evidence" returns only groups reached through
+ * explicit reply_to provenance. It is unqualified even for one group, and
+ * reports CONFLICT when different reply trails are linked to the query.
+ * top_k bounds returned groups; individual source lists are capped at 16.
  *
  * These calls never create facts, predicates, grammar labels or ontology.
  * Resolution is read-only and does not reinforce the query.
@@ -129,11 +133,59 @@ memoria_mobile_status memoria_mobile_export_structural_text_json(
     memoria_mobile_buffer *response_json
 );
 
+/* Persist a caller-observed reply relation in one conversation. Request:
+ * hierarchy_id, source_id, sequence, reply_to_source_id, reply_to_sequence.
+ * Both observations must already exist and the target must precede the user
+ * source. The relation is provenance, not user confirmation or a fact. */
+memoria_mobile_status memoria_mobile_link_structural_reply_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
 /* Read-only addressable conversation region. Request: hierarchy_id, offset,
  * limit (1..64), optional expected_token for stable pagination. Records
  * remain raw observations; previous/next IDs describe temporal adjacency,
  * not inferred truth or a semantic trajectory. */
 memoria_mobile_status memoria_mobile_read_structural_window_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/* Read-only activation preview across conversation regions. Request: query,
+ * optional limit (1..16). Returns unqualified region statistics, never a
+ * factual HIT. An exact symbol trail matching the query is counted as an echo. */
+memoria_mobile_status memoria_mobile_probe_structural_regions_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/* Read-only recurrence of identical user-observed symbol trails. Request:
+ * query, offset, limit (1..64). Counts source observations separately from
+ * distinct conversation regions; neither count establishes a fact. */
+memoria_mobile_status memoria_mobile_probe_structural_trails_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/* Read-only exact-query continuation diagnostic. Request: query, offset,
+ * limit (1..64). Only the immediate next occurrence in the same conversation
+ * is considered. Echoes, blocked assistant turns and tied sequences stay
+ * explicit; candidate continuations are never qualified as facts. */
+memoria_mobile_status memoria_mobile_probe_structural_continuations_json(
+    memoria_mobile_handle *handle,
+    memoria_mobile_buffer request_json,
+    memoria_mobile_buffer *response_json
+);
+
+/* Read-only explicit reply provenance for a complete ordered query trail,
+ * including that trail inside a larger target payload. Request: query,
+ * optional offset and limit (1..64). Returns source-addressed witnesses,
+ * repeated-question and competing-trail counts, always unqualified. */
+memoria_mobile_status memoria_mobile_probe_structural_linked_replies_json(
     memoria_mobile_handle *handle,
     memoria_mobile_buffer request_json,
     memoria_mobile_buffer *response_json

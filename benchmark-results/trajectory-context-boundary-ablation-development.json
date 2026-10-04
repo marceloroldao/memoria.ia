@@ -1,0 +1,110 @@
+{
+  "format": "memoria.ia-context-body-boundary-ablation-v1",
+  "seed": 20261121,
+  "integrity_status": "PASS",
+  "structural_quality_status": "FAIL",
+  "semantic_quality_status": "UNQUALIFIED",
+  "counts": {
+    "cases": 168,
+    "passed": 124,
+    "answer_cases": 66,
+    "correct_answers": 22,
+    "conflict_cases": 6,
+    "conflicts_preserved": 6,
+    "absence_cases": 96,
+    "absence_empty": 96,
+    "target_cases": 72,
+    "all_targets_retained": 72,
+    "false_unique": 0
+  },
+  "by_mode": {
+    "explicit": {
+      "cases": 56,
+      "passed": 56,
+      "answer_cases": 22,
+      "correct_answers": 22,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 32,
+      "absence_empty": 32,
+      "target_cases": 24,
+      "all_targets_retained": 24,
+      "false_unique": 0
+    },
+    "absent": {
+      "cases": 56,
+      "passed": 34,
+      "answer_cases": 22,
+      "correct_answers": 0,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 32,
+      "absence_empty": 32,
+      "target_cases": 24,
+      "all_targets_retained": 24,
+      "false_unique": 0
+    },
+    "ambiguous": {
+      "cases": 56,
+      "passed": 34,
+      "answer_cases": 22,
+      "correct_answers": 0,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 32,
+      "absence_empty": 32,
+      "target_cases": 24,
+      "all_targets_retained": 24,
+      "false_unique": 0
+    }
+  },
+  "cross_control_by_mode": {
+    "explicit": {
+      "cases": 6,
+      "passed": 6,
+      "answer_cases": 4,
+      "correct_answers": 4,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 0,
+      "absence_empty": 0,
+      "target_cases": 6,
+      "all_targets_retained": 6,
+      "false_unique": 0
+    },
+    "absent": {
+      "cases": 6,
+      "passed": 2,
+      "answer_cases": 4,
+      "correct_answers": 0,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 0,
+      "absence_empty": 0,
+      "target_cases": 6,
+      "all_targets_retained": 6,
+      "false_unique": 0
+    },
+    "ambiguous": {
+      "cases": 6,
+      "passed": 6,
+      "answer_cases": 4,
+      "correct_answers": 4,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 0,
+      "absence_empty": 0,
+      "target_cases": 6,
+      "all_targets_retained": 6,
+      "false_unique": 0
+    }
+  },
+  "engine_changed": false,
+  "prior_selectors_changed": false,
+  "native_executed": false,
+  "limitation": "Only the source context/body delimiter changes. Destination roots, contexts, bodies, values and evaluator contracts are fixed; structural routing remains unqualified.",
+  "full_report_provenance": {
+    "workflow_run_id": 37175657334,
+    "job_id": 111357620533
+  }
+}

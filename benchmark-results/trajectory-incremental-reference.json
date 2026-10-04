@@ -1,0 +1,19 @@
+{
+  "reference_commit": "544e8ff8c969fc9790db3e225c4f494f492a400d",
+  "rows": [
+    {
+      "seed": 20260930,
+      "cycles": 59,
+      "digest": "0331a327f1b62e3a268b82e7ff37ac3036fea92f43d0f00a72b8616bbf8dcfb5",
+      "exact_cold_parity": true,
+      "occurrence_witnesses_included": true
+    },
+    {
+      "seed": 20261003,
+      "cycles": 59,
+      "digest": "22059abede6d0f13feb4ef91bc0a8dca7ac6db04419a341a86dd4a8a24760ea1",
+      "exact_cold_parity": true,
+      "occurrence_witnesses_included": true
+    }
+  ]
+}
