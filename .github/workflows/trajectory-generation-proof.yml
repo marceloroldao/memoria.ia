@@ -57,6 +57,8 @@ on:
       - 'tests/test_trajectory_boundary_length_probe.py'
       - 'scripts/trajectory_cut_compatibility_probe.py'
       - 'tests/test_trajectory_cut_compatibility_probe.py'
+      - 'scripts/trajectory_region_evidence_probe.py'
+      - 'tests/test_trajectory_region_evidence_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -118,7 +120,7 @@ jobs:
           python scripts/trajectory_analogy_frame_probe.py --library build/trajectory-native/libmemoria_mobile.so
   proof:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -297,6 +299,11 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_cut_compatibility_probe.py
           python scripts/trajectory_cut_compatibility_probe.py --seed 20261125 --summary
           python scripts/trajectory_cut_compatibility_probe.py --seed 20261126 --summary
+      - name: Observed region scope and identical hidden reply roles (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_region_evidence_probe.py
+          python scripts/trajectory_region_evidence_probe.py --seed 20261127 --summary
+          python scripts/trajectory_region_evidence_probe.py --seed 20261128 --summary
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
