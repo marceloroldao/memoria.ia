@@ -55,6 +55,8 @@ on:
       - 'tests/test_trajectory_context_boundary_ablation_probe.py'
       - 'scripts/trajectory_boundary_length_probe.py'
       - 'tests/test_trajectory_boundary_length_probe.py'
+      - 'scripts/trajectory_cut_compatibility_probe.py'
+      - 'tests/test_trajectory_cut_compatibility_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -290,6 +292,11 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_boundary_length_probe.py
           python scripts/trajectory_boundary_length_probe.py --seed 20261123 --summary
           python scripts/trajectory_boundary_length_probe.py --seed 20261124 --summary
+      - name: Root scoped cut incompatibility and late unknown cut support (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_cut_compatibility_probe.py
+          python scripts/trajectory_cut_compatibility_probe.py --seed 20261125 --summary
+          python scripts/trajectory_cut_compatibility_probe.py --seed 20261126 --summary
       - name: Install regression runner
         run: python -m pip install 'pytest>=8,<9'
       - name: Existing trajectory consumers and association field
