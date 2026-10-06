@@ -59,6 +59,8 @@ on:
       - 'tests/test_trajectory_cut_compatibility_probe.py'
       - 'scripts/trajectory_region_evidence_probe.py'
       - 'tests/test_trajectory_region_evidence_probe.py'
+      - 'scripts/trajectory_region_reply_probe.py'
+      - 'tests/test_trajectory_region_reply_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -110,6 +112,13 @@ jobs:
           cmake --build build/trajectory-native --target memoria_mobile --parallel 2
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Observed regions versus exact native reply addresses (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_region_reply_probe.py
+          python scripts/trajectory_region_reply_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261129
+          python scripts/trajectory_region_reply_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261130
       - name: Native cold BDR windows versus trajectory hypotheses (quality failures reported)
         run: python scripts/trajectory_native_bridge_probe.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Experimental transported source scope with native cold windows (quality failures reported)
