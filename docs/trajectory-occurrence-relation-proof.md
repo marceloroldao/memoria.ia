@@ -35,7 +35,7 @@ Os quatro testes cobrem origens distintas de conteúdo idêntico, colisão de ID
 
 Todas as saídas seguem `answer:null`, `qualified:false`, qualidade factual `NOT_EVALUATED`. O endereço do episódio continua explícito e fornecido pelo chamador. A ausência de vínculo não nega uma intenção que não foi observada. Mantêm-se o gate pessoal nativo 23/26, o FAIL 2/4 dos papéis ocultos e os limites anteriores de molduras/cortes. Este experimento não avalia aprendizagem autônoma de intenção nem reforço temporal do motor.
 
-Regressões locais dos probes e consumidores estruturais: **252 passed, 1 optional BDR skip**, com os novos testes executados contra a biblioteca nativa. Os resumos e hashes completos dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. A CI deste novo incremento ainda precisa executar.
+Regressões locais dos probes e consumidores estruturais: **252 passed, 1 optional BDR skip**, com os novos testes executados contra a biblioteca nativa. Os resumos e hashes completos dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. A CI de `92ba22d` concluiu: os sete workflows aplicáveis passaram, incluindo ambos os jobs do run `37471413915`.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_occurrence_relation_probe.py
