@@ -36,7 +36,7 @@ O gate pessoal nativo original foi executado novamente: **23/26**, com as mesmas
 
 ## Validação
 
-Três testes novos cobrem projeção sem mutação, identidade completa do fixture e execução real dos 28 controles nos dois seeds. O teste nativo exige `MEMORIA_NATIVE_LIBRARY`; o novo passo de CI fornece essa variável depois de compilar o runtime com BDR fixado, evitando skip silencioso nesse passo. Regressões locais dos probes e consumidores estruturais: **242 passed, 1 optional BDR skip**, com a biblioteca nativa fornecida e o teste novo executado. Os relatórios dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Três testes novos cobrem projeção sem mutação, identidade completa do fixture e execução real dos 28 controles nos dois seeds. O teste nativo exige `MEMORIA_NATIVE_LIBRARY`; o novo passo de CI fornece essa variável depois de compilar o runtime com BDR fixado, evitando skip silencioso nesse passo. Regressões locais dos probes e consumidores estruturais: **242 passed, 1 optional BDR skip**, com a biblioteca nativa fornecida e o teste novo executado. Os relatórios dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. A CI do commit `d411fdb` concluiu: sete workflows aplicáveis passaram, incluindo ambos os jobs do run `37392941713` e o passo nativo deste diagnóstico.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_region_reply_probe.py
