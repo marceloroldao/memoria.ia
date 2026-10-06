@@ -39,7 +39,7 @@ Seeds 20261201 e 20261202: **32/32 controles de integridade PASS em cada seed**.
 
 As saídas continuam `answer:null`, `qualified:false`, `selection_used:false`, com qualidade factual `NOT_EVALUATED`. Um vínculo registrado comprova a relação observada, sem demonstrar a verdade do conteúdo. O endereço do episódio ainda é fornecido pelo chamador. Não se aprendeu a intenção ausente nos gêmeos anteriores: o FAIL 2/4 permanece, assim como o gate pessoal nativo 23/26 e os demais limites históricos.
 
-Regressões locais dos probes e consumidores estruturais: **248 passed, 1 optional BDR skip**, com a biblioteca nativa fornecida e os testes novos executados. Os resumos e hashes completos dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. A CI deste novo incremento ainda precisa executar.
+Regressões locais dos probes e consumidores estruturais: **248 passed, 1 optional BDR skip**, com a biblioteca nativa fornecida e os testes novos executados. Os resumos e hashes completos dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. A CI de `6e8ef53` concluiu: os sete workflows aplicáveis passaram, incluindo o run `37394348674` com ambos os jobs de trajetória.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_native_evidence_join_probe.py

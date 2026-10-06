@@ -63,6 +63,8 @@ on:
       - 'tests/test_trajectory_region_reply_probe.py'
       - 'scripts/trajectory_native_evidence_join_probe.py'
       - 'tests/test_trajectory_native_evidence_join_probe.py'
+      - 'scripts/trajectory_occurrence_relation_probe.py'
+      - 'tests/test_trajectory_occurrence_relation_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -132,6 +134,13 @@ jobs:
           python scripts/trajectory_native_evidence_join_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261202 --summary
       - name: Experimental transported source scope with native cold windows (quality failures reported)
         run: python scripts/trajectory_transported_scope_probe.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Same payload with occurrence-local reply relations (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_occurrence_relation_probe.py
+          python scripts/trajectory_occurrence_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261203 --summary
+          python scripts/trajectory_occurrence_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261204 --summary
       - name: Read only frame analogy with native cold windows (quality failures reported)
         run: |
           python -m unittest discover -s tests -p test_trajectory_analogy_frame_probe.py
