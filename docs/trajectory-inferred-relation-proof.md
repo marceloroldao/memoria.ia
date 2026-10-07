@@ -40,7 +40,7 @@ Nos dois casos indistinguíveis, todas as rotas recebem a mesma entrada e produz
 
 ## Verificação e continuidade
 
-Regressão local: **298 passed, 1 optional BDR skip**, em 405,89 segundos. Os oito testes novos passaram, incluindo ambos os seeds nativos e os resultados negativos esperados. Os dois resumos e seus hashes do relatório completo reproduziram byte a byte. Compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Regressão local: **298 passed, 1 optional BDR skip**, em 405,89 segundos. Os oito testes novos passaram, incluindo ambos os seeds nativos e os resultados negativos esperados. Os dois resumos e seus hashes do relatório completo reproduziram byte a byte. Compilação Python e `git diff --check` passaram. CI de `01ba7e4`: seis workflows passaram; no workflow de trajetória `37656027785`, o job `proof` passou e `native-bridge` foi cancelado no novo ensaio. O job tinha limite de dez minutos. O cancelamento não é PASS nem falha de asserção comprovada; o próximo incremento amplia seu orçamento e preserva este registro.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_inferred_relation_probe.py

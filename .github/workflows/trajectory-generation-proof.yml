@@ -73,6 +73,8 @@ on:
       - 'tests/test_trajectory_window_consistency_probe.py'
       - 'scripts/trajectory_bounded_refresh_probe.py'
       - 'tests/test_trajectory_bounded_refresh_probe.py'
+      - 'scripts/trajectory_contextual_relation_probe.py'
+      - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
       - 'tests/test_trajectory_inferred_relation_probe.py'
       - 'scripts/trajectory_reply_hypothesis_probe.py'
@@ -108,7 +110,7 @@ permissions:
 jobs:
   native-bridge:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -199,6 +201,13 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_inferred_relation_probe.py
           python scripts/trajectory_inferred_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261215 --summary
           python scripts/trajectory_inferred_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261216 --summary
+      - name: Contextual root filters with retained loss and false links (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_contextual_relation_probe.py
+          python scripts/trajectory_contextual_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261217 --summary
+          python scripts/trajectory_contextual_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261218 --summary
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 20
