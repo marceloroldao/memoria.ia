@@ -40,7 +40,7 @@ O relatório mantém `semantic_quality_status:FAIL_HIDDEN_ROLE_TWINS` e qualidad
 
 ## Validação e continuidade
 
-Regressões locais: **290 passed, 1 optional BDR skip**. Os oito testes novos passaram, incluindo os dois seeds contra a biblioteca nativa e a falha de intenção oculta explicitamente esperada. Resumos e hashes completos foram reproduzidos byte a byte. Compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Regressões locais: **290 passed, 1 optional BDR skip**. Os oito testes novos passaram, incluindo os dois seeds contra a biblioteca nativa e a falha de intenção oculta explicitamente esperada. Resumos e hashes completos foram reproduzidos byte a byte. Compilação Python e `git diff --check` passaram. A CI de `5f921e9` passou nos sete workflows aplicáveis, incluindo trajetória `37644341652`; a regressão condicional experimental foi pulada.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_reply_hypothesis_probe.py
