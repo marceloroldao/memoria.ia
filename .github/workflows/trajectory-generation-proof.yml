@@ -67,6 +67,8 @@ on:
       - 'tests/test_trajectory_occurrence_relation_probe.py'
       - 'scripts/trajectory_region_target_probe.py'
       - 'tests/test_trajectory_region_target_probe.py'
+      - 'scripts/trajectory_paged_relation_probe.py'
+      - 'tests/test_trajectory_paged_relation_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -154,6 +156,13 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_region_target_probe.py
           python scripts/trajectory_region_target_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261205 --summary
           python scripts/trajectory_region_target_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261206 --summary
+      - name: Complete paginated relation witnesses including query echoes (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_paged_relation_probe.py
+          python scripts/trajectory_paged_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261207 --summary
+          python scripts/trajectory_paged_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261208 --summary
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 20

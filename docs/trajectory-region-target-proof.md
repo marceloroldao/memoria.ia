@@ -37,7 +37,7 @@ Seeds 20261205/20261206: **27/27 controles de integridade PASS em cada seed**, e
 
 Saídas seguem `answer:null`, `qualified:false`, `selected_target:null`, `global_fallback_used:false`, qualidade factual `NOT_EVALUATED`. Correspondência bruta exata não mede compreensão semântica e não resolve qual episódio o usuário pretendia consultar. Tampouco o episódio sem vínculo é declarado falso ou sem intenção. Permanecem os limites anteriores de cortes/molduras, o gate pessoal nativo 23/26 e os papéis ocultos 2/4 FAIL. Este fluxo ainda é diagnóstico, sem integração com o aplicativo.
 
-Regressões locais dos probes e consumidores estruturais: **259 passed, 1 optional BDR skip**, com os sete testes novos executados contra a biblioteca nativa. Os resumos e hashes completos dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Regressões locais dos probes e consumidores estruturais: **259 passed, 1 optional BDR skip**, com os sete testes novos executados contra a biblioteca nativa. Os resumos e hashes completos dos dois seeds foram reproduzidos byte a byte em uma segunda execução. Compilação Python e `git diff --check` passaram. CI de `a61d75a`: sete workflows aplicáveis passaram, incluindo trajetória `37545165842`; a regressão experimental condicionada foi pulada.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_region_target_probe.py
