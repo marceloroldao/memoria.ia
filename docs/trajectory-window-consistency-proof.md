@@ -41,7 +41,7 @@ O token nativo é um fingerprint de 64 bits, não uma trava ou prova matemática
 
 As saídas continuam sem resposta ou alvo selecionado, com `qualified:false` e qualidade factual `NOT_EVALUATED`. As rejeições mantêm `answer:null`, `view:null`. Os limites históricos, incluindo gate pessoal 23/26 e papéis ocultos 2/4 FAIL, permanecem. Motor, runtime nativo, ingestão e seletores anteriores não foram alterados; não há integração com OFF.IA.
 
-Regressões locais: **274 passed, 1 optional BDR skip**. Os oito testes novos passaram, incluindo os dois seeds contra a biblioteca nativa. Resumos e hashes completos foram reproduzidos byte a byte. Compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Regressões locais: **274 passed, 1 optional BDR skip**. Os oito testes novos passaram, incluindo os dois seeds contra a biblioteca nativa. Resumos e hashes completos foram reproduzidos byte a byte. Compilação Python e `git diff --check` passaram. CI de `f6e349d`: sete workflows aplicáveis passaram, incluindo trajetória `37559701392`; a regressão experimental condicionada foi pulada.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_window_consistency_probe.py
