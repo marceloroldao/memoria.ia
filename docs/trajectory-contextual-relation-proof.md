@@ -36,7 +36,7 @@ Os relatórios continuam com `FAIL_FALSE_OR_MISSING_RELATIONS`, `FAIL_HIDDEN_REL
 
 ## Verificação e continuidade
 
-Regressão local: **306 passed, 1 optional BDR skip**, em 513,72 segundos. Os oito testes novos passaram, incluindo ambos os seeds nativos e os resultados negativos esperados. Os resumos e hashes do relatório completo reproduziram byte a byte. Compilação Python e `git diff --check` passaram. A nova CI, com orçamento ampliado, ainda precisa executar.
+Regressão local: **306 passed, 1 optional BDR skip**, em 513,72 segundos. Os oito testes novos passaram, incluindo ambos os seeds nativos e os resultados negativos esperados. Os resumos e hashes do relatório completo reproduziram byte a byte. Compilação Python e `git diff --check` passaram. A CI de `8cb021b` passou nos sete workflows aplicáveis, incluindo trajetória `37659778915`; a regressão condicional experimental foi pulada. O job nativo com orçamento de 25 minutos também passou.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_contextual_relation_probe.py
