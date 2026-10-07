@@ -41,7 +41,7 @@ As saídas seguem `answer:null`, `qualified:false`, `selected_target:null`, `sel
 
 O token de 64 bits não é uma trava nem uma prova de ausência de colisões. Uma escrita posterior à verificação final continua possível. `global_snapshot_guaranteed:false` e proveniência estrangeira `caller_supplied_rows` permanecem explícitos. Alterações estrangeiras de vínculos ainda podem invalidar o transporte global; elas não são escondidas por repetição automática. As quatro falhas históricas do critério de janela atual no leitor anterior, o gate pessoal 23/26 e os papéis ocultos 2/4 FAIL permanecem documentados.
 
-Regressões locais: **282 passed, 1 optional BDR skip**. Os oito testes novos passaram, incluindo os dois seeds contra a biblioteca nativa. Resumos e hashes completos foram reproduzidos byte a byte. Compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Regressões locais: **282 passed, 1 optional BDR skip**. Os oito testes novos passaram, incluindo os dois seeds contra a biblioteca nativa. Resumos e hashes completos foram reproduzidos byte a byte. Compilação Python e `git diff --check` passaram. CI de `2f5cf76`: sete workflows aplicáveis passaram, incluindo trajetória `37575024665`; a regressão experimental condicionada foi pulada.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_bounded_refresh_probe.py

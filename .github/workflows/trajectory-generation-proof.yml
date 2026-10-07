@@ -73,6 +73,8 @@ on:
       - 'tests/test_trajectory_window_consistency_probe.py'
       - 'scripts/trajectory_bounded_refresh_probe.py'
       - 'tests/test_trajectory_bounded_refresh_probe.py'
+      - 'scripts/trajectory_reply_hypothesis_probe.py'
+      - 'tests/test_trajectory_reply_hypothesis_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -181,6 +183,13 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_bounded_refresh_probe.py
           python scripts/trajectory_bounded_refresh_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261211 --summary
           python scripts/trajectory_bounded_refresh_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261212 --summary
+      - name: Unqualified reply hypotheses and abstention (hidden-role failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_reply_hypothesis_probe.py
+          python scripts/trajectory_reply_hypothesis_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261213 --summary
+          python scripts/trajectory_reply_hypothesis_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261214 --summary
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 20
