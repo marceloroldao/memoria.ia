@@ -69,6 +69,8 @@ on:
       - 'tests/test_trajectory_region_target_probe.py'
       - 'scripts/trajectory_paged_relation_probe.py'
       - 'tests/test_trajectory_paged_relation_probe.py'
+      - 'scripts/trajectory_window_consistency_probe.py'
+      - 'tests/test_trajectory_window_consistency_probe.py'
       - 'tests/test_trajectory_analogy_fixed_context_probe.py'
       - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
       - 'tests/test_trajectory_analogy_alignment_probe.py'
@@ -163,6 +165,13 @@ jobs:
           python -m unittest discover -s tests -p test_trajectory_paged_relation_probe.py
           python scripts/trajectory_paged_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261207 --summary
           python scripts/trajectory_paged_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261208 --summary
+      - name: Regional window token guard under controlled between-call writes (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_window_consistency_probe.py
+          python scripts/trajectory_window_consistency_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261209 --summary
+          python scripts/trajectory_window_consistency_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261210 --summary
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 20

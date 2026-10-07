@@ -30,7 +30,7 @@ Seeds 20261207/20261208: **25/25 controles de integridade PASS em cada seed**. A
 
 Todos os envelopes seguem `answer:null`, `qualified:false`, `selected_target:null`, `selection_used:false`, qualidade factual `NOT_EVALUATED`. Relação observada não prova verdade, intenção ou relevância semântica. A API não fornece token de snapshot para paginação: verificações de cabeçalho e cobertura detectam inconsistências ensaiadas, sem garantir atomicidade sob escritores concorrentes arbitrários. Os limites anteriores, incluindo gate pessoal nativo 23/26 e papéis ocultos 2/4 FAIL, permanecem.
 
-Regressões locais: **266 passed, 1 optional BDR skip**. Os sete testes novos passaram, incluindo execução nativa dos dois seeds. Resumos e hashes completos reproduzidos byte a byte; compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Regressões locais: **266 passed, 1 optional BDR skip**. Os sete testes novos passaram, incluindo execução nativa dos dois seeds. Resumos e hashes completos reproduzidos byte a byte; compilação Python e `git diff --check` passaram. CI de `5205b8b`: sete workflows aplicáveis passaram, incluindo trajetória `37554455794`; a regressão experimental condicionada foi pulada.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_paged_relation_probe.py
