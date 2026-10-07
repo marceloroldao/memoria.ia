@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Memoria.ia · Memória local</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#18362d;background:#f3f5ef}*{box-sizing:border-box}body{margin:0}main{max-width:1020px;margin:auto;padding:36px 22px}h1{font-size:34px;margin:6px 0}p{line-height:1.6}.eyebrow{font-size:13px;letter-spacing:2px;color:#54776c}section{background:white;border:1px solid #dce5dc;border-radius:14px;padding:24px;margin-top:22px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}label{display:block;font-size:14px;margin:12px 0 6px}input,textarea,select,button{font:inherit}input,textarea,select{width:100%;padding:11px;border:1px solid #b6c9bf;border-radius:7px}textarea{min-height:100px;resize:vertical}button{padding:12px 18px;border:0;border-radius:7px;background:#236b50;color:white;cursor:pointer;margin-top:12px}button:disabled{opacity:.5;cursor:wait}.secondary{background:#e7eee8;color:#18362d}.note,small{color:#5b6e63}.card{background:#f7f9f5;border-radius:8px;padding:14px;margin:12px 0;overflow-wrap:anywhere}.card p{white-space:pre-wrap;margin:0 0 10px}.sources{font-size:12px;white-space:pre-wrap}.error{color:#a82828}#status{min-height:24px}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto}input[type=checkbox]{width:auto}details{margin-top:14px}@media(max-width:650px){.grid{grid-template-columns:1fr}main{padding:24px 16px}h1{font-size:28px}}
+</style>
+<main>
+<div class="eyebrow">MEMORIA.IA / PROTÓTIPO LOCAL</div>
+<h1>Uma memória que você pode consultar.</h1>
+<p>Registre um trecho, volte depois e confira de onde veio o conteúdo recuperado.</p>
+<section><div class="grid"><div><label for="key">Chave de acesso</label><input id="key" type="password" autocomplete="off" placeholder="Chave configurada no servidor"></div><div><label for="scope">Nome da memória</label><input id="scope" value="principal" pattern="[a-zA-Z0-9_-]{1,64}" maxlength="64"></div></div><p class="note">Use letras, números, traço ou sublinhado no nome. A chave fica somente nesta página enquanto estiver aberta.</p></section>
+<div class="grid">
+<section><h2>Registrar</h2><label for="entry">Conteúdo</label><textarea id="entry" maxlength="20000" placeholder="Ex.: Meu gato se chama Alt."></textarea><label for="kind">Origem</label><select id="kind"><option value="user_turn">Informado por mim</option><option value="assistant_generated">Gerado por assistente</option></select><p class="note">Conteúdo gerado fica no histórico, sem servir como fonte factual nos resultados.</p><button id="save">Salvar entrada</button></section>
+<section><h2>Consultar</h2><label for="query">O que você quer recuperar?</label><textarea id="query" maxlength="4000" placeholder="Ex.: Qual nome do meu gato?"></textarea><label><input id="experimental" type="checkbox"> Mostrar hipóteses experimentais</label><p class="note">Consultar não adiciona sua pergunta à memória. Hipóteses ainda podem errar ou ficar sem resultado.</p><button id="search">Consultar memória</button></section>
+</div>
+<p id="status" role="status" aria-live="polite"></p>
+<section><h2>Conteúdo recuperado</h2><p class="note">Trechos observados e suas fontes. Vários trechos são alternativas; repetições não confirmam uma resposta. Ainda não há resposta factual validada.</p><div id="results">Faça uma consulta para ver os resultados.</div></section>
+<section><h2>Entradas da memória</h2><button id="refresh" class="secondary">Carregar histórico</button><div id="history"></div></section>
+</main>
+<script>
+const el=id=>document.getElementById(id);
+async function api(path,body){const response=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Memoria-Key':el('key').value},body:body?JSON.stringify(body):undefined});const value=await response.json();if(!response.ok)throw new Error(typeof value.detail==='string'?value.detail:'Confira os campos informados.');return value;}
+function scope(){const s=el('scope').value;if(!/^[a-zA-Z0-9_-]{1,64}$/.test(s))throw new Error('Nome de memória inválido.');return s;}
+function card(text,sources){const box=document.createElement('div');box.className='card';const p=document.createElement('p');p.textContent=text;box.append(p);const origin=document.createElement('div');origin.className='sources';origin.textContent=sources;box.append(origin);return box;}
+async function history(){const value=await api('/api/entries?scope='+encodeURIComponent(scope()));el('history').replaceChildren();if(!value.entries.length)el('history').textContent='Nenhuma entrada registrada nesta memória.';for(const row of value.entries)el('history').append(card(row.text,`${row.source_id} · sequência ${row.sequence} · ${row.source_kind==='assistant_generated'?'Gerado por assistente':'Informado por você'}`));}
+async function run(action){for(const b of document.querySelectorAll('button'))b.disabled=true;el('status').className='';el('status').textContent='Processando…';try{await action();}catch(error){el('status').className='error';el('status').textContent=error.message;}finally{for(const b of document.querySelectorAll('button'))b.disabled=false;}}
+el('save').onclick=()=>run(async()=>{await api('/api/entries',{scope:scope(),text:el('entry').value,source_kind:el('kind').value});el('entry').value='';await history();el('status').textContent='Entrada persistida.';});
+el('refresh').onclick=()=>run(async()=>{await history();el('status').textContent='Histórico carregado.';});
+el('scope').oninput=()=>{el('history').replaceChildren();el('results').textContent='Faça uma consulta nesta memória.';};
+el('search').onclick=()=>run(async()=>{el('results').textContent='Consultando…';const result=await api('/api/query',{scope:scope(),text:el('query').value,experimental:el('experimental').checked});el('results').replaceChildren();if(!result.candidates.length)el('results').textContent='Sem conteúdo recuperado para esta consulta. A memória não foi alterada.';for(const c of result.candidates)el('results').append(card(c.text,c.origins.map(o=>`${o.hierarchy_id} / ${o.source_id} · sequência ${o.sequence}`).join('\n')));if(result.experimental){const d=document.createElement('details');const title=document.createElement('summary');title.textContent='Hipóteses experimentais · '+result.experimental.routes.positive_copy_witness.reason;const pre=document.createElement('pre');pre.textContent=JSON.stringify(result.experimental,null,2);d.append(title,pre);el('results').append(d);}el('status').textContent=`Consulta concluída · ${result.candidates.length} trecho(s) · pergunta não registrada.`;});
+</script>
+</html>

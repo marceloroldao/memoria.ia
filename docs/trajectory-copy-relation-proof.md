@@ -41,7 +41,7 @@ O gêmeo sem relação tem exatamente as mesmas observações e saída completa 
 
 ## Verificação e continuidade
 
-Regressão local com registro de saída: **314 passed, 1 optional BDR skip**, em 522,97 segundos. Os oito testes novos passaram, incluindo ambos os seeds nativos e as falhas de qualidade esperadas. Os dois resumos e hashes completos reproduziram byte a byte. Compilação Python e `git diff --check` passaram. A CI deste incremento ainda precisa executar.
+Regressão local com registro de saída: **314 passed, 1 optional BDR skip**, em 522,97 segundos. Os oito testes novos passaram, incluindo ambos os seeds nativos e as falhas de qualidade esperadas. Os dois resumos e hashes completos reproduziram byte a byte. Compilação Python e `git diff --check` passaram. Após publicação de `50454f4`, os sete workflows aplicáveis passaram, incluindo trajetória `37662537535`; a regressão experimental condicional foi pulada. Isso verifica contratos e preservação das falhas relatadas, sem aprovar qualidade semântica/factual.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so python -m unittest discover -s tests -p test_trajectory_copy_relation_probe.py

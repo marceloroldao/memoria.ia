@@ -75,6 +75,10 @@ on:
       - 'tests/test_trajectory_bounded_refresh_probe.py'
       - 'scripts/trajectory_copy_relation_probe.py'
       - 'tests/test_trajectory_copy_relation_probe.py'
+      - 'scripts/trajectory_local_mvp.py'
+      - 'scripts/trajectory_local_mvp.html'
+      - 'scripts/trajectory_local_mvp_gate.py'
+      - 'tests/test_trajectory_local_mvp.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -130,6 +134,14 @@ jobs:
         run: |
           cmake -S native/mobile -B build/trajectory-native -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
           cmake --build build/trajectory-native --target memoria_mobile --parallel 2
+      - name: Local MVP API and real HTTP restart gate (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pip install 'fastapi>=0.116,<1' 'uvicorn>=0.35,<1' 'httpx>=0.28,<1' 'pytest>=8,<9'
+          python -m pytest -q tests/test_trajectory_local_mvp.py
+          python scripts/trajectory_local_mvp_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Observed regions versus exact native reply addresses (integrity only)
