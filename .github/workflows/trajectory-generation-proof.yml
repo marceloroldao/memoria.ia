@@ -81,6 +81,8 @@ on:
       - 'tests/test_trajectory_local_mvp.py'
       - 'scripts/trajectory_local_mvp_variation_gate.py'
       - 'tests/test_trajectory_local_mvp_variation.py'
+      - 'scripts/trajectory_question_frame_probe.py'
+      - 'tests/test_trajectory_question_frame_probe.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -145,6 +147,22 @@ jobs:
           python -m pytest -q tests/test_trajectory_local_mvp.py tests/test_trajectory_local_mvp_variation.py
           python scripts/trajectory_local_mvp_gate.py --library build/trajectory-native/libmemoria_mobile.so
           python scripts/trajectory_local_mvp_variation_gate.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Observed question-content frames (coverage and hidden-relevance failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_question_frame_probe.py
+          for question_seed in 20261221 20261222; do
+            python scripts/trajectory_question_frame_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$question_seed" --summary --output "/tmp/question-frame-$question_seed.json" > "/tmp/question-frame-$question_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261221, 20261222):
+              r = json.loads(Path(f'/tmp/question-frame-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
+          PY
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Observed regions versus exact native reply addresses (integrity only)
