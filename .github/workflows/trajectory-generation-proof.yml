@@ -79,6 +79,8 @@ on:
       - 'scripts/trajectory_local_mvp.html'
       - 'scripts/trajectory_local_mvp_gate.py'
       - 'tests/test_trajectory_local_mvp.py'
+      - 'scripts/trajectory_local_mvp_variation_gate.py'
+      - 'tests/test_trajectory_local_mvp_variation.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -140,8 +142,9 @@ jobs:
           PYTHONPATH: src
         run: |
           python -m pip install 'fastapi>=0.116,<1' 'uvicorn>=0.35,<1' 'httpx>=0.28,<1' 'pytest>=8,<9'
-          python -m pytest -q tests/test_trajectory_local_mvp.py
+          python -m pytest -q tests/test_trajectory_local_mvp.py tests/test_trajectory_local_mvp_variation.py
           python scripts/trajectory_local_mvp_gate.py --library build/trajectory-native/libmemoria_mobile.so
+          python scripts/trajectory_local_mvp_variation_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Observed regions versus exact native reply addresses (integrity only)

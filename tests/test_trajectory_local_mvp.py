@@ -188,3 +188,27 @@ def test_between_call_write_rejects_query_instead_of_returning_stale_view(app_fa
         assert response.status_code == 409
         assert "candidates" not in response.json()
         assert len(entries(c)["entries"]) == 2
+
+
+def test_structural_scores_are_diagnostics_not_factual_confidence(app_factory):
+    with TestClient(app_factory()) as c:
+        add(c, "Meu gato se chama Alt.")
+        result = query(c, "Qual nome do meu gato?")
+        candidate = result["candidates"][0]
+        assert candidate["native_support"]["exact_overlap"] >= 2
+        assert candidate["support_is_factual_confidence"] is False
+        assert result["retrieval"]["limit_may_have_hidden_alternatives"] is False
+        assert result["retrieval"]["all_relevant_content_recovered"] is None
+
+
+def test_native_recall_limit_warns_without_claiming_complete_conflict_detection(app_factory):
+    with TestClient(app_factory()) as c:
+        for i in range(20):
+            add(c, f"Meu gato se chama Nome{i}.")
+        before = entries(c)
+        result = query(c, "Qual nome do meu gato?")
+        assert len(result["candidates"]) == 16
+        assert result["retrieval"]["native_context_count"] == 16
+        assert result["retrieval"]["limit_may_have_hidden_alternatives"] is True
+        assert result["retrieval"]["all_relevant_content_recovered"] is None
+        assert entries(c) == before

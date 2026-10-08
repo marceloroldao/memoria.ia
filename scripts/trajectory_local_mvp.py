@@ -173,6 +173,9 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
                 raise HTTPException(500, "Consulta nativa rejeitada")
             texts = list(dict.fromkeys([r["text"] for r in accepted if r["text"] == request.text] +
                 [c["source_text"] for c in recall.get("contexts", [])]))
+            support = {c["source_text"]: {k: c[k] for k in
+                ("score", "exact_overlap", "surface_overlap", "association_mass") if k in c}
+                for c in recall.get("contexts", [])}
             candidates = []
             for text in texts:
                 origins = [dict(hierarchy_id=r["hierarchy_id"], source_id=r["source_id"],
@@ -180,7 +183,8 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
                            for r in accepted if r["text"] == text]
                 if origins:
                     candidates.append(dict(text=text, origins=origins,
-                        evidence_kind="EXACT_OBSERVED_CONTENT" if text == request.text else "NATIVE_STRUCTURAL_RECALL"))
+                        evidence_kind="EXACT_OBSERVED_CONTENT" if text == request.text else "NATIVE_STRUCTURAL_RECALL",
+                        native_support=support.get(text), support_is_factual_confidence=False))
             # Generated rows are timeline barriers only in the experimental
             # adapter; their actual native storage address stays in the journal.
             experimental_rows = [dict(r, hierarchy_id=request.region) if r["source_kind"] == "assistant_generated" else r for r in rows]
@@ -190,7 +194,10 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
                         candidates=candidates, experimental=experiment,
                         answer=None, qualified=False, selected_target=None, selection_used=False,
                         query_recorded=False, revision=before["revision"], window_token=before["token"],
-                        recall_limit=16, factual_quality_status="NOT_EVALUATED")
+                        recall_limit=16, factual_quality_status="NOT_EVALUATED",
+                        retrieval=dict(native_context_count=len(recall.get("contexts", [])),
+                            limit_may_have_hidden_alternatives=len(recall.get("contexts", [])) >= 16,
+                            all_relevant_content_recovered=None))
 
     return app
 
