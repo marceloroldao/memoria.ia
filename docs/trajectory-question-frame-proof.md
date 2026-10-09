@@ -52,7 +52,7 @@ Na preparação, uma renomeação para caracteres U+0100+ foi rejeitada pelo tok
 
 Oito testes novos e regressões dos leitores de moldura/âncora e adaptadores nativos: **30 passed**. Cobrem discriminação literal, consultas novas sem gravação, perda por poucos exemplos/cópias, fontes e testemunhos aceitos, conflito sem voto, metadados mascarados, exemplos trocados, gêmeos indistinguíveis, perdas de paráfrase/maiúsculas, reabertura fria e símbolos renomeados.
 
-Os resumos preservam todas as entradas, consultas, candidatos, origens, scores dos dois leitores e falhas. Molduras completas, tabela de proveniência e testemunhos longos têm hashes; sem `--summary`, a CLI emite todo o conteúdo. `full_report_sha256` usa a serialização canônica do relatório, sem timestamps. Ambos os resumos e hashes completos reproduziram byte a byte em nova execução. Compilação Python e `git diff --check` passaram. A CI inclui ambos os seeds e os testes novos. O novo commit ainda precisa executar seus checks.
+Os resumos preservam todas as entradas, consultas, candidatos, origens, scores dos dois leitores e falhas. Molduras completas, tabela de proveniência e testemunhos longos têm hashes; sem `--summary`, a CLI emite todo o conteúdo. `full_report_sha256` usa a serialização canônica do relatório, sem timestamps. Ambos os resumos e hashes completos reproduziram byte a byte em nova execução. Compilação Python e `git diff --check` passaram. A CI inclui ambos os seeds e os testes novos. A CI de `dc3ea89` passou nos oito workflows aplicáveis; o workflow condicional de regressão foi ignorado. A prova de trajetória passou no run `37794083377`.
 
 ```sh
 MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so \

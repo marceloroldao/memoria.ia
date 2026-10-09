@@ -145,8 +145,8 @@ def score(texts, expected):
                 false_positive=len(actual - reference), false_negative=len(reference - actual))
 
 
-def trial(library, case, seed, renamed):
-    rows, region, queries = fixture(case, seed, renamed)
+def trial(library, case, seed, renamed, fixture_factory=fixture):
+    rows, region, queries = fixture_factory(case, seed, renamed)
     scopes = list(dict.fromkeys(r["hierarchy_id"] for r in rows))
     with tempfile.TemporaryDirectory(prefix="memoria-question-frame-") as directory:
         native = NativeProbe(library, Path(directory))
