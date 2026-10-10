@@ -25,11 +25,11 @@ CASES = ("three_examples", "no_examples", "two_examples", "repeated_one_example"
          "crossed_examples", "unrelated_twin", "untrained_attribute_observed")
 
 
-def read(rows, region, query):
+def read(rows, region, query, reader=checked_read):
     inputs = [{k: r[k] for k in FIELDS} for r in rows if r["hierarchy_id"] == region]
     memory, origins = adapt_regions(inputs)
     before = memory.snapshot(), memory.learning_state()
-    view = checked_read(memory, encode(query, "unicode"))
+    view = reader(memory, encode(query, "unicode"))
     indexed = {(r["hierarchy_id"], r["source_id"], r["sequence"]): r for r in inputs}
     candidates = []
     for c in view["candidates"]:
@@ -145,7 +145,7 @@ def score(texts, expected):
                 false_positive=len(actual - reference), false_negative=len(reference - actual))
 
 
-def trial(library, case, seed, renamed, fixture_factory=fixture):
+def trial(library, case, seed, renamed, fixture_factory=fixture, read_factory=read):
     rows, region, queries = fixture_factory(case, seed, renamed)
     scopes = list(dict.fromkeys(r["hierarchy_id"] for r in rows))
     with tempfile.TemporaryDirectory(prefix="memoria-question-frame-") as directory:
@@ -156,7 +156,7 @@ def trial(library, case, seed, renamed, fixture_factory=fixture):
             before = fingerprint(stored)
             outcomes, views, frames = [], [], None
             for query in queries:
-                view = read(stored, region, query["text"])
+                view = read_factory(stored, region, query["text"])
                 views.append(view)
                 if frames is None:
                     frames = view["frames"]
@@ -176,11 +176,11 @@ def trial(library, case, seed, renamed, fixture_factory=fixture):
                 all_views_unqualified=all(v["answer"] is None and not v["qualified"] and not v["selection_used"] and v["selected_target"] is None for v in views),
                 query_independent_frames=all(v["frames"] == frames for v in views))
             masked = [dict(r, reply_to={"source_id":"hidden"}, expected="evaluator", category="not-input") for r in stored]
-            checks["metadata_masked"] = read(masked, region, queries[0]["text"]) == views[0]
+            checks["metadata_masked"] = read_factory(masked, region, queries[0]["text"]) == views[0]
             native.reopen()
             cold = collect(native, scopes)
             checks["cold_rows_equal"] = cold == stored
-            checks["cold_full_views_equal"] = all(read(cold, region, q["text"]) == v for q, v in zip(queries, views))
+            checks["cold_full_views_equal"] = all(read_factory(cold, region, q["text"]) == v for q, v in zip(queries, views))
             checks["origins_local_users"] = all(tuple(o) in {(r["hierarchy_id"],r["source_id"],r["sequence"]) for r in stored
                 if r["hierarchy_id"] == region and r["source_kind"] == "user_turn"} for v in views for c in v["candidates"] for o in c["origins"])
             # Every observation root has immutable text/origins. Keep the union

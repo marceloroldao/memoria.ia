@@ -85,6 +85,8 @@ on:
       - 'tests/test_trajectory_question_frame_probe.py'
       - 'scripts/trajectory_question_variant_probe.py'
       - 'tests/test_trajectory_question_variant_probe.py'
+      - 'scripts/trajectory_symbol_transform_probe.py'
+      - 'tests/test_trajectory_symbol_transform_probe.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -179,6 +181,22 @@ jobs:
           from pathlib import Path
           for seed in (20261223, 20261224):
               r = json.loads(Path(f'/tmp/question-variant-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
+          PY
+      - name: Observed finite symbol substitutions (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_symbol_transform_probe.py
+          for transform_seed in 20261225 20261226; do
+            python scripts/trajectory_symbol_transform_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$transform_seed" --summary --output "/tmp/symbol-transform-$transform_seed.json" > "/tmp/symbol-transform-$transform_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261225, 20261226):
+              r = json.loads(Path(f'/tmp/symbol-transform-{seed}.json').read_text())
               print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
           PY
       - name: Original native personal gates (quality failures reported)

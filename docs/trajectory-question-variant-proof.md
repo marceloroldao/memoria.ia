@@ -42,7 +42,7 @@ PYTHONPATH=src python scripts/trajectory_question_variant_probe.py \
  --library build/trajectory-native/libmemoria_mobile.so --seed 20261223 --summary
 ```
 
-BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. A CI anterior (`dc3ea89`) passou nos oito workflows aplicáveis. O novo workflow inclui os testes e ambos os seeds; os checks deste incremento ainda precisam executar.
+BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. A CI anterior (`dc3ea89`) passou nos oito workflows aplicáveis. O novo workflow inclui os testes e ambos os seeds; a CI de `53c481b` passou nos oito workflows aplicáveis (prova de trajetória: run `37973289818`); o workflow condicional foi ignorado.
 
 O próximo limite útil é aprender relações observadas que transformem a variável, em vez de apenas copiá-la, mantendo controles de transformação errada, conteúdo ausente e origem observada. Este incremento não implementa essa transformação.
 
