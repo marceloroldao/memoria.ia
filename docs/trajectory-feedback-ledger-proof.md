@@ -59,4 +59,4 @@ python scripts/trajectory_feedback_ledger_probe.py \
   --seed 20261231 --output /tmp/feedback-ledger-development.json
 ```
 
-BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. O commit anterior `6c6901f` passou nos oito workflows aplicáveis; trajetória no run `38086413178`. O workflow condicional foi ignorado. A CI deste incremento inclui a nova suíte e ambos os seeds e fica pendente até a execução remota.
+BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. O commit `afee837` passou nos oito workflows aplicáveis; trajetória no run `38088721518`, incluindo esta suíte e ambos os seeds. O anterior `6c6901f` também passou; trajetória no run `38086413178`. O workflow condicional foi ignorado.

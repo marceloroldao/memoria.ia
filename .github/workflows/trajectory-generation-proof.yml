@@ -93,6 +93,8 @@ on:
       - 'tests/test_trajectory_route_relation_probe.py'
       - 'scripts/trajectory_feedback_ledger_probe.py'
       - 'tests/test_trajectory_feedback_ledger_probe.py'
+      - 'scripts/trajectory_feedback_gate_probe.py'
+      - 'tests/test_trajectory_feedback_gate_probe.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -252,6 +254,22 @@ jobs:
           for seed in (20261231, 20270102):
               r = json.loads(Path(f'/tmp/feedback-ledger-{seed}.json').read_text())
               print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'factual_quality_status', 'retrieval_improvement_status')})
+          PY
+      - name: Exact-receipt feedback veto (integrity and negative controls)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_gate_probe.py
+          for feedback_gate_seed in 20270103 20270104; do
+            python scripts/trajectory_feedback_gate_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$feedback_gate_seed" --output "/tmp/feedback-gate-$feedback_gate_seed.json" > "/tmp/feedback-gate-$feedback_gate_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20270103, 20270104):
+              r = json.loads(Path(f'/tmp/feedback-gate-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'effects', 'general_learning_status', 'report_content_sha256')})
           PY
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
