@@ -62,6 +62,6 @@ PYTHONPATH=src python scripts/trajectory_symbol_transform_probe.py \
  --library build/trajectory-native/libmemoria_mobile.so --seed 20261225 --summary
 ```
 
-BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. Relatórios: `benchmark-results/trajectory-symbol-transform-{development,reserved}.json`. A CI anterior (`53c481b`) passou nos oito workflows aplicáveis; a prova de trajetória passou no run `37973289818`. Os checks deste novo incremento ainda precisam executar.
+BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. Relatórios: `benchmark-results/trajectory-symbol-transform-{development,reserved}.json`. A CI anterior (`53c481b`) passou nos oito workflows aplicáveis; a prova de trajetória passou no run `37973289818`. A CI de `1c0b0a3` passou nos oito workflows aplicáveis; a prova de trajetória passou no run `38082813810`, e o workflow condicional foi ignorado.
 
 Não alteramos o núcleo estável, ABI, seletor padrão ou MVP. A prova anterior ganhou parâmetros opcionais para injetar leitor e fixture; os padrões preservam o comportamento anterior. A exploração de grupos de três pares tem custo combinatorial e não foi validada para escala de produção. O próximo passo útil é medir a composição entre rotas de cópia e transformação, mantendo ambas as proveniências e expondo novos conflitos em vez de instalar uma prioridade automática.

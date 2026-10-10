@@ -89,6 +89,8 @@ on:
       - 'tests/test_trajectory_symbol_transform_probe.py'
       - 'scripts/trajectory_composed_frame_probe.py'
       - 'tests/test_trajectory_composed_frame_probe.py'
+      - 'scripts/trajectory_route_relation_probe.py'
+      - 'tests/test_trajectory_route_relation_probe.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -216,6 +218,22 @@ jobs:
           for seed in (20261227, 20261228):
               r = json.loads(Path(f'/tmp/composed-frame-{seed}.json').read_text())
               print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
+          PY
+      - name: Route set relations and append-only interventions (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_route_relation_probe.py
+          for relation_seed in 20261229 20261230; do
+            python scripts/trajectory_route_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$relation_seed" --summary --output "/tmp/route-relation-$relation_seed.json" > "/tmp/route-relation-$relation_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261229, 20261230):
+              r = json.loads(Path(f'/tmp/route-relation-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'relation_counts', 'full_report_sha256')})
           PY
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so

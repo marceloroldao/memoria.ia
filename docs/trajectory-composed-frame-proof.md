@@ -68,6 +68,6 @@ PYTHONPATH=src python scripts/trajectory_composed_frame_probe.py \
  --library build/trajectory-native/libmemoria_mobile.so --seed 20261227 --summary
 ```
 
-BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. Relatórios: `benchmark-results/trajectory-composed-frame-{development,reserved}.json`. A CI inclui os testes e ambos os seeds. Os checks deste novo incremento ainda precisam executar. Na primeira verificação do predecessor `1c0b0a3`, sete workflows aplicáveis passaram e a prova de trajetória continuava em execução; o workflow condicional foi ignorado.
+BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. Relatórios: `benchmark-results/trajectory-composed-frame-{development,reserved}.json`. A CI inclui os testes e ambos os seeds. A CI de `b41492c` passou nos oito workflows aplicáveis; a prova de trajetória passou no run `38083673221`. O predecessor `1c0b0a3` também passou nos oito workflows aplicáveis, incluindo a prova de trajetória no run `38082813810`; o workflow condicional foi ignorado.
 
 A composição permanece uma rota opt-in de pesquisa, com custo combinatorial de aprendizado herdado dos leitores. Não foi integrada ao seletor padrão nem à interface do MVP. O próximo problema é expor ou aprender sinais de contradição entre rotas a partir de intervenções observadas, sem confundir discordância com falsidade nem decidir pela quantidade de rotas ou ocorrências.
