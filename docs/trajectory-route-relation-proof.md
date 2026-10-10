@@ -70,6 +70,6 @@ PYTHONPATH=src python scripts/trajectory_route_relation_probe.py \
  --library build/trajectory-native/libmemoria_mobile.so --seed 20261229 --summary
 ```
 
-BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. Relatórios: `benchmark-results/trajectory-route-relation-{development,reserved}.json`. A CI de `b41492c` passou nos oito workflows aplicáveis, incluindo trajetória no run `38083673221`; `1c0b0a3` também passou, com trajetória no run `38082813810`. O workflow condicional foi ignorado. A CI inclui os testes e ambos os seeds novos; os checks deste incremento ainda precisam executar.
+BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. Relatórios: `benchmark-results/trajectory-route-relation-{development,reserved}.json`. A CI de `6c6901f` passou nos oito workflows aplicáveis, incluindo trajetória no run `38086413178`. A CI de `b41492c` também passou, com trajetória no run `38083673221`; `1c0b0a3` passou com trajetória no run `38082813810`. O workflow condicional foi ignorado. A CI executou os testes e ambos os seeds deste diagnóstico.
 
 O diagnóstico permanece uma rota opt-in de pesquisa; não altera o núcleo estável, ABI, seletor padrão ou MVP. O próximo problema é representar retorno observado de acerto/erro com alvo e proveniência próprios, testar contrafactuais e fontes concorrentes e só então investigar uma mudança de suporte de rota. Repetição, concordância e divergência sozinhas não forneceram esse sinal.
