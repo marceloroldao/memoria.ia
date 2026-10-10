@@ -60,4 +60,4 @@ python scripts/trajectory_feedback_gate_probe.py \
   --seed 20270103 --output /tmp/feedback-gate-development.json
 ```
 
-BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. O commit anterior `afee837` passou nos oito workflows aplicáveis, incluindo trajetória no run `38088721518`; workflow condicional ignorado. A CI inclui os testes e ambos os seeds deste incremento, pendentes até executar remotamente. O PR permanece draft; baseline, seletores padrão, ABI e MVP permanecem preservados.
+BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. O commit `8ddc632` passou nos oito workflows aplicáveis, incluindo trajetória no run `38094045735` com estes testes e ambos os seeds. O anterior `afee837` também passou, incluindo trajetória no run `38088721518`; workflow condicional ignorado. O PR permanece draft; baseline, seletores padrão, ABI e MVP permanecem preservados.
