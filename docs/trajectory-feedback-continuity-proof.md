@@ -66,3 +66,5 @@ python scripts/trajectory_feedback_continuity_probe.py \
 ```
 
 BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. O commit anterior `8ddc632` passou nos oito workflows aplicáveis, incluindo trajetória no run `38094045735`; workflow condicional ignorado. A CI inclui os testes e ambos os seeds deste incremento, pendentes até executar remotamente. Núcleo estável, ABI, seletores padrão, MVP e PR draft permanecem preservados.
+
+Atualização de CI: `385dd22` passou em sete workflows, mas trajetória no run `38095264122` terminou cancelada por atingir o limite de 25 minutos do job `native-bridge`. O job `proof` passou. As etapas de ledger, veto e continuidade passaram, incluindo esta suíte e ambos os seeds; o cancelamento ocorreu depois, na etapa antiga de filtros contextuais, e impediu a etapa seguinte. A execução integral não está aprovada. O incremento de retirada amplia o limite para 40 minutos e mantém o cancelamento documentado.
