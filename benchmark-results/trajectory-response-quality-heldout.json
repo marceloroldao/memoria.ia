@@ -1,0 +1,1598 @@
+{
+  "format": "memoria.ia-response-quality-synthetic-v1",
+  "seed": 20261004,
+  "trials": 2,
+  "integrity_status": "PASS",
+  "quality_status": "FAIL",
+  "counts": {
+    "answer_cases": 28,
+    "correct_unique_answers": 8,
+    "false_unique_outputs": 10,
+    "answer_targets_retained": 24,
+    "absence_abstentions": 18,
+    "conflicts_preserved": 4,
+    "invalid_outputs": 0,
+    "absence_cases": 24,
+    "conflict_cases": 4
+  },
+  "required_cases": 52,
+  "required_passes": 30,
+  "cases": [
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Luma?",
+      "expected": [
+        "Luma: 381."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502.",
+        "Neri: 635."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 502.",
+        "Neri: 635.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "split_capture"
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 502."
+      ],
+      "selected": "Neri: 502.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Luma?",
+      "expected": [
+        "Luma: 381."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Luma: 381.",
+        ": Neri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 502.",
+        "Neri: 635."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 502.",
+        "Neri: 635.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "split_capture"
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": Neri: 248.",
+        ": ",
+        "ri: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248.",
+        "Neri: 711."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 711.",
+        "Neri: 248.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "split_capture"
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Neri: 248."
+      ],
+      "selected": "Neri: 248.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Neri"
+      ],
+      "selected": "Neri",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Neri: 248.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 502."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 502.",
+        ": Neri: 248.",
+        ": ",
+        "ri: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Neri?",
+      "expected": [
+        "Neri: 248.",
+        "Neri: 711."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Neri: 711.",
+        "Neri: 248.",
+        "Neri: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "split_capture"
+    }
+  ],
+  "scope": "fictional text fixtures, raw Unicode/UTF-8 adapters; no personal or multimodal accuracy claim",
+  "labels_used_by_engine": false
+}

@@ -1,0 +1,3028 @@
+{
+  "format": "memoria.ia-local-mvp-variation-v1",
+  "integrity_status": "PASS",
+  "integrity_passed": 12,
+  "integrity_total": 12,
+  "checks": {
+    "all_scope_histories_unchanged": true,
+    "repeated_query_full_parity": true,
+    "repeated_queries_do_not_reinforce": true,
+    "cold_restart_full_parity": true,
+    "cold_histories_equal": true,
+    "all_cases_read_only_envelope": true,
+    "all_cases_unqualified": true,
+    "all_cases_observed_origins": true,
+    "all_cases_complete_payload_origins": true,
+    "all_cases_generated_excluded": true,
+    "all_cases_scope_preserved": true,
+    "all_cases_support_not_confidence": true
+  },
+  "totals": {
+    "cases": 37,
+    "exact_cases": 13,
+    "true_positive": 28,
+    "false_positive": 51,
+    "false_negative": 0
+  },
+  "by_category": {
+    "absent_attribute": {
+      "cases": 10,
+      "exact_cases": 0,
+      "true_positive": 0,
+      "false_positive": 23,
+      "false_negative": 0
+    },
+    "absent_entity": {
+      "cases": 2,
+      "exact_cases": 0,
+      "true_positive": 0,
+      "false_positive": 8,
+      "false_negative": 0
+    },
+    "conflict": {
+      "cases": 7,
+      "exact_cases": 4,
+      "true_positive": 14,
+      "false_positive": 4,
+      "false_negative": 0
+    },
+    "empty_scope": {
+      "cases": 1,
+      "exact_cases": 1,
+      "true_positive": 0,
+      "false_positive": 0,
+      "false_negative": 0
+    },
+    "exact_content": {
+      "cases": 1,
+      "exact_cases": 0,
+      "true_positive": 1,
+      "false_positive": 3,
+      "false_negative": 0
+    },
+    "foreign_only": {
+      "cases": 1,
+      "exact_cases": 0,
+      "true_positive": 0,
+      "false_positive": 4,
+      "false_negative": 0
+    },
+    "generated_only": {
+      "cases": 1,
+      "exact_cases": 1,
+      "true_positive": 0,
+      "false_positive": 0,
+      "false_negative": 0
+    },
+    "no_overlap": {
+      "cases": 1,
+      "exact_cases": 1,
+      "true_positive": 0,
+      "false_positive": 0,
+      "false_negative": 0
+    },
+    "positive": {
+      "cases": 13,
+      "exact_cases": 6,
+      "true_positive": 13,
+      "false_positive": 9,
+      "false_negative": 0
+    }
+  },
+  "retrieval_quality_status": "FAIL_EXTRA_OR_MISSING_CONTENT",
+  "factual_quality_status": "NOT_EVALUATED",
+  "source_entry_count": 25,
+  "cases": [
+    {
+      "scope": "pets",
+      "name": "cat_name",
+      "query": "Qual nome do meu gato?",
+      "category": "conflict",
+      "expected": [
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "retrieved": [
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.9025524004856592,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.5025524004856592
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8991881914700519,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.4991881914700519
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.7729069297483231,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3729069297483231
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 2,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Meu gato dorme no sofá."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "cat_name_paraphrase",
+      "query": "Como se chama meu gato?",
+      "category": "conflict",
+      "expected": [
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "retrieved": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.8397558597573034,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 1.0397558597573033
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.8326698266016197,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 1.0326698266016197
+          }
+        },
+        {
+          "text": "Meu cachorro se chama Bolt.",
+          "source_sequences": [
+            5
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.488585211537547,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.8885852115375471
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.020563711503299,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.6205637115032989
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 2,
+      "false_positive": 2,
+      "false_negative": 0,
+      "extra": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 4,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "cat_name_uppercase",
+      "query": "QUAL NOME DO MEU GATO?",
+      "category": "conflict",
+      "expected": [
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "retrieved": [
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.9025524004856592,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.5025524004856592
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8991881914700519,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.4991881914700519
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.7729069297483231,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3729069297483231
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 2,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Meu gato dorme no sofá."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "cat_sleep",
+      "query": "Onde meu gato dorme?",
+      "category": "positive",
+      "expected": [
+        "Meu gato dorme no sofá."
+      ],
+      "retrieved": [
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.3705814362502742,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.6205814362502741
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.2163049358107498,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.7163049358107498
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.2111096247074915,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.7111096247074915
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 2,
+      "false_negative": 0,
+      "extra": [
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "dog_name",
+      "query": "Qual nome do meu cachorro?",
+      "category": "positive",
+      "expected": [
+        "Meu cachorro se chama Bolt."
+      ],
+      "retrieved": [
+        "Meu cachorro se chama Bolt."
+      ],
+      "candidates": [
+        {
+          "text": "Meu cachorro se chama Bolt.",
+          "source_sequences": [
+            5
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6794914426497571,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.27949144264975706
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 1,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "cat_color_absent",
+      "query": "Qual a cor do meu gato?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.752127000404716,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.41879366707138266
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.7493234928917099,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.41599015955837654
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6440891081236026,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3107557747902693
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 3,
+      "false_negative": 0,
+      "extra": [
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "cat_age_absent",
+      "query": "Quantos anos tem meu gato?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.9025524004856592,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.5025524004856592
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8991881914700519,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.4991881914700519
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.7729069297483231,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3729069297483231
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 3,
+      "false_negative": 0,
+      "extra": [
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "bird_absent",
+      "query": "Qual nome do meu pássaro?",
+      "category": "absent_entity",
+      "expected": [],
+      "retrieved": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.44030061302924817,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.24030061302924813
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.4386347637543749,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.23863476375437487
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.37160271736792405,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.17160271736792404
+          }
+        },
+        {
+          "text": "Meu cachorro se chama Bolt.",
+          "source_sequences": [
+            5
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.3632247759830904,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.16322477598309038
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 4,
+      "false_negative": 0,
+      "extra": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 4,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "exact_observed",
+      "query": "Meu gato se chama Alt.",
+      "category": "exact_content",
+      "expected": [
+        "Meu gato se chama Alt."
+      ],
+      "retrieved": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "EXACT_OBSERVED_CONTENT",
+          "native_support": {
+            "score": 2.113540287730662,
+            "exact_overlap": 5,
+            "surface_overlap": 0,
+            "association_mass": 1.1135402877306617
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.9221946387636364,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 1.1221946387636363
+          }
+        },
+        {
+          "text": "Meu cachorro se chama Bolt.",
+          "source_sequences": [
+            5
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.5575830655526093,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.9575830655526092
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.0455835602204289,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.6455835602204288
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 3,
+      "false_negative": 0,
+      "extra": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt2."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 4,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "no_overlap",
+      "query": "zzzzzzz",
+      "category": "no_overlap",
+      "expected": [],
+      "retrieved": [],
+      "candidates": [],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 0,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "UNRESOLVED",
+      "retrieval": {
+        "native_context_count": 0,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "cars",
+      "name": "corsa_color",
+      "query": "Qual a cor do meu Corsa?",
+      "category": "conflict",
+      "expected": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata."
+      ],
+      "retrieved": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata."
+      ],
+      "candidates": [
+        {
+          "text": "Meu Corsa é branco.",
+          "source_sequences": [
+            2,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.7024578075670127,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3691244742336794
+          }
+        },
+        {
+          "text": "Meu Corsa é prata.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6970139554574897,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3636806221241564
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 2,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "cars",
+      "name": "corsa_color_paraphrase",
+      "query": "Meu Corsa tem que cor?",
+      "category": "conflict",
+      "expected": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata."
+      ],
+      "retrieved": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata."
+      ],
+      "candidates": [
+        {
+          "text": "Meu Corsa é branco.",
+          "source_sequences": [
+            2,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8429493690804153,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.44294936908041527
+          }
+        },
+        {
+          "text": "Meu Corsa é prata.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8364167465489878,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.4364167465489877
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 2,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "cars",
+      "name": "jetta_color",
+      "query": "Qual a cor do meu Jetta?",
+      "category": "positive",
+      "expected": [
+        "Meu Jetta é preto."
+      ],
+      "retrieved": [
+        "Meu Jetta é preto."
+      ],
+      "candidates": [
+        {
+          "text": "Meu Jetta é preto.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.5781313536560404,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.24479802032270712
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 1,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "cars",
+      "name": "kombi_color",
+      "query": "Qual a cor da minha Kombi?",
+      "category": "positive",
+      "expected": [
+        "Minha Kombi é preta."
+      ],
+      "retrieved": [
+        "Minha Kombi é preta."
+      ],
+      "candidates": [
+        {
+          "text": "Minha Kombi é preta.",
+          "source_sequences": [
+            5
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.5138888888888888,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.18055555555555555
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 1,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "cars",
+      "name": "corsa_year_absent",
+      "query": "De que ano é meu Corsa?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata.",
+        "Meu Jetta é preto."
+      ],
+      "candidates": [
+        {
+          "text": "Meu Corsa é branco.",
+          "source_sequences": [
+            2,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.0748443976588413,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.5748443976588413
+          }
+        },
+        {
+          "text": "Meu Corsa é prata.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.0664415640143217,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.5664415640143218
+          }
+        },
+        {
+          "text": "Meu Jetta é preto.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8113952337687811,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.47806190043544783
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 3,
+      "false_negative": 0,
+      "extra": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata.",
+        "Meu Jetta é preto."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "cars",
+      "name": "car_location_absent",
+      "query": "Onde está meu Corsa?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata."
+      ],
+      "candidates": [
+        {
+          "text": "Meu Corsa é branco.",
+          "source_sequences": [
+            2,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.053686711350519,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.5536867113505191
+          }
+        },
+        {
+          "text": "Meu Corsa é prata.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.0455209331862347,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.5455209331862346
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 2,
+      "false_negative": 0,
+      "extra": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "cars",
+      "name": "fiesta_absent",
+      "query": "Qual a cor do meu Fiesta?",
+      "category": "absent_entity",
+      "expected": [],
+      "retrieved": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata.",
+        "Meu Jetta é preto.",
+        "Minha Kombi é preta."
+      ],
+      "candidates": [
+        {
+          "text": "Meu Corsa é branco.",
+          "source_sequences": [
+            2,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.3391213281146694,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.17245466144800273
+          }
+        },
+        {
+          "text": "Meu Corsa é prata.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.33643326712851296,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.1697666004618463
+          }
+        },
+        {
+          "text": "Meu Jetta é preto.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.301862947144086,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.13519628047741938
+          }
+        },
+        {
+          "text": "Minha Kombi é preta.",
+          "source_sequences": [
+            5
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.08678166427630024,
+            "exact_overlap": 0,
+            "surface_overlap": 0,
+            "association_mass": 0.08678166427630024
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 4,
+      "false_negative": 0,
+      "extra": [
+        "Meu Corsa é branco.",
+        "Meu Corsa é prata.",
+        "Meu Jetta é preto.",
+        "Minha Kombi é preta."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 4,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "home",
+      "name": "house_color",
+      "query": "Qual a cor da minha casa?",
+      "category": "positive",
+      "expected": [
+        "Minha casa é azul."
+      ],
+      "retrieved": [
+        "Azul é a cor do céu.",
+        "Minha casa é azul."
+      ],
+      "candidates": [
+        {
+          "text": "Minha casa é azul.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6744187853305603,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.34108545199722706
+          }
+        },
+        {
+          "text": "Azul é a cor do céu.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6305150390950102,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.29718170576167685
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Azul é a cor do céu."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "home",
+      "name": "sky_color",
+      "query": "Qual é a cor do céu?",
+      "category": "positive",
+      "expected": [
+        "Azul é a cor do céu."
+      ],
+      "retrieved": [
+        "Azul é a cor do céu."
+      ],
+      "candidates": [
+        {
+          "text": "Azul é a cor do céu.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.2628370933307171,
+            "exact_overlap": 5,
+            "surface_overlap": 0,
+            "association_mass": 0.4295037599973839
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 1,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "home",
+      "name": "workshop_color",
+      "query": "Qual a cor da minha oficina?",
+      "category": "positive",
+      "expected": [
+        "Minha oficina é amarela."
+      ],
+      "retrieved": [
+        "Azul é a cor do céu.",
+        "Minha oficina é amarela."
+      ],
+      "candidates": [
+        {
+          "text": "Minha oficina é amarela.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6427929268666694,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3094595935333361
+          }
+        },
+        {
+          "text": "Azul é a cor do céu.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6176611200338284,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.28432778670049513
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Azul é a cor do céu."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "home",
+      "name": "door_color",
+      "query": "Qual a cor da minha porta?",
+      "category": "positive",
+      "expected": [
+        "Minha porta é branca."
+      ],
+      "retrieved": [
+        "Azul é a cor do céu.",
+        "Minha porta é branca."
+      ],
+      "candidates": [
+        {
+          "text": "Minha porta é branca.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6449241835231697,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3115908501898364
+          }
+        },
+        {
+          "text": "Azul é a cor do céu.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6130847513370257,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.2797514180036923
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Azul é a cor do céu."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "home",
+      "name": "house_address_absent",
+      "query": "Qual o endereço da minha casa?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Minha casa é azul."
+      ],
+      "candidates": [
+        {
+          "text": "Minha casa é azul.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.5637375051004959,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.23040417176716257
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Minha casa é azul."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "home",
+      "name": "house_owner_absent",
+      "query": "Quem é o dono da minha casa?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Minha casa é azul.",
+        "Minha oficina é amarela.",
+        "Minha porta é branca."
+      ],
+      "candidates": [
+        {
+          "text": "Minha casa é azul.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.7629649795976028,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.3343935510261743
+          }
+        },
+        {
+          "text": "Minha porta é branca.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.605359349064477,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.31964506335019127
+          }
+        },
+        {
+          "text": "Minha oficina é amarela.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.6022443541392417,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.31653006842495607
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 3,
+      "false_negative": 0,
+      "extra": [
+        "Minha casa é azul.",
+        "Minha oficina é amarela.",
+        "Minha porta é branca."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "agenda",
+      "name": "meeting_day",
+      "query": "Em que dia está marcada minha reunião?",
+      "category": "positive",
+      "expected": [
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "retrieved": [
+        "Minha reunião começa às 14h.",
+        "Minha reunião está marcada para terça-feira.",
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "candidates": [
+        {
+          "text": "Minha reunião está marcada para terça-feira.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.0093085169603437,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 0.43787994553177234
+          }
+        },
+        {
+          "text": "Minha viagem está marcada para sexta-feira.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8440949910652409,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.4155235624938123
+          }
+        },
+        {
+          "text": "Minha reunião começa às 14h.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.5857552471627963,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3000409614485105
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 2,
+      "false_negative": 0,
+      "extra": [
+        "Minha reunião começa às 14h.",
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 3,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "agenda",
+      "name": "meeting_time",
+      "query": "A que horas minha reunião começa?",
+      "category": "positive",
+      "expected": [
+        "Minha reunião começa às 14h."
+      ],
+      "retrieved": [
+        "Minha reunião começa às 14h.",
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "candidates": [
+        {
+          "text": "Minha reunião começa às 14h.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8360387748288538,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.33603877482885386
+          }
+        },
+        {
+          "text": "Minha reunião está marcada para terça-feira.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.5928787055127329,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.25954537217939955
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "agenda",
+      "name": "trip_day",
+      "query": "Em que dia está marcada minha viagem?",
+      "category": "positive",
+      "expected": [
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "retrieved": [
+        "Minha reunião está marcada para terça-feira.",
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "candidates": [
+        {
+          "text": "Minha viagem está marcada para sexta-feira.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.9685408992576111,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 0.3971123278290397
+          }
+        },
+        {
+          "text": "Minha reunião está marcada para terça-feira.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8405193423755347,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.41194791380410617
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "agenda",
+      "name": "meeting_place_absent",
+      "query": "Onde será minha reunião?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Minha reunião começa às 14h.",
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "candidates": [
+        {
+          "text": "Minha reunião começa às 14h.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8527219733701936,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.3527219733701937
+          }
+        },
+        {
+          "text": "Minha reunião está marcada para terça-feira.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.8291672768679985,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.32916727686799846
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 2,
+      "false_negative": 0,
+      "extra": [
+        "Minha reunião começa às 14h.",
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "agenda",
+      "name": "trip_price_absent",
+      "query": "Quanto custa minha viagem?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "candidates": [
+        {
+          "text": "Minha viagem está marcada para sexta-feira.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.7582146516569768,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.2582146516569767
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "devices",
+      "name": "sensor_temperature",
+      "query": "Quantos graus indica o sensor?",
+      "category": "positive",
+      "expected": [
+        "O sensor indica 23 graus."
+      ],
+      "retrieved": [
+        "O sensor indica 23 graus."
+      ],
+      "candidates": [
+        {
+          "text": "O sensor indica 23 graus.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.1881782134194032,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 0.38817821341940323
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 1,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "devices",
+      "name": "source_voltage",
+      "query": "Quantos volts fornece a fonte?",
+      "category": "positive",
+      "expected": [
+        "A fonte fornece 12 volts."
+      ],
+      "retrieved": [
+        "A fonte fornece 12 volts."
+      ],
+      "candidates": [
+        {
+          "text": "A fonte fornece 12 volts.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.1920794693227021,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 0.3920794693227021
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 1,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "devices",
+      "name": "robot_status",
+      "query": "O robô está online ou offline?",
+      "category": "conflict",
+      "expected": [
+        "O robô está offline.",
+        "O robô está online."
+      ],
+      "retrieved": [
+        "O robô está offline.",
+        "O robô está online."
+      ],
+      "candidates": [
+        {
+          "text": "O robô está offline.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.3528443094376927,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 0.6861776427710261
+          }
+        },
+        {
+          "text": "O robô está online.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.3446085847592428,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 0.6779419180925763
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 2,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "devices",
+      "name": "robot_status_paraphrase",
+      "query": "Como está o robô?",
+      "category": "conflict",
+      "expected": [
+        "O robô está offline.",
+        "O robô está online."
+      ],
+      "retrieved": [
+        "O robô está offline.",
+        "O robô está online."
+      ],
+      "candidates": [
+        {
+          "text": "O robô está offline.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.533026301174214,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.7830263011742139
+          }
+        },
+        {
+          "text": "O robô está online.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.5206727141565393,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.7706727141565393
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 2,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 2,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "devices",
+      "name": "sensor_battery_absent",
+      "query": "Qual a bateria do sensor?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "A fonte fornece 12 volts.",
+        "O robô está offline.",
+        "O robô está online.",
+        "O sensor indica 23 graus."
+      ],
+      "candidates": [
+        {
+          "text": "O sensor indica 23 graus.",
+          "source_sequences": [
+            1
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.3192371983121592,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.11923719831215916
+          }
+        },
+        {
+          "text": "A fonte fornece 12 volts.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.289524812162017,
+            "exact_overlap": 1,
+            "surface_overlap": 0,
+            "association_mass": 0.08952481216201696
+          }
+        },
+        {
+          "text": "O robô está online.",
+          "source_sequences": [
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.06755212855814315,
+            "exact_overlap": 0,
+            "surface_overlap": 0,
+            "association_mass": 0.06755212855814315
+          }
+        },
+        {
+          "text": "O robô está offline.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.06592277501491708,
+            "exact_overlap": 0,
+            "surface_overlap": 0,
+            "association_mass": 0.06592277501491708
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 4,
+      "false_negative": 0,
+      "extra": [
+        "A fonte fornece 12 volts.",
+        "O robô está offline.",
+        "O robô está online.",
+        "O sensor indica 23 graus."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 4,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "devices",
+      "name": "source_current_absent",
+      "query": "Quantos amperes fornece a fonte?",
+      "category": "absent_attribute",
+      "expected": [],
+      "retrieved": [
+        "A fonte fornece 12 volts."
+      ],
+      "candidates": [
+        {
+          "text": "A fonte fornece 12 volts.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 0.9103962465471391,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.3103962465471391
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 1,
+      "false_negative": 0,
+      "extra": [
+        "A fonte fornece 12 volts."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 1,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "empty",
+      "name": "empty_scope",
+      "query": "Qual nome do meu gato?",
+      "category": "empty_scope",
+      "expected": [],
+      "retrieved": [],
+      "candidates": [],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 0,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "UNRESOLVED",
+      "retrieval": {
+        "native_context_count": 0,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "generated",
+      "name": "generated_only",
+      "query": "Meu gato se chama Gerado.",
+      "category": "generated_only",
+      "expected": [],
+      "retrieved": [],
+      "candidates": [],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": true,
+      "true_positive": 0,
+      "false_positive": 0,
+      "false_negative": 0,
+      "extra": [],
+      "missing": [],
+      "status": "UNRESOLVED",
+      "retrieval": {
+        "native_context_count": 0,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    },
+    {
+      "scope": "pets",
+      "name": "foreign_name",
+      "query": "Meu gato se chama Fora.",
+      "category": "foreign_only",
+      "expected": [],
+      "retrieved": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "candidates": [
+        {
+          "text": "Meu gato se chama Alt2.",
+          "source_sequences": [
+            2
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.8397558597573034,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 1.0397558597573033
+          }
+        },
+        {
+          "text": "Meu gato se chama Alt.",
+          "source_sequences": [
+            1,
+            3
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.8326698266016195,
+            "exact_overlap": 4,
+            "surface_overlap": 0,
+            "association_mass": 1.0326698266016194
+          }
+        },
+        {
+          "text": "Meu cachorro se chama Bolt.",
+          "source_sequences": [
+            5
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.488585211537547,
+            "exact_overlap": 3,
+            "surface_overlap": 0,
+            "association_mass": 0.8885852115375471
+          }
+        },
+        {
+          "text": "Meu gato dorme no sofá.",
+          "source_sequences": [
+            4
+          ],
+          "evidence_kind": "NATIVE_STRUCTURAL_RECALL",
+          "native_support": {
+            "score": 1.020563711503299,
+            "exact_overlap": 2,
+            "surface_overlap": 0,
+            "association_mass": 0.6205637115032989
+          }
+        }
+      ],
+      "checks": {
+        "read_only_envelope": true,
+        "unqualified": true,
+        "observed_origins": true,
+        "complete_payload_origins": true,
+        "generated_excluded": true,
+        "scope_preserved": true,
+        "support_not_confidence": true
+      },
+      "exact_retrieval_set": false,
+      "true_positive": 0,
+      "false_positive": 4,
+      "false_negative": 0,
+      "extra": [
+        "Meu cachorro se chama Bolt.",
+        "Meu gato dorme no sofá.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Alt2."
+      ],
+      "missing": [],
+      "status": "CANDIDATES",
+      "retrieval": {
+        "native_context_count": 4,
+        "limit_may_have_hidden_alternatives": false,
+        "all_relevant_content_recovered": null
+      }
+    }
+  ],
+  "threshold_shadow": {
+    "selection_used": false,
+    "evaluator_only": true,
+    "calibrated_confidence": false,
+    "boundary": "one global >= threshold on native score; only this curated sample",
+    "exact_all_cases_possible": false,
+    "most_reference_content_without_extra": 1,
+    "least_extra_with_all_reference_content": 39,
+    "sweep": [
+      {
+        "threshold": 0.0,
+        "true_positive": 28,
+        "false_positive": 51,
+        "false_negative": 0,
+        "exact_cases": 13
+      },
+      {
+        "threshold": 0.0659227750149171,
+        "true_positive": 28,
+        "false_positive": 50,
+        "false_negative": 0,
+        "exact_cases": 13
+      },
+      {
+        "threshold": 0.06755212855814316,
+        "true_positive": 28,
+        "false_positive": 49,
+        "false_negative": 0,
+        "exact_cases": 13
+      },
+      {
+        "threshold": 0.08678166427630025,
+        "true_positive": 28,
+        "false_positive": 48,
+        "false_negative": 0,
+        "exact_cases": 13
+      },
+      {
+        "threshold": 0.28952481216201703,
+        "true_positive": 28,
+        "false_positive": 47,
+        "false_negative": 0,
+        "exact_cases": 13
+      },
+      {
+        "threshold": 0.30186294714408607,
+        "true_positive": 28,
+        "false_positive": 46,
+        "false_negative": 0,
+        "exact_cases": 13
+      },
+      {
+        "threshold": 0.31923719831215924,
+        "true_positive": 28,
+        "false_positive": 45,
+        "false_negative": 0,
+        "exact_cases": 14
+      },
+      {
+        "threshold": 0.336433267128513,
+        "true_positive": 28,
+        "false_positive": 44,
+        "false_negative": 0,
+        "exact_cases": 14
+      },
+      {
+        "threshold": 0.33912132811466944,
+        "true_positive": 28,
+        "false_positive": 43,
+        "false_negative": 0,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.36322477598309044,
+        "true_positive": 28,
+        "false_positive": 42,
+        "false_negative": 0,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.3716027173679241,
+        "true_positive": 28,
+        "false_positive": 41,
+        "false_negative": 0,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.43863476375437493,
+        "true_positive": 28,
+        "false_positive": 40,
+        "false_negative": 0,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.4403006130292482,
+        "true_positive": 28,
+        "false_positive": 39,
+        "false_negative": 0,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 0.513888888888889,
+        "true_positive": 27,
+        "false_positive": 39,
+        "false_negative": 1,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.563737505100496,
+        "true_positive": 27,
+        "false_positive": 38,
+        "false_negative": 1,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 0.5781313536560405,
+        "true_positive": 26,
+        "false_positive": 38,
+        "false_negative": 2,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.5857552471627964,
+        "true_positive": 26,
+        "false_positive": 37,
+        "false_negative": 2,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.592878705512733,
+        "true_positive": 26,
+        "false_positive": 36,
+        "false_negative": 2,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 0.6022443541392418,
+        "true_positive": 26,
+        "false_positive": 35,
+        "false_negative": 2,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 0.6053593490644771,
+        "true_positive": 26,
+        "false_positive": 34,
+        "false_negative": 2,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 0.6130847513370258,
+        "true_positive": 26,
+        "false_positive": 33,
+        "false_negative": 2,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 0.6176611200338286,
+        "true_positive": 26,
+        "false_positive": 32,
+        "false_negative": 2,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 0.6305150390950103,
+        "true_positive": 26,
+        "false_positive": 31,
+        "false_negative": 2,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 0.6427929268666696,
+        "true_positive": 25,
+        "false_positive": 31,
+        "false_negative": 3,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 0.6440891081236028,
+        "true_positive": 25,
+        "false_positive": 30,
+        "false_negative": 3,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 0.6449241835231698,
+        "true_positive": 24,
+        "false_positive": 30,
+        "false_negative": 4,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 0.6744187853305604,
+        "true_positive": 23,
+        "false_positive": 30,
+        "false_negative": 5,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 0.6794914426497572,
+        "true_positive": 22,
+        "false_positive": 30,
+        "false_negative": 6,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.6970139554574898,
+        "true_positive": 21,
+        "false_positive": 30,
+        "false_negative": 7,
+        "exact_cases": 14
+      },
+      {
+        "threshold": 0.7024578075670128,
+        "true_positive": 20,
+        "false_positive": 30,
+        "false_negative": 8,
+        "exact_cases": 14
+      },
+      {
+        "threshold": 0.74932349289171,
+        "true_positive": 20,
+        "false_positive": 29,
+        "false_negative": 8,
+        "exact_cases": 14
+      },
+      {
+        "threshold": 0.7521270004047161,
+        "true_positive": 20,
+        "false_positive": 28,
+        "false_negative": 8,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 0.7582146516569769,
+        "true_positive": 20,
+        "false_positive": 27,
+        "false_negative": 8,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 0.7629649795976029,
+        "true_positive": 20,
+        "false_positive": 26,
+        "false_negative": 8,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 0.7729069297483232,
+        "true_positive": 20,
+        "false_positive": 23,
+        "false_negative": 8,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 0.8113952337687812,
+        "true_positive": 20,
+        "false_positive": 22,
+        "false_negative": 8,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 0.8291672768679986,
+        "true_positive": 20,
+        "false_positive": 21,
+        "false_negative": 8,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 0.8360387748288539,
+        "true_positive": 19,
+        "false_positive": 21,
+        "false_negative": 9,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 0.8364167465489879,
+        "true_positive": 18,
+        "false_positive": 21,
+        "false_negative": 10,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 0.8405193423755348,
+        "true_positive": 18,
+        "false_positive": 20,
+        "false_negative": 10,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 0.8429493690804154,
+        "true_positive": 17,
+        "false_positive": 20,
+        "false_negative": 11,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 0.844094991065241,
+        "true_positive": 17,
+        "false_positive": 19,
+        "false_negative": 11,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 0.8527219733701937,
+        "true_positive": 17,
+        "false_positive": 18,
+        "false_negative": 11,
+        "exact_cases": 20
+      },
+      {
+        "threshold": 0.899188191470052,
+        "true_positive": 15,
+        "false_positive": 17,
+        "false_negative": 13,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 0.9025524004856593,
+        "true_positive": 13,
+        "false_positive": 16,
+        "false_negative": 15,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 0.9103962465471392,
+        "true_positive": 13,
+        "false_positive": 15,
+        "false_negative": 15,
+        "exact_cases": 20
+      },
+      {
+        "threshold": 0.9685408992576112,
+        "true_positive": 12,
+        "false_positive": 15,
+        "false_negative": 16,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 1.009308516960344,
+        "true_positive": 11,
+        "false_positive": 15,
+        "false_negative": 17,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 1.0205637115032993,
+        "true_positive": 11,
+        "false_positive": 13,
+        "false_negative": 17,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 1.045520933186235,
+        "true_positive": 11,
+        "false_positive": 12,
+        "false_negative": 17,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 1.045583560220429,
+        "true_positive": 11,
+        "false_positive": 11,
+        "false_negative": 17,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 1.0536867113505193,
+        "true_positive": 11,
+        "false_positive": 10,
+        "false_negative": 17,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 1.0664415640143219,
+        "true_positive": 11,
+        "false_positive": 9,
+        "false_negative": 17,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 1.0748443976588415,
+        "true_positive": 11,
+        "false_positive": 8,
+        "false_negative": 17,
+        "exact_cases": 20
+      },
+      {
+        "threshold": 1.1881782134194034,
+        "true_positive": 10,
+        "false_positive": 8,
+        "false_negative": 18,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 1.1920794693227024,
+        "true_positive": 9,
+        "false_positive": 8,
+        "false_negative": 19,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 1.2111096247074917,
+        "true_positive": 9,
+        "false_positive": 7,
+        "false_negative": 19,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 1.21630493581075,
+        "true_positive": 9,
+        "false_positive": 6,
+        "false_negative": 19,
+        "exact_cases": 19
+      },
+      {
+        "threshold": 1.2628370933307174,
+        "true_positive": 8,
+        "false_positive": 6,
+        "false_negative": 20,
+        "exact_cases": 18
+      },
+      {
+        "threshold": 1.344608584759243,
+        "true_positive": 7,
+        "false_positive": 6,
+        "false_negative": 21,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 1.352844309437693,
+        "true_positive": 6,
+        "false_positive": 6,
+        "false_negative": 22,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 1.3705814362502744,
+        "true_positive": 5,
+        "false_positive": 6,
+        "false_negative": 23,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 1.4885852115375473,
+        "true_positive": 5,
+        "false_positive": 4,
+        "false_negative": 23,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 1.5206727141565395,
+        "true_positive": 4,
+        "false_positive": 4,
+        "false_negative": 24,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 1.5330263011742142,
+        "true_positive": 3,
+        "false_positive": 4,
+        "false_negative": 25,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 1.5575830655526095,
+        "true_positive": 3,
+        "false_positive": 3,
+        "false_negative": 25,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 1.8326698266016197,
+        "true_positive": 3,
+        "false_positive": 2,
+        "false_negative": 25,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 1.83266982660162,
+        "true_positive": 2,
+        "false_positive": 2,
+        "false_negative": 26,
+        "exact_cases": 15
+      },
+      {
+        "threshold": 1.8397558597573036,
+        "true_positive": 1,
+        "false_positive": 1,
+        "false_negative": 27,
+        "exact_cases": 16
+      },
+      {
+        "threshold": 1.9221946387636366,
+        "true_positive": 1,
+        "false_positive": 0,
+        "false_negative": 27,
+        "exact_cases": 17
+      },
+      {
+        "threshold": 2.1135402877306624,
+        "true_positive": 0,
+        "false_positive": 0,
+        "false_negative": 28,
+        "exact_cases": 16
+      }
+    ]
+  },
+  "fixture_scope": "curated public synthetic cases; reference content labels are evaluator-only; not independent semantic accuracy"
+}

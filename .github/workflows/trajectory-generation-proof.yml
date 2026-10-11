@@ -1,0 +1,595 @@
+name: trajectory generation proof
+
+on:
+  pull_request:
+    paths:
+      - 'src/memoria_resolutiva/**'
+      - 'tests/test_trajectory_generation_v2.py'
+      - 'tests/test_structural_association_continuous.py'
+      - 'tests/test_structural_trajectory_v2.py'
+      - 'scripts/trajectory_generation_gate.py'
+      - 'scripts/trajectory_holdout_probe.py'
+      - 'scripts/trajectory_episode_probe.py'
+      - 'scripts/trajectory_online_probe.py'
+      - 'scripts/trajectory_private_replay.py'
+      - 'scripts/trajectory_stability_probe.py'
+      - 'scripts/trajectory_projection_probe.py'
+      - 'scripts/trajectory_interleaved_probe.py'
+      - 'scripts/trajectory_incremental_probe.py'
+      - 'scripts/trajectory_response_quality_probe.py'
+      - 'scripts/trajectory_query_specificity_probe.py'
+      - 'tests/test_trajectory_query_specificity_probe.py'
+      - 'tests/test_temporal_nodule_contrast.py'
+      - 'scripts/trajectory_transition_contrast_probe.py'
+      - 'scripts/trajectory_contextual_hypothesis_probe.py'
+      - 'scripts/trajectory_native_bridge_probe.py'
+      - 'scripts/trajectory_fragment_scope_probe.py'
+      - 'scripts/trajectory_transported_scope_probe.py'
+      - 'scripts/trajectory_analogy_frame_probe.py'
+      - 'scripts/trajectory_analogy_stress_probe.py'
+      - 'scripts/trajectory_analogy_anchor_probe.py'
+      - 'scripts/trajectory_analogy_evidence_probe.py'
+      - 'scripts/trajectory_analogy_boundary_probe.py'
+      - 'scripts/trajectory_analogy_copy_probe.py'
+      - 'scripts/trajectory_analogy_value_probe.py'
+      - 'scripts/trajectory_analogy_unmarked_probe.py'
+      - 'scripts/trajectory_analogy_two_slot_probe.py'
+      - 'scripts/trajectory_analogy_alignment_probe.py'
+      - 'scripts/trajectory_analogy_repeated_cue_probe.py'
+      - 'scripts/trajectory_analogy_fixed_context_probe.py'
+      - 'scripts/trajectory_evidence_packet_probe.py'
+      - 'tests/test_trajectory_evidence_packet_probe.py'
+      - 'scripts/trajectory_relation_contrast_probe.py'
+      - 'tests/test_trajectory_relation_contrast_probe.py'
+      - 'scripts/trajectory_separator_ablation_probe.py'
+      - 'tests/test_trajectory_separator_ablation_probe.py'
+      - 'scripts/trajectory_boundary_candidates_probe.py'
+      - 'tests/test_trajectory_boundary_candidates_probe.py'
+      - 'scripts/trajectory_boundary_support_probe.py'
+      - 'tests/test_trajectory_boundary_support_probe.py'
+      - 'scripts/trajectory_boundary_roles_probe.py'
+      - 'tests/test_trajectory_boundary_roles_probe.py'
+      - 'scripts/trajectory_observed_context_probe.py'
+      - 'tests/test_trajectory_observed_context_probe.py'
+      - 'scripts/trajectory_context_boundary_ablation_probe.py'
+      - 'tests/test_trajectory_context_boundary_ablation_probe.py'
+      - 'scripts/trajectory_boundary_length_probe.py'
+      - 'tests/test_trajectory_boundary_length_probe.py'
+      - 'scripts/trajectory_cut_compatibility_probe.py'
+      - 'tests/test_trajectory_cut_compatibility_probe.py'
+      - 'scripts/trajectory_region_evidence_probe.py'
+      - 'tests/test_trajectory_region_evidence_probe.py'
+      - 'scripts/trajectory_region_reply_probe.py'
+      - 'tests/test_trajectory_region_reply_probe.py'
+      - 'scripts/trajectory_native_evidence_join_probe.py'
+      - 'tests/test_trajectory_native_evidence_join_probe.py'
+      - 'scripts/trajectory_occurrence_relation_probe.py'
+      - 'tests/test_trajectory_occurrence_relation_probe.py'
+      - 'scripts/trajectory_region_target_probe.py'
+      - 'tests/test_trajectory_region_target_probe.py'
+      - 'scripts/trajectory_paged_relation_probe.py'
+      - 'tests/test_trajectory_paged_relation_probe.py'
+      - 'scripts/trajectory_window_consistency_probe.py'
+      - 'tests/test_trajectory_window_consistency_probe.py'
+      - 'scripts/trajectory_bounded_refresh_probe.py'
+      - 'tests/test_trajectory_bounded_refresh_probe.py'
+      - 'scripts/trajectory_copy_relation_probe.py'
+      - 'tests/test_trajectory_copy_relation_probe.py'
+      - 'scripts/trajectory_local_mvp.py'
+      - 'scripts/trajectory_local_mvp.html'
+      - 'scripts/trajectory_local_mvp_gate.py'
+      - 'tests/test_trajectory_local_mvp.py'
+      - 'scripts/trajectory_local_mvp_variation_gate.py'
+      - 'tests/test_trajectory_local_mvp_variation.py'
+      - 'scripts/trajectory_question_frame_probe.py'
+      - 'tests/test_trajectory_question_frame_probe.py'
+      - 'scripts/trajectory_question_variant_probe.py'
+      - 'tests/test_trajectory_question_variant_probe.py'
+      - 'scripts/trajectory_symbol_transform_probe.py'
+      - 'tests/test_trajectory_symbol_transform_probe.py'
+      - 'scripts/trajectory_composed_frame_probe.py'
+      - 'tests/test_trajectory_composed_frame_probe.py'
+      - 'scripts/trajectory_route_relation_probe.py'
+      - 'tests/test_trajectory_route_relation_probe.py'
+      - 'scripts/trajectory_feedback_ledger_probe.py'
+      - 'tests/test_trajectory_feedback_ledger_probe.py'
+      - 'scripts/trajectory_feedback_gate_probe.py'
+      - 'tests/test_trajectory_feedback_gate_probe.py'
+      - 'scripts/trajectory_feedback_continuity_probe.py'
+      - 'tests/test_trajectory_feedback_continuity_probe.py'
+      - 'scripts/trajectory_feedback_withdrawal_probe.py'
+      - 'tests/test_trajectory_feedback_withdrawal_probe.py'
+      - 'scripts/trajectory_contextual_relation_probe.py'
+      - 'tests/test_trajectory_contextual_relation_probe.py'
+      - 'scripts/trajectory_inferred_relation_probe.py'
+      - 'tests/test_trajectory_inferred_relation_probe.py'
+      - 'scripts/trajectory_reply_hypothesis_probe.py'
+      - 'tests/test_trajectory_reply_hypothesis_probe.py'
+      - 'tests/test_trajectory_analogy_fixed_context_probe.py'
+      - 'tests/test_trajectory_analogy_repeated_cue_probe.py'
+      - 'tests/test_trajectory_analogy_alignment_probe.py'
+      - 'tests/test_trajectory_analogy_two_slot_probe.py'
+      - 'tests/test_trajectory_analogy_unmarked_probe.py'
+      - 'tests/test_trajectory_analogy_value_probe.py'
+      - 'tests/test_trajectory_analogy_copy_probe.py'
+      - 'tests/test_trajectory_analogy_boundary_probe.py'
+      - 'tests/test_trajectory_analogy_evidence_probe.py'
+      - 'tests/test_trajectory_analogy_anchor_probe.py'
+      - 'tests/test_trajectory_analogy_stress_probe.py'
+      - 'tests/test_trajectory_analogy_frame_probe.py'
+      - 'tests/test_trajectory_transported_scope_probe.py'
+      - 'tests/test_trajectory_fragment_scope_probe.py'
+      - 'tests/test_trajectory_native_bridge_probe.py'
+      - 'scripts/mobile_region_replay.py'
+      - 'scripts/mobile_personal_proof_gate.py'
+      - 'scripts/trajectory_observed_variant_probe.py'
+      - 'tests/test_trajectory_observed_variant_probe.py'
+      - 'tests/test_contextual_route_hypothesis.py'
+      - 'tests/test_trajectory_response_quality_probe.py'
+      - 'benchmark-results/trajectory-incremental-reference.json'
+      - '.github/workflows/trajectory-generation-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Raw native window adapter and assistant barrier contracts
+        run: python -m unittest discover -s tests -p test_trajectory_native_bridge_probe.py
+      - name: Checkout pinned durable BDR
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 317882a00f041fc1568ff986af8016b09453f21a
+          path: deps/resolutive-DB
+      - name: Build unchanged native host runtime
+        run: |
+          cmake -S native/mobile -B build/trajectory-native -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
+          cmake --build build/trajectory-native --target memoria_mobile --parallel 2
+      - name: Local MVP API and real HTTP restart gate (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pip install 'fastapi>=0.116,<1' 'uvicorn>=0.35,<1' 'httpx>=0.28,<1' 'pytest>=8,<9'
+          python -m pytest -q tests/test_trajectory_local_mvp.py tests/test_trajectory_local_mvp_variation.py
+          python scripts/trajectory_local_mvp_gate.py --library build/trajectory-native/libmemoria_mobile.so
+          python scripts/trajectory_local_mvp_variation_gate.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Observed question-content frames (coverage and hidden-relevance failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_question_frame_probe.py
+          for question_seed in 20261221 20261222; do
+            python scripts/trajectory_question_frame_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$question_seed" --summary --output "/tmp/question-frame-$question_seed.json" > "/tmp/question-frame-$question_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261221, 20261222):
+              r = json.loads(Path(f'/tmp/question-frame-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
+          PY
+      - name: Observed wording and uppercase variants (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_question_variant_probe.py
+          for variant_seed in 20261223 20261224; do
+            python scripts/trajectory_question_variant_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$variant_seed" --summary --output "/tmp/question-variant-$variant_seed.json" > "/tmp/question-variant-$variant_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261223, 20261224):
+              r = json.loads(Path(f'/tmp/question-variant-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
+          PY
+      - name: Observed finite symbol substitutions (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_symbol_transform_probe.py
+          for transform_seed in 20261225 20261226; do
+            python scripts/trajectory_symbol_transform_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$transform_seed" --summary --output "/tmp/symbol-transform-$transform_seed.json" > "/tmp/symbol-transform-$transform_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261225, 20261226):
+              r = json.loads(Path(f'/tmp/symbol-transform-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
+          PY
+      - name: Composed copy and transformation routes (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_composed_frame_probe.py
+          for composed_seed in 20261227 20261228; do
+            python scripts/trajectory_composed_frame_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$composed_seed" --summary --output "/tmp/composed-frame-$composed_seed.json" > "/tmp/composed-frame-$composed_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261227, 20261228):
+              r = json.loads(Path(f'/tmp/composed-frame-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'full_report_sha256')})
+          PY
+      - name: Route set relations and append-only interventions (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_route_relation_probe.py
+          for relation_seed in 20261229 20261230; do
+            python scripts/trajectory_route_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$relation_seed" --summary --output "/tmp/route-relation-$relation_seed.json" > "/tmp/route-relation-$relation_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261229, 20261230):
+              r = json.loads(Path(f'/tmp/route-relation-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'totals', 'relation_counts', 'full_report_sha256')})
+          PY
+      - name: Explicit feedback ledger (persistence integrity, no factual selection)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_ledger_probe.py
+          for feedback_seed in 20261231 20270102; do
+            python scripts/trajectory_feedback_ledger_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$feedback_seed" --output "/tmp/feedback-ledger-$feedback_seed.json" > "/tmp/feedback-ledger-$feedback_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20261231, 20270102):
+              r = json.loads(Path(f'/tmp/feedback-ledger-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'factual_quality_status', 'retrieval_improvement_status')})
+          PY
+      - name: Exact-receipt feedback veto (integrity and negative controls)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_gate_probe.py
+          for feedback_gate_seed in 20270103 20270104; do
+            python scripts/trajectory_feedback_gate_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$feedback_gate_seed" --output "/tmp/feedback-gate-$feedback_gate_seed.json" > "/tmp/feedback-gate-$feedback_gate_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20270103, 20270104):
+              r = json.loads(Path(f'/tmp/feedback-gate-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'effects', 'general_learning_status', 'report_content_sha256')})
+          PY
+      - name: Feedback continuity with identical evidence (integrity and hidden-context failures)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_continuity_probe.py
+          for feedback_continuity_seed in 20270105 20270106; do
+            python scripts/trajectory_feedback_continuity_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$feedback_continuity_seed" --output "/tmp/feedback-continuity-$feedback_continuity_seed.json" > "/tmp/feedback-continuity-$feedback_continuity_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20270105, 20270106):
+              r = json.loads(Path(f'/tmp/feedback-continuity-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'effects', 'semantic_context_status', 'report_content_sha256')})
+          PY
+      - name: Exact-event feedback withdrawal (integrity and negative controls)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_withdrawal_probe.py
+          for feedback_withdrawal_seed in 20270107 20270108; do
+            python scripts/trajectory_feedback_withdrawal_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$feedback_withdrawal_seed" --output "/tmp/feedback-withdrawal-$feedback_withdrawal_seed.json" > "/tmp/feedback-withdrawal-$feedback_withdrawal_seed.log"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for seed in (20270107, 20270108):
+              r = json.loads(Path(f'/tmp/feedback-withdrawal-{seed}.json').read_text())
+              print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'effects', 'report_content_sha256')})
+          PY
+      - name: Original native personal gates (quality failures reported)
+        run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Observed regions versus exact native reply addresses (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_region_reply_probe.py
+          python scripts/trajectory_region_reply_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261129
+          python scripts/trajectory_region_reply_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261130
+      - name: Native cold BDR windows versus trajectory hypotheses (quality failures reported)
+        run: python scripts/trajectory_native_bridge_probe.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Native reply provenance joined to unchanged structural packets (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_native_evidence_join_probe.py
+          python scripts/trajectory_native_evidence_join_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261201 --summary
+          python scripts/trajectory_native_evidence_join_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261202 --summary
+      - name: Experimental transported source scope with native cold windows (quality failures reported)
+        run: python scripts/trajectory_transported_scope_probe.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Same payload with occurrence-local reply relations (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_occurrence_relation_probe.py
+          python scripts/trajectory_occurrence_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261203 --summary
+          python scripts/trajectory_occurrence_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261204 --summary
+      - name: Read only frame analogy with native cold windows (quality failures reported)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_frame_probe.py
+          python scripts/trajectory_analogy_frame_probe.py --library build/trajectory-native/libmemoria_mobile.so
+      - name: Region-local target enumeration without global reply fallback (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_region_target_probe.py
+          python scripts/trajectory_region_target_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261205 --summary
+          python scripts/trajectory_region_target_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261206 --summary
+      - name: Complete paginated relation witnesses including query echoes (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_paged_relation_probe.py
+          python scripts/trajectory_paged_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261207 --summary
+          python scripts/trajectory_paged_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261208 --summary
+      - name: Regional window token guard under controlled between-call writes (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_window_consistency_probe.py
+          python scripts/trajectory_window_consistency_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261209 --summary
+          python scripts/trajectory_window_consistency_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261210 --summary
+      - name: Bounded regional refresh with retained rejection history (integrity only)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_bounded_refresh_probe.py
+          python scripts/trajectory_bounded_refresh_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261211 --summary
+          python scripts/trajectory_bounded_refresh_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261212 --summary
+      - name: Unqualified reply hypotheses and abstention (hidden-role failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_reply_hypothesis_probe.py
+          python scripts/trajectory_reply_hypothesis_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261213 --summary
+          python scripts/trajectory_reply_hypothesis_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261214 --summary
+      - name: Inferred sequence relations without reply links (false links and hidden-role failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_inferred_relation_probe.py
+          python scripts/trajectory_inferred_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261215 --summary
+          python scripts/trajectory_inferred_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261216 --summary
+      - name: Contextual root filters with retained loss and false links (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_contextual_relation_probe.py
+          python scripts/trajectory_contextual_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261217 --summary
+          python scripts/trajectory_contextual_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261218 --summary
+      - name: Positive learned copy witnesses with context swaps and retained conflicts (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_copy_relation_probe.py
+          python scripts/trajectory_copy_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261219 --summary
+          python scripts/trajectory_copy_relation_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20261220 --summary
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Synthetic generative proof
+        run: python scripts/trajectory_generation_gate.py
+      - name: Embedded root export adapter without private data
+        run: python scripts/trajectory_private_replay.py
+      - name: Reused read projection and cold parity
+        run: python scripts/trajectory_projection_probe.py
+      - name: Interleaved learning and full cold-read parity
+        run: |
+          python scripts/trajectory_interleaved_probe.py --seed 20260930
+          python scripts/trajectory_interleaved_probe.py --seed 20261002
+      - name: Incremental occurrence order and pinned pre-change reference
+        run: python scripts/trajectory_incremental_probe.py
+      - name: Held-out structural scenarios and negative controls
+        run: |
+          python scripts/trajectory_holdout_probe.py --seed 4107
+          python scripts/trajectory_holdout_probe.py --seed 20260927
+      - name: Cross-capture episodes and ambiguity
+        run: |
+          python scripts/trajectory_episode_probe.py --seed 4169
+          python scripts/trajectory_episode_probe.py --seed 20260928
+          python scripts/trajectory_episode_probe.py --seed 20260929
+          python scripts/trajectory_episode_probe.py --seed 9271901
+      - name: Online exact-root distraction and negative controls
+        run: |
+          python scripts/trajectory_online_probe.py --seed 9271902
+          python scripts/trajectory_online_probe.py --seed 20260930
+      - name: Recurrent route stability without factual selection
+        run: |
+          python scripts/trajectory_stability_probe.py --seed 9281903
+          python scripts/trajectory_stability_probe.py --seed 20261001
+      - name: Response scorecard integrity (quality failures reported)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_response_quality_probe.py
+          python scripts/trajectory_response_quality_probe.py --seed 20260930
+          python scripts/trajectory_response_quality_probe.py --seed 20261004
+      - name: Query specificity diagnosis and coverage ablation
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_query_specificity_probe.py
+          python scripts/trajectory_query_specificity_probe.py --seed 20260930
+          python scripts/trajectory_query_specificity_probe.py --seed 20261004
+          python scripts/trajectory_query_specificity_probe.py --seed 20261005
+      - name: Temporal source destination contrast without selection policy
+        run: |
+          python -m unittest discover -s tests -p test_temporal_nodule_contrast.py
+          python scripts/trajectory_transition_contrast_probe.py --seed 20260930
+          python scripts/trajectory_transition_contrast_probe.py --seed 20261004
+          python scripts/trajectory_transition_contrast_probe.py --seed 20261006
+      - name: Opt in contextual hypothesis and source context absence gate
+        run: |
+          python -m unittest discover -s tests -p test_contextual_route_hypothesis.py
+          python scripts/trajectory_contextual_hypothesis_probe.py --seed 20260930
+          python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261004
+          python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261007
+          python scripts/trajectory_contextual_hypothesis_probe.py --seed 20261008 --strict-quality
+      - name: Observed symbol variants integrity (quality failures reported)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_observed_variant_probe.py
+          python scripts/trajectory_observed_variant_probe.py --seed 20260930
+          python scripts/trajectory_observed_variant_probe.py --seed 20261009
+          python scripts/trajectory_observed_variant_probe.py --seed 20261010
+          python scripts/trajectory_observed_variant_probe.py --seed 20261012
+          python scripts/trajectory_observed_variant_probe.py --seed 20261013 --strict-quality
+      - name: Rejected fragment scope shadow policy (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_fragment_scope_probe.py
+          python scripts/trajectory_fragment_scope_probe.py
+      - name: Transported source discriminator contracts (experimental opt in)
+        run: python -m unittest discover -s tests -p test_trajectory_transported_scope_probe.py
+      - name: Frame analogy opaque stress and mixed relation counterexample (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_stress_probe.py
+          python scripts/trajectory_analogy_stress_probe.py --seed 20261016
+          python scripts/trajectory_analogy_stress_probe.py --seed 20261017
+      - name: Internal anchor shadow veto and coverage loss control (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_anchor_probe.py
+          python scripts/trajectory_analogy_anchor_probe.py --seed 20261018
+          python scripts/trajectory_analogy_anchor_probe.py --seed 20261019
+      - name: Sequential frame evidence and preserved competing relations
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_evidence_probe.py
+          python scripts/trajectory_analogy_evidence_probe.py --seed 20261020 --strict-quality
+          python scripts/trajectory_analogy_evidence_probe.py --seed 20261021 --strict-quality
+      - name: Optional source boundary shadow and earlier veto parity (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_boundary_probe.py
+          python scripts/trajectory_analogy_boundary_probe.py --seed 20261022
+          python scripts/trajectory_analogy_boundary_probe.py --seed 20261023
+      - name: Repeated exact source copies shadow and competing roots (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_copy_probe.py
+          python scripts/trajectory_analogy_copy_probe.py --seed 20261024
+          python scripts/trajectory_analogy_copy_probe.py --seed 20261025
+      - name: Partially repeated values and exact constant tails (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_value_probe.py
+          python scripts/trajectory_analogy_value_probe.py --seed 20261026
+          python scripts/trajectory_analogy_value_probe.py --seed 20261027
+      - name: Unmarked field role counterexamples and observational equivalence (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_unmarked_probe.py
+          python scripts/trajectory_analogy_unmarked_probe.py --seed 20261028
+          python scripts/trajectory_analogy_unmarked_probe.py --seed 20261029
+      - name: Two copied source slots and preserved unmarked field failures (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_two_slot_probe.py
+          python scripts/trajectory_analogy_two_slot_probe.py --seed 20261030
+          python scripts/trajectory_analogy_two_slot_probe.py --seed 20261031
+      - name: Alignment candidate retention and conservative consensus (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_alignment_probe.py
+          python scripts/trajectory_analogy_alignment_probe.py --seed 20261101
+          python scripts/trajectory_analogy_alignment_probe.py --seed 20261102
+      - name: Repeated source cues and specific broad route competition (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_repeated_cue_probe.py
+          python scripts/trajectory_analogy_repeated_cue_probe.py --seed 20261103
+          python scripts/trajectory_analogy_repeated_cue_probe.py --seed 20261104
+      - name: Copied fixed context empty bridge shadow (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_analogy_fixed_context_probe.py
+          python scripts/trajectory_analogy_fixed_context_probe.py --seed 20261105
+          python scripts/trajectory_analogy_fixed_context_probe.py --seed 20261106
+      - name: Structural evidence packets and exact sequence intervention (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_evidence_packet_probe.py
+          python scripts/trajectory_evidence_packet_probe.py --seed 20261107
+          python scripts/trajectory_evidence_packet_probe.py --seed 20261108
+      - name: Copied relation cue and crossed value interventions (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_relation_contrast_probe.py
+          python scripts/trajectory_relation_contrast_probe.py --seed 20261109
+          python scripts/trajectory_relation_contrast_probe.py --seed 20261110
+      - name: Source separator ablation with fixed destination roots (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_separator_ablation_probe.py
+          python scripts/trajectory_separator_ablation_probe.py --seed 20261111
+          python scripts/trajectory_separator_ablation_probe.py --seed 20261112
+      - name: Unseparated source boundary candidates and incomplete support (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_boundary_candidates_probe.py
+          python scripts/trajectory_boundary_candidates_probe.py --seed 20261113
+          python scripts/trajectory_boundary_candidates_probe.py --seed 20261114
+      - name: Boundary support coverage agreement and rivals (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_boundary_support_probe.py
+          python scripts/trajectory_boundary_support_probe.py --seed 20261115
+          python scripts/trajectory_boundary_support_probe.py --seed 20261116
+      - name: Complete cut agreement under identical observations and hidden roles (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_boundary_roles_probe.py
+          python scripts/trajectory_boundary_roles_probe.py --seed 20261117
+          python scripts/trajectory_boundary_roles_probe.py --seed 20261118
+      - name: Observed context transport and crossed root discrimination (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_observed_context_probe.py
+          python scripts/trajectory_observed_context_probe.py --seed 20261119
+          python scripts/trajectory_observed_context_probe.py --seed 20261120
+      - name: Context body boundary ablation with fixed destination roots (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_context_boundary_ablation_probe.py
+          python scripts/trajectory_context_boundary_ablation_probe.py --seed 20261121
+          python scripts/trajectory_context_boundary_ablation_probe.py --seed 20261122
+      - name: Crossed lengths without source delimiters and equivalent cut controls (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_boundary_length_probe.py
+          python scripts/trajectory_boundary_length_probe.py --seed 20261123 --summary
+          python scripts/trajectory_boundary_length_probe.py --seed 20261124 --summary
+      - name: Root scoped cut incompatibility and late unknown cut support (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_cut_compatibility_probe.py
+          python scripts/trajectory_cut_compatibility_probe.py --seed 20261125 --summary
+          python scripts/trajectory_cut_compatibility_probe.py --seed 20261126 --summary
+      - name: Observed region scope and identical hidden reply roles (integrity only)
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_region_evidence_probe.py
+          python scripts/trajectory_region_evidence_probe.py --seed 20261127 --summary
+          python scripts/trajectory_region_evidence_probe.py --seed 20261128 --summary
+      - name: Install regression runner
+        run: python -m pip install 'pytest>=8,<9'
+      - name: Existing trajectory consumers and association field
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m pytest -q
+          tests/test_structural_trajectory_v2.py
+          tests/test_persistent_structural_trajectory_v2.py
+          tests/test_structural_association_continuous.py
+          tests/test_structural_branch_rollout_recovery_v2.py
+          tests/test_hierarchical_multiscale_v2.py
+          tests/test_structural_attractor_v2.py

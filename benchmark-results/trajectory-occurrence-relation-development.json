@@ -1,0 +1,1270 @@
+{
+  "seed": 20261203,
+  "integrity_status": "PASS",
+  "integrity_passed": 64,
+  "integrity_total": 64,
+  "gates": {
+    "restored_regional_packets_equal": true,
+    "shared_payload_reuses_address": true,
+    "generated_copy_excluded": true,
+    "regional_witnesses_stay_local": true,
+    "unlinked_raw_memory_unchanged_by_links": true,
+    "unlinked_0_exact_occurrence_flags": true,
+    "unlinked_0_all_origins_retained": true,
+    "unlinked_0_same_payload_does_not_propagate_relation": true,
+    "unlinked_0_unqualified_and_competition_retained": true,
+    "unlinked_1_exact_occurrence_flags": true,
+    "unlinked_1_all_origins_retained": true,
+    "unlinked_1_same_payload_does_not_propagate_relation": true,
+    "unlinked_1_unqualified_and_competition_retained": true,
+    "unlinked_2_exact_occurrence_flags": true,
+    "unlinked_2_all_origins_retained": true,
+    "unlinked_2_same_payload_does_not_propagate_relation": true,
+    "unlinked_2_unqualified_and_competition_retained": true,
+    "unlinked_3_exact_occurrence_flags": true,
+    "unlinked_3_all_origins_retained": true,
+    "unlinked_3_same_payload_does_not_propagate_relation": true,
+    "unlinked_3_unqualified_and_competition_retained": true,
+    "unlinked_native_reads_do_not_change_rows": true,
+    "unlinked_cold_raw_snapshot_equal": true,
+    "unlinked_cold_complete_join_equal": true,
+    "separate_episode_links_raw_memory_unchanged_by_links": true,
+    "separate_episode_links_0_exact_occurrence_flags": true,
+    "separate_episode_links_0_all_origins_retained": true,
+    "separate_episode_links_0_same_payload_does_not_propagate_relation": true,
+    "separate_episode_links_0_unqualified_and_competition_retained": true,
+    "separate_episode_links_1_exact_occurrence_flags": true,
+    "separate_episode_links_1_all_origins_retained": true,
+    "separate_episode_links_1_same_payload_does_not_propagate_relation": true,
+    "separate_episode_links_1_unqualified_and_competition_retained": true,
+    "separate_episode_links_2_exact_occurrence_flags": true,
+    "separate_episode_links_2_all_origins_retained": true,
+    "separate_episode_links_2_same_payload_does_not_propagate_relation": true,
+    "separate_episode_links_2_unqualified_and_competition_retained": true,
+    "separate_episode_links_3_exact_occurrence_flags": true,
+    "separate_episode_links_3_all_origins_retained": true,
+    "separate_episode_links_3_same_payload_does_not_propagate_relation": true,
+    "separate_episode_links_3_unqualified_and_competition_retained": true,
+    "separate_episode_links_native_reads_do_not_change_rows": true,
+    "separate_episode_links_cold_raw_snapshot_equal": true,
+    "separate_episode_links_cold_complete_join_equal": true,
+    "late_local_link_raw_memory_unchanged_by_links": true,
+    "late_local_link_0_exact_occurrence_flags": true,
+    "late_local_link_0_all_origins_retained": true,
+    "late_local_link_0_same_payload_does_not_propagate_relation": true,
+    "late_local_link_0_unqualified_and_competition_retained": true,
+    "late_local_link_1_exact_occurrence_flags": true,
+    "late_local_link_1_all_origins_retained": true,
+    "late_local_link_1_same_payload_does_not_propagate_relation": true,
+    "late_local_link_1_unqualified_and_competition_retained": true,
+    "late_local_link_2_exact_occurrence_flags": true,
+    "late_local_link_2_all_origins_retained": true,
+    "late_local_link_2_same_payload_does_not_propagate_relation": true,
+    "late_local_link_2_unqualified_and_competition_retained": true,
+    "late_local_link_3_exact_occurrence_flags": true,
+    "late_local_link_3_all_origins_retained": true,
+    "late_local_link_3_same_payload_does_not_propagate_relation": true,
+    "late_local_link_3_unqualified_and_competition_retained": true,
+    "late_local_link_native_reads_do_not_change_rows": true,
+    "late_local_link_cold_raw_snapshot_equal": true,
+    "late_local_link_cold_complete_join_equal": true
+  },
+  "shared_payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+  "shared_payload_origins": [
+    [
+      "conversation:opaque-20261203",
+      "row-7",
+      8
+    ],
+    [
+      "conversation:opaque-20261203",
+      "again-a",
+      13
+    ],
+    [
+      "conversation:opaque-20261203",
+      "unlinked-copy",
+      14
+    ],
+    [
+      "conversation:opaque-20261203",
+      "unlinked-a",
+      16
+    ],
+    [
+      "conversation:opaque-20261203-other",
+      "row-7",
+      8
+    ]
+  ],
+  "structural_packet_sha256": {
+    "conversation:opaque-20261203": "ab769e80a595960bf6b9cbc8b84d94bb2fa6317ecc6b2ce5b6a7af54fc7d6bb9",
+    "conversation:opaque-20261203-other": "32b1a32f463d3626148f24d751c822621fdf36487787cf7b1b404b6f8bbc9947"
+  },
+  "unsafe_root_only_false_annotations": 25,
+  "answer": null,
+  "qualified": false,
+  "factual_quality_status": "NOT_EVALUATED",
+  "native_executed": true,
+  "full_report_sha256": "d7110566bf2b69caa5afad212eb1443930afc839c17ab9dcfd8392debaf598ef",
+  "stages": [
+    {
+      "stage": "unlinked",
+      "cases": [
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "row-6",
+            7
+          ],
+          "expected_linked_origins": [],
+          "native_status": "UNRESOLVED",
+          "joined_sha256": "23c0473e6f1060d9e20fd92c9c08ba981c9dd6ffc6a10629c415dcf935e3fd40",
+          "unsafe_root_only_false_annotations": 0,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": []
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "again-q",
+            12
+          ],
+          "expected_linked_origins": [],
+          "native_status": "UNRESOLVED",
+          "joined_sha256": "1ff515e4d64f4c616e47f20643c1af6f5c49cb7770485902a3769258f100abbd",
+          "unsafe_root_only_false_annotations": 0,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": []
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "unlinked-q",
+            15
+          ],
+          "expected_linked_origins": [],
+          "native_status": "UNRESOLVED",
+          "joined_sha256": "69f2c8a67156fb36624519ee8e024dc5d975a680d3b44832a97a4faf20eb8011",
+          "unsafe_root_only_false_annotations": 0,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": []
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203-other",
+            "row-6",
+            7
+          ],
+          "expected_linked_origins": [],
+          "native_status": "UNRESOLVED",
+          "joined_sha256": "128fc35e660ddf5978904a2cc8f9a078a4cac39f6ee4778c699509fdd292f41d",
+          "unsafe_root_only_false_annotations": 0,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": []
+        }
+      ]
+    },
+    {
+      "stage": "separate_episode_links",
+      "cases": [
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "row-6",
+            7
+          ],
+          "expected_linked_origins": [
+            [
+              "conversation:opaque-20261203",
+              "row-7",
+              8
+            ],
+            [
+              "conversation:opaque-20261203",
+              "row-8",
+              9
+            ]
+          ],
+          "native_status": "CONFLICT",
+          "joined_sha256": "71da2bfcc28929ed41c7a6f7baad02b5c76706e42f6b7accf904e959aba3312f",
+          "unsafe_root_only_false_annotations": 5,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "origin": [
+                "conversation:opaque-20261203",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261203",
+                "row-6",
+                7
+              ],
+              "native_trail_address": "d6bb84258a73f385"
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "origin": [
+                "conversation:opaque-20261203",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261203",
+                "row-6",
+                7
+              ],
+              "native_trail_address": "66a41d69cc59dcc2"
+            }
+          ]
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "again-q",
+            12
+          ],
+          "expected_linked_origins": [
+            [
+              "conversation:opaque-20261203",
+              "again-a",
+              13
+            ]
+          ],
+          "native_status": "CANDIDATES",
+          "joined_sha256": "df7c9018a9e87b0d54fce5b5af374cf7310158406bec250964fe896825a88f6e",
+          "unsafe_root_only_false_annotations": 4,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "origin": [
+                "conversation:opaque-20261203",
+                "again-a",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261203",
+                "again-q",
+                12
+              ],
+              "native_trail_address": "d6bb84258a73f385"
+            }
+          ]
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "unlinked-q",
+            15
+          ],
+          "expected_linked_origins": [],
+          "native_status": "UNRESOLVED",
+          "joined_sha256": "69f2c8a67156fb36624519ee8e024dc5d975a680d3b44832a97a4faf20eb8011",
+          "unsafe_root_only_false_annotations": 0,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": []
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203-other",
+            "row-6",
+            7
+          ],
+          "expected_linked_origins": [
+            [
+              "conversation:opaque-20261203-other",
+              "row-7",
+              8
+            ]
+          ],
+          "native_status": "CANDIDATES",
+          "joined_sha256": "a2837643f09a63c63e20f6192e62000d142f4477856e5da668a92c9823399218",
+          "unsafe_root_only_false_annotations": 4,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": true
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "origin": [
+                "conversation:opaque-20261203-other",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261203-other",
+                "row-6",
+                7
+              ],
+              "native_trail_address": "d6bb84258a73f385"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "late_local_link",
+      "cases": [
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "row-6",
+            7
+          ],
+          "expected_linked_origins": [
+            [
+              "conversation:opaque-20261203",
+              "row-7",
+              8
+            ],
+            [
+              "conversation:opaque-20261203",
+              "row-8",
+              9
+            ],
+            [
+              "conversation:opaque-20261203",
+              "unlinked-copy",
+              14
+            ]
+          ],
+          "native_status": "CONFLICT",
+          "joined_sha256": "c399be1b72fd3e4f84e26bb309bb026c4d7413640eb0b30b819009d52243c7d8",
+          "unsafe_root_only_false_annotations": 4,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "origin": [
+                "conversation:opaque-20261203",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261203",
+                "row-6",
+                7
+              ],
+              "native_trail_address": "d6bb84258a73f385"
+            },
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "origin": [
+                "conversation:opaque-20261203",
+                "unlinked-copy",
+                14
+              ],
+              "target": [
+                "conversation:opaque-20261203",
+                "row-6",
+                7
+              ],
+              "native_trail_address": "d6bb84258a73f385"
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "origin": [
+                "conversation:opaque-20261203",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261203",
+                "row-6",
+                7
+              ],
+              "native_trail_address": "66a41d69cc59dcc2"
+            }
+          ]
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "again-q",
+            12
+          ],
+          "expected_linked_origins": [
+            [
+              "conversation:opaque-20261203",
+              "again-a",
+              13
+            ]
+          ],
+          "native_status": "CANDIDATES",
+          "joined_sha256": "df7c9018a9e87b0d54fce5b5af374cf7310158406bec250964fe896825a88f6e",
+          "unsafe_root_only_false_annotations": 4,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "origin": [
+                "conversation:opaque-20261203",
+                "again-a",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261203",
+                "again-q",
+                12
+              ],
+              "native_trail_address": "d6bb84258a73f385"
+            }
+          ]
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203",
+            "unlinked-q",
+            15
+          ],
+          "expected_linked_origins": [],
+          "native_status": "UNRESOLVED",
+          "joined_sha256": "69f2c8a67156fb36624519ee8e024dc5d975a680d3b44832a97a4faf20eb8011",
+          "unsafe_root_only_false_annotations": 0,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": []
+        },
+        {
+          "target": [
+            "conversation:opaque-20261203-other",
+            "row-6",
+            7
+          ],
+          "expected_linked_origins": [
+            [
+              "conversation:opaque-20261203-other",
+              "row-7",
+              8
+            ]
+          ],
+          "native_status": "CANDIDATES",
+          "joined_sha256": "a2837643f09a63c63e20f6192e62000d142f4477856e5da668a92c9823399218",
+          "unsafe_root_only_false_annotations": 4,
+          "candidates": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "again-a",
+                    13
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-copy",
+                    14
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "unlinked-a",
+                    16
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-7",
+                    8
+                  ],
+                  "explicit_reply_to_selected_target": true
+                }
+              ]
+            },
+            {
+              "payload_id": "payload:f11e3d1f854271eea8bd610989a4540594f491e7",
+              "occurrences": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261203",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261203-other",
+                    "row-8",
+                    9
+                  ],
+                  "explicit_reply_to_selected_target": false
+                }
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "payload_id": "payload:51b3e429313867250937500e2413b1bba3386d97",
+              "origin": [
+                "conversation:opaque-20261203-other",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261203-other",
+                "row-6",
+                7
+              ],
+              "native_trail_address": "d6bb84258a73f385"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
