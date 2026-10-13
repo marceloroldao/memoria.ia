@@ -63,6 +63,8 @@ O replay histórico ainda busca prefixos e reconstrói leituras; não há garant
 
 O próximo passo é consolidar um fluxo experimental único de registrar, consultar, dar feedback e retirar feedback, mantendo a baseline preservada e avaliando o ciclo com operadores humanos. Aprender uma penalização de rota generalizável continua uma investigação separada.
 
+O fluxo local unificado está descrito em [trajectory-feedback-session.md](trajectory-feedback-session.md). Ele aplica o leitor de retirada a todas as consultas da nova sessão, sem modificar os leitores antigos ou o MVP. A avaliação humana continua pendente.
+
 ## Reprodução e CI
 
 ```bash
