@@ -51,3 +51,5 @@ Relatório: `benchmark-results/trajectory-feedback-portuguese.json`, com saídas
 ## Próxima investigação
 
 Medir, em outro catálogo reservado, se demonstrar explicitamente variações de pergunta permite recuperar conteúdo em novas entidades sem aumentar respostas a atributos ausentes. Separar o efeito de molduras demonstradas, variações em maiúsculas e paráfrases novas; preservar esses 32 resultados como baseline. A avaliação com operadores humanos permanece pendente e poderá usar o ciclo documentado em `trajectory-feedback-session.md`.
+
+A ablação correspondente está registrada em [trajectory-feedback-variants-proof.md](trajectory-feedback-variants-proof.md), com resultados separados por catálogo e por tipo de demonstração. O diagnóstico inicial acima permanece preservado.
