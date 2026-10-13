@@ -52,3 +52,5 @@ O gate retorna sucesso pela integridade. Cobertura incompleta, `human_evaluation
 ## Próxima investigação
 
 Isolar o problema de maiúsculas: distinguir mudança de escrita na moldura fixa, na entidade copiada e em ambas, incluindo entidades cujos símbolos têm ou não testemunhos observados de transformação. Testar controles de escrita literalmente distinta e campos sensíveis a maiúsculas, antes de propor qualquer equivalência automática. A avaliação humana e a generalização para famílias de perguntas não ensinadas continuam pendentes.
+
+O diagnóstico de localização está registrado em [trajectory-feedback-case-proof.md](trajectory-feedback-case-proof.md). Ele conserva a fragilidade na entidade e o contraexemplo de cobertura de pares completa sem recuperação.
