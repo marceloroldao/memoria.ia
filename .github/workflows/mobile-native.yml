@@ -1,0 +1,73 @@
+name: mobile-native
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/mobile-native-runtime
+  pull_request:
+
+jobs:
+  desktop-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Memoria.ia
+        uses: actions/checkout@v6
+
+      - name: Checkout BDR Android ABI candidate
+        uses: actions/checkout@v6
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: d6aa823eaf348ed6230e6ee4e15db1f35e5da857
+          path: _deps/resolutive-DB
+
+      - name: Configure
+        run: cmake -S mobile -B build-mobile -DBDR_SOURCE_DIR="$GITHUB_WORKSPACE/_deps/resolutive-DB"
+
+      - name: Build
+        run: cmake --build build-mobile --parallel 2
+
+      - name: Test online learning and restart persistence
+        run: ctest --test-dir build-mobile --output-on-failure
+
+  android-arm64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Memoria.ia
+        uses: actions/checkout@v6
+
+      - name: Checkout BDR Android ABI candidate
+        uses: actions/checkout@v6
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: d6aa823eaf348ed6230e6ee4e15db1f35e5da857
+          path: _deps/resolutive-DB
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install NDK and CMake
+        run: sdkmanager "ndk;29.0.13113456" "cmake;3.31.6"
+
+      - name: Configure Android arm64-v8a
+        run: |
+          "$ANDROID_SDK_ROOT/cmake/3.31.6/bin/cmake" \
+            -S mobile \
+            -B build-mobile-android \
+            -DBDR_SOURCE_DIR="$GITHUB_WORKSPACE/_deps/resolutive-DB" \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_SDK_ROOT/ndk/29.0.13113456/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-33 \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Memoria mobile runtime
+        run: |
+          "$ANDROID_SDK_ROOT/cmake/3.31.6/bin/cmake" \
+            --build build-mobile-android \
+            --target memoria_mobile \
+            --parallel 2
+
+      - name: Verify native libraries
+        run: |
+          test -f build-mobile-android/libmemoria_mobile.so
+          test -f build-mobile-android/bdr-build/experimental/api_v86/libbdr_c.so
