@@ -58,3 +58,5 @@ BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. `general_learning_stat
 ## Próxima etapa
 
 Medir em um catálogo novo a separação entre símbolo nunca observado, símbolo observado com mapa conflitante e fronteira de valor excessivamente específica. Incluir controles de IDs sensíveis à escrita. Só então avaliar uma política que solicite demonstrações adicionais com base na lacuna estrutural, sem criar respostas nem retirar restrições sem evidência.
+
+A replicação em novos identificadores está registrada em [trajectory-transform-new-catalogue-proof.md](trajectory-transform-new-catalogue-proof.md), incluindo preservação de duas hipóteses quando existem mapas concorrentes.
