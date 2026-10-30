@@ -78,3 +78,5 @@ PYTHONPATH=src MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.
 ```
 
 `human_evaluation_status=NOT_PERFORMED` e `general_learning_status=NOT_ESTABLISHED` permanecem explícitos. O próximo passo é usar esse registro com escolhas reais e medir separadamente o efeito de exemplos incorporados depois, preservando decisões adiadas e tentativas sem melhora.
+
+O registro de comparação posterior, incluindo ausência de mudança e avaliação incerta, está em [trajectory-review-outcomes.md](trajectory-review-outcomes.md). Ele referencia dois recibos e mantém avaliação declarada separada da diferença de recuperação.

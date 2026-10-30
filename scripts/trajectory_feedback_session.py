@@ -15,6 +15,7 @@ from trajectory_region_evidence_probe import fingerprint
 from trajectory_evidence_diagnosis import diagnose_evidence
 from trajectory_demonstration_review import review_demonstrations, validate_offers
 from trajectory_review_decisions import open_review, record_decision, history as review_decision_history
+from trajectory_review_outcomes import record as record_review_outcome, history as review_outcome_history
 
 
 class FeedbackSession:
@@ -65,6 +66,8 @@ class FeedbackSession:
             'open_review': {'text', 'offers'},
             'record_review_decision': {'receipt_id', 'decision_id', 'actor_id', 'choice', 'offer_id', 'reason'},
             'review_decisions': set(),
+            'record_review_outcome': {'decision_id', 'after_receipt_id', 'outcome_id', 'actor_id', 'judgement', 'reason'},
+            'review_outcomes': set(),
             'feedback': {'receipt', 'event_id', 'actor_id', 'stance'},
             'withdraw': {'request_id', 'actor_id', 'target'},
             'history': set(),
@@ -127,6 +130,13 @@ class FeedbackSession:
                           learning_performed=False)
         elif op == 'review_decisions':
             result = review_decision_history(self.native, region)
+        elif op == 'record_review_outcome':
+            result = record_review_outcome(self.native, region, command.get('decision_id'), command.get('after_receipt_id'),
+                                           command.get('outcome_id'), command.get('actor_id'), command.get('judgement'), command.get('reason'))
+            result.update(operator_judgement_recorded=True, examples_incorporated_into_learning=False,
+                          learning_performed=False)
+        elif op == 'review_outcomes':
+            result = review_outcome_history(self.native, region)
         elif op == 'feedback':
             binding = command.get('receipt')
             if not isinstance(binding, dict) or binding.get('region') != region:
@@ -143,7 +153,7 @@ class FeedbackSession:
             controls = withdrawals(self.native, region)
             result = dict(entries=rows, feedback_projection=feedback_projection(ledger, controls),
                           withdrawal_history=controls)
-        if op in ('observe', 'feedback', 'withdraw', 'open_review', 'record_review_decision'):
+        if op in ('observe', 'feedback', 'withdraw', 'open_review', 'record_review_decision', 'record_review_outcome'):
             self.flush()
             result['persisted'] = True
         return dict(format='memoria.ia-feedback-session-v1', scope=scope, operation=op,
