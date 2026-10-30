@@ -110,13 +110,24 @@ class ReviewWizard:
             for suffix,text,origin in (('q',example['source_text'],kind),('a',example['target_text'],kind),
                                        ('barrier','Intervalo observado.','assistant_generated')):
                 planned.append(dict(event_id=f'wizard-apply:{decision["decision_id"]}:{i}:{suffix}',text=text,source_kind=origin))
-        rows=self.call('history')['entries'];existing={r['source_id']:r for r in rows};pending=[]
-        for entry in planned:
-            previous=existing.get('session-observation:'+fingerprint(entry['event_id']))
-            if previous:
+        rows=self.call('history')['entries'];pending=[];present=[];positions=[]
+        for index,entry in enumerate(planned):
+            source='session-observation:'+fingerprint(entry['event_id'])
+            matches=[(position,row) for position,row in enumerate(rows) if row['source_id']==source]
+            if len(matches)>1:
+                raise ValueError('Há identidades duplicadas no lote; confira o histórico antes de retomar.')
+            if matches:
+                position,previous=matches[0]
                 if previous['text']!=entry['text'] or previous['source_kind']!=entry['source_kind']:
                     raise ValueError('A retomada exige a mesma origem e os mesmos textos já registrados.')
+                present.append(index);positions.append(position)
             else:pending.append(entry)
+        if present!=list(range(len(present))):
+            raise ValueError('O histórico parcial não segue a ordem inicial do lote; confira as entradas antes de retomar.')
+        if positions and positions!=list(range(positions[0],positions[0]+len(positions))):
+            raise ValueError('Há observações intercaladas no lote; a retomada não pode reconstruir sua sequência automaticamente.')
+        if pending and positions and positions[-1]!=len(rows)-1:
+            raise ValueError('Há contexto posterior ao trecho parcial; confira a sequência antes de registrar os pares restantes.')
         if len(rows)+len(pending)>64 or sum(len(r['text']) for r in rows)+sum(len(r['text']) for r in pending)>4096:
             raise ValueError('O conjunto inteiro excede o limite da sessão; nenhum novo par foi registrado.')
         return planned

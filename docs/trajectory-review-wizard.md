@@ -37,6 +37,8 @@ Os IDs das observações incorporadas derivam do ID da decisão, do índice do p
 
 Interromper depois de registrar a decisão, inclusive por fim da entrada do terminal, preserva uma decisão retomável. Um resultado posterior é um novo evento e recebe novo ID. Uma decisão não é apagada ao adiar a avaliação.
 
+Na retomada de um lote parcialmente registrado, os registros existentes precisam formar um prefixo contínuo, na ordem prevista, no final da região local. Uma observação intercalada, um trecho fora de ordem ou contexto posterior ao trecho incompleto faz a incorporação ser recusada antes de novos pares. Confira o histórico: o assistente não reordena ou apaga observações para reconstruir a sequência. Um lote já completo pode ser reenviado depois de contexto posterior, sem acrescentar observações.
+
 ## Limites e falhas
 
 O assistente usa os mesmos limites da sessão. As linhas de entrada inicial têm até 2000 caracteres; consultas até 4000; conjuntos de exemplos seguem os limites já documentados em `trajectory-demonstration-review.md`.
@@ -67,3 +69,5 @@ PYTHONPATH=src MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.
 ```
 
 As operações anteriores, os diários, o motor e a ABI permanecem preservados. `human_evaluation_status=NOT_PERFORMED` e `general_learning_status=NOT_ESTABLISHED` continuam explícitos. A próxima etapa é realizar percursos com um operador real e dados de origem conhecida, usando os registros para identificar dúvidas, falhas e efeitos observados.
+
+O roteiro para essa rodada está em [trajectory-operator-pilot.md](trajectory-operator-pilot.md), junto da validação cumulativa e da correção de retomada com histórico parcial intercalado.
