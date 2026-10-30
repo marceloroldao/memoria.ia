@@ -22,6 +22,8 @@ Outros testes cobrem os três históricos ambíguos e o reenvio de um lote compl
 
 ## Preparar a rodada
 
+Para conferir ferramentas, compilar com a dependência fixada e abrir o assistente sem configurar `PYTHONPATH` manualmente, use [trajectory-operator-setup.md](trajectory-operator-setup.md). O comando direto abaixo continua disponível para bibliotecas já preparadas.
+
 Use o código da branch `feat/feedback-withdrawal-continuity` e a biblioteca construída com o BDR fixado nas instruções de `trajectory-feedback-session.md`. Para abrir o assistente:
 
 ```sh

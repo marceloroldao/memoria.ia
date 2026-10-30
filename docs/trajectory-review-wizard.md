@@ -4,6 +4,8 @@
 
 ## Executar
 
+Se ainda não preparou a biblioteca, use o [preparador do piloto](trajectory-operator-setup.md), que compila em pasta isolada e verifica persistência temporária antes de abrir este assistente.
+
 Com a biblioteca nativa construída conforme `trajectory-feedback-session.md`, execute a partir da raiz do repositório:
 
 ```sh
