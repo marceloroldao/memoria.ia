@@ -52,3 +52,5 @@ BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. CI verde significa int
 ## Próxima investigação
 
 Rastrear a composição e a admissão de transformações da entidade nos casos com cobertura de pares completa e incompleta. Comparar o caso de carros que falha mesmo com cobertura completa ao de dispositivos que recupera somente um conteúdo. Preservar a distinção de IDs e exigir evidência explícita antes de qualquer equivalência aprendida. Nenhuma normalização global deve ser deduzida desses resultados.
+
+O rastreamento está documentado em [trajectory-entity-transform-trace-proof.md](trajectory-entity-transform-trace-proof.md). Identificou `F → F` ausente no caso de carros (o diagnóstico anterior contava somente pares que mudavam) e o sufixo ` V.` excessivamente específico no caso de dispositivos. Intervenções observadas e seus contrastes são registrados separadamente, preservando os resultados acima.

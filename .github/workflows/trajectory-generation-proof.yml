@@ -107,6 +107,8 @@ on:
       - 'tests/test_trajectory_feedback_variants_probe.py'
       - 'scripts/trajectory_feedback_case_probe.py'
       - 'tests/test_trajectory_feedback_case_probe.py'
+      - 'scripts/trajectory_entity_transform_trace.py'
+      - 'tests/test_trajectory_entity_transform_trace.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -345,6 +347,13 @@ jobs:
           for case_split in development reserved; do
             python scripts/trajectory_feedback_case_probe.py --library build/trajectory-native/libmemoria_mobile.so --split "$case_split" --output "/tmp/feedback-case-$case_split.json"
           done
+      - name: Entity transform admission trace and targeted observation controls
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_entity_transform_trace.py
+          python scripts/trajectory_entity_transform_trace.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/entity-transform-trace.json
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Observed regions versus exact native reply addresses (integrity only)
