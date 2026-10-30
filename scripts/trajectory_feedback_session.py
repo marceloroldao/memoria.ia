@@ -13,6 +13,7 @@ from trajectory_feedback_withdrawal_probe import feedback_projection, withdraw, 
 from trajectory_question_frame_probe import collect
 from trajectory_region_evidence_probe import fingerprint
 from trajectory_evidence_diagnosis import diagnose_evidence
+from trajectory_demonstration_review import review_demonstrations, validate_offers
 
 
 class FeedbackSession:
@@ -59,6 +60,7 @@ class FeedbackSession:
             'observe': {'event_id', 'text', 'source_kind'},
             'query': {'text'},
             'diagnose': {'text'},
+            'review_examples': {'text', 'offers'},
             'feedback': {'receipt', 'event_id', 'actor_id', 'stance'},
             'withdraw': {'request_id', 'actor_id', 'target'},
             'history': set(),
@@ -92,16 +94,20 @@ class FeedbackSession:
                 if status != 0 or response.get('duplicate'):
                     raise RuntimeError('observation rejected')
                 result = dict(status='APPENDED', entry=row)
-        elif op in ('query', 'diagnose'):
+        elif op in ('query', 'diagnose', 'review_examples'):
             text = command.get('text')
             if not isinstance(text, str) or not text.strip() or len(text) > 4000:
                 raise ValueError('invalid query')
+            if op == 'review_examples':
+                validate_offers(command.get('offers'))
             result = withdrawal_read(self.native, region, text, enabled=True)
             result['receipts'] = [receipt(self.native, region, text, c['payload_id'])
                                   for c in result['raw_view']['candidates']]
             result['query_recorded'] = False
-            if op == 'diagnose':
+            if op in ('diagnose', 'review_examples'):
                 result['diagnosis'] = diagnose_evidence(result, rows, text)
+            if op == 'review_examples':
+                result['example_review'] = review_demonstrations(result, command['offers'])
         elif op == 'feedback':
             binding = command.get('receipt')
             if not isinstance(binding, dict) or binding.get('region') != region:

@@ -62,3 +62,5 @@ Passaram **22 testes locais**, nove novos e treze regressões da sessão e do ra
 ## Próxima etapa
 
 Avaliar se um operador, usando somente esses achados e a proveniência, consegue escolher uma demonstração adicional que resolva casos novos. Preservar alternativas ambíguas, controles de conteúdo inexistente e histórico de sugestões que não melhoraram a recuperação. Não usar as referências do avaliador para escolher a próxima ação.
+
+O protocolo preparatório `review_examples` está em [trajectory-demonstration-review.md](trajectory-demonstration-review.md). Sua avaliação programada conserva marcações sem melhora e exemplos úteis sem marcação; a avaliação humana permanece pendente.

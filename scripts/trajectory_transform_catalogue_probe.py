@@ -22,10 +22,11 @@ CATALOGUES = {
 }
 
 
-def fixture_for(catalogue, experiment, arm):
-    if catalogue not in CATALOGUES or experiment not in EXPERIMENTS or arm not in ARMS:
+def fixture_for(catalogue, experiment, arm, *, catalogues=None):
+    catalogues = CATALOGUES if catalogues is None else catalogues
+    if catalogue not in catalogues or experiment not in EXPERIMENTS or arm not in ARMS:
         raise ValueError('unknown catalogue, experiment or arm')
-    spec = CATALOGUES[catalogue]; attribute = spec['attribute']; units = spec['units']
+    spec = catalogues[catalogue]; attribute = spec['attribute']; units = spec['units']
     question = lambda entity: f'Qual é a {attribute} do {entity}?'
     statement = lambda entity,value: f'A {attribute} do {entity} é {value}.'
     mapping = {c:c.lower() for entity in spec['training'] for c in entity}
