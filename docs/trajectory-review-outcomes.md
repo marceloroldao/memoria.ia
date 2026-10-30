@@ -72,3 +72,5 @@ PYTHONPATH=src MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.
 ```
 
 `human_evaluation_status=NOT_PERFORMED` e `general_learning_status=NOT_ESTABLISHED` permanecem explícitos. A próxima etapa é usar o ciclo completo com escolhas e observações reais, preservando tanto a avaliação do operador quanto as evidências que permitam contestá-la.
+
+O ciclo pode ser conduzido pelo [assistente de terminal](trajectory-review-wizard.md), que administra os IDs de recibos, separa escolha e incorporação e permite retomar decisões.

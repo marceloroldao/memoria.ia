@@ -1,5 +1,7 @@
 # Sessão local unificada de feedback
 
+Para executar a avaliação com menus em português e sem JSON manual, use [trajectory-review-wizard.md](trajectory-review-wizard.md). As operações abaixo continuam disponíveis para automação e inspeção.
+
 Continuação de `7dc43da`: um único leitor experimental aplica continuidade e retirada em todas as consultas desta sessão. O incremento reúne registro, consulta, feedback e retirada em um processo Linux por diretório. Não modifica o MVP, a ABI ou o servidor de produto.
 
 ## Execução
