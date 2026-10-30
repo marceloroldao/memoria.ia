@@ -18,6 +18,7 @@ O terminal recebe um objeto JSON por linha e devolve um objeto por operação. R
 |---|---|---|
 | `observe` | `event_id`, `text`, `source_kind` opcional | Registra observação e confirma flush; replay exato não cria ocorrência |
 | `query` | `text` | Recuperação bruta, candidatas disponíveis/suspensas, projeção de controles e recibos de todas as candidatas |
+| `diagnose` | `text` | A mesma leitura e recibos de `query`, acrescentando `result.diagnosis` com evidências e orientação estrutural ao operador |
 | `feedback` | `receipt`, `event_id`, `actor_id`, `stance` (`support`/`oppose`) | Registra evento explícito vinculado ao recibo integral, com flush |
 | `withdraw` | `target`, `request_id`, `actor_id` | Retira somente a ocorrência exata, acrescentando controle com flush |
 | `history` | Nenhum | Observações, feedback original com estado ativo e histórico completo de retiradas |
@@ -56,3 +57,5 @@ Validação local: **10 testes da sessão passaram**, incluindo execução real 
 O próximo passo é executar o ciclo com operadores humanos e exemplos variados, registrando acertos, candidatas extras, ausências e efeitos de feedback incorreto. Essa avaliação ainda não foi realizada.
 
 Uma avaliação preparatória sintética em português está registrada em [trajectory-feedback-portuguese-proof.md](trajectory-feedback-portuguese-proof.md). Ela conserva as falhas de recuperação e não substitui avaliação humana.
+
+O comando opcional `diagnose` está documentado em [trajectory-evidence-diagnosis.md](trajectory-evidence-diagnosis.md). Ele não grava a pergunta nem solicita ou incorpora exemplos automaticamente. A saída de `query` continua preservada.

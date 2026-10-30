@@ -12,6 +12,7 @@ from trajectory_feedback_ledger_probe import canonical, events, receipt, record
 from trajectory_feedback_withdrawal_probe import feedback_projection, withdraw, withdrawal_read, withdrawals
 from trajectory_question_frame_probe import collect
 from trajectory_region_evidence_probe import fingerprint
+from trajectory_evidence_diagnosis import diagnose_evidence
 
 
 class FeedbackSession:
@@ -57,6 +58,7 @@ class FeedbackSession:
         allowed = {
             'observe': {'event_id', 'text', 'source_kind'},
             'query': {'text'},
+            'diagnose': {'text'},
             'feedback': {'receipt', 'event_id', 'actor_id', 'stance'},
             'withdraw': {'request_id', 'actor_id', 'target'},
             'history': set(),
@@ -90,7 +92,7 @@ class FeedbackSession:
                 if status != 0 or response.get('duplicate'):
                     raise RuntimeError('observation rejected')
                 result = dict(status='APPENDED', entry=row)
-        elif op == 'query':
+        elif op in ('query', 'diagnose'):
             text = command.get('text')
             if not isinstance(text, str) or not text.strip() or len(text) > 4000:
                 raise ValueError('invalid query')
@@ -98,6 +100,8 @@ class FeedbackSession:
             result['receipts'] = [receipt(self.native, region, text, c['payload_id'])
                                   for c in result['raw_view']['candidates']]
             result['query_recorded'] = False
+            if op == 'diagnose':
+                result['diagnosis'] = diagnose_evidence(result, rows, text)
         elif op == 'feedback':
             binding = command.get('receipt')
             if not isinstance(binding, dict) or binding.get('region') != region:

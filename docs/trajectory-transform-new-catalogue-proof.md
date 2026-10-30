@@ -51,3 +51,5 @@ BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a`. A CI do commit anterio
 ## Próxima etapa
 
 Construir um diagnóstico de lacuna para o operador que use somente a leitura e seus testemunhos: símbolo sem mapa, nenhuma moldura compatível, ausência de destino observado ou hipóteses concorrentes. Uma fronteira específica pode ser informada como observação estrutural, mas não removida automaticamente. Avaliar se esse diagnóstico orienta demonstrações adicionais em casos novos, sem escolher uma verdade, produzir conteúdo inexistente ou usar os gabaritos para decidir a solicitação.
+
+O comando opcional `diagnose` da sessão local está documentado em [trajectory-evidence-diagnosis.md](trajectory-evidence-diagnosis.md). Ele acrescenta orientação de evidências à leitura, preservando o comportamento de `query`.
