@@ -20,6 +20,9 @@ O terminal recebe um objeto JSON por linha e devolve um objeto por operação. R
 | `query` | `text` | Recuperação bruta, candidatas disponíveis/suspensas, projeção de controles e recibos de todas as candidatas |
 | `diagnose` | `text` | A mesma leitura e recibos de `query`, acrescentando `result.diagnosis` com evidências e orientação estrutural ao operador |
 | `review_examples` | `text`, `offers` | Acrescenta diagnóstico e revisão estrutural de exemplos fornecidos pelo chamador, sem escolher ou gravar exemplos |
+| `open_review` | `text`, `offers` | Persiste um recibo da revisão exata em campo de auditoria, incluindo os textos oferecidos, sem incorporá-los à aprendizagem |
+| `record_review_decision` | `receipt_id`, `decision_id`, `actor_id`, `choice`, `offer_id`, `reason` | Registra escolha, adiamento ou rejeição do operador com vínculo ao recibo |
+| `review_decisions` | Nenhum | Retorna recibos e decisões do escopo, preservando o histórico |
 | `feedback` | `receipt`, `event_id`, `actor_id`, `stance` (`support`/`oppose`) | Registra evento explícito vinculado ao recibo integral, com flush |
 | `withdraw` | `target`, `request_id`, `actor_id` | Retira somente a ocorrência exata, acrescentando controle com flush |
 | `history` | Nenhum | Observações, feedback original com estado ativo e histórico completo de retiradas |
@@ -62,3 +65,5 @@ Uma avaliação preparatória sintética em português está registrada em [traj
 O comando opcional `diagnose` está documentado em [trajectory-evidence-diagnosis.md](trajectory-evidence-diagnosis.md). Ele não grava a pergunta nem solicita ou incorpora exemplos automaticamente. A saída de `query` continua preservada.
 
 A revisão opcional `review_examples`, seu formato e as tentativas sem melhora estão em [trajectory-demonstration-review.md](trajectory-demonstration-review.md). Os exemplos só entram na memória por uma operação explícita de registro posterior.
+
+O registro persistente de decisões, incluindo dúvida e rejeição, está documentado em [trajectory-review-decisions.md](trajectory-review-decisions.md). O recibo de auditoria contém cópia dos textos oferecidos; essa preservação não equivale a incorporá-los à região de aprendizagem.

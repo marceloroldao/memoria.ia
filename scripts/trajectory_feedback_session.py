@@ -14,6 +14,7 @@ from trajectory_question_frame_probe import collect
 from trajectory_region_evidence_probe import fingerprint
 from trajectory_evidence_diagnosis import diagnose_evidence
 from trajectory_demonstration_review import review_demonstrations, validate_offers
+from trajectory_review_decisions import open_review, record_decision, history as review_decision_history
 
 
 class FeedbackSession:
@@ -61,6 +62,9 @@ class FeedbackSession:
             'query': {'text'},
             'diagnose': {'text'},
             'review_examples': {'text', 'offers'},
+            'open_review': {'text', 'offers'},
+            'record_review_decision': {'receipt_id', 'decision_id', 'actor_id', 'choice', 'offer_id', 'reason'},
+            'review_decisions': set(),
             'feedback': {'receipt', 'event_id', 'actor_id', 'stance'},
             'withdraw': {'request_id', 'actor_id', 'target'},
             'history': set(),
@@ -94,20 +98,35 @@ class FeedbackSession:
                 if status != 0 or response.get('duplicate'):
                     raise RuntimeError('observation rejected')
                 result = dict(status='APPENDED', entry=row)
-        elif op in ('query', 'diagnose', 'review_examples'):
+        elif op in ('query', 'diagnose', 'review_examples', 'open_review'):
             text = command.get('text')
             if not isinstance(text, str) or not text.strip() or len(text) > 4000:
                 raise ValueError('invalid query')
-            if op == 'review_examples':
+            if op in ('review_examples', 'open_review'):
                 validate_offers(command.get('offers'))
             result = withdrawal_read(self.native, region, text, enabled=True)
             result['receipts'] = [receipt(self.native, region, text, c['payload_id'])
                                   for c in result['raw_view']['candidates']]
             result['query_recorded'] = False
-            if op in ('diagnose', 'review_examples'):
+            if op in ('diagnose', 'review_examples', 'open_review'):
                 result['diagnosis'] = diagnose_evidence(result, rows, text)
-            if op == 'review_examples':
+            if op in ('review_examples', 'open_review'):
                 result['example_review'] = review_demonstrations(result, command['offers'])
+            if op == 'open_review':
+                result = open_review(self.native, region, text, fingerprint(rows), result)
+                result.update(review_receipt_recorded=True, audit_contains_offered_texts=True,
+                              examples_incorporated_into_learning=False, learning_performed=False)
+        elif op == 'record_review_decision':
+            def current_review(query, offers):
+                reviewed = self.execute(dict(op='review_examples', scope=scope, text=query, offers=offers))['result']
+                return reviewed, fingerprint(collect(self.native, [region]))
+            result = record_decision(self.native, region, command.get('receipt_id'), command.get('decision_id'),
+                                     command.get('actor_id'), command.get('choice'), command.get('offer_id'),
+                                     command.get('reason'), current_review)
+            result.update(operator_choice_recorded=True, examples_incorporated_into_learning=False,
+                          learning_performed=False)
+        elif op == 'review_decisions':
+            result = review_decision_history(self.native, region)
         elif op == 'feedback':
             binding = command.get('receipt')
             if not isinstance(binding, dict) or binding.get('region') != region:
@@ -124,7 +143,7 @@ class FeedbackSession:
             controls = withdrawals(self.native, region)
             result = dict(entries=rows, feedback_projection=feedback_projection(ledger, controls),
                           withdrawal_history=controls)
-        if op in ('observe', 'feedback', 'withdraw'):
+        if op in ('observe', 'feedback', 'withdraw', 'open_review', 'record_review_decision'):
             self.flush()
             result['persisted'] = True
         return dict(format='memoria.ia-feedback-session-v1', scope=scope, operation=op,

@@ -59,3 +59,5 @@ A avaliação em catálogos novos continua curada e correlacionada; não mede pr
 ## Próxima etapa
 
 Realizar a avaliação humana usando exemplos com proveniência real. Registrar a escolha do operador, inclusive quando ele mantém a dúvida, e avaliar separadamente a pertinência da escolha e o efeito posterior na recuperação. Manter visíveis os casos de marcação sem melhora e melhora sem marcação; não converter essa heurística em registro ou seleção automática.
+
+O registro persistente de escolha, adiamento e rejeição está disponível em [trajectory-review-decisions.md](trajectory-review-decisions.md). Ele preserva o recibo exato sem incorporar os exemplos à região de aprendizagem. A avaliação humana continua pendente.
