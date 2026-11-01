@@ -1,0 +1,220 @@
+{
+  "format": "memoria.ia-borrowed-map-validation-v1",
+  "source_parent": "d68c379dad31f182b055d786c4ecc0a235b49b89",
+  "source_sha256": {
+    "scripts/trajectory_borrowed_map.py": "f32521ef890f0c05e371d68c5fcac66759ba3c5f3ea9c1537a52652bafd9ca2c",
+    "scripts/trajectory_borrowed_map_probe.py": "6368199793fe96f6c0891ede5992b66bbb4305d0e80cb7879a2fd204267c3442",
+    "tests/test_trajectory_borrowed_map.py": "4a2883b34cc53f7d8e81eff7457d7086530d0068a0e6b6cc540456b917ceee08"
+  },
+  "native_sha256": "8a21f2bfd09d2eb4b2b011d0d116ea1d253c35951eff9f12dd3ef1d0b1aa759a",
+  "test_count": 32,
+  "tests": [
+    {
+      "name": "test_hidden_worlds_have_identical_evidence_without_target_leakage[20261101-humidity]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.004,
+      "status": "PASS"
+    },
+    {
+      "name": "test_hidden_worlds_have_identical_evidence_without_target_leakage[20261101-vibration]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.004,
+      "status": "PASS"
+    },
+    {
+      "name": "test_hidden_worlds_have_identical_evidence_without_target_leakage[20261102-humidity]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.004,
+      "status": "PASS"
+    },
+    {
+      "name": "test_hidden_worlds_have_identical_evidence_without_target_leakage[20261102-vibration]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.004,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_borrowing_cannot_distinguish_hidden_world_and_never_selects[uppercase]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 1.34,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_borrowing_cannot_distinguish_hidden_world_and_never_selects[paraphrase]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 1.378,
+      "status": "PASS"
+    },
+    {
+      "name": "test_missing_or_ineligible_anchors_do_not_authorize_borrowing[baseline]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.088,
+      "status": "PASS"
+    },
+    {
+      "name": "test_missing_or_ineligible_anchors_do_not_authorize_borrowing[one_anchor]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.096,
+      "status": "PASS"
+    },
+    {
+      "name": "test_missing_or_ineligible_anchors_do_not_authorize_borrowing[wrong_anchor]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.113,
+      "status": "PASS"
+    },
+    {
+      "name": "test_missing_or_ineligible_anchors_do_not_authorize_borrowing[generated]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.091,
+      "status": "PASS"
+    },
+    {
+      "name": "test_missing_or_ineligible_anchors_do_not_authorize_borrowing[foreign]",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.1,
+      "status": "PASS"
+    },
+    {
+      "name": "test_repeated_anchor_and_repeated_cue_are_not_two_distinct_witnesses",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.047,
+      "status": "PASS"
+    },
+    {
+      "name": "test_generated_target_payload_is_not_admitted_by_borrowed_route",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.116,
+      "status": "PASS"
+    },
+    {
+      "name": "test_explicit_new_form_counterwitness_vetoes_an_otherwise_matching_donor",
+      "classname": "tests.test_trajectory_borrowed_map",
+      "seconds": 0.143,
+      "status": "PASS"
+    },
+    {
+      "name": "test_surface_conditions_keep_targets_and_evaluation_queries_out_of_demonstrations[20261101-humidity]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.004,
+      "status": "PASS"
+    },
+    {
+      "name": "test_surface_conditions_keep_targets_and_evaluation_queries_out_of_demonstrations[20261101-vibration]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.003,
+      "status": "PASS"
+    },
+    {
+      "name": "test_surface_conditions_keep_targets_and_evaluation_queries_out_of_demonstrations[20261102-humidity]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.003,
+      "status": "PASS"
+    },
+    {
+      "name": "test_surface_conditions_keep_targets_and_evaluation_queries_out_of_demonstrations[20261102-vibration]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.003,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_diagnosis_distinguishes_source_form_symbol_gap_and_target_mismatch[baseline-NO_COMPATIBLE_SOURCE_FRAME]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.988,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_diagnosis_distinguishes_source_form_symbol_gap_and_target_mismatch[known_symbols_only-UNWITNESSED_SYMBOLS_IN_FRAMES]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 1.31,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_diagnosis_distinguishes_source_form_symbol_gap_and_target_mismatch[wrong_map-NO_OBSERVED_DESTINATION_IN_FRAMES]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 1.516,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_diagnosis_distinguishes_source_form_symbol_gap_and_target_mismatch[three_surface-OBSERVED_CANDIDATE_REQUIRES_REVIEW]",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 1.698,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluator_cannot_be_used_to_execute_a_writing_operation",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "name": "test_untaught_surface_failure_keeps_full_retrieval_gate_failed",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "name": "test_surface_strict_mode_rejects_retrieval_failure",
+      "classname": "tests.test_trajectory_surface_evaluation",
+      "seconds": 0.002,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261101-humidity]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261101-vibration]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261102-humidity]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261102-vibration]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_transfer_commands_do_not_contain_references_or_reinsert_queries[contrast]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.611,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_transfer_commands_do_not_contain_references_or_reinsert_queries[intervention]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.939,
+      "status": "PASS"
+    },
+    {
+      "name": "test_strict_mode_rejects_incomplete_retrieval_despite_integrity_pass",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.002,
+      "status": "PASS"
+    }
+  ],
+  "integrity_checks": 768,
+  "integrity_status": "PASS",
+  "promotion_status": "NOT_APPROVED_FOR_SELECTION",
+  "counterexample_extra": 16,
+  "counterexample_missing": 16,
+  "standard_candidates_remain_empty": true,
+  "repeat_report_byte_identical": true,
+  "report_content_sha256": "52e3fef88f28c6b1f8fad5d2ef72a9cb6cdfb935a1b6b563dd63afb54db5dac8",
+  "prior_ci": {
+    "sha": "d68c379dad31f182b055d786c4ecc0a235b49b89",
+    "run_id": 41279129515,
+    "conclusion": "success"
+  },
+  "human_evaluation_status": "NOT_PERFORMED",
+  "general_learning_status": "NOT_ESTABLISHED"
+}

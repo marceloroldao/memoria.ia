@@ -99,6 +99,46 @@ on:
       - 'tests/test_trajectory_feedback_continuity_probe.py'
       - 'scripts/trajectory_feedback_withdrawal_probe.py'
       - 'tests/test_trajectory_feedback_withdrawal_probe.py'
+      - 'scripts/trajectory_feedback_session.py'
+      - 'tests/test_trajectory_feedback_session.py'
+      - 'scripts/trajectory_feedback_portuguese_probe.py'
+      - 'tests/test_trajectory_feedback_portuguese_probe.py'
+      - 'scripts/trajectory_feedback_variants_probe.py'
+      - 'tests/test_trajectory_feedback_variants_probe.py'
+      - 'scripts/trajectory_feedback_case_probe.py'
+      - 'tests/test_trajectory_feedback_case_probe.py'
+      - 'scripts/trajectory_entity_transform_trace.py'
+      - 'tests/test_trajectory_entity_transform_trace.py'
+      - 'scripts/trajectory_transform_catalogue_probe.py'
+      - 'tests/test_trajectory_transform_catalogue_probe.py'
+      - 'scripts/trajectory_transform_trace_core.py'
+      - 'scripts/trajectory_evidence_diagnosis.py'
+      - 'scripts/trajectory_evidence_diagnosis_probe.py'
+      - 'tests/test_trajectory_evidence_diagnosis.py'
+      - 'scripts/trajectory_demonstration_review.py'
+      - 'scripts/trajectory_demonstration_review_probe.py'
+      - 'tests/test_trajectory_demonstration_review.py'
+      - 'scripts/trajectory_review_decisions.py'
+      - 'scripts/trajectory_review_decisions_probe.py'
+      - 'tests/test_trajectory_review_decisions.py'
+      - 'scripts/trajectory_review_outcomes.py'
+      - 'scripts/trajectory_review_outcomes_probe.py'
+      - 'tests/test_trajectory_review_outcomes.py'
+      - 'scripts/trajectory_review_wizard.py'
+      - 'scripts/trajectory_review_wizard_probe.py'
+      - 'tests/test_trajectory_review_wizard.py'
+      - 'tests/test_trajectory_wizard_resume_faults.py'
+      - 'scripts/trajectory_operator_setup.py'
+      - 'tests/test_trajectory_operator_setup.py'
+      - 'scripts/trajectory_pilot_export.py'
+      - 'tests/test_trajectory_pilot_export.py'
+      - 'scripts/trajectory_transfer_evaluation.py'
+      - 'tests/test_trajectory_transfer_evaluation.py'
+      - 'scripts/trajectory_surface_evaluation.py'
+      - 'tests/test_trajectory_surface_evaluation.py'
+      - 'scripts/trajectory_borrowed_map.py'
+      - 'scripts/trajectory_borrowed_map_probe.py'
+      - 'tests/test_trajectory_borrowed_map.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -307,6 +347,113 @@ jobs:
               r = json.loads(Path(f'/tmp/feedback-withdrawal-{seed}.json').read_text())
               print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'effects', 'report_content_sha256')})
           PY
+      - name: Unified local feedback session and cold restart
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: python -m pytest -q tests/test_trajectory_feedback_session.py
+      - name: Curated Portuguese feedback session (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_portuguese_probe.py
+          python scripts/trajectory_feedback_portuguese_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/trajectory-feedback-portuguese.json
+      - name: Observed wording variants and reserved entities (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_variants_probe.py
+          for variant_split in development reserved; do
+            python scripts/trajectory_feedback_variants_probe.py --library build/trajectory-native/libmemoria_mobile.so --split "$variant_split" --output "/tmp/feedback-variants-$variant_split.json"
+          done
+      - name: Fixed question versus entity casing and sensitive IDs (quality failures reported)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_feedback_case_probe.py
+          for case_split in development reserved; do
+            python scripts/trajectory_feedback_case_probe.py --library build/trajectory-native/libmemoria_mobile.so --split "$case_split" --output "/tmp/feedback-case-$case_split.json"
+          done
+      - name: Entity transform admission trace and targeted observation controls
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_entity_transform_trace.py
+          python scripts/trajectory_entity_transform_trace.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/entity-transform-trace.json
+      - name: New finite-map catalogues and retained conflicting hypotheses
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_transform_catalogue_probe.py
+          python scripts/trajectory_transform_catalogue_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/transform-new-catalogue.json
+      - name: Read only operator evidence diagnosis and unchanged query contract
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_evidence_diagnosis.py
+          python scripts/trajectory_evidence_diagnosis_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/evidence-diagnosis.json
+      - name: Caller example review with helpful and unhelpful attempts retained
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_demonstration_review.py
+          python scripts/trajectory_demonstration_review_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/demonstration-review.json
+      - name: Synthetic transfer evaluation with retrieval failures preserved
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_transfer_evaluation.py
+          python scripts/trajectory_transfer_evaluation.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/transfer-evaluation.json
+      - name: Observed surface frames with diagnostic and provenance controls
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_surface_evaluation.py
+          python scripts/trajectory_surface_evaluation.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/surface-evaluation.json
+      - name: Opt-in borrowed map hypotheses and indistinguishable counterexamples
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_borrowed_map.py
+          python scripts/trajectory_borrowed_map_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/borrowed-map.json
+      - name: Durable operator review receipts and decisions without incorporation
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_review_decisions.py
+          python scripts/trajectory_review_decisions_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/review-decisions.json
+      - name: Stored before after outcome audit without quality promotion
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_review_outcomes.py
+          python scripts/trajectory_review_outcomes_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/review-outcomes.json
+      - name: Portuguese terminal review workflow and explicit incorporation
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_review_wizard.py tests/test_trajectory_wizard_resume_faults.py tests/test_trajectory_pilot_export.py
+          python scripts/trajectory_review_wizard_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/review-wizard.json
+      - name: Isolated local pilot preparation and temporary persistence check
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_operator_setup.py
+          python scripts/trajectory_operator_setup.py --work-dir build/operator-setup-check --bdr-root deps/resolutive-DB
       - name: Original native personal gates (quality failures reported)
         run: python scripts/mobile_personal_proof_gate.py --library build/trajectory-native/libmemoria_mobile.so
       - name: Observed regions versus exact native reply addresses (integrity only)

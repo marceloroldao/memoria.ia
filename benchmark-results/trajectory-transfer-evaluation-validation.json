@@ -1,0 +1,212 @@
+{
+  "format": "memoria.ia-transfer-evaluation-validation-v1",
+  "source_parent": "4b045e373d07f61c73db9084c8315a878ad6c0ec",
+  "source_sha256": {
+    "scripts/trajectory_transfer_evaluation.py": "f1382330a1d7aa53a82261ca89a510b1b0538edbae01bad5ebab5aa55bd9af95",
+    "tests/test_trajectory_transfer_evaluation.py": "c031f0f425250ae643ae5682fe691b9275d58fd53108e8a01cb1c9984b8bc2ec"
+  },
+  "native_sha256": "8a21f2bfd09d2eb4b2b011d0d116ea1d253c35951eff9f12dd3ef1d0b1aa759a",
+  "tests": [
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261101-humidity]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261101-vibration]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261102-humidity]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_evaluation_questions_and_targets_are_excluded_from_additional_demonstrations[20261102-vibration]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_transfer_commands_do_not_contain_references_or_reinsert_queries[contrast]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.588,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_transfer_commands_do_not_contain_references_or_reinsert_queries[intervention]",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.928,
+      "status": "PASS"
+    },
+    {
+      "name": "test_strict_mode_rejects_incomplete_retrieval_despite_integrity_pass",
+      "classname": "tests.test_trajectory_transfer_evaluation",
+      "seconds": 0.003,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[unseen_symbol-related0]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.098,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[unseen_identity-related1]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.115,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[value_boundary-related2]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.323,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[conflicting_map-related3]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.258,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers0]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.002,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers1]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.002,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers2]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.002,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers3]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers4]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers5]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers6]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_offers_are_rejected_without_writing[offers7]",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_total_offer_budget_and_identity_limits",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.0,
+      "status": "PASS"
+    },
+    {
+      "name": "test_feedback_context_is_not_treated_as_permission_to_learn",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.18,
+      "status": "PASS"
+    },
+    {
+      "name": "test_review_terminal_protocol_never_records_offered_examples",
+      "classname": "tests.test_trajectory_demonstration_review",
+      "seconds": 0.115,
+      "status": "PASS"
+    },
+    {
+      "name": "test_complete_cycle_survives_process_restart",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 1.051,
+      "status": "PASS"
+    },
+    {
+      "name": "test_scope_and_stale_feedback_reject_without_writes",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.259,
+      "status": "PASS"
+    },
+    {
+      "name": "test_observation_retry_conflict_and_excluded_generated_content",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.005,
+      "status": "PASS"
+    },
+    {
+      "name": "test_directory_lock_blocks_second_writer",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_terminal_protocol_rejects_bad_line_and_persists_after_exit",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.092,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_commands_do_not_write[command0]",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_commands_do_not_write[command1]",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_commands_do_not_write[command2]",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_commands_do_not_write[command3]",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_commands_do_not_write[command4]",
+      "classname": "tests.test_trajectory_feedback_session",
+      "seconds": 0.001,
+      "status": "PASS"
+    }
+  ],
+  "test_count": 32,
+  "integrity_checks": 112,
+  "integrity_status": "PASS",
+  "retrieval_status": "EXTRA_OR_MISSING_CONTENT",
+  "strict_retrieval_exit_code": 1,
+  "report_content_sha256": "35959eb137209213c9c934d20ec7db684428c2430a25c219c6546445617eafe6",
+  "human_evaluation_status": "NOT_PERFORMED",
+  "general_learning_status": "NOT_ESTABLISHED",
+  "repeat_report_byte_identical": true
+}
