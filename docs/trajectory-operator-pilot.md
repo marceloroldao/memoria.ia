@@ -2,6 +2,8 @@
 
 Este é um roteiro de execução do laboratório, com registro das limitações e da correção de recuperação após interrupção. Não representa uma avaliação humana já realizada nem uma versão estável publicada.
 
+Uma avaliação sintética separada mede [transferência para consultas não demonstradas](trajectory-transfer-evaluation.md): 8/8 novas combinações recuperadas após um exemplo adicional, mas 0/8 em caixa/paráfrase. Ela não substitui a rodada humana deste roteiro.
+
 ## Correção encontrada na consolidação
 
 A retomada anterior conferia IDs, conteúdo, origem e limites. Porém, podia acrescentar os pares restantes mesmo quando uma observação havia sido inserida entre os registros do lote interrompido ou quando já existia um registro posterior sem o prefixo inicial. Isso preservava IDs sem preservar a sequência prevista de pergunta/conteúdo.
