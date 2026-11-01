@@ -74,3 +74,5 @@ Relatórios: `benchmark-results/trajectory-surface-evaluation.json` e `benchmark
 O modo padrão retorna zero quando a integridade passa e mantém a recuperação reprovada no relatório. Adicionar `--strict-retrieval` ao primeiro comando retorna 1 quando o gate completo falha. Essa separação também tem testes próprios.
 
 A execução combina armazenamento nativo em BDR com o leitor experimental em Python. Nenhuma resposta factual é selecionada. Os mapas sorteados são reutilizados nos dois domínios e as molduras são correlacionadas; as contagens não estimam precisão geral. Demonstrar explicitamente outra escrita não prova compreensão automática de paráfrases inéditas, aprendizagem geral, uso humano, escala ou integração ao produto.
+
+O [protótipo de reaproveitamento de mapas](trajectory-borrowed-map.md) investiga duas âncoras da nova escrita e um mapa já aprendido. Ele registra tanto a recuperação bem-sucedida quanto um contraexemplo indistinguível pelas observações, por isso permanece separado do leitor padrão.
