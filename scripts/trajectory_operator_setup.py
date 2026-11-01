@@ -130,7 +130,7 @@ def prepare(work_dir,checks,bdr_root=None,jobs=2):
         tools=checks['tools'];git=tools['git']['path'];cmake=tools['cmake']['path']
         report['source_commit']=command([git,'-C',ROOT,'rev-parse','HEAD'])
         report['runtime_entry_sha256']={name:hashlib.sha256((ROOT/'scripts'/name).read_bytes()).hexdigest()
-                                        for name in ('trajectory_operator_setup.py','trajectory_review_wizard.py')}
+                                        for name in ('trajectory_operator_setup.py','trajectory_review_wizard.py','trajectory_pilot_export.py')}
         if command([git,'-C',ROOT,'status','--porcelain','--','native/mobile','include']):
             raise ValueError('Há alterações nativas não registradas; use uma revisão nativa consolidada para o piloto.')
         print('Conferindo a dependência BDR fixada...',flush=True)

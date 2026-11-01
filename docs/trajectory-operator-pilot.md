@@ -53,6 +53,18 @@ Não é necessário forçar uma escolha: adiamento, rejeição e dúvida são re
 
 ## Evidência da rodada
 
+No menu, escolha **[6] exportar evidências** e informe um novo arquivo JSON em uma pasta existente, fora da pasta de dados. O arquivo contém os textos e as identidades declaradas do escopo selecionado; confira seu conteúdo antes de compartilhá-lo. A exportação é local e não envia dados a terceiros.
+
+O documento preserva as entradas com origem e sequência, projeção de feedback e retiradas, recibos completos de revisão, decisões, resultados e a lista de decisões ainda sem resultado. Mantém avaliações negativas e incertas sem convertê-las em pontuação de qualidade. Não é backup do armazenamento nativo nem cópia integral do ledger bruto de feedback. Continue preservando a pasta de dados para retomada.
+
+A exportação consulta o escopo sob o lock da sessão e não registra novos eventos. Publica um arquivo completo com permissão inicial 0600 e recusa qualquer nome já existente, inclusive link simbólico. Recusa destinos dentro da pasta de dados, inclusive por alias da pasta; não cria pastas. Falha de publicação remove o temporário, sem deixar um JSON parcial no destino. Não foi testada queda de energia durante essa operação.
+
+O campo `sha256` usa a função canônica `fingerprint` sobre o documento sem esse campo. Permite comparar conteúdo, sem autenticar autoria. `human_evaluation_status=NOT_VERIFIED` significa que o exportador não consegue verificar se os eventos vieram de uma pessoa ou de entradas programadas. As avaliações continuam declaradas; causalidade, verdade e aprendizagem geral não são certificadas.
+
+Validação deste incremento: **41 testes aprovados**, incluindo seis casos de exportação sobre armazenamento nativo. Os oito percursos programados do assistente passaram nas **72 verificações**; auditorias e linhas de saída permaneceram iguais às do relatório histórico. O prompt do menu mudou para incluir a opção 6, por isso o relatório completo atual tem outro hash. O relatório histórico foi preservado. Evidência: `benchmark-results/trajectory-pilot-export-validation.json`.
+
+A CI da preparação anterior, commit `a8c8f5c3`, concluiu com sucesso (execução `41056182958`). A CI da nova exportação será verificada após publicação. Nenhuma rodada humana foi realizada neste incremento.
+
 O protocolo preserva a pergunta, os conjuntos oferecidos e sua origem declarada, a revisão exata, a decisão, o motivo e o resultado posterior. Confira as entradas e decisões pelo menu. As operações `review_decisions` e `review_outcomes` continuam disponíveis para auditoria detalhada.
 
 Registre também as dificuldades de uso na justificativa: falta de clareza, excesso de etapas, dificuldade para conferir uma origem, marcação que não ajudou ou exemplo útil sem marcação. Não altere o histórico para remover tentativas malsucedidas. Não atribua utilidade humana com base somente nos testes programados.

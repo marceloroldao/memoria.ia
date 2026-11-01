@@ -18,7 +18,7 @@ PYTHONPATH=src python scripts/trajectory_review_wizard.py \
 
 `--actor` é uma identidade declarada, sem autenticação. `--scope` seleciona a região de memória. Preserve o diretório para continuar após reiniciar.
 
-O menu oferece registrar uma entrada, iniciar revisão, listar decisões, retomar uma decisão, ver entradas e sair. A listagem de entradas mostra texto literal, sequência e origem declarada. Nas candidatas recuperadas, o assistente mostra sequências de origem e informa separadamente candidatas disponíveis e suspensas por feedback.
+O menu oferece registrar uma entrada, iniciar revisão, listar decisões, retomar uma decisão, ver entradas, exportar evidências e sair. A opção **[6]** grava um novo JSON fora da pasta de dados, com o histórico e a auditoria do escopo, sem novos eventos; consulte os detalhes e limites no [roteiro do piloto](trajectory-operator-pilot.md#evidência-da-rodada). A listagem de entradas mostra texto literal, sequência e origem declarada. Nas candidatas recuperadas, o assistente mostra sequências de origem e informa separadamente candidatas disponíveis e suspensas por feedback.
 
 ## Ciclo guiado
 

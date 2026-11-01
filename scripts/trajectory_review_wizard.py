@@ -8,6 +8,7 @@ from uuid import uuid4
 from trajectory_feedback_session import FeedbackSession
 from trajectory_region_evidence_probe import fingerprint
 from trajectory_review_outcomes import compare_receipts
+from trajectory_pilot_export import export as export_pilot
 
 
 def literal(value):
@@ -171,6 +172,16 @@ class ReviewWizard:
         for row in rows:self.write(f'{row["sequence"]} | {row["source_kind"]} | '+literal(row['text']))
         if not rows:self.write('  Nenhuma.')
 
+    def export_evidence(self):
+        path=self.text('Novo arquivo JSON fora da pasta de dados: ',4096)
+        try:
+            report=export_pilot(self.session,self.scope,path)
+        except OSError as error:
+            raise ValueError('Não foi possível exportar; use uma pasta existente e um nome novo. '+str(error)) from error
+        self.write('Evidência exportada; contém os textos e as identidades declaradas deste escopo.')
+        self.write('SHA-256 do conteúdo canônico sem o campo sha256: '+report['sha256'])
+        self.write('A exportação não verifica avaliação humana, verdade ou melhora.')
+
     def resume(self):
         identity=self.text('ID da decisão a retomar: ',128)
         audit=self.call('review_decisions')
@@ -190,9 +201,9 @@ class ReviewWizard:
         self.write('Memoria.ia — avaliação local com decisões explícitas. Identidade declarada, sem autenticação.')
         while True:
             try:
-                option=self.option('[1] registrar entrada; [2] revisar; [3] listar decisões; [4] retomar; [5] ver entradas; [0] sair: ',{'0','1','2','3','4','5'})
+                option=self.option('[1] registrar entrada; [2] revisar; [3] listar decisões; [4] retomar; [5] ver entradas; [6] exportar evidências; [0] sair: ',{'0','1','2','3','4','5','6'})
                 if option=='0':return
-                {'1':self.register_entry,'2':self.review,'3':self.list_decisions,'4':self.resume,'5':self.list_entries}[option]()
+                {'1':self.register_entry,'2':self.review,'3':self.list_decisions,'4':self.resume,'5':self.list_entries,'6':self.export_evidence}[option]()
             except ValueError as error:
                 self.write('Operação recusada: '+str(error))
             except (EOFError,KeyboardInterrupt):

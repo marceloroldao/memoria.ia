@@ -130,6 +130,8 @@ on:
       - 'tests/test_trajectory_wizard_resume_faults.py'
       - 'scripts/trajectory_operator_setup.py'
       - 'tests/test_trajectory_operator_setup.py'
+      - 'scripts/trajectory_pilot_export.py'
+      - 'tests/test_trajectory_pilot_export.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -415,7 +417,7 @@ jobs:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
           PYTHONPATH: src
         run: |
-          python -m pytest -q tests/test_trajectory_review_wizard.py tests/test_trajectory_wizard_resume_faults.py
+          python -m pytest -q tests/test_trajectory_review_wizard.py tests/test_trajectory_wizard_resume_faults.py tests/test_trajectory_pilot_export.py
           python scripts/trajectory_review_wizard_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/review-wizard.json
       - name: Isolated local pilot preparation and temporary persistence check
         env:
