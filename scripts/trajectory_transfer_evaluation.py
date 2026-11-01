@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fixed-arm synthetic transfer evaluation; references never enter session commands."""
 import argparse
+from collections import Counter
 import json
 from pathlib import Path
 from random import Random
@@ -64,31 +65,40 @@ def fixture(domain, seed, arm):
                 foreign=statement(convert(a+b+d),f'80 {unit}'))
 
 
-def trial(library, descriptor):
+def trial(library, descriptor, operation='query'):
+    if operation not in ('query','diagnose'):
+        raise ValueError('read-only evaluation operation required')
     scope = descriptor['scope']; queries = descriptor['queries']; cases = []; checks = {}
     with tempfile.TemporaryDirectory(prefix='memoria-transfer-') as directory:
         with FeedbackSession(library,directory) as session:
             for row in descriptor['rows']:
                 session.execute(dict(op='observe',scope=scope,**row))
             session.execute(dict(op='observe',scope='foreign',event_id='foreign',text=descriptor['foreign']))
+            for row in descriptor.get('foreign_rows',[]):
+                session.execute(dict(op='observe',scope='foreign',**row))
             before = session.execute(dict(op='history',scope=scope))
             foreign = session.execute(dict(op='history',scope='foreign'))
-            views = [session.execute(dict(op='query',scope=scope,text=q['text'])) for q in queries]
+            views = [session.execute(dict(op=operation,scope=scope,text=q['text'])) for q in queries]
             checks['read_only'] = session.execute(dict(op='history',scope=scope)) == before
             checks['foreign_unchanged'] = session.execute(dict(op='history',scope='foreign')) == foreign
-            checks['repeat_full_views'] = all(session.execute(dict(op='query',scope=scope,text=q['text'])) == v
+            checks['repeat_full_views'] = all(session.execute(dict(op=operation,scope=scope,text=q['text'])) == v
                                                for q,v in zip(queries,views))
             accepted = {r['text'] for r in descriptor['rows'] if r['source_kind']=='user_turn'}
             checks['observed_candidates_only'] = all(c['text'] in accepted for v in views for c in v['result']['available_candidates'])
             checks['unqualified'] = all(v['answer'] is None and not v['qualified'] and not v['selection_used'] for v in views)
         with FeedbackSession(library,directory) as cold:
             checks['cold_history'] = cold.execute(dict(op='history',scope=scope)) == before
-            checks['cold_full_views'] = all(cold.execute(dict(op='query',scope=scope,text=q['text'])) == v for q,v in zip(queries,views))
+            checks['cold_full_views'] = all(cold.execute(dict(op=operation,scope=scope,text=q['text'])) == v for q,v in zip(queries,views))
     for query, view in zip(queries,views):
         cases.append(dict(query=query,score=score(view,query['expected']),
                           available_candidates=view['result']['available_candidates'],
                           answer=view['answer'],qualified=view['qualified'],selection_used=view['selection_used'],
                           full_view_sha256=fingerprint(view)))
+        if operation=='diagnose':
+            diagnosis = view['result']['diagnosis']
+            cases[-1]['diagnosis'] = dict(findings=[f['code'] for f in diagnosis['findings']],
+                frame_status_counts=dict(sorted(Counter(f['status'] for f in diagnosis['frames']).items())),
+                transform_candidate_set_equal=diagnosis['transform_trace']['candidate_set_equal'])
     return dict(fixture=descriptor,cases=cases,checks=checks)
 
 

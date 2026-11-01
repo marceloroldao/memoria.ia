@@ -134,6 +134,8 @@ on:
       - 'tests/test_trajectory_pilot_export.py'
       - 'scripts/trajectory_transfer_evaluation.py'
       - 'tests/test_trajectory_transfer_evaluation.py'
+      - 'scripts/trajectory_surface_evaluation.py'
+      - 'tests/test_trajectory_surface_evaluation.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -407,6 +409,13 @@ jobs:
         run: |
           python -m pytest -q tests/test_trajectory_transfer_evaluation.py
           python scripts/trajectory_transfer_evaluation.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/transfer-evaluation.json
+      - name: Observed surface frames with diagnostic and provenance controls
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_surface_evaluation.py
+          python scripts/trajectory_surface_evaluation.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/surface-evaluation.json
       - name: Durable operator review receipts and decisions without incorporation
         env:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
