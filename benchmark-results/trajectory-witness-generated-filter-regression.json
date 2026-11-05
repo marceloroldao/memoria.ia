@@ -1,0 +1,440 @@
+{
+  "format": "memoria.ia-witness-generated-filter-regression-v1",
+  "initial_report_content_sha256": "78b31ea7bda09db46afd4af942179cba9864b94124a97d7305076dda43a7d8cd",
+  "pre_fix_proposer_sha256": "325affe35ea9e2142ef2538f20b00ee41afdeb04599ebb1edecd4bfb50220f03",
+  "status": "DEVELOPMENT_ISSUE_CORRECTED",
+  "affected_generated_trials": 16,
+  "expected_pending_requests_per_trial": 1,
+  "observed_pending_requests_before_fix": 0,
+  "case": {
+    "arm": "generated",
+    "cases": [
+      {
+        "after_candidates": [],
+        "before_candidates": [],
+        "full_view_sha256": "49f2719737bd9af9b6bf7b2b1c9f0c32cbb7e8ecd829b395344fdc01f154e0c4",
+        "query": {
+          "expected": [
+            "A umidade do lxh é 40 %."
+          ],
+          "family": "surface",
+          "name": "uppercase_1",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO BCD?"
+        },
+        "score": {
+          "exact": false,
+          "extra": 0,
+          "missing": 1,
+          "recovered": 0
+        }
+      },
+      {
+        "after_candidates": [],
+        "before_candidates": [],
+        "full_view_sha256": "49f2719737bd9af9b6bf7b2b1c9f0c32cbb7e8ecd829b395344fdc01f154e0c4",
+        "query": {
+          "expected": [
+            "A umidade do hlx é 50 %."
+          ],
+          "family": "surface",
+          "name": "uppercase_2",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO DBC?"
+        },
+        "score": {
+          "exact": false,
+          "extra": 0,
+          "missing": 1,
+          "recovered": 0
+        }
+      },
+      {
+        "after_candidates": [],
+        "before_candidates": [],
+        "full_view_sha256": "49f2719737bd9af9b6bf7b2b1c9f0c32cbb7e8ecd829b395344fdc01f154e0c4",
+        "query": {
+          "expected": [],
+          "family": "absence",
+          "name": "absent_attribute",
+          "required": true,
+          "text": "QUAL É A IDADE DO BCD?"
+        },
+        "score": {
+          "exact": true,
+          "extra": 0,
+          "missing": 0,
+          "recovered": 0
+        }
+      },
+      {
+        "after_candidates": [],
+        "before_candidates": [],
+        "full_view_sha256": "49f2719737bd9af9b6bf7b2b1c9f0c32cbb7e8ecd829b395344fdc01f154e0c4",
+        "query": {
+          "expected": [],
+          "family": "absence",
+          "name": "absent_entity",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO BBC?"
+        },
+        "score": {
+          "exact": true,
+          "extra": 0,
+          "missing": 0,
+          "recovered": 0
+        }
+      },
+      {
+        "after_candidates": [],
+        "before_candidates": [],
+        "full_view_sha256": "49f2719737bd9af9b6bf7b2b1c9f0c32cbb7e8ecd829b395344fdc01f154e0c4",
+        "query": {
+          "expected": [],
+          "family": "absence",
+          "name": "unknown_symbol",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO VCD?"
+        },
+        "score": {
+          "exact": true,
+          "extra": 0,
+          "missing": 0,
+          "recovered": 0
+        }
+      },
+      {
+        "after_candidates": [],
+        "before_candidates": [],
+        "full_view_sha256": "49f2719737bd9af9b6bf7b2b1c9f0c32cbb7e8ecd829b395344fdc01f154e0c4",
+        "query": {
+          "expected": [],
+          "family": "absence",
+          "name": "generated_only",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO CBD?"
+        },
+        "score": {
+          "exact": true,
+          "extra": 0,
+          "missing": 0,
+          "recovered": 0
+        }
+      },
+      {
+        "after_candidates": [],
+        "before_candidates": [],
+        "full_view_sha256": "49f2719737bd9af9b6bf7b2b1c9f0c32cbb7e8ecd829b395344fdc01f154e0c4",
+        "query": {
+          "expected": [],
+          "family": "absence",
+          "name": "foreign_only",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO CDB?"
+        },
+        "score": {
+          "exact": true,
+          "extra": 0,
+          "missing": 0,
+          "recovered": 0
+        }
+      }
+    ],
+    "checks": {
+      "cold_full_views": true,
+      "cold_history": true,
+      "cold_pending_request": true,
+      "deterministic_request": true,
+      "foreign_unchanged": true,
+      "held_out_queries_excluded": true,
+      "held_out_targets_excluded": true,
+      "no_dispatch": true,
+      "no_qualification": true,
+      "one_request": true,
+      "queries_read_only": true,
+      "request_read_only": true
+    },
+    "domain": "humidity",
+    "fixture": {
+      "arm": "two_anchors",
+      "domain": "humidity",
+      "foreign": "A umidade do xhl é 80 %.",
+      "foreign_rows": [],
+      "intervention_start": 18,
+      "queries": [
+        {
+          "expected": [
+            "A umidade do lxh é 40 %."
+          ],
+          "family": "surface",
+          "name": "uppercase_1",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO BCD?"
+        },
+        {
+          "expected": [
+            "A umidade do hlx é 50 %."
+          ],
+          "family": "surface",
+          "name": "uppercase_2",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO DBC?"
+        },
+        {
+          "expected": [],
+          "family": "absence",
+          "name": "absent_attribute",
+          "required": true,
+          "text": "QUAL É A IDADE DO BCD?"
+        },
+        {
+          "expected": [],
+          "family": "absence",
+          "name": "absent_entity",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO BBC?"
+        },
+        {
+          "expected": [],
+          "family": "absence",
+          "name": "unknown_symbol",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO VCD?"
+        },
+        {
+          "expected": [],
+          "family": "absence",
+          "name": "generated_only",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO CBD?"
+        },
+        {
+          "expected": [],
+          "family": "absence",
+          "name": "foreign_only",
+          "required": true,
+          "text": "QUAL É A UMIDADE DO CDB?"
+        }
+      ],
+      "rows": [
+        {
+          "event_id": "row-0",
+          "source_kind": "user_turn",
+          "text": "Qual é a umidade do CDN?"
+        },
+        {
+          "event_id": "row-1",
+          "source_kind": "user_turn",
+          "text": "A umidade do xhj é 10 %."
+        },
+        {
+          "event_id": "row-2",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "row-3",
+          "source_kind": "user_turn",
+          "text": "Qual é a umidade do DNC?"
+        },
+        {
+          "event_id": "row-4",
+          "source_kind": "user_turn",
+          "text": "A umidade do hjx é 20 %."
+        },
+        {
+          "event_id": "row-5",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "row-6",
+          "source_kind": "user_turn",
+          "text": "Qual é a umidade do NCD?"
+        },
+        {
+          "event_id": "row-7",
+          "source_kind": "user_turn",
+          "text": "A umidade do jxh é 30 %."
+        },
+        {
+          "event_id": "row-8",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "row-9",
+          "source_kind": "user_turn",
+          "text": "A umidade do lxh é 40 %."
+        },
+        {
+          "event_id": "row-10",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "row-11",
+          "source_kind": "user_turn",
+          "text": "A umidade do hlx é 50 %."
+        },
+        {
+          "event_id": "row-12",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "row-13",
+          "source_kind": "assistant_generated",
+          "text": "A umidade do xlh é 60 %."
+        },
+        {
+          "event_id": "row-14",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "row-15",
+          "source_kind": "user_turn",
+          "text": "Qual é a umidade do BNC?"
+        },
+        {
+          "event_id": "row-16",
+          "source_kind": "user_turn",
+          "text": "A umidade do ljx é 70 %."
+        },
+        {
+          "event_id": "row-17",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "alternative-0",
+          "source_kind": "user_turn",
+          "text": "A umidade do cxh é 40 %."
+        },
+        {
+          "event_id": "alternative-0-barrier",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "alternative-1",
+          "source_kind": "user_turn",
+          "text": "A umidade do hcx é 50 %."
+        },
+        {
+          "event_id": "alternative-1-barrier",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "surface-0-q",
+          "source_kind": "user_turn",
+          "text": "QUAL É A UMIDADE DO CDN?"
+        },
+        {
+          "event_id": "surface-0-a",
+          "source_kind": "user_turn",
+          "text": "A umidade do xhj é 10 %."
+        },
+        {
+          "event_id": "surface-0-barrier",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        },
+        {
+          "event_id": "surface-1-q",
+          "source_kind": "user_turn",
+          "text": "QUAL É A UMIDADE DO DNC?"
+        },
+        {
+          "event_id": "surface-1-a",
+          "source_kind": "user_turn",
+          "text": "A umidade do hjx é 20 %."
+        },
+        {
+          "event_id": "surface-1-barrier",
+          "source_kind": "assistant_generated",
+          "text": "Intervalo observado."
+        }
+      ],
+      "scope": "humidity_20261101",
+      "seed": 20261101,
+      "surface": "uppercase",
+      "world": "shared_map"
+    },
+    "pending_request": {
+      "answer": null,
+      "factual_quality_status": "NOT_EVALUATED",
+      "format": "memoria.ia-witness-requests-v1",
+      "general_learning_status": "NOT_ESTABLISHED",
+      "learning_performed": false,
+      "limitation": "A proposed source example covers an unwitnessed symbol; no answer is supplied and no information gain or truthful response is guaranteed.",
+      "observations_recorded": false,
+      "qualified": false,
+      "query": "QUAL É A UMIDADE DO BCD?",
+      "region": "conversation:feedback-session:humidity_20261101",
+      "request_dispatched": false,
+      "requests": [],
+      "selection_used": false
+    },
+    "request": {
+      "answer": null,
+      "factual_quality_status": "NOT_EVALUATED",
+      "format": "memoria.ia-witness-requests-v1",
+      "general_learning_status": "NOT_ESTABLISHED",
+      "learning_performed": false,
+      "limitation": "A proposed source example covers an unwitnessed symbol; no answer is supplied and no information gain or truthful response is guaranteed.",
+      "observations_recorded": false,
+      "qualified": false,
+      "query": "QUAL É A UMIDADE DO BCD?",
+      "region": "conversation:feedback-session:humidity_20261101",
+      "request_dispatched": false,
+      "requests": [
+        {
+          "donor_question_origins": [
+            [
+              "conversation:feedback-session:humidity_20261101",
+              "session-observation:05cd5b2ad9a3d13c569f62e84ab1402f103728d86b4a33b7151880ff6aa6ec13",
+              16
+            ]
+          ],
+          "kind": "OBSERVE_SOURCE_TARGET_PAIR",
+          "request_id": "witness-request:8e66f1b52c09f7d308d5f857ea4eac9d9688f99e583647511a32ac25ec35941f",
+          "source_kind": "constructed_request",
+          "source_text": "QUAL É A UMIDADE DO BNC?",
+          "supporting_route_ids": [
+            "44bcbaa6d8168484d62aa717f2a8a9629aa173abf2732f9b5c6306c451472d61",
+            "99fcfa12236e9c501bb734df44c44ea8c90fd78c726116d993833e17975d0f6b",
+            "e6f39469e76a768d2c227ff9b9708952f93fa9c9641638cfc130d7ae984b4870"
+          ],
+          "unwitnessed_source_symbols": [
+            "B"
+          ]
+        }
+      ],
+      "selection_used": false
+    },
+    "response": [
+      {
+        "event_id": "response-q",
+        "source_kind": "assistant_generated",
+        "text": "QUAL É A UMIDADE DO BNC?"
+      },
+      {
+        "event_id": "response-a",
+        "source_kind": "assistant_generated",
+        "text": "A umidade do ljx é 70 %."
+      },
+      {
+        "event_id": "response-barrier",
+        "source_kind": "assistant_generated",
+        "text": "Intervalo observado."
+      }
+    ],
+    "seed": 20261101,
+    "surface": "uppercase",
+    "world": "shared_map"
+  },
+  "limitation": "Initial development run checked persistence but did not yet assert generated-response pending-state semantics. This extract preserves that negative result; the final report adds the missing control."
+}

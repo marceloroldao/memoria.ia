@@ -139,6 +139,9 @@ on:
       - 'scripts/trajectory_borrowed_map.py'
       - 'scripts/trajectory_borrowed_map_probe.py'
       - 'tests/test_trajectory_borrowed_map.py'
+      - 'scripts/trajectory_witness_requests.py'
+      - 'scripts/trajectory_witness_requests_probe.py'
+      - 'tests/test_trajectory_witness_requests.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -426,6 +429,13 @@ jobs:
         run: |
           python -m pytest -q tests/test_trajectory_borrowed_map.py
           python scripts/trajectory_borrowed_map_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/borrowed-map.json
+      - name: Read only witness proposals and explicit scripted response controls
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_witness_requests.py
+          python scripts/trajectory_witness_requests_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/witness-requests.json
       - name: Durable operator review receipts and decisions without incorporation
         env:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so

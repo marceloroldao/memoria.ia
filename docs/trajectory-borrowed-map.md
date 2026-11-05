@@ -62,3 +62,5 @@ O workflow mede integridade e conserva o contraexemplo. Seu sucesso não aprova 
 O relatório repetiu byte a byte após o veto de testemunho contraditório. Compilação Python e `git diff --check` passaram. A CI da etapa anterior, commit `d68c379d`, concluiu com sucesso na execução `41279129515`; a CI deste incremento fica pendente após publicação.
 
 Este é um experimento posterior ao diagnóstico, com dados curados e leitor Python sobre persistência nativa BDR. Não altera a ABI, a sessão, o assistente ou o serviço de produção. A avaliação humana e a aprendizagem geral seguem não estabelecidas. A próxima direção é obter testemunho do par faltante antes de promover sua aplicação, mantendo explícita a diferença entre hipótese e relação observada.
+
+O [componente de pedidos de testemunho](trajectory-witness-requests.md) agora propõe outro exemplo contendo o símbolo faltante, sem resposta sugerida ou incorporação automática. Sua avaliação registra tanto a recuperação após resposta adequada quanto a aprendizagem de uma rota errada após resposta declarada incorreta.
