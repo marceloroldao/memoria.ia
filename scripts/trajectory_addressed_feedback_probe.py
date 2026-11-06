@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Explicit CONTENT versus FRAME targets; no inferred route blame or factual selection."""
+"""Addressed CONTENT/FRAME controls and WITNESS journal support.
+
+Active WITNESS controls require the separate witness-aware reader.
+"""
 import argparse
 import base64
 import json
@@ -15,6 +18,7 @@ from trajectory_region_evidence_probe import fingerprint
 from trajectory_route_feedback_probe import make_fixture, witness_origins
 from trajectory_route_relation_probe import read
 from trajectory_window_consistency_probe import window_snapshot
+from trajectory_native_evidence_join_probe import adapt_regions
 
 
 PREFIX = 'addressed-feedback:'
@@ -61,9 +65,10 @@ def projection(log):
                     not isinstance(binding, dict) or
                     fingerprint({k: v for k, v in binding.items() if k != 'receipt_id'}) != binding.get('receipt_id')):
                 raise ValueError('invalid feedback envelope or receipt digest')
-            if event['stance'] not in ('support', 'oppose') or event['target']['kind'] not in ('CONTENT', 'FRAME'):
+            if event['stance'] not in ('support', 'oppose') or event['target']['kind'] not in ('CONTENT', 'FRAME', 'WITNESS'):
                 raise ValueError('invalid feedback target or stance')
-            expected_fields = {'kind'} if event['target']['kind'] == 'CONTENT' else {'kind', 'frame', 'witness_provenance'}
+            expected_fields = {'CONTENT': {'kind'}, 'FRAME': {'kind', 'frame', 'witness_provenance'},
+                               'WITNESS': {'kind', 'frame', 'witness', 'occurrence'}}[event['target']['kind']]
             if set(event['target']) != expected_fields:
                 raise ValueError('invalid stored target schema')
             feedback.append(dict(entry, active=True, withdrawal=None))
@@ -80,16 +85,52 @@ def projection(log):
     return feedback
 
 
-def target_packet(view, binding, target):
+def witness_occurrence_map(rows, region):
+    """Resolve learned payload-pair/stream witnesses to actual adjacent native rows.
+
+    Equal payloads remain distinct occurrences. Generated rows break streams in
+    the unchanged adapter. No new adjacency is inferred by removing observations.
+    """
+    selected = [r for r in rows if r['hierarchy_id'] == region]
+    memory, _ = adapt_regions(selected)
+    previous, result = {}, {}
+    for observation in memory.snapshot()['observations']:
+        index = int(observation['observation_id'].split(':')[1])
+        row = selected[index]
+        scope = observation['hierarchy_id'], observation['stream_id']
+        old = previous.get(scope)
+        if old is not None and old[0] != observation['payload_id']:
+            witness = (old[0], observation['payload_id'], observation['stream_id'])
+            result.setdefault(canonical(witness), []).append(dict(source=old[1], target=row))
+        previous[scope] = observation['payload_id'], row
+    return result
+
+
+def target_packet(view, binding, target, *, rows=None):
     if not isinstance(target, dict):
         raise ValueError('explicit target is required')
     if target == {'kind': 'CONTENT'}:
         return dict(kind='CONTENT')
-    if set(target) != {'kind', 'frame_id'} or target['kind'] != 'FRAME':
-        raise ValueError('target must be CONTENT or one addressed FRAME')
+    kind = target.get('kind')
+    expected = ({'kind', 'frame_id'} if kind == 'FRAME' else
+                {'kind', 'frame_id', 'witness', 'source_address', 'target_address'} if kind == 'WITNESS' else set())
+    if not expected or set(target) != expected:
+        raise ValueError('target must be CONTENT, FRAME or an exact WITNESS occurrence')
     if target['frame_id'] not in binding['candidate']['frame_ids']:
         raise ValueError('frame did not generate the addressed candidate')
     frame = next(f for f in view['frames'] if f['frame_id'] == target['frame_id'])
+    if kind == 'WITNESS':
+        if rows is None or canonical(target['witness']) not in {canonical(w) for w in frame['witnesses']}:
+            raise ValueError('witness does not belong to addressed frame')
+        def address(row):
+            return [row['hierarchy_id'], row['source_id'], row['sequence']]
+        matches = [p for p in witness_occurrence_map(rows, binding['region']).get(canonical(target['witness']), [])
+                   if canonical(address(p['source'])) == canonical(target['source_address'])
+                   and canonical(address(p['target'])) == canonical(target['target_address'])]
+        if len(matches) != 1:
+            raise ValueError('witness occurrence addresses are not an observed adjacent pair')
+        return json.loads(canonical(dict(kind='WITNESS', frame=frame,
+                                        witness=target['witness'], occurrence=matches[0])))
     return json.loads(canonical(dict(kind='FRAME', frame=frame,
                                     witness_provenance=witness_origins(view, frame))))
 
@@ -120,8 +161,13 @@ def record_addressed(native, binding, event_id, actor_id, stance, target):
     if previous:
         old = previous[0]['event']
         requested = {'kind': old['target']['kind']}
-        if requested['kind'] == 'FRAME':
+        if requested['kind'] in ('FRAME', 'WITNESS'):
             requested['frame_id'] = old['target']['frame']['frame_id']
+        if requested['kind'] == 'WITNESS':
+            requested['witness'] = old['target']['witness']
+            for role in ('source', 'target'):
+                row = old['target']['occurrence'][role]
+                requested[role + '_address'] = [row['hierarchy_id'], row['source_id'], row['sequence']]
         if (old['actor_id'] != actor_id or old['stance'] != stance or
                 canonical(old['receipt']) != canonical(binding) or canonical(requested) != canonical(target)):
             raise ValueError('feedback identity reused with different content')
@@ -132,9 +178,10 @@ def record_addressed(native, binding, event_id, actor_id, stance, target):
         raise ValueError('invalid receipt structure') from error
     if canonical(current) != canonical(binding):
         raise ValueError('stale or altered receipt')
-    view = read(collect(native, [region]), region, binding['query'])
+    rows = collect(native, [region])
+    view = read(rows, region, binding['query'])
     event = dict(format=FORMAT, op='FEEDBACK', event_id=event_id, actor_id=actor_id,
-                 stance=stance, receipt=binding, target=target_packet(view, binding, target))
+                 stance=stance, receipt=binding, target=target_packet(view, binding, target, rows=rows))
     return append(native, region, event, log)
 
 
@@ -160,7 +207,7 @@ def withdraw_addressed(native, region, request_id, actor_id, event_id):
     return append(native, region, event, log)
 
 
-def addressed_read(native, region, query, *, enabled=False):
+def addressed_read(native, region, query, *, enabled=False, _allow_witness=False):
     journal_region(region)
     if not isinstance(query, str) or not query:
         raise ValueError('query must be a nonempty string')
@@ -172,6 +219,8 @@ def addressed_read(native, region, query, *, enabled=False):
     log = operations(native, region)
     projected = projection(log)
     active = [dict(address=p['address'], event=p['event']) for p in projected if p['active']]
+    if not _allow_witness and any(p['event']['target']['kind'] == 'WITNESS' for p in active):
+        raise ValueError('active WITNESS controls require the witness-aware reader')
     rows, view = collect(native, [region]), base['raw_view']
     proofs = historical_proofs(rows, active)
     content = [p for p in active if p['event']['target']['kind'] == 'CONTENT']

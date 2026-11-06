@@ -107,6 +107,8 @@ on:
       - 'tests/test_trajectory_route_feedback_probe.py'
       - 'scripts/trajectory_addressed_feedback_probe.py'
       - 'tests/test_trajectory_addressed_feedback_probe.py'
+      - 'scripts/trajectory_witness_feedback_probe.py'
+      - 'tests/test_trajectory_witness_feedback_probe.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -171,6 +173,16 @@ jobs:
           python scripts/trajectory_addressed_feedback_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20270112 --output /tmp/addressed-reserved.json
           cmp benchmark-results/trajectory-addressed-feedback-development.json /tmp/addressed-development.json
           cmp benchmark-results/trajectory-addressed-feedback-reserved.json /tmp/addressed-reserved.json
+      - name: Occurrence-addressed witnesses, alternate support and negative controls
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_witness_feedback_probe.py
+          python scripts/trajectory_witness_feedback_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20270113 --output /tmp/witness-development.json
+          python scripts/trajectory_witness_feedback_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed 20270114 --output /tmp/witness-reserved.json
+          cmp benchmark-results/trajectory-witness-feedback-development.json /tmp/witness-development.json
+          cmp benchmark-results/trajectory-witness-feedback-reserved.json /tmp/witness-reserved.json
   native-bridge:
     runs-on: ubuntu-latest
     timeout-minutes: 40

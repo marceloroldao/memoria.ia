@@ -1,5 +1,7 @@
 # Oposição endereçada ao conteúdo ou à moldura
 
+Continuação: [rejeição de uma ocorrência de demonstração](trajectory-witness-feedback-proof.md), com alvo `WITNESS`, suporte alternativo e novos controles negativos. Os contratos e relatórios abaixo continuam preservados para `CONTENT`/`FRAME`.
+
 O leitor experimental `scripts/trajectory_addressed_feedback_probe.py` separa explicitamente dois alvos. O chamador precisa declarar se rejeita a candidata daquela recuperação (`CONTENT`) ou uma moldura específica que a recuperou (`FRAME`). Rejeitar conteúdo não implica culpar automaticamente sua trajetória, mesmo quando há apenas uma moldura geradora.
 
 O experimento anterior de atribuição por unicidade permanece preservado em `trajectory_route_feedback_probe.py`, com seus resultados positivos e negativos. O novo leitor não o chama nem migra feedback antigo para penalizações de moldura. Não altera os leitores padrão, o console, a ABI, o MVP ou o OFF.IA.
