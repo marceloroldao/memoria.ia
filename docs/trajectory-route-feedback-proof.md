@@ -1,5 +1,7 @@
 # Transferência experimental de oposição para uma moldura estrutural exata
 
+Continuação: [oposição explícita ao conteúdo ou à moldura](trajectory-addressed-feedback-proof.md). Esse leitor separado elimina a atribuição implícita por unicidade; o experimento abaixo e seus resultados permanecem preservados.
+
 O novo leitor `scripts/trajectory_route_feedback_probe.py` testa o efeito de uma correção fora da consulta e do conteúdo originalmente endereçados. Uma oposição explícita pode produzir uma penalização binária da moldura que recuperou a candidata, desde que exista exatamente uma moldura geradora, o recibo histórico seja reproduzível e a mesma moldura com as mesmas origens de testemunhos continue presente.
 
 Essa é uma hipótese de atribuição de erro: uma candidata rejeitada não prova que sua moldura esteja errada. O experimento mede tanto a utilidade quanto o dano dessa hipótese. Fica desativado por padrão, sem integração à seleção factual, laboratório/console, MVP, ABI ou OFF.IA.
