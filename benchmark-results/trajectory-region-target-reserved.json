@@ -1,0 +1,318 @@
+{
+  "seed": 20261206,
+  "integrity_status": "PASS",
+  "integrity_passed": 27,
+  "integrity_total": 27,
+  "gates": {
+    "unlinked_all_local_addresses_retained": true,
+    "unlinked_foreign_address_only": true,
+    "unlinked_unknown_and_prefix_do_not_fall_back": true,
+    "unlinked_ambiguity_not_selected": true,
+    "unlinked_generated_query_excluded": true,
+    "unlinked_unlinked_episode_retained": true,
+    "unlinked_native_reads_do_not_change_rows": true,
+    "unlinked_incomplete_echo_preserved": true,
+    "unlinked_complete_cold_parity": true,
+    "explicit_links_all_local_addresses_retained": true,
+    "explicit_links_foreign_address_only": true,
+    "explicit_links_unknown_and_prefix_do_not_fall_back": true,
+    "explicit_links_ambiguity_not_selected": true,
+    "explicit_links_generated_query_excluded": true,
+    "explicit_links_unlinked_episode_retained": true,
+    "explicit_links_native_reads_do_not_change_rows": true,
+    "explicit_links_incomplete_echo_preserved": true,
+    "explicit_links_complete_cold_parity": true,
+    "query_echo_link_all_local_addresses_retained": true,
+    "query_echo_link_foreign_address_only": true,
+    "query_echo_link_unknown_and_prefix_do_not_fall_back": true,
+    "query_echo_link_ambiguity_not_selected": true,
+    "query_echo_link_generated_query_excluded": true,
+    "query_echo_link_unlinked_episode_retained": true,
+    "query_echo_link_native_reads_do_not_change_rows": true,
+    "query_echo_link_incomplete_echo_preserved": true,
+    "query_echo_link_complete_cold_parity": true
+  },
+  "native_executed": true,
+  "answer": null,
+  "qualified": false,
+  "factual_quality_status": "NOT_EVALUATED",
+  "full_report_sha256": "672d66796c932d53314b4dbe3e8e3c403a5f2cec7a6d39b5e5d38840869b82b8",
+  "stages": [
+    {
+      "stage": "unlinked",
+      "cases": [
+        {
+          "name": "local",
+          "result_sha256": "83e5ceae7c6ef345aeadebf7896afd35598deab0cd445abd9eb79980eaf2f3ad",
+          "raw_target_count": 3,
+          "target_status": "AMBIGUOUS_RAW_MATCHES",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "row-6",
+                7
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "UNRESOLVED",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 0
+            },
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "again-q",
+                12
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "UNRESOLVED",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 0
+            },
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "unlinked-q",
+                15
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "UNRESOLVED",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 0
+            }
+          ]
+        },
+        {
+          "name": "foreign",
+          "result_sha256": "36149430b89dbdde4093728b0b6f76cb7dc776747f9507ab8a0d94c0d5c427ac",
+          "raw_target_count": 1,
+          "target_status": "SINGLE_RAW_MATCH",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261206-other",
+                "row-6",
+                7
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "UNRESOLVED",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 0
+            }
+          ]
+        },
+        {
+          "name": "missing_region",
+          "result_sha256": "e43619ad8b07250248b9d74ec9da6b75e035d54908a49cb517cfc26b048aeaea",
+          "raw_target_count": 0,
+          "target_status": "NO_RAW_MATCH",
+          "structural_roots": [],
+          "episodes": []
+        },
+        {
+          "name": "new_prefix",
+          "result_sha256": "396c9b8de9a17abdf7892f1dc9bf09701dc6114f4ff4927a16da8c5da3174183",
+          "raw_target_count": 0,
+          "target_status": "NO_RAW_MATCH",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": []
+        }
+      ]
+    },
+    {
+      "stage": "explicit_links",
+      "cases": [
+        {
+          "name": "local",
+          "result_sha256": "8faa61b541efc13abdaca8c2a4c1f41ddd563f2f5d7406f03ccc5399d066cbb6",
+          "raw_target_count": 3,
+          "target_status": "AMBIGUOUS_RAW_MATCHES",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "row-6",
+                7
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "CONFLICT",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 2
+            },
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "again-q",
+                12
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "CANDIDATES",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 1
+            },
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "unlinked-q",
+                15
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "UNRESOLVED",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 0
+            }
+          ]
+        },
+        {
+          "name": "foreign",
+          "result_sha256": "ccf0190db552650366fbf8f8b0ee68c975868827c0983c4e80e56112cd82be7c",
+          "raw_target_count": 1,
+          "target_status": "SINGLE_RAW_MATCH",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261206-other",
+                "row-6",
+                7
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "CANDIDATES",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 1
+            }
+          ]
+        },
+        {
+          "name": "missing_region",
+          "result_sha256": "e43619ad8b07250248b9d74ec9da6b75e035d54908a49cb517cfc26b048aeaea",
+          "raw_target_count": 0,
+          "target_status": "NO_RAW_MATCH",
+          "structural_roots": [],
+          "episodes": []
+        },
+        {
+          "name": "new_prefix",
+          "result_sha256": "396c9b8de9a17abdf7892f1dc9bf09701dc6114f4ff4927a16da8c5da3174183",
+          "raw_target_count": 0,
+          "target_status": "NO_RAW_MATCH",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": []
+        }
+      ]
+    },
+    {
+      "stage": "query_echo_link",
+      "cases": [
+        {
+          "name": "local",
+          "result_sha256": "e7f3edcfd0468d498867a3bb31e25ef8555c2be6a0f1ea74d421cd7a6919d172",
+          "raw_target_count": 3,
+          "target_status": "AMBIGUOUS_RAW_MATCHES",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "row-6",
+                7
+              ],
+              "join_status": "UNSUPPORTED_QUERY_ECHO_LINKS",
+              "native_status": "CONFLICT",
+              "repeat_question_links": 1,
+              "explicit_reply_occurrences": 3
+            },
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "again-q",
+                12
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "CANDIDATES",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 1
+            },
+            {
+              "target": [
+                "conversation:opaque-20261206",
+                "unlinked-q",
+                15
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "UNRESOLVED",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 0
+            }
+          ]
+        },
+        {
+          "name": "foreign",
+          "result_sha256": "ccf0190db552650366fbf8f8b0ee68c975868827c0983c4e80e56112cd82be7c",
+          "raw_target_count": 1,
+          "target_status": "SINGLE_RAW_MATCH",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261206-other",
+                "row-6",
+                7
+              ],
+              "join_status": "COMPLETE",
+              "native_status": "CANDIDATES",
+              "repeat_question_links": 0,
+              "explicit_reply_occurrences": 1
+            }
+          ]
+        },
+        {
+          "name": "missing_region",
+          "result_sha256": "e43619ad8b07250248b9d74ec9da6b75e035d54908a49cb517cfc26b048aeaea",
+          "raw_target_count": 0,
+          "target_status": "NO_RAW_MATCH",
+          "structural_roots": [],
+          "episodes": []
+        },
+        {
+          "name": "new_prefix",
+          "result_sha256": "396c9b8de9a17abdf7892f1dc9bf09701dc6114f4ff4927a16da8c5da3174183",
+          "raw_target_count": 0,
+          "target_status": "NO_RAW_MATCH",
+          "structural_roots": [
+            "payload:bd12cfd8afcb642753ca87dfe9c9bcb7a441c041",
+            "payload:fd272f37d54bf1172fb3a4791c48356bfd5d4c13"
+          ],
+          "episodes": []
+        }
+      ]
+    }
+  ]
+}

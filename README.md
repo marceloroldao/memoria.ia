@@ -158,6 +158,8 @@ Container deployment is defined by `Dockerfile`, `compose.yaml` and `.env.exampl
 
 ## Public interfaces
 
+The experimental draft branch also includes an opt-in [local memory MVP](docs/trajectory-local-mvp.md): a browser form for persistent native observations, read-only retrieval with source addresses, and optional unqualified structural hypotheses. Real HTTP restart/closed-backup checks pass; the curated retrieval report retains failures. This launcher does not replace the published product server or establish factual-answer quality.
+
 The project contains research, product/server and native/mobile boundaries. The V2 RC1 structural path adds observation and read-only resolution of structural text through the server/native layers while retaining provenance and BDR persistence.
 
 ## Research and claims status

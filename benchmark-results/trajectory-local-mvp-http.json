@@ -1,0 +1,123 @@
+{
+  "format": "memoria.ia-local-mvp-http-gate-v1",
+  "integrity_status": "PASS",
+  "integrity_passed": 12,
+  "integrity_total": 12,
+  "checks": {
+    "http_ui": true,
+    "auth_rejects": true,
+    "query_read_only": true,
+    "always_unqualified": true,
+    "generated_origins_excluded": true,
+    "scope_preserved": true,
+    "duplicates_addressable": true,
+    "competing_names_retained": true,
+    "restart_full_view_equal": true,
+    "restart_history_equal": true,
+    "closed_backup_restore_full_view_equal": true,
+    "closed_backup_restore_history_equal": true
+  },
+  "cases": [
+    {
+      "scope": "nomes",
+      "query": "Qual nome do meu gato?",
+      "expected": [
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Bia."
+      ],
+      "retrieved": [
+        "Meu gato dorme no sofa.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Bia."
+      ],
+      "missing": [],
+      "extra": [
+        "Meu gato dorme no sofa."
+      ],
+      "exact_retrieval_set": false,
+      "status": "CANDIDATES"
+    },
+    {
+      "scope": "nomes",
+      "query": "Qual a cor do meu gato?",
+      "expected": [],
+      "retrieved": [
+        "Meu gato dorme no sofa.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Bia."
+      ],
+      "missing": [],
+      "extra": [
+        "Meu gato dorme no sofa.",
+        "Meu gato se chama Alt.",
+        "Meu gato se chama Bia."
+      ],
+      "exact_retrieval_set": false,
+      "status": "CANDIDATES"
+    },
+    {
+      "scope": "agenda",
+      "query": "Quando é minha reunião?",
+      "expected": [
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "retrieved": [
+        "Minha reunião está marcada para terça-feira."
+      ],
+      "missing": [],
+      "extra": [],
+      "exact_retrieval_set": true,
+      "status": "CANDIDATES"
+    },
+    {
+      "scope": "agenda",
+      "query": "Qual dia é minha viagem?",
+      "expected": [
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "retrieved": [
+        "Minha viagem está marcada para sexta-feira."
+      ],
+      "missing": [],
+      "extra": [],
+      "exact_retrieval_set": true,
+      "status": "CANDIDATES"
+    },
+    {
+      "scope": "nomes",
+      "query": "zzzzzzz",
+      "expected": [],
+      "retrieved": [],
+      "missing": [],
+      "extra": [],
+      "exact_retrieval_set": true,
+      "status": "UNRESOLVED"
+    },
+    {
+      "scope": "vazia",
+      "query": "Qual nome do meu gato?",
+      "expected": [],
+      "retrieved": [],
+      "missing": [],
+      "extra": [],
+      "exact_retrieval_set": true,
+      "status": "UNRESOLVED"
+    },
+    {
+      "scope": "gerada",
+      "query": "Minha cidade é Recife.",
+      "expected": [],
+      "retrieved": [],
+      "missing": [],
+      "extra": [],
+      "exact_retrieval_set": true,
+      "status": "UNRESOLVED"
+    }
+  ],
+  "retrieval_exact_cases": 5,
+  "retrieval_total_cases": 7,
+  "retrieval_quality_status": "FAIL_EXTRA_OR_MISSING_CONTENT",
+  "factual_quality_status": "NOT_EVALUATED",
+  "answer_generation": false,
+  "fixture_scope": "public synthetic examples; not a general natural-language benchmark"
+}

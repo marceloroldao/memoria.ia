@@ -1,0 +1,1363 @@
+{
+  "seed": 20261207,
+  "integrity_status": "PASS",
+  "integrity_passed": 25,
+  "integrity_total": 25,
+  "gates": {
+    "original_grouped_packet_has_omitted_echo_and_truncated_sources": true,
+    "1_page_size_does_not_change_scoped_results": true,
+    "1_all_global_witnesses_collected": true,
+    "1_local_counts_include_echo_and_every_copy": true,
+    "1_echo_source_is_addressed": true,
+    "1_foreign_witness_excluded_from_local_evidence": true,
+    "1_unlinked_episode_retained": true,
+    "1_native_reads_do_not_change_rows": true,
+    "1_full_cold_parity": true,
+    "7_page_size_does_not_change_scoped_results": true,
+    "7_all_global_witnesses_collected": true,
+    "7_local_counts_include_echo_and_every_copy": true,
+    "7_echo_source_is_addressed": true,
+    "7_foreign_witness_excluded_from_local_evidence": true,
+    "7_unlinked_episode_retained": true,
+    "7_native_reads_do_not_change_rows": true,
+    "7_full_cold_parity": true,
+    "64_page_size_does_not_change_scoped_results": true,
+    "64_all_global_witnesses_collected": true,
+    "64_local_counts_include_echo_and_every_copy": true,
+    "64_echo_source_is_addressed": true,
+    "64_foreign_witness_excluded_from_local_evidence": true,
+    "64_unlinked_episode_retained": true,
+    "64_native_reads_do_not_change_rows": true,
+    "64_full_cold_parity": true
+  },
+  "native_executed": true,
+  "answer": null,
+  "qualified": false,
+  "factual_quality_status": "NOT_EVALUATED",
+  "full_report_sha256": "a12540a3f051a02639e9bef2709cfd68fcda508daa9e3530c8c51f4014f039ab",
+  "evaluations": [
+    {
+      "page_size": 1,
+      "page_count": 25,
+      "summary": {
+        "explicit_reply_occurrences": 25,
+        "distinct_reply_trails": 2,
+        "embedded_question_links": 0,
+        "repeat_question_links": 1
+      },
+      "scoped_results_sha256": "7dc3a69cb72be65186787ba2fd4de33160ca11634c6b815d6bdc8a067f632c4f",
+      "scopes": [
+        {
+          "region": "conversation:opaque-20261207",
+          "excluded": 1,
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "row-6",
+                7
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:48dbd123d452fa254f6cdc9c3edba1b1cce412db",
+                  "native_query_echo": false,
+                  "native_trail_address": "259e0879cdfa154d"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-0",
+                    17
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-1",
+                    18
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-2",
+                    19
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-3",
+                    20
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-4",
+                    21
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-5",
+                    22
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-6",
+                    23
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-7",
+                    24
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-8",
+                    25
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-9",
+                    26
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-10",
+                    27
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-11",
+                    28
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-12",
+                    29
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-13",
+                    30
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-14",
+                    31
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-15",
+                    32
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-16",
+                    33
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-17",
+                    34
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-18",
+                    35
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-19",
+                    36
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "again-q",
+                    12
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:f2c0b33b8e79bb6b56d7d1685b229dd72a094705",
+                  "native_query_echo": true,
+                  "native_trail_address": "66aef7e658289e5f"
+                }
+              ],
+              "outside_roots": [
+                "payload:f2c0b33b8e79bb6b56d7d1685b229dd72a094705"
+              ]
+            },
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "again-q",
+                12
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "again-a",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "again-q",
+                    12
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                }
+              ],
+              "outside_roots": []
+            },
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "unlinked-q",
+                15
+              ],
+              "relations": [],
+              "outside_roots": []
+            }
+          ]
+        },
+        {
+          "region": "conversation:opaque-20261207-other",
+          "excluded": 24,
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261207-other",
+                "row-6",
+                7
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207-other",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207-other",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                }
+              ],
+              "outside_roots": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_size": 7,
+      "page_count": 4,
+      "summary": {
+        "explicit_reply_occurrences": 25,
+        "distinct_reply_trails": 2,
+        "embedded_question_links": 0,
+        "repeat_question_links": 1
+      },
+      "scoped_results_sha256": "7dc3a69cb72be65186787ba2fd4de33160ca11634c6b815d6bdc8a067f632c4f",
+      "scopes": [
+        {
+          "region": "conversation:opaque-20261207",
+          "excluded": 1,
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "row-6",
+                7
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:48dbd123d452fa254f6cdc9c3edba1b1cce412db",
+                  "native_query_echo": false,
+                  "native_trail_address": "259e0879cdfa154d"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-0",
+                    17
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-1",
+                    18
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-2",
+                    19
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-3",
+                    20
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-4",
+                    21
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-5",
+                    22
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-6",
+                    23
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-7",
+                    24
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-8",
+                    25
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-9",
+                    26
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-10",
+                    27
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-11",
+                    28
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-12",
+                    29
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-13",
+                    30
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-14",
+                    31
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-15",
+                    32
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-16",
+                    33
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-17",
+                    34
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-18",
+                    35
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-19",
+                    36
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "again-q",
+                    12
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:f2c0b33b8e79bb6b56d7d1685b229dd72a094705",
+                  "native_query_echo": true,
+                  "native_trail_address": "66aef7e658289e5f"
+                }
+              ],
+              "outside_roots": [
+                "payload:f2c0b33b8e79bb6b56d7d1685b229dd72a094705"
+              ]
+            },
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "again-q",
+                12
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "again-a",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "again-q",
+                    12
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                }
+              ],
+              "outside_roots": []
+            },
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "unlinked-q",
+                15
+              ],
+              "relations": [],
+              "outside_roots": []
+            }
+          ]
+        },
+        {
+          "region": "conversation:opaque-20261207-other",
+          "excluded": 24,
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261207-other",
+                "row-6",
+                7
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207-other",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207-other",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                }
+              ],
+              "outside_roots": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "page_size": 64,
+      "page_count": 1,
+      "summary": {
+        "explicit_reply_occurrences": 25,
+        "distinct_reply_trails": 2,
+        "embedded_question_links": 0,
+        "repeat_question_links": 1
+      },
+      "scoped_results_sha256": "7dc3a69cb72be65186787ba2fd4de33160ca11634c6b815d6bdc8a067f632c4f",
+      "scopes": [
+        {
+          "region": "conversation:opaque-20261207",
+          "excluded": 1,
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "row-6",
+                7
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:48dbd123d452fa254f6cdc9c3edba1b1cce412db",
+                  "native_query_echo": false,
+                  "native_trail_address": "259e0879cdfa154d"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-0",
+                    17
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-1",
+                    18
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-2",
+                    19
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-3",
+                    20
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-4",
+                    21
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-5",
+                    22
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-6",
+                    23
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-7",
+                    24
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-8",
+                    25
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-9",
+                    26
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-10",
+                    27
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-11",
+                    28
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-12",
+                    29
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-13",
+                    30
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-14",
+                    31
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-15",
+                    32
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-16",
+                    33
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-17",
+                    34
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-18",
+                    35
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "copy-19",
+                    36
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "again-q",
+                    12
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:f2c0b33b8e79bb6b56d7d1685b229dd72a094705",
+                  "native_query_echo": true,
+                  "native_trail_address": "66aef7e658289e5f"
+                }
+              ],
+              "outside_roots": [
+                "payload:f2c0b33b8e79bb6b56d7d1685b229dd72a094705"
+              ]
+            },
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "again-q",
+                12
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207",
+                    "again-a",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207",
+                    "again-q",
+                    12
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                }
+              ],
+              "outside_roots": []
+            },
+            {
+              "target": [
+                "conversation:opaque-20261207",
+                "unlinked-q",
+                15
+              ],
+              "relations": [],
+              "outside_roots": []
+            }
+          ]
+        },
+        {
+          "region": "conversation:opaque-20261207-other",
+          "excluded": 24,
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261207-other",
+                "row-6",
+                7
+              ],
+              "relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261207-other",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261207-other",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:afd3b28a3a0ec10f642e7f953aa775d7c56c7bd8",
+                  "native_query_echo": false,
+                  "native_trail_address": "2563be3553e72ffc"
+                }
+              ],
+              "outside_roots": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -134,6 +134,32 @@ def test_transport_duplicate_does_not_advance_or_reinforce():
     assert field.observation_count == 2
 
 
+def test_positional_spans_preserve_distance_and_exclude_overlap():
+    field = ContinuousStructuralAssociationField(forgetting_rate=0)
+    field.observe(observation(0, [1, 2]), spans=((0, 3), (1, 4)))
+    assert field.association("h1", 1, 2, channel="within") == 0.0
+    field.observe(observation(1, [1, 2]), spans=((0, 3), (9, 12)))
+    assert abs(field.association("h1", 1, 2, channel="within") - exp(-0.35 * 6)) < 1e-12
+    field.observe(observation(2, [1, 2]), spans=((0, 3), (3, 6)))
+    assert abs(field.association("h1", 1, 2, channel="within") -
+               (1.0 + exp(-0.35 * 6))) < 1e-12
+
+
+def test_invalid_positional_spans_are_rejected_before_learning():
+    field = ContinuousStructuralAssociationField(forgetting_rate=0)
+    for spans in (((0, 1),), ((2, 3), (1, 2)), ((0, 0), (1, 2)),
+                  ((0, 1), (True, 2))):
+        try:
+            field.observe(observation(0, [1, 2]), spans=spans)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"invalid spans accepted: {spans!r}")
+    assert field.observation_count == 0
+    assert field.tick == 0
+    assert field.association("h1", 1, 2, channel="within") == 0
+
+
 def test_active_temporal_history_is_bounded_by_numerical_precision_not_fixed_lag():
     field = ContinuousStructuralAssociationField(
         temporal_decay=0.4,

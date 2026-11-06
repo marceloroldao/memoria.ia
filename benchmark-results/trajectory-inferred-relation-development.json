@@ -1,0 +1,3575 @@
+{
+  "seed": 20261215,
+  "gates": {
+    "adjacent_true_native_rows_read_only": true,
+    "adjacent_true_native_roundtrip_matches_request": true,
+    "adjacent_true_explicit_links_do_not_change_inference": true,
+    "adjacent_true_cold_complete_view_parity": true,
+    "adjacent_true_no_factual_promotion": true,
+    "adjacent_true_inferred_origins_local_and_not_generated": true,
+    "adjacent_unrelated_native_rows_read_only": true,
+    "adjacent_unrelated_native_roundtrip_matches_request": true,
+    "adjacent_unrelated_explicit_links_do_not_change_inference": true,
+    "adjacent_unrelated_cold_complete_view_parity": true,
+    "adjacent_unrelated_no_factual_promotion": true,
+    "adjacent_unrelated_inferred_origins_local_and_not_generated": true,
+    "structural_single_native_rows_read_only": true,
+    "structural_single_native_roundtrip_matches_request": true,
+    "structural_single_explicit_links_do_not_change_inference": true,
+    "structural_single_cold_complete_view_parity": true,
+    "structural_single_no_factual_promotion": true,
+    "structural_single_inferred_origins_local_and_not_generated": true,
+    "nonadjacent_true_native_rows_read_only": true,
+    "nonadjacent_true_native_roundtrip_matches_request": true,
+    "nonadjacent_true_explicit_links_do_not_change_inference": true,
+    "nonadjacent_true_cold_complete_view_parity": true,
+    "nonadjacent_true_no_factual_promotion": true,
+    "nonadjacent_true_inferred_origins_local_and_not_generated": true,
+    "outside_frame_native_rows_read_only": true,
+    "outside_frame_native_roundtrip_matches_request": true,
+    "outside_frame_explicit_links_do_not_change_inference": true,
+    "outside_frame_cold_complete_view_parity": true,
+    "outside_frame_no_factual_promotion": true,
+    "outside_frame_inferred_origins_local_and_not_generated": true,
+    "conflicting_successors_native_rows_read_only": true,
+    "conflicting_successors_native_roundtrip_matches_request": true,
+    "conflicting_successors_explicit_links_do_not_change_inference": true,
+    "conflicting_successors_cold_complete_view_parity": true,
+    "conflicting_successors_no_factual_promotion": true,
+    "conflicting_successors_inferred_origins_local_and_not_generated": true,
+    "repeated_single_native_rows_read_only": true,
+    "repeated_single_native_roundtrip_matches_request": true,
+    "repeated_single_explicit_links_do_not_change_inference": true,
+    "repeated_single_cold_complete_view_parity": true,
+    "repeated_single_no_factual_promotion": true,
+    "repeated_single_inferred_origins_local_and_not_generated": true,
+    "repeated_conflict_native_rows_read_only": true,
+    "repeated_conflict_native_roundtrip_matches_request": true,
+    "repeated_conflict_explicit_links_do_not_change_inference": true,
+    "repeated_conflict_cold_complete_view_parity": true,
+    "repeated_conflict_no_factual_promotion": true,
+    "repeated_conflict_inferred_origins_local_and_not_generated": true,
+    "multiple_targets_native_rows_read_only": true,
+    "multiple_targets_native_roundtrip_matches_request": true,
+    "multiple_targets_explicit_links_do_not_change_inference": true,
+    "multiple_targets_cold_complete_view_parity": true,
+    "multiple_targets_no_factual_promotion": true,
+    "multiple_targets_inferred_origins_local_and_not_generated": true,
+    "generated_barrier_native_rows_read_only": true,
+    "generated_barrier_native_roundtrip_matches_request": true,
+    "generated_barrier_explicit_links_do_not_change_inference": true,
+    "generated_barrier_cold_complete_view_parity": true,
+    "generated_barrier_no_factual_promotion": true,
+    "generated_barrier_inferred_origins_local_and_not_generated": true,
+    "foreign_copy_native_rows_read_only": true,
+    "foreign_copy_native_roundtrip_matches_request": true,
+    "foreign_copy_explicit_links_do_not_change_inference": true,
+    "foreign_copy_cold_complete_view_parity": true,
+    "foreign_copy_no_factual_promotion": true,
+    "foreign_copy_inferred_origins_local_and_not_generated": true,
+    "no_raw_target_native_rows_read_only": true,
+    "no_raw_target_native_roundtrip_matches_request": true,
+    "no_raw_target_explicit_links_do_not_change_inference": true,
+    "no_raw_target_cold_complete_view_parity": true,
+    "no_raw_target_no_factual_promotion": true,
+    "no_raw_target_inferred_origins_local_and_not_generated": true,
+    "terminal_target_native_rows_read_only": true,
+    "terminal_target_native_roundtrip_matches_request": true,
+    "terminal_target_explicit_links_do_not_change_inference": true,
+    "terminal_target_cold_complete_view_parity": true,
+    "terminal_target_no_factual_promotion": true,
+    "terminal_target_inferred_origins_local_and_not_generated": true,
+    "hidden_relation_twins_identical_view": true,
+    "hidden_relation_twins_different_reference": true
+  },
+  "integrity_status": "PASS",
+  "integrity_passed": 80,
+  "integrity_total": 80,
+  "route_totals": {
+    "adjacent": {
+      "true_positive": 9,
+      "false_positive": 2,
+      "false_negative": 44,
+      "exact_relation_set": 7,
+      "proposal_matches": 8
+    },
+    "structural_adjacent": {
+      "true_positive": 9,
+      "false_positive": 2,
+      "false_negative": 44,
+      "exact_relation_set": 7,
+      "proposal_matches": 8
+    },
+    "structural_successors": {
+      "true_positive": 52,
+      "false_positive": 9,
+      "false_negative": 1,
+      "exact_relation_set": 6,
+      "proposal_matches": 8
+    }
+  },
+  "relation_quality_status": "FAIL_FALSE_OR_MISSING_RELATIONS",
+  "semantic_quality_status": "FAIL_HIDDEN_RELATION_TWINS",
+  "factual_quality_status": "NOT_EVALUATED",
+  "native_executed": true,
+  "engine_changed": false,
+  "answer": null,
+  "qualified": false,
+  "hidden_relation_twins": {
+    "identical_view": true,
+    "view_sha256": "c9e7e26ad39a74b95d6d1496b6fdbac10f09fa83329e088fefde0223861d55b6",
+    "route_matches": {
+      "adjacent": 1,
+      "structural_adjacent": 1,
+      "structural_successors": 0
+    },
+    "total": 2
+  },
+  "full_report_sha256": "8746ed689fdcc08185cfd03af7041eafdc8542e6b8c80a223420e264557133fc",
+  "cases": [
+    {
+      "case": "adjacent_true",
+      "view_sha256": "c9e7e26ad39a74b95d6d1496b6fdbac10f09fa83329e088fefde0223861d55b6",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "COMPETING_INFERRED_ROOTS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        }
+      }
+    },
+    {
+      "case": "adjacent_unrelated",
+      "view_sha256": "c9e7e26ad39a74b95d6d1496b6fdbac10f09fa83329e088fefde0223861d55b6",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "COMPETING_INFERRED_ROOTS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 2,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      }
+    },
+    {
+      "case": "structural_single",
+      "view_sha256": "c77fd86fa140c7d93857c4a35a01ec36742c668a97a4b2694721202ff4dac89d",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        }
+      }
+    },
+    {
+      "case": "nonadjacent_true",
+      "view_sha256": "528f2d7a059bfc5b8eedbf1daa21a656903fdc36a4a1c14fd37d1fbaa2e96ab7",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "outside",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "outside",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "outside",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    10
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "COMPETING_INFERRED_ROOTS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            9
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 2,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        }
+      }
+    },
+    {
+      "case": "outside_frame",
+      "view_sha256": "528f2d7a059bfc5b8eedbf1daa21a656903fdc36a4a1c14fd37d1fbaa2e96ab7",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "outside",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "outside",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "outside",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    10
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "COMPETING_INFERRED_ROOTS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "outside",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 2,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        }
+      }
+    },
+    {
+      "case": "conflicting_successors",
+      "view_sha256": "c9e7e26ad39a74b95d6d1496b6fdbac10f09fa83329e088fefde0223861d55b6",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "COMPETING_INFERRED_ROOTS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-8",
+            9
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 2,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      }
+    },
+    {
+      "case": "repeated_single",
+      "view_sha256": "18785bc8824eea3dc45990c8cdffe438809c20c14a71bf9438473648724c1142",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-0",
+                    10
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-1",
+                    11
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-2",
+                    12
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-3",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-4",
+                    14
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-5",
+                    15
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-6",
+                    16
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-7",
+                    17
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-8",
+                    18
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-9",
+                    19
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-10",
+                    20
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-11",
+                    21
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-12",
+                    22
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-13",
+                    23
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-14",
+                    24
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-15",
+                    25
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-16",
+                    26
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-17",
+                    27
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-18",
+                    28
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-19",
+                    29
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-0",
+            10
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-1",
+            11
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-2",
+            12
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-3",
+            13
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-4",
+            14
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-5",
+            15
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-6",
+            16
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-7",
+            17
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-8",
+            18
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-9",
+            19
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-10",
+            20
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-11",
+            21
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-12",
+            22
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-13",
+            23
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-14",
+            24
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-15",
+            25
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-16",
+            26
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-17",
+            27
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-18",
+            28
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-19",
+            29
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 20,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 20,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_successors": {
+          "true_positive": 21,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        }
+      }
+    },
+    {
+      "case": "repeated_conflict",
+      "view_sha256": "6ccf437489626deb3f50471ab1f5635e88305b2c39e91cc67e5375c1b946ff52",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-0",
+                    11
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-1",
+                    12
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-2",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-3",
+                    14
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-4",
+                    15
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-5",
+                    16
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-6",
+                    17
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-7",
+                    18
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-8",
+                    19
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-9",
+                    20
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-10",
+                    21
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-11",
+                    22
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-12",
+                    23
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-13",
+                    24
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-14",
+                    25
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-15",
+                    26
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-16",
+                    27
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-17",
+                    28
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-18",
+                    29
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "copy-19",
+                    30
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "COMPETING_INFERRED_ROOTS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-8",
+            9
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-0",
+            11
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-1",
+            12
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-2",
+            13
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-3",
+            14
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-4",
+            15
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-5",
+            16
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-6",
+            17
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-7",
+            18
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-8",
+            19
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-9",
+            20
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-10",
+            21
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-11",
+            22
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-12",
+            23
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-13",
+            24
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-14",
+            25
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-15",
+            26
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-16",
+            27
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-17",
+            28
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-18",
+            29
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "copy-19",
+            30
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 21,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 21,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 22,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      }
+    },
+    {
+      "case": "multiple_targets",
+      "view_sha256": "9b3c52f14aa62afa76603e78ed2b5d801aa95a57b17a85f855c7fdaf68be60f6",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ],
+        [
+          "conversation:opaque-20261215",
+          "other-q",
+          12
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            },
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "other-q",
+                12
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "other-a",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "other-q",
+                    12
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "AMBIGUOUS_TARGETS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            },
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "other-q",
+                12
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "other-a",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "other-q",
+                    12
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "AMBIGUOUS_TARGETS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f"
+              ]
+            },
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "other-q",
+                12
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "other-a",
+                    13
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "other-q",
+                    12
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "AMBIGUOUS_TARGETS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261215",
+            "other-q",
+            12
+          ],
+          [
+            "conversation:opaque-20261215",
+            "other-a",
+            13
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 2,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 2,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 2,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      }
+    },
+    {
+      "case": "generated_barrier",
+      "view_sha256": "1fb569f1b22d43e75b7cf080029ea611429248b9635e9b06547ea8a8630ba439",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_INFERRED_RELATION",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_INFERRED_RELATION",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_INFERRED_RELATION",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            9
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        }
+      }
+    },
+    {
+      "case": "foreign_copy",
+      "view_sha256": "84fa6c4fe5e5879d2427886b06efd9a4a9c1353da083922e3aa02219385abd8c",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+          "reason": "UNIQUE_INFERRED_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                },
+                {
+                  "origin": [
+                    "conversation:opaque-20261215",
+                    "row-8",
+                    9
+                  ],
+                  "target": [
+                    "conversation:opaque-20261215",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a",
+                "payload:e081c62e81895cf61c33be4fe97d5f6cf155b42f"
+              ]
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "COMPETING_INFERRED_ROOTS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261215",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261215",
+            "row-7",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:b81a3315a20f86630a1297cd64cb4e0ca574014a"
+        }
+      }
+    },
+    {
+      "case": "no_raw_target",
+      "view_sha256": "940e1dbb9fa194ed4a6857e3367f496b1e451dd21e1876c6ffd1c8d8e187d541",
+      "targets": [],
+      "routes": {
+        "adjacent": {
+          "episodes": [],
+          "proposal_payload_id": null,
+          "reason": "NO_OBSERVED_TARGET",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [],
+          "proposal_payload_id": null,
+          "reason": "NO_OBSERVED_TARGET",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [],
+          "proposal_payload_id": null,
+          "reason": "NO_OBSERVED_TARGET",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      }
+    },
+    {
+      "case": "terminal_target",
+      "view_sha256": "5bc370bbf040ee7374d79dfe0ffbba8f96e9f079c523d92adab99826a6e7e851",
+      "targets": [
+        [
+          "conversation:opaque-20261215",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_INFERRED_RELATION",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_adjacent": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_INFERRED_RELATION",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "structural_successors": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261215",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_INFERRED_RELATION",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_rows_read_only": true,
+        "native_roundtrip_matches_request": true,
+        "explicit_links_do_not_change_inference": true,
+        "cold_complete_view_parity": true,
+        "no_factual_promotion": true,
+        "inferred_origins_local_and_not_generated": true
+      },
+      "scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      }
+    }
+  ]
+}

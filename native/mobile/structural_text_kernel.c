@@ -648,13 +648,17 @@ void memoria_structural_text_field_destroy(memoria_structural_text_field *field)
     free(field);
 }
 
-int memoria_structural_text_field_observe(
+int memoria_structural_text_field_observe_reusing(
     memoria_structural_text_field *field,
     const uint64_t *trail,
-    size_t trail_count
+    size_t trail_count,
+    size_t reuse_start,
+    size_t reuse_count
 ) {
     size_t i;
-    if (!field || (trail_count > 0u && !trail)) return 0;
+    if (!field || (trail_count > 0u && !trail) ||
+        reuse_start > trail_count || reuse_count > trail_count - reuse_start)
+        return 0;
     ++field->tick;
     trim_recent(field);
 
@@ -663,6 +667,8 @@ int memoria_structural_text_field_observe(
         size_t upper = i + field->max_within_distance + 1u;
         if (upper > trail_count) upper = trail_count;
         for (j = i + 1u; j < upper; ++j) {
+            if (reuse_count && i >= reuse_start &&
+                j < reuse_start + reuse_count) continue;
             if (!reinforce(
                 field,
                 trail[i],
@@ -681,10 +687,24 @@ int memoria_structural_text_field_observe(
             const double mass = 1.0 / (
                 (double)lag * (double)previous->trail_count * (double)trail_count
             );
+            size_t previous_reuse = SIZE_MAX;
             size_t a;
+            if (reuse_count <= previous->trail_count) {
+                for (a = 0; a <= previous->trail_count - reuse_count; ++a) {
+                    if (memcmp(previous->trail + a, trail + reuse_start,
+                        reuse_count * sizeof(*trail)) == 0) {
+                        previous_reuse = a;
+                        break;
+                    }
+                }
+            }
             for (a = 0; a < previous->trail_count; ++a) {
                 size_t b;
                 for (b = 0; b < trail_count; ++b) {
+                    if (previous_reuse != SIZE_MAX &&
+                        a >= previous_reuse && a < previous_reuse + reuse_count &&
+                        b >= reuse_start && b < reuse_start + reuse_count)
+                        continue;
                     if (!reinforce(
                         field,
                         previous->trail[a],
@@ -698,6 +718,16 @@ int memoria_structural_text_field_observe(
         if (!append_recent(field, trail, trail_count)) return 0;
     }
     return 1;
+}
+
+int memoria_structural_text_field_observe(
+    memoria_structural_text_field *field,
+    const uint64_t *trail,
+    size_t trail_count
+) {
+    return memoria_structural_text_field_observe_reusing(
+        field, trail, trail_count, 0u, 0u
+    );
 }
 
 double memoria_structural_text_field_association(
