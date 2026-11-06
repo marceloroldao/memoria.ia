@@ -1,5 +1,7 @@
 # Observador separado em simulação controlada
 
+Continuação opcional: [admissão com chave compartilhada e limites de autenticação](trajectory-authenticated-observer-proof.md). Os resultados e controles desta etapa permanecem válidos para a ponte sem autenticação.
+
 Esta etapa liga a [auditoria de hipóteses congeladas](trajectory-prediction-audit.md) a um observador determinístico executado em outro processo. A solicitação fica registrada antes do resultado. Para uma solicitação fixa, o trabalhador recebe somente `world_seed`, `entity`, `tick` e `sensor_mode`: não recebe hipóteses, candidatas ou caminho do BDR. Campos extras são recusados.
 
 Isso demonstra separação do fluxo de dados neste contrato controlado. O subprocesso não é uma sandbox de segurança, nem representa um sensor real ou uma fonte autenticada. O programa, o ambiente e o chamador continuam confiáveis no caminho normal de execução. Não há demonstração de independência causal geral.
