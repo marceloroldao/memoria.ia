@@ -103,6 +103,8 @@ on:
       - 'tests/test_trajectory_feedback_lab.py'
       - 'scripts/trajectory_feedback_console.py'
       - 'tests/test_trajectory_feedback_console.py'
+      - 'scripts/trajectory_route_feedback_probe.py'
+      - 'tests/test_trajectory_route_feedback_probe.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -300,6 +302,15 @@ jobs:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
           PYTHONPATH: src
         run: python -m pytest -q tests/test_trajectory_feedback_lab.py tests/test_trajectory_feedback_console.py
+      - name: Exact-frame opposition transfer (integrity, wrong feedback and hidden-reference controls)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_route_feedback_probe.py
+          for route_feedback_seed in 20270109 20270110; do
+            python scripts/trajectory_route_feedback_probe.py --library build/trajectory-native/libmemoria_mobile.so --seed "$route_feedback_seed" --output "/tmp/route-feedback-$route_feedback_seed.json"
+          done
       - name: Exact-event feedback withdrawal (integrity and negative controls)
         env:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so

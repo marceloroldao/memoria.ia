@@ -17,7 +17,9 @@ from trajectory_route_relation_probe import fixture
 def library():
     path = Path(os.environ.get('MEMORIA_NATIVE_LIBRARY', 'build/trajectory-native/libmemoria_mobile.so')).resolve()
     if not path.exists():
-        pytest.fail('Build the pinned native BDR runtime before running the laboratory contracts')
+        if 'MEMORIA_NATIVE_LIBRARY' in os.environ:
+            pytest.fail('Explicit native BDR library is missing')
+        pytest.skip('Native integration runs in the dedicated pinned-BDR job')
     return path
 
 
