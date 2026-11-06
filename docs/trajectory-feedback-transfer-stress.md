@@ -1,5 +1,7 @@
 # Transferência de feedback: consultas reservadas e redundância
 
+Continuação: [registro de hipóteses antes de observações posteriores](trajectory-prediction-audit.md), com corte temporal imutável, vínculos nativos e controles de recorrência sem confirmação factual.
+
 Esta etapa amplia a avaliação dos leitores existentes sem mudar suas regras. `scripts/trajectory_feedback_transfer_stress.py` mede o efeito de uma oposição local ao conteúdo, de uma oposição à moldura e de uma oposição a uma ocorrência de testemunho em combinações de símbolos não usadas nas demonstrações.
 
 São comparados retornos programados que rejeitam o extra e retornos programados que rejeitam o conteúdo esperado. Isso controla a qualidade da decisão fornecida ao sistema; **não estima a confiabilidade real de uma pessoa, fonte ou agente**. Nenhum peso ou limiar de confiança foi acrescentado ao núcleo.
