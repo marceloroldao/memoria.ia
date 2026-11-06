@@ -1,5 +1,7 @@
 # Rejeição de uma ocorrência de demonstração
 
+Continuação: [transferência de feedback em consultas reservadas e regimes de redundância](trajectory-feedback-transfer-stress.md), com retornos corretos/incorretos programados e referências isoladas do aprendizado.
+
 O novo leitor `trajectory_witness_feedback_probe.py` acrescenta o alvo `WITNESS` ao contrato de feedback endereçado. Ele identifica uma ocorrência nativa de demonstração: uma entrada de origem e a entrada de destino adjacente no mesmo fluxo elegível da região. Isso permite rejeitar o uso daquela ocorrência sem declarar o conteúdo falso em todos os contextos ou rejeitar diretamente uma moldura inteira.
 
 O mecanismo é uma política experimental de dependências, desativada por padrão. Não decide autonomamente qual demonstração está errada e não altera os pesos ou as observações do núcleo. Todas as molduras e candidatas brutas continuam visíveis.
