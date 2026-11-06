@@ -1,0 +1,282 @@
+{
+  "format": "memoria.ia-pilot-export-validation-v1",
+  "source_parent": "a8c8f5c30caf35ee8369c669ae167993cce2c661",
+  "tests": [
+    {
+      "name": "test_export_keeps_negative_and_uncertain_results_across_restart[p-worsened]",
+      "classname": "tests.test_trajectory_pilot_export",
+      "seconds": 0.085,
+      "status": "PASS"
+    },
+    {
+      "name": "test_export_keeps_negative_and_uncertain_results_across_restart[d-uncertain]",
+      "classname": "tests.test_trajectory_pilot_export",
+      "seconds": 0.059,
+      "status": "PASS"
+    },
+    {
+      "name": "test_export_preserves_unfinished_decisions_and_menu_does_not_record_events",
+      "classname": "tests.test_trajectory_pilot_export",
+      "seconds": 0.065,
+      "status": "PASS"
+    },
+    {
+      "name": "test_export_refuses_existing_file_symlink_and_data_directory",
+      "classname": "tests.test_trajectory_pilot_export",
+      "seconds": 0.004,
+      "status": "PASS"
+    },
+    {
+      "name": "test_export_publication_failure_leaves_no_partial_file_or_new_event",
+      "classname": "tests.test_trajectory_pilot_export",
+      "seconds": 0.002,
+      "status": "PASS"
+    },
+    {
+      "name": "test_real_terminal_exports_empty_scope_without_new_observations",
+      "classname": "tests.test_trajectory_pilot_export",
+      "seconds": 0.111,
+      "status": "PASS"
+    },
+    {
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[u-1]",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.11,
+      "status": "PASS"
+    },
+    {
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[g-0]",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.059,
+      "status": "PASS"
+    },
+    {
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[p-0]",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.068,
+      "status": "PASS"
+    },
+    {
+      "name": "test_wizard_can_defer_or_reject_without_incorporating[d-defer]",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.056,
+      "status": "PASS"
+    },
+    {
+      "name": "test_wizard_can_defer_or_reject_without_incorporating[r-reject_all]",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.069,
+      "status": "PASS"
+    },
+    {
+      "name": "test_resume_after_restart_reuses_observation_ids_and_preserves_original_snapshot",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.244,
+      "status": "PASS"
+    },
+    {
+      "name": "test_incorporation_preflight_rejects_whole_batch_without_partial_learning",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.625,
+      "status": "PASS"
+    },
+    {
+      "name": "test_eof_after_decision_keeps_a_resumable_decision",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.052,
+      "status": "PASS"
+    },
+    {
+      "name": "test_wrong_declared_actor_cannot_resume_a_decision",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.07,
+      "status": "PASS"
+    },
+    {
+      "name": "test_real_terminal_entry_registration_and_literal_output",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.107,
+      "status": "PASS"
+    },
+    {
+      "name": "test_real_terminal_review_cycle_needs_no_json_or_manual_receipt_ids",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.153,
+      "status": "PASS"
+    },
+    {
+      "name": "test_resume_cannot_relabel_generated_examples_as_user_observations",
+      "classname": "tests.test_trajectory_review_wizard",
+      "seconds": 0.091,
+      "status": "PASS"
+    },
+    {
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[1-before]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.149,
+      "status": "PASS"
+    },
+    {
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[1-after_flush]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.134,
+      "status": "PASS"
+    },
+    {
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[2-before]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.143,
+      "status": "PASS"
+    },
+    {
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[2-after_flush]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.222,
+      "status": "PASS"
+    },
+    {
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[3-before]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.176,
+      "status": "PASS"
+    },
+    {
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[3-after_flush]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.188,
+      "status": "PASS"
+    },
+    {
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[interleaved_tail]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.082,
+      "status": "PASS"
+    },
+    {
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[interleaved_middle]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.065,
+      "status": "PASS"
+    },
+    {
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[nonprefix]",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.07,
+      "status": "PASS"
+    },
+    {
+      "name": "test_complete_batch_can_be_replayed_after_later_context_without_new_observations",
+      "classname": "tests.test_trajectory_wizard_resume_faults",
+      "seconds": 0.193,
+      "status": "PASS"
+    },
+    {
+      "name": "test_check_with_missing_tools_is_read_only_and_does_not_open_pilot",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.038,
+      "status": "PASS"
+    },
+    {
+      "name": "test_existing_data_folder_is_never_claimed_or_rewritten",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_owned_build_directory_is_reusable_but_wrong_configuration_is_rejected",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_data_and_build_paths_cannot_overlap[same]",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_data_and_build_paths_cannot_overlap[nested_data]",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_data_and_build_paths_cannot_overlap[nested_build]",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_wrong_bdr_revision_is_rejected_without_checkout_or_reset",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.014,
+      "status": "PASS"
+    },
+    {
+      "name": "test_missing_tools_reject_prepare_before_creating_build",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.001,
+      "status": "PASS"
+    },
+    {
+      "name": "test_native_smoke_is_temporary_and_does_not_touch_existing_pilot_data",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.025,
+      "status": "PASS"
+    },
+    {
+      "name": "test_run_requires_explicit_identity_and_data_folder_before_any_build",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.035,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_run_identity_is_rejected_before_preparing[ ]",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.037,
+      "status": "PASS"
+    },
+    {
+      "name": "test_invalid_run_identity_is_rejected_before_preparing[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.037,
+      "status": "PASS"
+    },
+    {
+      "name": "test_configuration_failure_replaces_stale_readiness_without_touching_pilot",
+      "classname": "tests.test_trajectory_operator_setup",
+      "seconds": 0.014,
+      "status": "PASS"
+    }
+  ],
+  "test_count": 41,
+  "integrity_status": "PASS",
+  "wizard_probe": {
+    "cases": 8,
+    "checks": 72,
+    "sha256": "0182f69c048aa28fa6aa1120698cbd7d95289e410b6e38012948fe71174aa300",
+    "historical_report_preserved": true,
+    "audits_and_checks_unchanged": true,
+    "output_lines_unchanged": true,
+    "menu_prompt_changed": true
+  },
+  "source_sha256": {
+    "scripts/trajectory_pilot_export.py": "bd97531dcd9b59730c5baf94f58f91e0da8d70d22a5b2d0f8491f637ce48ab9d",
+    "scripts/trajectory_review_wizard.py": "1443edecb7940b660444254e0b4ddd24df3109106ef3612c69af877d9b043502",
+    "scripts/trajectory_operator_setup.py": "3c8256a7f23762ad385f592672853ebc66427a1d8000e7d5dd66f37e6aec35fb",
+    "tests/test_trajectory_pilot_export.py": "0f84eb88c2b590d82a5e0a8f338fc970c93ed200b735b52cd6fa794afc4dc935"
+  },
+  "native_sha256": "8a21f2bfd09d2eb4b2b011d0d116ea1d253c35951eff9f12dd3ef1d0b1aa759a",
+  "ci_prior_head": {
+    "sha": "a8c8f5c30caf35ee8369c669ae167993cce2c661",
+    "run_id": 41056182958,
+    "conclusion": "success"
+  },
+  "human_evaluation_status": "NOT_PERFORMED",
+  "general_learning_status": "NOT_ESTABLISHED",
+  "limitations": [
+    "Scripted tests only; no human evaluation or cognitive quality measurement.",
+    "Export covers one scope, not a native backup or complete raw feedback ledger.",
+    "Digest is not authentication. No cross-process transaction or power-loss guarantee tested."
+  ]
+}

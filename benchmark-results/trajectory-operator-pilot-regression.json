@@ -1,0 +1,894 @@
+{
+  "format": "memoria.ia-operator-pilot-regression-v1",
+  "status": "PASS",
+  "source_parent_commit": "50fba048c3819850efa7693e4ad1d7a741fbd80a",
+  "executed_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_trajectory_feedback_ledger_probe.py",
+    "tests/test_trajectory_feedback_gate_probe.py",
+    "tests/test_trajectory_feedback_continuity_probe.py",
+    "tests/test_trajectory_feedback_withdrawal_probe.py",
+    "tests/test_trajectory_feedback_session.py",
+    "tests/test_trajectory_entity_transform_trace.py",
+    "tests/test_trajectory_evidence_diagnosis.py",
+    "tests/test_trajectory_demonstration_review.py",
+    "tests/test_trajectory_review_decisions.py",
+    "tests/test_trajectory_review_outcomes.py",
+    "tests/test_trajectory_review_wizard.py",
+    "tests/test_trajectory_wizard_resume_faults.py",
+    "--junitxml=/tmp/trajectory-operator-pilot-regression.xml"
+  ],
+  "tests": 136,
+  "passed": 136,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suite_duration_seconds": 159.165,
+  "cases": [
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_two_opposed_callers_and_retries_preserve_exact_retrieval",
+      "status": "passed",
+      "duration_seconds": 0.575
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_tampered_or_misdirected_receipts_cannot_append[query]",
+      "status": "passed",
+      "duration_seconds": 0.279
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_tampered_or_misdirected_receipts_cannot_append[region]",
+      "status": "passed",
+      "duration_seconds": 0.207
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_tampered_or_misdirected_receipts_cannot_append[root]",
+      "status": "passed",
+      "duration_seconds": 0.441
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_tampered_or_misdirected_receipts_cannot_append[witness]",
+      "status": "passed",
+      "duration_seconds": 0.222
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_tampered_or_misdirected_receipts_cannot_append[snapshot]",
+      "status": "passed",
+      "duration_seconds": 0.189
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_tampered_or_misdirected_receipts_cannot_append[extra]",
+      "status": "passed",
+      "duration_seconds": 0.21
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_event_identity_is_per_region_and_conflicting_reuse_rejects",
+      "status": "passed",
+      "duration_seconds": 0.418
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_new_snapshot_keeps_history_and_does_not_transfer_support",
+      "status": "passed",
+      "duration_seconds": 0.921
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_paged_ledger_reopens_without_feedback_becoming_observed_facts",
+      "status": "passed",
+      "duration_seconds": 4.807
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_generated_barrier_append_also_invalidates_snapshot_without_transferring_feedback",
+      "status": "passed",
+      "duration_seconds": 0.436
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_feedback_region_cannot_be_used_as_learning_scope",
+      "status": "passed",
+      "duration_seconds": 0.149
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_feedback_codec_preserves_literal_unicode_quotes_and_newlines",
+      "status": "passed",
+      "duration_seconds": 0.19
+    },
+    {
+      "module": "tests.test_trajectory_feedback_ledger_probe",
+      "name": "test_probe_is_reproducible_without_evaluator_reference_learning",
+      "status": "passed",
+      "duration_seconds": 14.436
+    },
+    {
+      "module": "tests.test_trajectory_feedback_gate_probe",
+      "name": "test_explicit_veto_removes_only_addressed_extra_and_preserves_raw",
+      "status": "passed",
+      "duration_seconds": 0.702
+    },
+    {
+      "module": "tests.test_trajectory_feedback_gate_probe",
+      "name": "test_twenty_support_events_cannot_outvote_opposition",
+      "status": "passed",
+      "duration_seconds": 3.802
+    },
+    {
+      "module": "tests.test_trajectory_feedback_gate_probe",
+      "name": "test_support_and_default_disabled_do_not_qualify_or_promote",
+      "status": "passed",
+      "duration_seconds": 0.859
+    },
+    {
+      "module": "tests.test_trajectory_feedback_gate_probe",
+      "name": "test_exact_query_and_scope_binding_do_not_transfer_veto",
+      "status": "passed",
+      "duration_seconds": 1.289
+    },
+    {
+      "module": "tests.test_trajectory_feedback_gate_probe",
+      "name": "test_generated_append_expires_veto_but_preserves_feedback",
+      "status": "passed",
+      "duration_seconds": 0.649
+    },
+    {
+      "module": "tests.test_trajectory_feedback_gate_probe",
+      "name": "test_decision_cannot_use_similar_or_stale_receipt_feedback",
+      "status": "passed",
+      "duration_seconds": 0.299
+    },
+    {
+      "module": "tests.test_trajectory_feedback_gate_probe",
+      "name": "test_full_probe_preserves_positive_and_negative_feedback_effects",
+      "status": "passed",
+      "duration_seconds": 17.635
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_identical_evidence_carries_veto_across_append_and_cold_restart[user_turn]",
+      "status": "passed",
+      "duration_seconds": 1.607
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_identical_evidence_carries_veto_across_append_and_cold_restart[assistant_generated]",
+      "status": "passed",
+      "duration_seconds": 1.466
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_same_payload_with_new_occurrence_does_not_inherit_veto",
+      "status": "passed",
+      "duration_seconds": 0.936
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_new_route_evidence_on_same_root_expires_veto",
+      "status": "passed",
+      "duration_seconds": 0.362
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_current_support_cannot_outvote_historical_opposition",
+      "status": "passed",
+      "duration_seconds": 1.605
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_new_witness_occurrence_expires_veto_even_if_candidate_packet_is_identical",
+      "status": "passed",
+      "duration_seconds": 1.817
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_scope_query_and_all_evidence_fields_are_required",
+      "status": "passed",
+      "duration_seconds": 0.967
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_default_disabled_preserves_all_candidates",
+      "status": "passed",
+      "duration_seconds": 1.038
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_missing_historical_prefix_or_changed_witness_provenance_prevents_carry",
+      "status": "passed",
+      "duration_seconds": 1.21
+    },
+    {
+      "module": "tests.test_trajectory_feedback_continuity_probe",
+      "name": "test_probe_exposes_wrong_feedback_and_hidden_context_failures",
+      "status": "passed",
+      "duration_seconds": 43.761
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_withdraw_wrong_veto_restores_candidate_preserving_both_histories",
+      "status": "passed",
+      "duration_seconds": 1.249
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_old_feedback_retry_does_not_reactivate_but_new_event_can",
+      "status": "passed",
+      "duration_seconds": 0.613
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_invalid_withdrawals_never_write[actor]",
+      "status": "passed",
+      "duration_seconds": 0.176
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_invalid_withdrawals_never_write[address]",
+      "status": "passed",
+      "duration_seconds": 0.198
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_invalid_withdrawals_never_write[content]",
+      "status": "passed",
+      "duration_seconds": 0.234
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_invalid_withdrawals_never_write[region]",
+      "status": "passed",
+      "duration_seconds": 0.22
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_reused_request_or_second_withdrawal_rejects",
+      "status": "passed",
+      "duration_seconds": 0.309
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_one_withdrawal_cannot_cancel_other_opposition",
+      "status": "passed",
+      "duration_seconds": 0.695
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_withdraw_support_does_not_cancel_opposition",
+      "status": "passed",
+      "duration_seconds": 0.703
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_historical_withdrawal_survives_append_and_does_not_mutate_old_receipt",
+      "status": "passed",
+      "duration_seconds": 0.853
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_projection_rejects_corrupted_control_and_reader_rejects_control_scopes",
+      "status": "passed",
+      "duration_seconds": 0.274
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_withdrawal_codec_preserves_literal_request_id",
+      "status": "passed",
+      "duration_seconds": 0.222
+    },
+    {
+      "module": "tests.test_trajectory_feedback_withdrawal_probe",
+      "name": "test_probe_preserves_negative_effect_of_withdrawing_valid_veto",
+      "status": "passed",
+      "duration_seconds": 12.754
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_complete_cycle_survives_process_restart",
+      "status": "passed",
+      "duration_seconds": 1.466
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_scope_and_stale_feedback_reject_without_writes",
+      "status": "passed",
+      "duration_seconds": 0.322
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_observation_retry_conflict_and_excluded_generated_content",
+      "status": "passed",
+      "duration_seconds": 0.009
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_directory_lock_blocks_second_writer",
+      "status": "passed",
+      "duration_seconds": 0.002
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_terminal_protocol_rejects_bad_line_and_persists_after_exit",
+      "status": "passed",
+      "duration_seconds": 0.209
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_invalid_commands_do_not_write[command0]",
+      "status": "passed",
+      "duration_seconds": 0.003
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_invalid_commands_do_not_write[command1]",
+      "status": "passed",
+      "duration_seconds": 0.003
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_invalid_commands_do_not_write[command2]",
+      "status": "passed",
+      "duration_seconds": 0.002
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_invalid_commands_do_not_write[command3]",
+      "status": "passed",
+      "duration_seconds": 0.002
+    },
+    {
+      "module": "tests.test_trajectory_feedback_session",
+      "name": "test_invalid_commands_do_not_write[command4]",
+      "status": "passed",
+      "duration_seconds": 0.003
+    },
+    {
+      "module": "tests.test_trajectory_entity_transform_trace",
+      "name": "test_interventions_use_new_entities_and_no_target_question_or_payload",
+      "status": "passed",
+      "duration_seconds": 0.007
+    },
+    {
+      "module": "tests.test_trajectory_entity_transform_trace",
+      "name": "test_trace_rejects_unwitnessed_identity_and_distinguishes_suffix_boundary",
+      "status": "passed",
+      "duration_seconds": 0.0
+    },
+    {
+      "module": "tests.test_trajectory_entity_transform_trace",
+      "name": "test_native_interventions_isolate_identity_and_value_suffix",
+      "status": "passed",
+      "duration_seconds": 15.74
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_native_diagnosis_reports_observed_gap_preserving_query_and_history[unseen_identity-baseline-UNWITNESSED_SYMBOLS_IN_FRAMES]",
+      "status": "passed",
+      "duration_seconds": 0.176
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_native_diagnosis_reports_observed_gap_preserving_query_and_history[conflicting_map-intervention-COMPETING_TRANSFORM_DESTINATIONS]",
+      "status": "passed",
+      "duration_seconds": 0.826
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_native_diagnosis_reports_observed_gap_preserving_query_and_history[value_boundary-baseline-OBSERVED_TARGET_BOUNDARY_MISMATCH]",
+      "status": "passed",
+      "duration_seconds": 0.416
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_native_diagnosis_reports_observed_gap_preserving_query_and_history[unseen_symbol-contrast-NO_OBSERVED_DESTINATION_IN_FRAMES]",
+      "status": "passed",
+      "duration_seconds": 0.579
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_empty_and_incompatible_frames_are_distinguished",
+      "status": "passed",
+      "duration_seconds": 0.074
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_feedback_is_reported_as_feedback_not_missing_memory",
+      "status": "passed",
+      "duration_seconds": 0.377
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_diagnosis_uses_no_evaluator_references_and_is_read_only",
+      "status": "passed",
+      "duration_seconds": 0.261
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_diagnosis_preserves_literal_and_transform_route_union",
+      "status": "passed",
+      "duration_seconds": 0.462
+    },
+    {
+      "module": "tests.test_trajectory_evidence_diagnosis",
+      "name": "test_diagnose_terminal_protocol_preserves_empty_history",
+      "status": "passed",
+      "duration_seconds": 0.209
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[unseen_symbol-related0]",
+      "status": "passed",
+      "duration_seconds": 0.134
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[unseen_identity-related1]",
+      "status": "passed",
+      "duration_seconds": 0.132
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[value_boundary-related2]",
+      "status": "passed",
+      "duration_seconds": 0.354
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_native_review_reports_structural_relation_without_choosing_truth[conflicting_map-related3]",
+      "status": "passed",
+      "duration_seconds": 0.399
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers0]",
+      "status": "passed",
+      "duration_seconds": 0.006
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers1]",
+      "status": "passed",
+      "duration_seconds": 0.004
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers2]",
+      "status": "passed",
+      "duration_seconds": 0.003
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers3]",
+      "status": "passed",
+      "duration_seconds": 0.003
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers4]",
+      "status": "passed",
+      "duration_seconds": 0.002
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers5]",
+      "status": "passed",
+      "duration_seconds": 0.007
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers6]",
+      "status": "passed",
+      "duration_seconds": 0.003
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_invalid_offers_are_rejected_without_writing[offers7]",
+      "status": "passed",
+      "duration_seconds": 0.003
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_total_offer_budget_and_identity_limits",
+      "status": "passed",
+      "duration_seconds": 0.0
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_feedback_context_is_not_treated_as_permission_to_learn",
+      "status": "passed",
+      "duration_seconds": 0.331
+    },
+    {
+      "module": "tests.test_trajectory_demonstration_review",
+      "name": "test_review_terminal_protocol_never_records_offered_examples",
+      "status": "passed",
+      "duration_seconds": 0.203
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_operator_choice_is_durable_without_learning_or_example_incorporation",
+      "status": "passed",
+      "duration_seconds": 0.207
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_uncertainty_and_rejection_are_explicit_choices_without_offer[defer]",
+      "status": "passed",
+      "duration_seconds": 0.086
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_uncertainty_and_rejection_are_explicit_choices_without_offer[reject_all]",
+      "status": "passed",
+      "duration_seconds": 0.092
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_invalid_decisions_do_not_append[scope]",
+      "status": "passed",
+      "duration_seconds": 0.115
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_invalid_decisions_do_not_append[offer]",
+      "status": "passed",
+      "duration_seconds": 0.093
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_invalid_decisions_do_not_append[choice]",
+      "status": "passed",
+      "duration_seconds": 0.078
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_invalid_decisions_do_not_append[reason]",
+      "status": "passed",
+      "duration_seconds": 0.122
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_invalid_decisions_do_not_append[identity_conflict]",
+      "status": "passed",
+      "duration_seconds": 0.077
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_new_decision_rejects_stale_snapshot_but_exact_replay_survives",
+      "status": "passed",
+      "duration_seconds": 0.189
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_receipt_digest_includes_context_even_when_review_output_is_unchanged",
+      "status": "passed",
+      "duration_seconds": 0.011
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_different_reviewed_order_or_provenance_gets_a_different_receipt",
+      "status": "passed",
+      "duration_seconds": 0.103
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_feedback_changes_invalidate_an_unrecorded_decision",
+      "status": "passed",
+      "duration_seconds": 0.495
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_terminal_decision_protocol_with_unicode_and_newlines",
+      "status": "passed",
+      "duration_seconds": 0.222
+    },
+    {
+      "module": "tests.test_trajectory_review_decisions",
+      "name": "test_corrupt_control_history_is_rejected_without_new_decision",
+      "status": "passed",
+      "duration_seconds": 0.11
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_before_after_delta_is_persisted_without_further_learning",
+      "status": "passed",
+      "duration_seconds": 1.517
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_subjective_judgement_is_not_inferred_from_candidate_counts[helped]",
+      "status": "passed",
+      "duration_seconds": 0.28
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_subjective_judgement_is_not_inferred_from_candidate_counts[unchanged]",
+      "status": "passed",
+      "duration_seconds": 0.311
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_subjective_judgement_is_not_inferred_from_candidate_counts[worsened]",
+      "status": "passed",
+      "duration_seconds": 0.215
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_subjective_judgement_is_not_inferred_from_candidate_counts[uncertain]",
+      "status": "passed",
+      "duration_seconds": 0.326
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[actor]",
+      "status": "passed",
+      "duration_seconds": 0.291
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[decision]",
+      "status": "passed",
+      "duration_seconds": 0.242
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[scope]",
+      "status": "passed",
+      "duration_seconds": 0.201
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[after]",
+      "status": "passed",
+      "duration_seconds": 0.22
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[judgement]",
+      "status": "passed",
+      "duration_seconds": 0.19
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[reason]",
+      "status": "passed",
+      "duration_seconds": 0.292
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[id_conflict]",
+      "status": "passed",
+      "duration_seconds": 0.212
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[query]",
+      "status": "passed",
+      "duration_seconds": 0.233
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_invalid_outcome_does_not_append[offers]",
+      "status": "passed",
+      "duration_seconds": 0.3
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_feedback_suspension_changes_available_candidates_without_removing_raw_memory",
+      "status": "passed",
+      "duration_seconds": 0.405
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_outcome_can_reference_historical_snapshots_after_further_observations",
+      "status": "passed",
+      "duration_seconds": 0.256
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_comparison_corruption_is_rejected_instead_of_partial_history",
+      "status": "passed",
+      "duration_seconds": 0.201
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_after_receipt_cannot_precede_the_selected_decision_snapshot",
+      "status": "passed",
+      "duration_seconds": 0.399
+    },
+    {
+      "module": "tests.test_trajectory_review_outcomes",
+      "name": "test_outcome_terminal_protocol_preserves_declared_uncertainty",
+      "status": "passed",
+      "duration_seconds": 0.148
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[u-1]",
+      "status": "passed",
+      "duration_seconds": 0.185
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[g-0]",
+      "status": "passed",
+      "duration_seconds": 0.126
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[p-0]",
+      "status": "passed",
+      "duration_seconds": 0.087
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_can_defer_or_reject_without_incorporating[d-defer]",
+      "status": "passed",
+      "duration_seconds": 0.098
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_can_defer_or_reject_without_incorporating[r-reject_all]",
+      "status": "passed",
+      "duration_seconds": 0.132
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_resume_after_restart_reuses_observation_ids_and_preserves_original_snapshot",
+      "status": "passed",
+      "duration_seconds": 0.427
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_incorporation_preflight_rejects_whole_batch_without_partial_learning",
+      "status": "passed",
+      "duration_seconds": 0.693
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_eof_after_decision_keeps_a_resumable_decision",
+      "status": "passed",
+      "duration_seconds": 0.09
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wrong_declared_actor_cannot_resume_a_decision",
+      "status": "passed",
+      "duration_seconds": 0.074
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_real_terminal_entry_registration_and_literal_output",
+      "status": "passed",
+      "duration_seconds": 0.162
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_real_terminal_review_cycle_needs_no_json_or_manual_receipt_ids",
+      "status": "passed",
+      "duration_seconds": 0.36
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_resume_cannot_relabel_generated_examples_as_user_observations",
+      "status": "passed",
+      "duration_seconds": 0.163
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[1-before]",
+      "status": "passed",
+      "duration_seconds": 0.216
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[1-after_flush]",
+      "status": "passed",
+      "duration_seconds": 0.213
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[2-before]",
+      "status": "passed",
+      "duration_seconds": 0.24
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[2-after_flush]",
+      "status": "passed",
+      "duration_seconds": 0.378
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[3-before]",
+      "status": "passed",
+      "duration_seconds": 0.323
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[3-after_flush]",
+      "status": "passed",
+      "duration_seconds": 0.561
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[interleaved_tail]",
+      "status": "passed",
+      "duration_seconds": 0.112
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[interleaved_middle]",
+      "status": "passed",
+      "duration_seconds": 0.169
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[nonprefix]",
+      "status": "passed",
+      "duration_seconds": 0.075
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_complete_batch_can_be_replayed_after_later_context_without_new_observations",
+      "status": "passed",
+      "duration_seconds": 0.495
+    }
+  ],
+  "focus_file_sha256": {
+    "scripts/trajectory_review_wizard.py": "8053b9aaa39ef3f3d2e03f6ed7793a163b20237c9b28410cf7d7747a3af6bdc7",
+    "tests/test_trajectory_wizard_resume_faults.py": "5079cfd93fd7b55f64aad4bbca501eef37b64635d56551bb2b5fd23fee71ceca",
+    ".github/workflows/trajectory-generation-proof.yml": "e99131978454cc4009c6cdb4d97281840727fbc440eb09df9a83ab2603a09d09"
+  },
+  "test_module_sha256": {
+    "tests/test_trajectory_feedback_ledger_probe.py": "9470516d0adb27d8e38b9d61d3f922cbee96c7a0864a146fc89d105b07337014",
+    "tests/test_trajectory_feedback_gate_probe.py": "984e78a6e7f67f71c8f21dd6c95ae2513598ef62313b2d35a49127dfe433dc5f",
+    "tests/test_trajectory_feedback_continuity_probe.py": "e7407be62dde1448ebef12738b27d4d579a83ea2de1e6fb6c024371d8b298100",
+    "tests/test_trajectory_feedback_withdrawal_probe.py": "8637752303b3fb21f5e717e6ee24af0ee140748b56cde8eebe362f5bae487acc",
+    "tests/test_trajectory_feedback_session.py": "c17c6df00f9b660e2e5f5d3ce98a52b91966da4ada6180b095219736f8a502e8",
+    "tests/test_trajectory_entity_transform_trace.py": "6bc05d45d0973d03ff07766f7546cc3ce1d45cb51691eabca93c548a35027744",
+    "tests/test_trajectory_evidence_diagnosis.py": "623fafaa89686388f4fff10a9d79b1aedb33d4c9021776644778a49f078d6f27",
+    "tests/test_trajectory_demonstration_review.py": "8e833ff377a0c83ffc4d8341e89d6b94027b06a99f18d5df5cda527b76cfe117",
+    "tests/test_trajectory_review_decisions.py": "7ac706891ce0bb4e547a89ef044a4880857b7b12bcdb24bb2fb96a88932354aa",
+    "tests/test_trajectory_review_outcomes.py": "32af9f8d6fed7f6824fa05f9ead61172f7fc7766406d4a62d968deefa1b5d504",
+    "tests/test_trajectory_review_wizard.py": "78e6b81022081f396cdfff587ccd4a445ba8b8c9bcedf8b2de998209416371a3",
+    "tests/test_trajectory_wizard_resume_faults.py": "5079cfd93fd7b55f64aad4bbca501eef37b64635d56551bb2b5fd23fee71ceca"
+  },
+  "native_library_sha256": "8a21f2bfd09d2eb4b2b011d0d116ea1d253c35951eff9f12dd3ef1d0b1aa759a",
+  "bdr_checkout": "317882a00f041fc1568ff986af8016b09453f21a",
+  "python_version": "3.12.14",
+  "historical_failure": {
+    "tests_failed_before_fix": 3,
+    "test_name": "test_ambiguous_partial_history_is_rejected_without_further_writes",
+    "patterns": [
+      "interleaved_tail",
+      "interleaved_middle",
+      "nonprefix"
+    ],
+    "wizard_sha256_before_fix": "ddbbdd6108fe36db92cab998d067631cbbef919afd75458a8b793bbabed8b13d",
+    "symptom": "Partial batch resume was not rejected when local history interleaved or did not form a planned prefix."
+  },
+  "normal_wizard_report_byte_identical": true,
+  "ci_observed": {
+    "43f117a1": "success",
+    "e3220321": "success",
+    "84b733d2": "success",
+    "d2ae7fa0": "success",
+    "3d7c1d71": "success",
+    "b604422a": "in_progress",
+    "50fba048": "in_progress"
+  },
+  "human_evaluation_status": "NOT_PERFORMED",
+  "general_learning_status": "NOT_ESTABLISHED",
+  "limitation": "JUnit-derived local cumulative regression, with simulated faults before observe or after confirmed flush. Does not test power loss during native writes or validate human usefulness. Native hash and checkout metadata do not certify binary build provenance."
+}

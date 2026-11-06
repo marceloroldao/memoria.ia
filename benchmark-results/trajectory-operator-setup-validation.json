@@ -1,0 +1,245 @@
+{
+  "format": "memoria.ia-operator-setup-validation-v1",
+  "status": "PASS",
+  "source_parent_commit": "f26c32674f2465b6cbc33a79f251de863e723466",
+  "setup_script_sha256": "862d2405365fa36a157cec992d94a85a3f70fed00aff4fabc80df5e2db887cdd",
+  "python_version": "3.12.14",
+  "tool_versions": {
+    "git": "git version 2.51.1",
+    "cmake": "cmake version 4.4.4",
+    "cc": "cc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "c++": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "make": "GNU Make 4.3"
+  },
+  "builds": [
+    {
+      "mode": "existing_checkout",
+      "bdr_commit": "317882a00f041fc1568ff986af8016b09453f21a",
+      "library_sha256": "8a21f2bfd09d2eb4b2b011d0d116ea1d253c35951eff9f12dd3ef1d0b1aa759a",
+      "same_build_hash_preserved": true,
+      "smoke": {
+        "status": "PASS",
+        "checks": {
+          "read_only_review": true,
+          "no_example_incorporation": true,
+          "generated_origin_preserved": true,
+          "receipt_decision_outcome_present": true,
+          "cold_history": true,
+          "cold_review": true,
+          "cold_audit": true,
+          "decision_replay": true,
+          "outcome_replay": true
+        },
+        "temporary_storage_removed": true,
+        "human_evaluation_status": "NOT_PERFORMED"
+      }
+    },
+    {
+      "mode": "default_clone",
+      "bdr_commit": "317882a00f041fc1568ff986af8016b09453f21a",
+      "library_sha256": "8a21f2bfd09d2eb4b2b011d0d116ea1d253c35951eff9f12dd3ef1d0b1aa759a",
+      "same_build_hash_preserved": true,
+      "smoke": {
+        "status": "PASS",
+        "checks": {
+          "read_only_review": true,
+          "no_example_incorporation": true,
+          "generated_origin_preserved": true,
+          "receipt_decision_outcome_present": true,
+          "cold_history": true,
+          "cold_review": true,
+          "cold_audit": true,
+          "decision_replay": true,
+          "outcome_replay": true
+        },
+        "temporary_storage_removed": true,
+        "human_evaluation_status": "NOT_PERFORMED"
+      }
+    }
+  ],
+  "missing_tool_check_blocked_without_writes": true,
+  "real_run_exit_code": 0,
+  "pilot_learning_entries_after_menu_exit": 0,
+  "preparation_message_precedes_menu": true,
+  "tests": [
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_check_with_missing_tools_is_read_only_and_does_not_open_pilot",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_existing_data_folder_is_never_claimed_or_rewritten",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_owned_build_directory_is_reusable_but_wrong_configuration_is_rejected",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_data_and_build_paths_cannot_overlap[same]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_data_and_build_paths_cannot_overlap[nested_data]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_data_and_build_paths_cannot_overlap[nested_build]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_wrong_bdr_revision_is_rejected_without_checkout_or_reset",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_missing_tools_reject_prepare_before_creating_build",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_native_smoke_is_temporary_and_does_not_touch_existing_pilot_data",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_run_requires_explicit_identity_and_data_folder_before_any_build",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_invalid_run_identity_is_rejected_before_preparing[ ]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_invalid_run_identity_is_rejected_before_preparing[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_operator_setup",
+      "name": "test_configuration_failure_replaces_stale_readiness_without_touching_pilot",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[u-1]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[g-0]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_incorporation_requires_explicit_origin_and_preserves_audit[p-0]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_can_defer_or_reject_without_incorporating[d-defer]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wizard_can_defer_or_reject_without_incorporating[r-reject_all]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_resume_after_restart_reuses_observation_ids_and_preserves_original_snapshot",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_incorporation_preflight_rejects_whole_batch_without_partial_learning",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_eof_after_decision_keeps_a_resumable_decision",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_wrong_declared_actor_cannot_resume_a_decision",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_real_terminal_entry_registration_and_literal_output",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_real_terminal_review_cycle_needs_no_json_or_manual_receipt_ids",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_review_wizard",
+      "name": "test_resume_cannot_relabel_generated_examples_as_user_observations",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[1-before]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[1-after_flush]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[2-before]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[2-after_flush]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[3-before]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_partial_batch_and_lost_ack_resume_after_reopen_without_duplicate_rows[3-after_flush]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[interleaved_tail]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[interleaved_middle]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_ambiguous_partial_history_is_rejected_without_further_writes[nonprefix]",
+      "status": "passed"
+    },
+    {
+      "module": "tests.test_trajectory_wizard_resume_faults",
+      "name": "test_complete_batch_can_be_replayed_after_later_context_without_new_observations",
+      "status": "passed"
+    }
+  ],
+  "tests_passed": 35,
+  "human_evaluation_status": "NOT_PERFORMED",
+  "general_learning_status": "NOT_ESTABLISHED",
+  "limitation": "Two real clean local compilations and repeated builds under one Linux toolchain. Does not establish compatibility with every distribution, bit-identical cross-environment binaries, human usability or cognitive quality."
+}
