@@ -55,14 +55,19 @@ def journal(native, region):
                 raise ValueError('invalid forecast schema')
             identity(event['forecast_id']); identity(event['actor_id'])
             binding = event['receipt']
+            if 'observation_context' in binding and metadata(binding['observation_context']) is None:
+                raise ValueError('invalid observation context')
             if (binding['region'] != region or event['forecast_id'] in forecasts or
                     fingerprint({k: v for k, v in binding.items() if k != 'receipt_id'}) != binding['receipt_id']):
                 raise ValueError('invalid forecast receipt or duplicate identity')
             forecasts[event['forecast_id']] = entry
         elif event.get('op') == 'OUTCOME':
-            if set(event) != {'format', 'op', 'outcome_id', 'observer_id', 'forecast_id',
-                              'forecast_address', 'forecast_sha256', 'observation'}:
+            required = {'format', 'op', 'outcome_id', 'observer_id', 'forecast_id',
+                        'forecast_address', 'forecast_sha256', 'observation'}
+            if set(event) not in (required, required | {'source_receipt'}):
                 raise ValueError('invalid outcome schema')
+            if 'source_receipt' in event and metadata(event['source_receipt']) is None:
+                raise ValueError('invalid source receipt')
             identity(event['outcome_id']); identity(event['observer_id'])
             forecast = forecasts.get(event['forecast_id'])
             pair = canonical((event['forecast_id'], address(event['observation'])))
@@ -97,15 +102,28 @@ def flush(native):
         raise RuntimeError('flush failed; append outcome uncertain')
 
 
-def forecast(native, region, query, forecast_id, actor_id):
+def metadata(value):
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValueError('optional metadata must be a JSON object of at most 4096 characters')
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False)
+    if len(encoded) > 4096:
+        raise ValueError('optional metadata must be a JSON object of at most 4096 characters')
+    return json.loads(encoded)
+
+
+def forecast(native, region, query, forecast_id, actor_id, *, observation_context=None):
     field(region); identity(forecast_id); identity(actor_id)
+    observation_context = metadata(observation_context)
     if not isinstance(query, str) or not query.strip() or len(query) > 4096:
         raise ValueError('invalid forecast query')
     log = journal(native, region)
     previous = [p for p in log if p['event']['op'] == 'FORECAST' and p['event']['forecast_id'] == forecast_id]
     if previous:
         old = previous[0]
-        if old['event']['actor_id'] != actor_id or old['event']['receipt']['query'] != query:
+        if (old['event']['actor_id'] != actor_id or old['event']['receipt']['query'] != query or
+                canonical(old['event']['receipt'].get('observation_context')) != canonical(observation_context)):
             raise ValueError('forecast identity reused with different request')
         flush(native)
         return dict(status='EXACT_REPLAY', **old)
@@ -114,6 +132,8 @@ def forecast(native, region, query, forecast_id, actor_id):
                    cutoff_sequence=max((r['sequence'] for r in rows), default=-1),
                    snapshot_sha256=fingerprint(rows), source_policy='RAW_OBSERVED_FRAME_CANDIDATES',
                    view=read(rows, region, query))
+    if observation_context is not None:
+        binding['observation_context'] = observation_context
     binding['receipt_id'] = fingerprint(binding)
     binding = json.loads(canonical(binding))
     return append(native, region, dict(format=FORMAT, op='FORECAST', forecast_id=forecast_id,
@@ -131,8 +151,9 @@ def verify_prefix(rows, binding):
             canonical(read(prefix, binding['region'], binding['query'])) == canonical(binding['view']))
 
 
-def observe_outcome(native, region, forecast_id, outcome_id, observer_id, observation_address):
+def observe_outcome(native, region, forecast_id, outcome_id, observer_id, observation_address, *, source_receipt=None):
     field(region); identity(forecast_id); identity(outcome_id); identity(observer_id)
+    source_receipt = metadata(source_receipt)
     log = journal(native, region)
     predictions = [p for p in log if p['event']['op'] == 'FORECAST' and p['event']['forecast_id'] == forecast_id]
     if len(predictions) != 1:
@@ -141,7 +162,9 @@ def observe_outcome(native, region, forecast_id, outcome_id, observer_id, observ
     previous = [p for p in log if p['event']['op'] == 'OUTCOME' and p['event']['outcome_id'] == outcome_id]
     if previous:
         old = previous[0]['event']
-        if old['observer_id'] != observer_id or old['forecast_id'] != forecast_id or canonical(address(old['observation'])) != canonical(observation_address):
+        if (old['observer_id'] != observer_id or old['forecast_id'] != forecast_id or
+                canonical(address(old['observation'])) != canonical(observation_address) or
+                canonical(old.get('source_receipt')) != canonical(source_receipt)):
             raise ValueError('outcome identity reused with different request')
         flush(native)
         return dict(status='EXACT_REPLAY', **previous[0])
@@ -161,6 +184,8 @@ def observe_outcome(native, region, forecast_id, outcome_id, observer_id, observ
     event = dict(format=FORMAT, op='OUTCOME', outcome_id=outcome_id, observer_id=observer_id,
                  forecast_id=forecast_id, forecast_address=prediction['address'], forecast_sha256=fingerprint(prediction),
                  observation=observation)
+    if source_receipt is not None:
+        event['source_receipt'] = source_receipt
     return append(native, region, event, log)
 
 

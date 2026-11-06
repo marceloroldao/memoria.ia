@@ -1,5 +1,7 @@
 # Hipóteses registradas antes de observações posteriores
 
+Continuação experimental: [observador separado em simulação controlada](trajectory-controlled-observer-proof.md).
+
 `scripts/trajectory_prediction_audit.py` acrescenta um journal nativo experimental para congelar um conjunto de hipóteses recuperadas e compará-lo com ocorrências registradas depois. O registro preserva a consulta, o prefixo de memória, o corte de sequência e todas as candidatas observadas pelo leitor bruto de molduras. Não escolhe uma candidata automaticamente.
 
 As candidatas são conteúdos já observados antes do corte. O recurso audita sua recorrência posterior; não implementa previsão de valores inéditos, modelo causal ou julgamento de verdade. Uma observação fora do conjunto congelado permanece fora dele, mesmo se sua ingestão normal a tornar recuperável pela memória atual.
