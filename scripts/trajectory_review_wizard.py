@@ -9,6 +9,7 @@ from trajectory_feedback_session import FeedbackSession
 from trajectory_region_evidence_probe import fingerprint
 from trajectory_review_outcomes import compare_receipts
 from trajectory_pilot_export import export as export_pilot
+from trajectory_witness_response_review import current_requests,open_response,response_origin,guard_incorporation
 
 
 def literal(value):
@@ -80,7 +81,11 @@ class ReviewWizard:
         self.write('Exemplos oferecidos; a marcação estrutural não garante melhora:')
         for i,item in enumerate(review['offers'],1):
             offer=item['offer']
-            self.write(f'{i}. Origem declarada: '+literal(offer.get('provenance','')))
+            binding=response_origin(offer)
+            if binding:
+                origin='conteúdo gerado' if binding['source_kind']=='assistant_generated' else 'observação declarada'
+                self.write(f'{i}. Resposta recebida; origem declarada: '+origin+'.')
+            else:self.write(f'{i}. Origem declarada: '+literal(offer.get('provenance','')))
             for example in offer['examples']:
                 self.write('  Origem: '+literal(example['source_text']))
                 self.write('  Conteúdo: '+literal(example['target_text']))
@@ -90,6 +95,9 @@ class ReviewWizard:
         query=self.text('Pergunta a avaliar: ',4000)
         offers=self.collect_offers()
         opened=self.call('open_review',text=query,offers=offers)['event']
+        self.decide_review(opened,offers)
+
+    def decide_review(self,opened,offers):
         self.write('Revisão preservada em auditoria; os exemplos ainda não foram incorporados.')
         self.show_reading(opened['reviewed_result']);self.show_offers(opened['reviewed_result']['example_review'])
         count=len(offers)
@@ -104,8 +112,26 @@ class ReviewWizard:
         self.write('Decisão registrada: '+literal(decision_id))
         self.finish(result['event'],opened)
 
+    def answer_witness(self):
+        query=self.text('Pergunta cuja hipótese precisa de exemplo: ',4000)
+        requests=current_requests(self.session,self.scope,query)['requests']
+        if not requests:
+            self.write('Nenhum pedido construído para esta consulta; isso não certifica resolução.');return
+        self.write('Pedidos de exemplo; nenhuma resposta é sugerida ou solicitada a serviço externo:')
+        for i,request in enumerate(requests,1):self.write(f'{i}. '+literal(request['source_text']))
+        request=requests[self.number(f'Qual pedido recebeu resposta? [1-{len(requests)}]: ',len(requests))-1]
+        response=self.text('Conteúdo recebido para esse exemplo: ',2000)
+        origin=self.option('Origem da resposta: [u] observação declarada; [g] gerada; [p] pular: ',{'u','g','p'})
+        if origin=='p':return
+        result=open_response(self.session,self.scope,query,request['request_id'],response,
+                             'user_turn' if origin=='u' else 'assistant_generated')
+        opened=result['review_receipt']['event']
+        offers=[row['offer'] for row in opened['reviewed_result']['example_review']['offers']]
+        self.decide_review(opened,offers)
+
     def incorporation_plan(self,decision,binding,kind):
         offer=next(r['offer'] for r in binding['reviewed_result']['example_review']['offers'] if r['offer']['offer_id']==decision['offer_id'])
+        guard_incorporation(offer,kind)
         planned=[]
         for i,example in enumerate(offer['examples']):
             for suffix,text,origin in (('q',example['source_text'],kind),('a',example['target_text'],kind),
@@ -135,7 +161,11 @@ class ReviewWizard:
 
     def finish(self,decision,binding):
         if decision['choice']=='select':
-            kind=self.option('Registro separado: [u] incorporar como observação declarada; [g] registrar como gerado; [p] pular: ',{'u','g','p'})
+            offer=next(row['offer'] for row in binding['reviewed_result']['example_review']['offers'] if row['offer']['offer_id']==decision['offer_id'])
+            origin=response_origin(offer)
+            if origin and origin['source_kind']=='assistant_generated':
+                kind=self.option('Registro separado: [g] registrar como gerado; [p] pular: ',{'g','p'})
+            else:kind=self.option('Registro separado: [u] incorporar como observação declarada; [g] registrar como gerado; [p] pular: ',{'u','g','p'})
             if kind!='p':
                 plan=self.incorporation_plan(decision,binding,'user_turn' if kind=='u' else 'assistant_generated')
                 for entry in plan:self.call('observe',**entry)
@@ -201,9 +231,9 @@ class ReviewWizard:
         self.write('Memoria.ia — avaliação local com decisões explícitas. Identidade declarada, sem autenticação.')
         while True:
             try:
-                option=self.option('[1] registrar entrada; [2] revisar; [3] listar decisões; [4] retomar; [5] ver entradas; [6] exportar evidências; [0] sair: ',{'0','1','2','3','4','5','6'})
+                option=self.option('[1] registrar entrada; [2] revisar; [3] listar decisões; [4] retomar; [5] ver entradas; [6] exportar evidências; [7] revisar resposta a pedido; [0] sair: ',{'0','1','2','3','4','5','6','7'})
                 if option=='0':return
-                {'1':self.register_entry,'2':self.review,'3':self.list_decisions,'4':self.resume,'5':self.list_entries,'6':self.export_evidence}[option]()
+                {'1':self.register_entry,'2':self.review,'3':self.list_decisions,'4':self.resume,'5':self.list_entries,'6':self.export_evidence,'7':self.answer_witness}[option]()
             except ValueError as error:
                 self.write('Operação recusada: '+str(error))
             except (EOFError,KeyboardInterrupt):

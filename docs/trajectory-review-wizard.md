@@ -18,7 +18,15 @@ PYTHONPATH=src python scripts/trajectory_review_wizard.py \
 
 `--actor` é uma identidade declarada, sem autenticação. `--scope` seleciona a região de memória. Preserve o diretório para continuar após reiniciar.
 
-O menu oferece registrar uma entrada, iniciar revisão, listar decisões, retomar uma decisão, ver entradas, exportar evidências e sair. A opção **[6]** grava um novo JSON fora da pasta de dados, com o histórico e a auditoria do escopo, sem novos eventos; consulte os detalhes e limites no [roteiro do piloto](trajectory-operator-pilot.md#evidência-da-rodada). A listagem de entradas mostra texto literal, sequência e origem declarada. Nas candidatas recuperadas, o assistente mostra sequências de origem e informa separadamente candidatas disponíveis e suspensas por feedback.
+O menu oferece registrar uma entrada, iniciar revisão, listar decisões, retomar uma decisão, ver entradas, exportar evidências, revisar resposta a pedido e sair. A opção **[6]** grava um novo JSON fora da pasta de dados, com o histórico e a auditoria do escopo, sem novos eventos; consulte os detalhes e limites no [roteiro do piloto](trajectory-operator-pilot.md#evidência-da-rodada). A listagem de entradas mostra texto literal, sequência e origem declarada. Nas candidatas recuperadas, o assistente mostra sequências de origem e informa separadamente candidatas disponíveis e suspensas por feedback.
+
+## Responder a um pedido de exemplo
+
+Na opção **[7] revisar resposta a pedido**, informe a pergunta cuja hipótese precisa de um exemplo. O assistente mostra os pedidos disponíveis; escolha um, registre o conteúdo recebido e declare se sua origem é observação ou conteúdo gerado. Não é necessário copiar um ID ou escrever JSON.
+
+A resposta entra primeiro na auditoria de revisão, vinculada ao pedido. Escolher, adiar ou rejeitar registra a decisão; a aprendizagem depende de uma ação separada. Para uma resposta declarada como gerada, o menu de incorporação oferece somente registrar como gerada ou pular. A mesma proteção continua na retomada. Uma observação declarada incorreta ainda pode ensinar uma rota errada se for incorporada explicitamente.
+
+Os detalhes de vínculo, validação e limites estão em [revisão de respostas a pedidos](trajectory-witness-response-review.md). O recurso é experimental e local; não envia solicitações a serviços externos.
 
 ## Ciclo guiado
 

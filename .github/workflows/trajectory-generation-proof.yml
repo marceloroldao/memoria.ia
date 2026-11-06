@@ -142,6 +142,9 @@ on:
       - 'scripts/trajectory_witness_requests.py'
       - 'scripts/trajectory_witness_requests_probe.py'
       - 'tests/test_trajectory_witness_requests.py'
+      - 'scripts/trajectory_witness_response_review.py'
+      - 'scripts/trajectory_witness_response_review_probe.py'
+      - 'tests/test_trajectory_witness_response_review.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -436,6 +439,13 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_trajectory_witness_requests.py
           python scripts/trajectory_witness_requests_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/witness-requests.json
+      - name: Received witness response review without automatic learning
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p test_trajectory_witness_response_review.py
+          python scripts/trajectory_witness_response_review_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/witness-response-review.json
       - name: Durable operator review receipts and decisions without incorporation
         env:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so

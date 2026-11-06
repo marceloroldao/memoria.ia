@@ -1,0 +1,121 @@
+{
+  "format": "memoria.ia-witness-response-review-validation-v1",
+  "source_parent": "0924a3da8ea146e2b744ad7f5268ae70c486ba26",
+  "source_sha256": {
+    "scripts/trajectory_witness_response_review.py": "3aae5c534be32842a538a14f64e80701282e3aedb4f2289e440cd4610c8103f4",
+    "scripts/trajectory_witness_response_review_probe.py": "4866ebc174c3409331df5e98339c92661b1386c485749ae2fff7266f8bd4d758",
+    "scripts/trajectory_review_wizard.py": "e8d5dd7b4aa3e7cb6332ab0febf9ad8a4454eef9d1d3c5bbcb426d0d1d6e068b",
+    "tests/test_trajectory_witness_response_review.py": "adffaef5d97f307e68f9c86fe7904df03d03016ac806e81e66aeab2431731ff8"
+  },
+  "native_sha256": "721e03eba3b68d7e9fb5bcfc2e1dfb8f823f5cbeda348a0f429f8f30ed2909d4",
+  "bdr_commit": "317882a00f041fc1568ff986af8016b09453f21a",
+  "test_count": 16,
+  "tests": [
+    {
+      "name": "test_trajectory_witness_requests.NativeWitnessRequestTests.test_generated_response_stays_pending_after_restart",
+      "status": "PASS",
+      "seconds": 0.677852162000363
+    },
+    {
+      "name": "test_trajectory_witness_requests.NativeWitnessRequestTests.test_incorrect_declared_response_can_learn_wrong_route",
+      "status": "PASS",
+      "seconds": 1.8345674839997628
+    },
+    {
+      "name": "test_trajectory_witness_requests.NativeWitnessRequestTests.test_observed_response_resolves_both_worlds_after_native_restart",
+      "status": "PASS",
+      "seconds": 1.8357108090003749
+    },
+    {
+      "name": "test_trajectory_witness_requests.WitnessRequestTests.test_generated_response_does_not_resolve_request",
+      "status": "PASS",
+      "seconds": 0.05484172900014528
+    },
+    {
+      "name": "test_trajectory_witness_requests.WitnessRequestTests.test_indistinguishable_worlds_yield_same_request_without_answer",
+      "status": "PASS",
+      "seconds": 0.1087079740000263
+    },
+    {
+      "name": "test_trajectory_witness_requests.WitnessRequestTests.test_missing_anchor_does_not_fabricate_a_request",
+      "status": "PASS",
+      "seconds": 0.09581301199978043
+    },
+    {
+      "name": "test_trajectory_witness_requests.WitnessRequestTests.test_observed_pair_ends_this_request_without_certifying_truth",
+      "status": "PASS",
+      "seconds": 0.11634935099982613
+    },
+    {
+      "name": "test_trajectory_witness_requests.WitnessRequestTests.test_unrelated_response_does_not_resolve_request",
+      "status": "PASS",
+      "seconds": 0.058912208000037936
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_generated_response_cannot_be_reclassified_on_initial_apply_or_resume",
+      "status": "PASS",
+      "seconds": 0.2963353120003376
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_incorrect_declared_observation_still_can_teach_wrong_route_after_explicit_application",
+      "status": "PASS",
+      "seconds": 0.35078255999997054
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_invalid_source_request_query_scope_and_text_write_no_audit",
+      "status": "PASS",
+      "seconds": 0.09069495399990046
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_metadata_or_content_tampering_is_rejected",
+      "status": "PASS",
+      "seconds": 0.08031787100026122
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_real_terminal_can_preserve_a_response_without_manual_json_or_request_id",
+      "status": "PASS",
+      "seconds": 0.2587299290003102
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_receipt_binds_source_content_and_request_without_learning_and_replays_after_restart",
+      "status": "PASS",
+      "seconds": 0.24235259200031578
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_select_defer_and_reject_only_record_decisions",
+      "status": "PASS",
+      "seconds": 0.29531010399978186
+    },
+    {
+      "name": "test_trajectory_witness_response_review.WitnessResponseReviewTests.test_stale_receipt_cannot_authorize_a_new_decision",
+      "status": "PASS",
+      "seconds": 0.11138484800039805
+    }
+  ],
+  "integrity_checks": 1168,
+  "integrity_status": "PASS",
+  "response_records": 72,
+  "offered_examples_applied": 0,
+  "ordinary_wizard_regression": {
+    "cases": 8,
+    "checks": 72,
+    "checks_passed": 72,
+    "audits_unchanged": true,
+    "output_lines_unchanged": true,
+    "menu_prompt_changed": true
+  },
+  "report_content_sha256": "4a54dcec28e7c8b85ea2d877f7449c2f24844ff2650034e0849399148ad473b2",
+  "human_evaluation_status": "NOT_PERFORMED",
+  "general_learning_status": "NOT_ESTABLISHED",
+  "limitations": [
+    "Reused pinned native build from the preceding recovery stage; no new CMake or ABI change.",
+    "Prior pytest suites were not rerun locally; sixteen unittest cases and the eight ordinary scripted wizard scenarios were run.",
+    "The guard preserves declared generated origin in the identified wizard flow; source declarations and hashes are not authentication.",
+    "An incorrect declared observation can still teach an incorrect route after explicit incorporation."
+  ],
+  "prior_ci": {
+    "sha": "0924a3da8ea146e2b744ad7f5268ae70c486ba26",
+    "run_id": 42130923709,
+    "conclusion": "success"
+  }
+}
