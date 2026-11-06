@@ -1,5 +1,7 @@
 # Laboratório local unificado de feedback
 
+Para uso por menu em português, seleção de candidatas por número e relatório de avaliação separado da memória, veja [sessão de operador](trajectory-feedback-operator-session.md).
+
 `scripts/trajectory_feedback_lab.py` reúne registro, consulta, feedback, retirada e histórico numa única interface JSONL. Cada linha de entrada contém um objeto JSON; cada linha de saída contém sua resposta. Os dados persistem no BDR nativo. É uma ferramenta local de laboratório, sem endpoint de rede, LLM ou integração ao MVP/OFF.IA.
 
 Todas as consultas desta interface usam o leitor que conhece as retiradas. Isso elimina, dentro deste laboratório, a divergência entre consultar com a política antiga e retirar com a política nova. Os leitores anteriores mantêm seus contratos. Não é um contrato de serviço de produção nem uma interface gráfica.

@@ -101,6 +101,8 @@ on:
       - 'tests/test_trajectory_feedback_withdrawal_probe.py'
       - 'scripts/trajectory_feedback_lab.py'
       - 'tests/test_trajectory_feedback_lab.py'
+      - 'scripts/trajectory_feedback_console.py'
+      - 'tests/test_trajectory_feedback_console.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -297,7 +299,7 @@ jobs:
         env:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
           PYTHONPATH: src
-        run: python -m pytest -q tests/test_trajectory_feedback_lab.py
+        run: python -m pytest -q tests/test_trajectory_feedback_lab.py tests/test_trajectory_feedback_console.py
       - name: Exact-event feedback withdrawal (integrity and negative controls)
         env:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
