@@ -1,5 +1,7 @@
 # Retirada explícita de feedback sem apagar o histórico
 
+Continuação: [laboratório local unificado](trajectory-feedback-lab.md), com registro, consulta, feedback, retirada e histórico na mesma interface experimental. As limitações e os contratos deste incremento continuam válidos.
+
 O novo laboratório permite retirar uma ocorrência exata de apoio ou oposição. A retirada é um evento nativo separado, com endereço próprio e referência ao endereço, ID, recibo e digest integral do feedback original. Nenhum registro de feedback, observação ou conteúdo da candidata é apagado ou reescrito.
 
 O leitor novo aplica as retiradas antes da política de continuidade. Os leitores anteriores conservam seus contratos e não consultam esse campo novo. O recurso fica desativado por padrão e não foi integrado ao MVP ou à UI.

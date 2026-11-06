@@ -99,6 +99,8 @@ on:
       - 'tests/test_trajectory_feedback_continuity_probe.py'
       - 'scripts/trajectory_feedback_withdrawal_probe.py'
       - 'tests/test_trajectory_feedback_withdrawal_probe.py'
+      - 'scripts/trajectory_feedback_lab.py'
+      - 'tests/test_trajectory_feedback_lab.py'
       - 'scripts/trajectory_contextual_relation_probe.py'
       - 'tests/test_trajectory_contextual_relation_probe.py'
       - 'scripts/trajectory_inferred_relation_probe.py'
@@ -291,6 +293,11 @@ jobs:
               r = json.loads(Path(f'/tmp/feedback-continuity-{seed}.json').read_text())
               print({k: r[k] for k in ('seed', 'integrity_status', 'integrity_passed', 'integrity_total', 'effects', 'semantic_context_status', 'report_content_sha256')})
           PY
+      - name: Unified local feedback laboratory (native process restart and negative controls)
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: python -m pytest -q tests/test_trajectory_feedback_lab.py
       - name: Exact-event feedback withdrawal (integrity and negative controls)
         env:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
