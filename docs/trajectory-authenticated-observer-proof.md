@@ -1,5 +1,7 @@
 # Admissão experimental com chave compartilhada
 
+Continuação opcional: [política congelada de atraso declarado](trajectory-observer-freshness-proof.md). O contrato de autenticação desta etapa permanece preservado.
+
 Continuação do [observador separado](trajectory-controlled-observer-proof.md). Esta etapa acrescenta uma ponte opcional que verifica HMAC-SHA256 antes de registrar uma observação. O escopo demonstrado é posse da chave compartilhada configurada para uma fonte e um identificador de chave. Não é identidade pública, PKI, assinatura exclusiva do sensor ou julgamento de verdade.
 
 ## Contrato
