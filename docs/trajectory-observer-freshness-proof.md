@@ -1,5 +1,7 @@
 # Política congelada de atraso declarado
 
+Continuação opcional: [registro nativo separado de recusas autenticadas](trajectory-observer-rejection-proof.md). A API e os resultados desta etapa permanecem preservados.
+
 Continuação da [admissão com chave compartilhada](trajectory-authenticated-observer-proof.md). Esta etapa acrescenta uma regra opcional sobre a diferença entre o tick solicitado e o tick declarado no pacote autenticado. Ela pode impedir a ingestão de uma leitura explicitamente defasada. Não verifica o relógio físico, a honestidade da declaração ou o valor medido.
 
 ## Fluxo e persistência
