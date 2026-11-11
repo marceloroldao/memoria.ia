@@ -1,5 +1,7 @@
 # Registro separado de recusas autenticadas
 
+Experimento cognitivo seguinte: [baseline de extrapolação numérica com hipótese congelada](trajectory-transition-forecast-baseline.md). As APIs e os resultados desta etapa permanecem preservados.
+
 Continuação da [política congelada de atraso declarado](trajectory-observer-freshness-proof.md). A nova ponte opcional preserva no BDR uma observação autenticada recusada por atraso, sem inseri-la na região principal e sem criar um vínculo de resultado da hipótese. Assim, a recusa pode ser auditada depois de fechar o processo.
 
 ## Fluxo
