@@ -1,5 +1,7 @@
 # Suspensão e retomada por trecho recente coerente
 
+Continuação experimental: [escolha de regra por perdas anteriores emparelhadas](trajectory-rule-selection-baseline.md). As regras e os resultados desta etapa permanecem preservados.
+
 Continuação da [baseline de extrapolação numérica](trajectory-transition-forecast-baseline.md). Este experimento compara o modelo de histórico completo com uma regra programada que usa o sufixo mais recente de taxa constante. Ambos continuam fora do núcleo cognitivo e não descobrem operadores ou políticas de aprendizagem.
 
 A adaptação demonstrada é uma nova seleção de observações para calcular outra hipótese. Não é aprendizado geral a partir da classificação de um erro: o algoritmo não recebe acerto/erro do avaliador, verdade do mundo, lei do simulador ou rótulo de mudança de regime. Ele pode mudar de hipótese mesmo que a medição anterior ainda não tenha sido vinculada à previsão.
