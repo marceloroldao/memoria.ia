@@ -1,5 +1,7 @@
 # Extrapolação numérica restrita antes da observação posterior
 
+Continuação experimental: [suspensão e retomada por trecho recente coerente](trajectory-recent-regime-baseline.md). A baseline de histórico completo desta etapa permanece preservada.
+
 Esta etapa retoma a lacuna de previsão de valores inéditos. É uma baseline experimental fora do núcleo cognitivo: o programador fornece a gramática numérica, o modelo de taxa constante e as regras de abstenção. A taxa é calculada das observações anteriores. Não é descoberta geral de operadores, trajetórias causais ou linguagem natural.
 
 O [registro de recusas autenticadas](trajectory-observer-rejection-proof.md) continua preservado. Este experimento usa o journal genérico de hipóteses; não integra automaticamente HMAC, política de atraso ou registro de recusas. As medições são declarações de fonte e o vínculo posterior é explícito, sob responsabilidade do chamador.
