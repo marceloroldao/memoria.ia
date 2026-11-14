@@ -1,0 +1,16 @@
+{"op":"observe","observation_id":"m0","entity":"ab","tick":0,"value":10}
+{"op":"observe","observation_id":"m1","entity":"ab","tick":1,"value":11}
+{"op":"observe","observation_id":"m2","entity":"ab","tick":2,"value":12}
+{"op":"predict","prediction_id":"p3","entity":"ab","target_tick":3}
+{"op":"observe","observation_id":"m3","entity":"ab","tick":3,"value":17}
+{"op":"predict","prediction_id":"p4","entity":"ab","target_tick":4}
+{"op":"observe","observation_id":"m4","entity":"ab","tick":4,"value":18}
+{"op":"predict","prediction_id":"p5","entity":"ab","target_tick":5}
+{"op":"observe","observation_id":"m5","entity":"ab","tick":5,"value":19}
+{"op":"predict","prediction_id":"p6","entity":"ab","target_tick":6}
+{"op":"observe","observation_id":"m6","entity":"ab","tick":6,"value":20}
+{"op":"predict","prediction_id":"p7","entity":"ab","target_tick":7}
+{"op":"observe","observation_id":"m7","entity":"ab","tick":7,"value":21}
+{"op":"prediction","prediction_id":"p3"}
+{"op":"prediction","prediction_id":"p7"}
+{"op":"status"}

@@ -111,6 +111,9 @@ on:
       - 'tests/test_trajectory_witness_feedback_probe.py'
       - 'scripts/trajectory_feedback_transfer_stress.py'
       - 'tests/test_trajectory_feedback_transfer_stress.py'
+      - 'scripts/trajectory_forecast_lab.py'
+      - 'tests/test_trajectory_forecast_lab.py'
+      - 'examples/forecast-lab-session.jsonl'
       - 'scripts/trajectory_rule_selection_probe.py'
       - 'tests/test_trajectory_rule_selection_probe.py'
       - 'scripts/trajectory_recent_regime_probe.py'
@@ -165,6 +168,31 @@ permissions:
   contents: read
 
 jobs:
+  forecast-lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Checkout pinned durable BDR
+        uses: actions/checkout@v4
+        with:
+          repository: marceloroldao/resolutive-DB
+          ref: 317882a00f041fc1568ff986af8016b09453f21a
+          path: deps/resolutive-DB
+      - name: Build unchanged native host runtime
+        run: |
+          cmake -S native/mobile -B build/trajectory-native -DCMAKE_BUILD_TYPE=Release -DMEMORIA_BDR_ROOT="$GITHUB_WORKSPACE/deps/resolutive-DB"
+          cmake --build build/trajectory-native --target memoria_mobile --parallel 2
+          python -m pip install 'pytest>=8,<9'
+      - name: Local JSON-lines forecast loop, process restart and partial-write recovery
+        env:
+          MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q tests/test_trajectory_forecast_lab.py tests/test_trajectory_rule_selection_probe.py tests/test_trajectory_recent_regime_probe.py tests/test_trajectory_transition_forecast_probe.py tests/test_trajectory_observer_rejection_probe.py tests/test_trajectory_observer_freshness_probe.py tests/test_trajectory_authenticated_observer_probe.py tests/test_trajectory_controlled_observer_probe.py tests/test_trajectory_prediction_audit.py
   rule-selection:
     runs-on: ubuntu-latest
     timeout-minutes: 15

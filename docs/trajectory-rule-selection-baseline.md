@@ -1,5 +1,7 @@
 # Escolha de regra por perdas anteriores emparelhadas
 
+Fluxo local utilizável: [laboratório de observações, previsão e confronto](trajectory-forecast-lab.md), com JSON por linha, persistência e retomada. As baselines desta etapa permanecem preservadas.
+
 Continuação da [baseline de trecho recente](trajectory-recent-regime-baseline.md). O experimento acrescenta uma decisão anterior à próxima medição: escolher entre duas regras já fornecidas pelo programador, usando apenas resultados nativos anteriores que possam ser comparados em condições iguais.
 
 O catálogo continua fixo: `whole_history` e `recent_suffix`. A aritmética, o catálogo, os custos e o suporte mínimo são programados. Os dados determinam a pontuação e, quando há suporte, o vencedor. Isso não demonstra descoberta de operadores ou modelos pelo núcleo, aprendizado de veracidade das fontes ou atualização de pesos cognitivos.
