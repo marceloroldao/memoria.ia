@@ -1,0 +1,527 @@
+{
+  "seed": 20261212,
+  "integrity_status": "PASS",
+  "integrity_passed": 90,
+  "integrity_total": 90,
+  "gates": {
+    "stable_expected_status": true,
+    "stable_explicit_budget_obeyed": true,
+    "stable_expected_interventions": true,
+    "stable_only_stale_rejections_retried": true,
+    "stable_history_retained": true,
+    "stable_input_and_foreign_snapshot_preserved": true,
+    "stable_no_view_on_terminal_rejection": true,
+    "stable_fresh_and_cold_parity": true,
+    "stable_no_factual_selection": true,
+    "stale_input_expected_status": true,
+    "stale_input_explicit_budget_obeyed": true,
+    "stale_input_expected_interventions": true,
+    "stale_input_only_stale_rejections_retried": true,
+    "stale_input_history_retained": true,
+    "stale_input_input_and_foreign_snapshot_preserved": true,
+    "stale_input_no_view_on_terminal_rejection": true,
+    "stale_input_fresh_and_cold_parity": true,
+    "stale_input_no_factual_selection": true,
+    "one_local_query_expected_status": true,
+    "one_local_query_explicit_budget_obeyed": true,
+    "one_local_query_expected_interventions": true,
+    "one_local_query_only_stale_rejections_retried": true,
+    "one_local_query_history_retained": true,
+    "one_local_query_input_and_foreign_snapshot_preserved": true,
+    "one_local_query_no_view_on_terminal_rejection": true,
+    "one_local_query_fresh_and_cold_parity": true,
+    "one_local_query_no_factual_selection": true,
+    "one_generated_expected_status": true,
+    "one_generated_explicit_budget_obeyed": true,
+    "one_generated_expected_interventions": true,
+    "one_generated_only_stale_rejections_retried": true,
+    "one_generated_history_retained": true,
+    "one_generated_input_and_foreign_snapshot_preserved": true,
+    "one_generated_no_view_on_terminal_rejection": true,
+    "one_generated_fresh_and_cold_parity": true,
+    "one_generated_no_factual_selection": true,
+    "one_nonquery_link_expected_status": true,
+    "one_nonquery_link_explicit_budget_obeyed": true,
+    "one_nonquery_link_expected_interventions": true,
+    "one_nonquery_link_only_stale_rejections_retried": true,
+    "one_nonquery_link_history_retained": true,
+    "one_nonquery_link_input_and_foreign_snapshot_preserved": true,
+    "one_nonquery_link_no_view_on_terminal_rejection": true,
+    "one_nonquery_link_fresh_and_cold_parity": true,
+    "one_nonquery_link_no_factual_selection": true,
+    "budget_one_expected_status": true,
+    "budget_one_explicit_budget_obeyed": true,
+    "budget_one_expected_interventions": true,
+    "budget_one_only_stale_rejections_retried": true,
+    "budget_one_history_retained": true,
+    "budget_one_input_and_foreign_snapshot_preserved": true,
+    "budget_one_no_view_on_terminal_rejection": true,
+    "budget_one_fresh_and_cold_parity": true,
+    "budget_one_no_factual_selection": true,
+    "continuous_expected_status": true,
+    "continuous_explicit_budget_obeyed": true,
+    "continuous_expected_interventions": true,
+    "continuous_only_stale_rejections_retried": true,
+    "continuous_history_retained": true,
+    "continuous_input_and_foreign_snapshot_preserved": true,
+    "continuous_no_view_on_terminal_rejection": true,
+    "continuous_fresh_and_cold_parity": true,
+    "continuous_no_factual_selection": true,
+    "foreign_unlinked_expected_status": true,
+    "foreign_unlinked_explicit_budget_obeyed": true,
+    "foreign_unlinked_expected_interventions": true,
+    "foreign_unlinked_only_stale_rejections_retried": true,
+    "foreign_unlinked_history_retained": true,
+    "foreign_unlinked_input_and_foreign_snapshot_preserved": true,
+    "foreign_unlinked_no_view_on_terminal_rejection": true,
+    "foreign_unlinked_fresh_and_cold_parity": true,
+    "foreign_unlinked_no_factual_selection": true,
+    "matching_link_expected_status": true,
+    "matching_link_explicit_budget_obeyed": true,
+    "matching_link_expected_interventions": true,
+    "matching_link_only_stale_rejections_retried": true,
+    "matching_link_history_retained": true,
+    "matching_link_input_and_foreign_snapshot_preserved": true,
+    "matching_link_no_view_on_terminal_rejection": true,
+    "matching_link_fresh_and_cold_parity": true,
+    "matching_link_no_factual_selection": true,
+    "refresh_window_change_expected_status": true,
+    "refresh_window_change_explicit_budget_obeyed": true,
+    "refresh_window_change_expected_interventions": true,
+    "refresh_window_change_only_stale_rejections_retried": true,
+    "refresh_window_change_history_retained": true,
+    "refresh_window_change_input_and_foreign_snapshot_preserved": true,
+    "refresh_window_change_no_view_on_terminal_rejection": true,
+    "refresh_window_change_fresh_and_cold_parity": true,
+    "refresh_window_change_no_factual_selection": true
+  },
+  "native_executed": true,
+  "answer": null,
+  "qualified": false,
+  "factual_quality_status": "NOT_EVALUATED",
+  "global_snapshot_guaranteed": false,
+  "full_report_sha256": "31e5f51b17390911026f08a2225c2473a50ada1ada4f57ba4fba2ccd7da7eff7",
+  "cases": [
+    {
+      "case": "stable",
+      "status": "OK",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "OK",
+          "reason": null,
+          "outcome_sha256": "7e9ff80f0250ced9967f211e7dd4c015597aa9c0de2f60b04f554817a474f70b",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        }
+      ],
+      "attempt_budget": 1,
+      "attempts_used": 1,
+      "writes": [],
+      "initial_target_count": 2,
+      "final_target_count": 2,
+      "final_output_sha256": "d19741a33d9360799dba1ad3c2e34bd1e521939b5f7fcd1828db0c39915fde74",
+      "outcome_sha256": "7e9ff80f0250ced9967f211e7dd4c015597aa9c0de2f60b04f554817a474f70b",
+      "request_count": 5,
+      "request_trace_sha256": "86b6c84b6dd7f5341248eece32f3748c24c356566979858561a3aeef77354eb0"
+    },
+    {
+      "case": "stale_input",
+      "status": "OK",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_INPUT_ROWS",
+          "outcome_sha256": "9c6d514121f2d5f2a89145d7c1c72115ef3c6bd9735a44dc4801cddbb8f7fd88",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        },
+        {
+          "attempt": 2,
+          "phase": "resolve",
+          "status": "OK",
+          "reason": null,
+          "outcome_sha256": "4aa5e52ebecc8f757ae2c709a3661a9b7f0c6dd1531c9975dfed604751ad08a2",
+          "input_rows_sha256": "5959262b51fe34c434d6e85ac0ee22edd1d33c7d8480a1649dab8998406907d8",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": {
+            "token": "6f7c38211ea5c6de",
+            "revision": 9
+          }
+        }
+      ],
+      "attempt_budget": 2,
+      "attempts_used": 2,
+      "writes": [
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-100",
+          "sequence": 100
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 3,
+      "final_output_sha256": "a105df262efcc37cc4a1325108f1d29c9968a2536d96f4fd80e3377bd44d874f",
+      "outcome_sha256": "4aa5e52ebecc8f757ae2c709a3661a9b7f0c6dd1531c9975dfed604751ad08a2",
+      "request_count": 7,
+      "request_trace_sha256": "cd4d01648cc86bb678d9b9d9edaabefa9c302bf83a501e3dcca0eb460b6c5222"
+    },
+    {
+      "case": "one_local_query",
+      "status": "OK",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        },
+        {
+          "attempt": 2,
+          "phase": "resolve",
+          "status": "OK",
+          "reason": null,
+          "outcome_sha256": "4aa5e52ebecc8f757ae2c709a3661a9b7f0c6dd1531c9975dfed604751ad08a2",
+          "input_rows_sha256": "5959262b51fe34c434d6e85ac0ee22edd1d33c7d8480a1649dab8998406907d8",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": {
+            "token": "6f7c38211ea5c6de",
+            "revision": 9
+          }
+        }
+      ],
+      "attempt_budget": 2,
+      "attempts_used": 2,
+      "writes": [
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-100",
+          "sequence": 100
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 3,
+      "final_output_sha256": "a105df262efcc37cc4a1325108f1d29c9968a2536d96f4fd80e3377bd44d874f",
+      "outcome_sha256": "4aa5e52ebecc8f757ae2c709a3661a9b7f0c6dd1531c9975dfed604751ad08a2",
+      "request_count": 11,
+      "request_trace_sha256": "517f08c89872749f0ece97cf482fb4ddeb76f71292024644fc37c76c16bd42f9"
+    },
+    {
+      "case": "one_generated",
+      "status": "OK",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        },
+        {
+          "attempt": 2,
+          "phase": "resolve",
+          "status": "OK",
+          "reason": null,
+          "outcome_sha256": "5e3bcedfc36d2ef8c98a4dc5445e3db847df63f507a6448a31f02d4d2e306387",
+          "input_rows_sha256": "b7ecb93e66a55588042d44f7adf022a13f8bb9a0c4e8a6a70057c560a9a6c04d",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": {
+            "token": "b213dd676ee1422f",
+            "revision": 9
+          }
+        }
+      ],
+      "attempt_budget": 2,
+      "attempts_used": 2,
+      "writes": [
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-100",
+          "sequence": 100
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 2,
+      "final_output_sha256": "0bfee2bf7493be944fa43f0703299ca5803f6c01243df63e5e87901fe8436180",
+      "outcome_sha256": "5e3bcedfc36d2ef8c98a4dc5445e3db847df63f507a6448a31f02d4d2e306387",
+      "request_count": 11,
+      "request_trace_sha256": "9c3a81f9701a42564bed1c9779a5339d3cab8995da2638dd8f133144324262d8"
+    },
+    {
+      "case": "one_nonquery_link",
+      "status": "OK",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        },
+        {
+          "attempt": 2,
+          "phase": "resolve",
+          "status": "OK",
+          "reason": null,
+          "outcome_sha256": "b330a292c4af5ccd1c3a1849ab298d0b32e9a1320c40e21c3a7efc34733d4fc9",
+          "input_rows_sha256": "733ca9350fa5b71500b51df991573339e9cbb61b4a7e172b8fa81786dccfe98d",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": {
+            "token": "9bb1ec7d6cb4aae7",
+            "revision": 8
+          }
+        }
+      ],
+      "attempt_budget": 2,
+      "attempts_used": 2,
+      "writes": [
+        {
+          "kind": "link",
+          "address": [
+            "conversation:xf9efa36f45261837",
+            "spare-reply",
+            8,
+            "nonquery",
+            7
+          ]
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 2,
+      "final_output_sha256": "e325265d30265f79b350cadea861ee305792bf6f9495b158554c164caeedd615",
+      "outcome_sha256": "b330a292c4af5ccd1c3a1849ab298d0b32e9a1320c40e21c3a7efc34733d4fc9",
+      "request_count": 11,
+      "request_trace_sha256": "406f46c1c21ca2f7bdedf0a6a0fe37990af329e2a9a7954cc640dd2114ba2291"
+    },
+    {
+      "case": "budget_one",
+      "status": "EXHAUSTED",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        }
+      ],
+      "attempt_budget": 1,
+      "attempts_used": 1,
+      "writes": [
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-100",
+          "sequence": 100
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 3,
+      "final_output_sha256": "a105df262efcc37cc4a1325108f1d29c9968a2536d96f4fd80e3377bd44d874f",
+      "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+      "request_count": 5,
+      "request_trace_sha256": "86b6c84b6dd7f5341248eece32f3748c24c356566979858561a3aeef77354eb0"
+    },
+    {
+      "case": "continuous",
+      "status": "EXHAUSTED",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        },
+        {
+          "attempt": 2,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+          "input_rows_sha256": "5959262b51fe34c434d6e85ac0ee22edd1d33c7d8480a1649dab8998406907d8",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": {
+            "token": "6f7c38211ea5c6de",
+            "revision": 9
+          }
+        }
+      ],
+      "attempt_budget": 2,
+      "attempts_used": 2,
+      "writes": [
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-100",
+          "sequence": 100
+        },
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-101",
+          "sequence": 101
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 4,
+      "final_output_sha256": "5dda333d686d5c88c631299891ba5204e0f8140e1b3f255b5362e18156f4f9ca",
+      "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+      "request_count": 11,
+      "request_trace_sha256": "517f08c89872749f0ece97cf482fb4ddeb76f71292024644fc37c76c16bd42f9"
+    },
+    {
+      "case": "foreign_unlinked",
+      "status": "OK",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "OK",
+          "reason": null,
+          "outcome_sha256": "7e9ff80f0250ced9967f211e7dd4c015597aa9c0de2f60b04f554817a474f70b",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        }
+      ],
+      "attempt_budget": 2,
+      "attempts_used": 1,
+      "writes": [
+        {
+          "kind": "observation",
+          "region": "conversation:x48dd59b74ddfcaf0",
+          "source_id": "late-100",
+          "sequence": 100
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 2,
+      "final_output_sha256": "6349545d60913d3b6238f728d65d246b8373d924145cf392399496b1595d7d60",
+      "outcome_sha256": "7e9ff80f0250ced9967f211e7dd4c015597aa9c0de2f60b04f554817a474f70b",
+      "request_count": 5,
+      "request_trace_sha256": "86b6c84b6dd7f5341248eece32f3748c24c356566979858561a3aeef77354eb0"
+    },
+    {
+      "case": "matching_link",
+      "status": "REJECTED",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "WITNESS_CONTRACT_REJECTED",
+          "outcome_sha256": "158f56e4ac9c885f22e98f51ac0c59036ea8b5ca1ae2320d2df1a2fe1e62dd67",
+          "input_rows_sha256": "fe50974a960c53cfd72521b92fb254e077968825dc65091dbf2722231c366677",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        }
+      ],
+      "attempt_budget": 2,
+      "attempts_used": 1,
+      "writes": [
+        {
+          "kind": "link",
+          "address": [
+            "conversation:xf9efa36f45261837",
+            "spare",
+            6,
+            "q",
+            1
+          ]
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 2,
+      "final_output_sha256": "7c0bb93df226d3f8cd4f049ba40795f1c3d91ccb9cb2dff62d284e8fd68209ea",
+      "outcome_sha256": "158f56e4ac9c885f22e98f51ac0c59036ea8b5ca1ae2320d2df1a2fe1e62dd67",
+      "request_count": 3,
+      "request_trace_sha256": "31d29dfcf7fa13f72f0ab26242c74e11352b9f6f8d69a67a7b5b0e4ebe45e485"
+    },
+    {
+      "case": "refresh_window_change",
+      "status": "OK",
+      "attempts": [
+        {
+          "attempt": 1,
+          "phase": "resolve",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "c18f072286981e0b45c7347cc740bb98b803be9148c10e94ec8801b868d3bc90",
+          "input_rows_sha256": "83f4787108e3977b1f5e23a647ffcf1c652a76905f9a7be8221a313964606c14",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        },
+        {
+          "attempt": 2,
+          "phase": "refresh",
+          "status": "REJECTED",
+          "reason": "STALE_REGIONAL_WINDOW",
+          "outcome_sha256": "62f1d8d5fa1cda38d7e67e7f79326bdfa60d6cf19b5ba53d3c5f0876f93a380e",
+          "input_rows_sha256": "83f4787108e3977b1f5e23a647ffcf1c652a76905f9a7be8221a313964606c14",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": null
+        },
+        {
+          "attempt": 3,
+          "phase": "resolve",
+          "status": "OK",
+          "reason": null,
+          "outcome_sha256": "19d45809799438eaea49b48d86c486f10539ed37915c0e77e97be85ad5ab050c",
+          "input_rows_sha256": "48dee2123f3243ec936491428baa9225a5c3ca1754d83cbc5baac88cecb5cc74",
+          "foreign_rows_sha256": "9e498d0d0c602e9e1ac9021b132f91292fe9150934e5c1d5f6d00270b5e7ea14",
+          "refreshed_window": {
+            "token": "325ee4fbe433685b",
+            "revision": 70
+          }
+        }
+      ],
+      "attempt_budget": 3,
+      "attempts_used": 3,
+      "writes": [
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-100",
+          "sequence": 100
+        },
+        {
+          "kind": "observation",
+          "region": "conversation:xf9efa36f45261837",
+          "source_id": "late-101",
+          "sequence": 101
+        }
+      ],
+      "initial_target_count": 2,
+      "final_target_count": 4,
+      "final_output_sha256": "cac1b104925434bd2f40c9edfc3cfdf13d0004faa3caffa92e3b919f06f34d92",
+      "outcome_sha256": "19d45809799438eaea49b48d86c486f10539ed37915c0e77e97be85ad5ab050c",
+      "request_count": 16,
+      "request_trace_sha256": "112aeb8371b2f7f9d4f8906981409734277497d85a396d380563b2921585829c"
+    }
+  ]
+}

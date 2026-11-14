@@ -115,9 +115,20 @@ class StructuralTrajectoryIndex:
     together through a globally shared address. Queries are read-only.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, preserve_repetitions: bool = False) -> None:
+        # Historical topology readers collapse immediate loops. Reconstruction
+        # and generation opt into positional, lossless trajectories instead.
+        self.preserve_repetitions = preserve_repetitions
         self._trajectories: list[StructuralTrajectory] = []
         self._by_id: dict[str, StructuralTrajectory] = {}
+
+    def _normalize(self, addresses: Iterable[int]) -> tuple[int, ...]:
+        if not self.preserve_repetitions:
+            return _collapse_immediate(addresses)
+        result = tuple(int(address) for address in addresses)
+        if any(address < 0 for address in result):
+            raise ValueError("structural addresses must be >= 0")
+        return result
 
     @property
     def count(self) -> int:
@@ -130,8 +141,10 @@ class StructuralTrajectoryIndex:
     def restore(
         cls,
         trajectories: Iterable[StructuralTrajectory],
+        *,
+        preserve_repetitions: bool = False,
     ) -> "StructuralTrajectoryIndex":
-        index = cls()
+        index = cls(preserve_repetitions=preserve_repetitions)
         for item in trajectories:
             restored = index.ingest_addresses(
                 item.addresses,
@@ -161,7 +174,7 @@ class StructuralTrajectoryIndex:
             raise ValueError("source_id must be non-empty")
         if int(sequence) < 0:
             raise ValueError("sequence must be >= 0")
-        collapsed = _collapse_immediate(addresses)
+        collapsed = self._normalize(addresses)
         if not collapsed:
             raise ValueError("trajectory must contain at least one structural address")
 
@@ -255,7 +268,7 @@ class StructuralTrajectoryIndex:
             raise ValueError("hierarchy_id must be non-empty")
         if limit < 1:
             raise ValueError("limit must be >= 1")
-        query = _collapse_immediate(addresses)
+        query = self._normalize(addresses)
         if not query:
             raise ValueError("query must contain at least one structural address")
 
@@ -315,7 +328,7 @@ class StructuralTrajectoryIndex:
             raise ValueError("hierarchy_id must be non-empty")
         if direction not in {"forward", "reverse"}:
             raise ValueError("direction must be 'forward' or 'reverse'")
-        query = _collapse_immediate(addresses)
+        query = self._normalize(addresses)
         if not query:
             raise ValueError("query must contain at least one structural address")
 

@@ -1,0 +1,925 @@
+{
+  "format": "memoria.ia-boundary-length-probe-v1",
+  "seed": 20261124,
+  "integrity_status": "PASS",
+  "structural_quality_status": "FAIL",
+  "semantic_quality_status": "UNQUALIFIED",
+  "counts": {
+    "cases": 160,
+    "passed": 148,
+    "answer_cases": 24,
+    "correct_answers": 12,
+    "conflict_cases": 8,
+    "conflicts_preserved": 8,
+    "absence_cases": 128,
+    "absence_empty": 128,
+    "target_cases": 32,
+    "all_targets_retained": 32,
+    "false_unique": 0
+  },
+  "by_shape": {
+    "fixed_separated": {
+      "cases": 40,
+      "passed": 34,
+      "answer_cases": 6,
+      "correct_answers": 0,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 32,
+      "absence_empty": 32,
+      "target_cases": 8,
+      "all_targets_retained": 8,
+      "false_unique": 0
+    },
+    "fixed_adjacent": {
+      "cases": 40,
+      "passed": 40,
+      "answer_cases": 6,
+      "correct_answers": 6,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 32,
+      "absence_empty": 32,
+      "target_cases": 8,
+      "all_targets_retained": 8,
+      "false_unique": 0
+    },
+    "varied_separated": {
+      "cases": 40,
+      "passed": 34,
+      "answer_cases": 6,
+      "correct_answers": 0,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 32,
+      "absence_empty": 32,
+      "target_cases": 8,
+      "all_targets_retained": 8,
+      "false_unique": 0
+    },
+    "varied_adjacent": {
+      "cases": 40,
+      "passed": 40,
+      "answer_cases": 6,
+      "correct_answers": 6,
+      "conflict_cases": 2,
+      "conflicts_preserved": 2,
+      "absence_cases": 32,
+      "absence_empty": 32,
+      "target_cases": 8,
+      "all_targets_retained": 8,
+      "false_unique": 0
+    }
+  },
+  "engine_changed": false,
+  "prior_selectors_changed": false,
+  "native_executed": false,
+  "limitation": "Finite opaque crossed-length fixtures. Adjacent target copies admit equivalent cuts. Unique demonstrated layouts do not eliminate unsupported query cuts or establish reply intent.",
+  "full_report_sha256": "79d10e1f85f695fe668864f1cfab415ebb75215ed050e7a40df4a7598d219caa",
+  "stages": [
+    {
+      "varied_lengths": false,
+      "joined_target_copies": false,
+      "renamed": false,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 1,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 4,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            3,
+            4
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    },
+    {
+      "varied_lengths": false,
+      "joined_target_copies": false,
+      "renamed": true,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 1,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 4,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            3,
+            4
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    },
+    {
+      "varied_lengths": false,
+      "joined_target_copies": true,
+      "renamed": false,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 64,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 256,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 768,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 768,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    },
+    {
+      "varied_lengths": false,
+      "joined_target_copies": true,
+      "renamed": true,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 64,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 256,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 768,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 768,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    },
+    {
+      "varied_lengths": true,
+      "joined_target_copies": false,
+      "renamed": false,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 1,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 4,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            3,
+            4
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    },
+    {
+      "varied_lengths": true,
+      "joined_target_copies": false,
+      "renamed": true,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 1,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 4,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            3
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": false,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 12,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            3,
+            4
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    },
+    {
+      "varied_lengths": true,
+      "joined_target_copies": true,
+      "renamed": false,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 32,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 128,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 608,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 608,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    },
+    {
+      "varied_lengths": true,
+      "joined_target_copies": true,
+      "renamed": true,
+      "stages": [
+        {
+          "name": "three_distinct_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 32,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "repeated_pairs",
+          "unique_payloads": 7,
+          "distinct_layouts": 1,
+          "frame_witnesses": 128,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "fourth_length_combination",
+          "unique_payloads": 9,
+          "distinct_layouts": 1,
+          "frame_witnesses": 608,
+          "reserved_candidate_count": 1,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        },
+        {
+          "name": "rival_other_cut",
+          "unique_payloads": 10,
+          "distinct_layouts": 1,
+          "frame_witnesses": 608,
+          "reserved_candidate_count": 2,
+          "supported_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "enumerated_cuts": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "quality": {
+            "reserved": true,
+            "unknown_context": true,
+            "unknown_body": true,
+            "missing_body": true,
+            "joined_queries": true
+          }
+        }
+      ]
+    }
+  ]
+}

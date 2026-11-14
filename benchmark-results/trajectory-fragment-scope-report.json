@@ -1,0 +1,1892 @@
+{
+  "format": "memoria.ia-fragment-scope-ablation-v1",
+  "integrity_status": "PASS",
+  "policy_status": "REJECTED",
+  "engine_changed": false,
+  "native_executed_in_this_probe": false,
+  "default_generation_unchanged": true,
+  "baseline_counts": {
+    "cases": 32,
+    "passed": 18,
+    "correct_answers": 2,
+    "answer_cases": 16,
+    "false_unique": 0,
+    "absence_abstentions": 12,
+    "conflicts_preserved": 4
+  },
+  "shadow_counts": {
+    "cases": 32,
+    "passed": 24,
+    "correct_answers": 8,
+    "answer_cases": 16,
+    "false_unique": 0,
+    "absence_abstentions": 12,
+    "conflicts_preserved": 4
+  },
+  "unsupported_origin_controls": [
+    {
+      "adapter": "unicode",
+      "renamed": false,
+      "expected": "abstention",
+      "baseline_abstains": true,
+      "shadow_abstains": false,
+      "contract_pass": false,
+      "shadow_hypothesis": [
+        68,
+        97,
+        114,
+        111,
+        58,
+        32,
+        55,
+        57,
+        49,
+        46
+      ],
+      "scoped_out_witnesses": [
+        [
+          "payload:174513e8893031cd85c22806f441975408d982e5",
+          "payload:e2be00cb85d10f6306e7d39e3a7938103ba7a3f9",
+          "1"
+        ]
+      ],
+      "full_generation": {
+        "mode": "COMBINED_RECALL",
+        "candidates": [
+          {
+            "output": [
+              68,
+              97,
+              114,
+              111,
+              58,
+              32,
+              55,
+              57,
+              49,
+              46
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "temporal_recall",
+            "steps": []
+          },
+          {
+            "output": [
+              68,
+              97,
+              114,
+              111,
+              58,
+              32
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "nodule_association",
+            "steps": []
+          }
+        ],
+        "ambiguous": true,
+        "truncated": false,
+        "scale": 2,
+        "temporal_evidence": [
+          {
+            "payload_id": "payload:8f6bc63eeafebcc8a4a19b574aa756c5fc51dc42",
+            "symbols": [
+              68,
+              97,
+              114,
+              111,
+              58,
+              32,
+              55,
+              57,
+              49,
+              46
+            ],
+            "weight": 1.0,
+            "streams": [
+              "0"
+            ]
+          }
+        ],
+        "association_evidence": {
+          "channel": "temporal",
+          "depth": 2,
+          "cues": [
+            "hc3:a429ff9b55804de9b77db1d51887fc0ed7be8f96",
+            "hc3:31c21108b860eaa2f15610219d4a7e4c269f6582"
+          ],
+          "candidates": [
+            {
+              "address": "hc3:dc4256fe86903cff3a350c8cda9366c48e8c62ed",
+              "symbols": [
+                68,
+                97,
+                114,
+                111,
+                58,
+                32
+              ],
+              "weight": 0.6666666666666666,
+              "cue_addresses": [
+                "hc3:31c21108b860eaa2f15610219d4a7e4c269f6582"
+              ],
+              "witnesses": [
+                [
+                  "payload:13eaa741d2d634d8d36d42a3c971b3598ce5922b",
+                  "payload:8f6bc63eeafebcc8a4a19b574aa756c5fc51dc42",
+                  "0"
+                ],
+                [
+                  "payload:174513e8893031cd85c22806f441975408d982e5",
+                  "payload:e2be00cb85d10f6306e7d39e3a7938103ba7a3f9",
+                  "1"
+                ]
+              ],
+              "source_width": 9,
+              "occurrence_witnesses": [
+                [
+                  "payload:13eaa741d2d634d8d36d42a3c971b3598ce5922b",
+                  "payload:8f6bc63eeafebcc8a4a19b574aa756c5fc51dc42",
+                  "0",
+                  1,
+                  2
+                ],
+                [
+                  "payload:174513e8893031cd85c22806f441975408d982e5",
+                  "payload:e2be00cb85d10f6306e7d39e3a7938103ba7a3f9",
+                  "1",
+                  1,
+                  2
+                ]
+              ]
+            }
+          ],
+          "ambiguous": false,
+          "truncated": false,
+          "total_rank_score": 4.0
+        },
+        "embedded_evidence": null
+      },
+      "cold_parity": true,
+      "learning_unchanged": true
+    },
+    {
+      "adapter": "unicode",
+      "renamed": true,
+      "expected": "abstention",
+      "baseline_abstains": true,
+      "shadow_abstains": false,
+      "contract_pass": false,
+      "shadow_hypothesis": [
+        9932,
+        9903,
+        9886,
+        9889,
+        9942,
+        9968,
+        9945,
+        9943,
+        9951,
+        9954
+      ],
+      "scoped_out_witnesses": [
+        [
+          "payload:85628e5a4a535af1a0618bcb08b6be0a797770b8",
+          "payload:e651ca6067b4458efe8daea31f187d20b21a25d4",
+          "1"
+        ]
+      ],
+      "full_generation": {
+        "mode": "COMBINED_RECALL",
+        "candidates": [
+          {
+            "output": [
+              9932,
+              9903,
+              9886,
+              9889,
+              9942,
+              9968,
+              9945,
+              9943,
+              9951,
+              9954
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "temporal_recall",
+            "steps": []
+          },
+          {
+            "output": [
+              9932,
+              9903,
+              9886,
+              9889,
+              9942,
+              9968
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "nodule_association",
+            "steps": []
+          }
+        ],
+        "ambiguous": true,
+        "truncated": false,
+        "scale": 2,
+        "temporal_evidence": [
+          {
+            "payload_id": "payload:e9db504ff66b1db77ab90d42b8ddfb1e574ff290",
+            "symbols": [
+              9932,
+              9903,
+              9886,
+              9889,
+              9942,
+              9968,
+              9945,
+              9943,
+              9951,
+              9954
+            ],
+            "weight": 1.0,
+            "streams": [
+              "0"
+            ]
+          }
+        ],
+        "association_evidence": {
+          "channel": "temporal",
+          "depth": 2,
+          "cues": [
+            "hc3:23e92af7dae508e82e306fc3a948f078ccd75ae2",
+            "hc3:6aa76da3d33d17b343d547c26b0db91d0e662b39"
+          ],
+          "candidates": [
+            {
+              "address": "hc3:18304dec6d23873cad1447c2f8b6ca499c1ef9fc",
+              "symbols": [
+                9932,
+                9903,
+                9886,
+                9889,
+                9942,
+                9968
+              ],
+              "weight": 0.6666666666666666,
+              "cue_addresses": [
+                "hc3:6aa76da3d33d17b343d547c26b0db91d0e662b39"
+              ],
+              "witnesses": [
+                [
+                  "payload:834791ddaffcd460d80b98dde9de90a796d783bf",
+                  "payload:e9db504ff66b1db77ab90d42b8ddfb1e574ff290",
+                  "0"
+                ],
+                [
+                  "payload:85628e5a4a535af1a0618bcb08b6be0a797770b8",
+                  "payload:e651ca6067b4458efe8daea31f187d20b21a25d4",
+                  "1"
+                ]
+              ],
+              "source_width": 9,
+              "occurrence_witnesses": [
+                [
+                  "payload:834791ddaffcd460d80b98dde9de90a796d783bf",
+                  "payload:e9db504ff66b1db77ab90d42b8ddfb1e574ff290",
+                  "0",
+                  1,
+                  2
+                ],
+                [
+                  "payload:85628e5a4a535af1a0618bcb08b6be0a797770b8",
+                  "payload:e651ca6067b4458efe8daea31f187d20b21a25d4",
+                  "1",
+                  1,
+                  2
+                ]
+              ]
+            }
+          ],
+          "ambiguous": false,
+          "truncated": false,
+          "total_rank_score": 4.0
+        },
+        "embedded_evidence": null
+      },
+      "cold_parity": true,
+      "learning_unchanged": true
+    },
+    {
+      "adapter": "utf8",
+      "renamed": false,
+      "expected": "abstention",
+      "baseline_abstains": true,
+      "shadow_abstains": false,
+      "contract_pass": false,
+      "shadow_hypothesis": [
+        68,
+        97,
+        114,
+        111,
+        58,
+        32,
+        55,
+        57,
+        49,
+        46
+      ],
+      "scoped_out_witnesses": [
+        [
+          "payload:c765352bfac55cc22cc33b3ec403b2b5a3c29d40",
+          "payload:e2be00cb85d10f6306e7d39e3a7938103ba7a3f9",
+          "1"
+        ]
+      ],
+      "full_generation": {
+        "mode": "COMBINED_RECALL",
+        "candidates": [
+          {
+            "output": [
+              68,
+              97,
+              114,
+              111,
+              58,
+              32,
+              55,
+              57,
+              49,
+              46
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "temporal_recall",
+            "steps": []
+          },
+          {
+            "output": [
+              68,
+              97,
+              114,
+              111,
+              58,
+              32
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "nodule_association",
+            "steps": []
+          }
+        ],
+        "ambiguous": true,
+        "truncated": false,
+        "scale": 1,
+        "temporal_evidence": [
+          {
+            "payload_id": "payload:8f6bc63eeafebcc8a4a19b574aa756c5fc51dc42",
+            "symbols": [
+              68,
+              97,
+              114,
+              111,
+              58,
+              32,
+              55,
+              57,
+              49,
+              46
+            ],
+            "weight": 1.0,
+            "streams": [
+              "0"
+            ]
+          }
+        ],
+        "association_evidence": {
+          "channel": "temporal",
+          "depth": 1,
+          "cues": [
+            "hc3:e12cbbca37b48277acc202e6c1223de072bfe479"
+          ],
+          "candidates": [
+            {
+              "address": "hc3:d84aeffcdcce8e37c499f46ad0a8de4d3182a247",
+              "symbols": [
+                68,
+                97,
+                114,
+                111,
+                58,
+                32
+              ],
+              "weight": 0.00251661918328585,
+              "cue_addresses": [
+                "hc3:e12cbbca37b48277acc202e6c1223de072bfe479"
+              ],
+              "witnesses": [
+                [
+                  "payload:c765352bfac55cc22cc33b3ec403b2b5a3c29d40",
+                  "payload:e2be00cb85d10f6306e7d39e3a7938103ba7a3f9",
+                  "1"
+                ],
+                [
+                  "payload:dd7b389bd6986d03d8c46ee0855fd05ba2493ab8",
+                  "payload:8f6bc63eeafebcc8a4a19b574aa756c5fc51dc42",
+                  "0"
+                ]
+              ],
+              "source_width": 10,
+              "occurrence_witnesses": [
+                [
+                  "payload:c765352bfac55cc22cc33b3ec403b2b5a3c29d40",
+                  "payload:e2be00cb85d10f6306e7d39e3a7938103ba7a3f9",
+                  "1",
+                  1,
+                  2
+                ],
+                [
+                  "payload:dd7b389bd6986d03d8c46ee0855fd05ba2493ab8",
+                  "payload:8f6bc63eeafebcc8a4a19b574aa756c5fc51dc42",
+                  "0",
+                  1,
+                  2
+                ]
+              ]
+            }
+          ],
+          "ambiguous": false,
+          "truncated": false,
+          "total_rank_score": 0.0150997150997151
+        },
+        "embedded_evidence": null
+      },
+      "cold_parity": true,
+      "learning_unchanged": true
+    },
+    {
+      "adapter": "utf8",
+      "renamed": true,
+      "expected": "abstention",
+      "baseline_abstains": true,
+      "shadow_abstains": false,
+      "contract_pass": false,
+      "shadow_hypothesis": [
+        9932,
+        9903,
+        9886,
+        9889,
+        9942,
+        9968,
+        9945,
+        9943,
+        9951,
+        9954
+      ],
+      "scoped_out_witnesses": [
+        [
+          "payload:63469a82e0502c224222b8faa33d14c95f55d57a",
+          "payload:e651ca6067b4458efe8daea31f187d20b21a25d4",
+          "1"
+        ]
+      ],
+      "full_generation": {
+        "mode": "COMBINED_RECALL",
+        "candidates": [
+          {
+            "output": [
+              9932,
+              9903,
+              9886,
+              9889,
+              9942,
+              9968,
+              9945,
+              9943,
+              9951,
+              9954
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "temporal_recall",
+            "steps": []
+          },
+          {
+            "output": [
+              9932,
+              9903,
+              9886,
+              9889,
+              9942,
+              9968
+            ],
+            "continuation": [],
+            "log_score": 0.0,
+            "stop_reason": "nodule_association",
+            "steps": []
+          }
+        ],
+        "ambiguous": true,
+        "truncated": false,
+        "scale": 1,
+        "temporal_evidence": [
+          {
+            "payload_id": "payload:e9db504ff66b1db77ab90d42b8ddfb1e574ff290",
+            "symbols": [
+              9932,
+              9903,
+              9886,
+              9889,
+              9942,
+              9968,
+              9945,
+              9943,
+              9951,
+              9954
+            ],
+            "weight": 1.0,
+            "streams": [
+              "0"
+            ]
+          }
+        ],
+        "association_evidence": {
+          "channel": "temporal",
+          "depth": 1,
+          "cues": [
+            "hc3:943ddb4fa4c25702c4ff7273ed7fa2db121963bf"
+          ],
+          "candidates": [
+            {
+              "address": "hc3:2ab78d4061739e40fd57e2d309869f7366412ab9",
+              "symbols": [
+                9932,
+                9903,
+                9886,
+                9889,
+                9942,
+                9968
+              ],
+              "weight": 0.00251661918328585,
+              "cue_addresses": [
+                "hc3:943ddb4fa4c25702c4ff7273ed7fa2db121963bf"
+              ],
+              "witnesses": [
+                [
+                  "payload:63469a82e0502c224222b8faa33d14c95f55d57a",
+                  "payload:e651ca6067b4458efe8daea31f187d20b21a25d4",
+                  "1"
+                ],
+                [
+                  "payload:d95c6dc9f9a16d9c9476021bfcc2112b8dd6c9b9",
+                  "payload:e9db504ff66b1db77ab90d42b8ddfb1e574ff290",
+                  "0"
+                ]
+              ],
+              "source_width": 10,
+              "occurrence_witnesses": [
+                [
+                  "payload:63469a82e0502c224222b8faa33d14c95f55d57a",
+                  "payload:e651ca6067b4458efe8daea31f187d20b21a25d4",
+                  "1",
+                  1,
+                  2
+                ],
+                [
+                  "payload:d95c6dc9f9a16d9c9476021bfcc2112b8dd6c9b9",
+                  "payload:e9db504ff66b1db77ab90d42b8ddfb1e574ff290",
+                  "0",
+                  1,
+                  2
+                ]
+              ]
+            }
+          ],
+          "ambiguous": false,
+          "truncated": false,
+          "total_rank_score": 0.0150997150997151
+        },
+        "embedded_evidence": null
+      },
+      "cold_parity": true,
+      "learning_unchanged": true
+    }
+  ],
+  "stages": [
+    {
+      "stage": "legacy_isolated",
+      "recorded_native_baseline_parity": true,
+      "baseline": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 0,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 9,
+          "unique_user_payloads": 7,
+          "quality_status": "FAIL"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 0,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 9,
+          "unique_user_payloads": 7,
+          "quality_status": "FAIL"
+        }
+      ],
+      "shadow": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 0,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 9,
+          "unique_user_payloads": 7,
+          "quality_status": "FAIL"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 3,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 0,
+              "correct_answer": false,
+              "targets_retained": [
+                false
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "ECHO_ONLY",
+              "generation_mode": "ECHO",
+              "candidate_count": 1,
+              "ambiguous": false,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 9,
+          "unique_user_payloads": 7,
+          "quality_status": "FAIL"
+        }
+      ]
+    },
+    {
+      "stage": "ordered_pairs",
+      "recorded_native_baseline_parity": true,
+      "baseline": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "FAIL"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "FAIL"
+        }
+      ],
+      "shadow": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": "Meu drone se chama Auri.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": "Meu drone se chama Auri.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": "Meu robô se chama Lumo.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "PASS"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "answer",
+              "hypothesis": "Meu drone se chama Auri.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "answer",
+              "hypothesis": "Meu drone se chama Auri.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": "Meu robô se chama Lumo.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 4,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "PASS"
+        }
+      ]
+    },
+    {
+      "stage": "ordered_conflict",
+      "recorded_native_baseline_parity": true,
+      "baseline": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 5,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 6,
+          "unique_user_payloads": 5,
+          "quality_status": "FAIL"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 5,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 6,
+          "unique_user_payloads": 5,
+          "quality_status": "FAIL"
+        }
+      ],
+      "shadow": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 5,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 6,
+          "unique_user_payloads": 5,
+          "quality_status": "FAIL"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "conflict",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 6,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true,
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": null,
+              "reason": "COMPETING_OR_BOUNDED_ROUTES",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 4,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": false
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 5,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 6,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 6,
+          "unique_user_payloads": 5,
+          "quality_status": "FAIL"
+        }
+      ]
+    },
+    {
+      "stage": "assistant_barrier",
+      "recorded_native_baseline_parity": true,
+      "baseline": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": "Meu robô se chama Lumo.",
+              "reason": "OBSERVED_ROOT_DESTINATION_CONTEXT",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "PASS"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": "Meu robô se chama Lumo.",
+              "reason": "OBSERVED_ROOT_DESTINATION_CONTEXT",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "PASS"
+        }
+      ],
+      "shadow": [
+        {
+          "adapter": "unicode",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": "Meu robô se chama Lumo.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "PASS"
+        },
+        {
+          "adapter": "utf8",
+          "cases": [
+            {
+              "name": "known",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "new_prefix",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "other_subject",
+              "kind": "answer",
+              "hypothesis": "Meu robô se chama Lumo.",
+              "reason": "SHADOW_FRAGMENT_SCOPE",
+              "generation_mode": "COMBINED_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": true,
+              "targets_retained": [
+                true
+              ],
+              "false_unique": false,
+              "quality_pass": true
+            },
+            {
+              "name": "absent_recombination",
+              "kind": "absence",
+              "hypothesis": null,
+              "reason": "DISTINCT_DESTINATION_EVIDENCE",
+              "generation_mode": "NODULE_RECALL",
+              "candidate_count": 3,
+              "ambiguous": true,
+              "truncated": false,
+              "witnesses_addressable": true,
+              "witness_source_count": 2,
+              "correct_answer": false,
+              "targets_retained": [],
+              "false_unique": false,
+              "quality_pass": true
+            }
+          ],
+          "user_occurrences": 4,
+          "unique_user_payloads": 4,
+          "quality_status": "PASS"
+        }
+      ]
+    }
+  ]
+}

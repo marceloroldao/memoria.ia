@@ -1,0 +1,276 @@
+{
+  "seed": 20261202,
+  "integrity_status": "PASS",
+  "gates": {
+    "unlinked_structural_packet_unchanged_by_links": true,
+    "unlinked_competing_structural_roots_retained": true,
+    "unlinked_explicit_relations_only": true,
+    "unlinked_outside_relation_retained": true,
+    "unlinked_generated_origin_excluded": true,
+    "unlinked_read_only": true,
+    "unlinked_native_rows_read_only": true,
+    "unlinked_cold_join_parity": true,
+    "one_link_structural_packet_unchanged_by_links": true,
+    "one_link_competing_structural_roots_retained": true,
+    "one_link_explicit_relations_only": true,
+    "one_link_outside_relation_retained": true,
+    "one_link_generated_origin_excluded": true,
+    "one_link_read_only": true,
+    "one_link_native_rows_read_only": true,
+    "one_link_cold_join_parity": true,
+    "rival_link_structural_packet_unchanged_by_links": true,
+    "rival_link_competing_structural_roots_retained": true,
+    "rival_link_explicit_relations_only": true,
+    "rival_link_outside_relation_retained": true,
+    "rival_link_generated_origin_excluded": true,
+    "rival_link_read_only": true,
+    "rival_link_native_rows_read_only": true,
+    "rival_link_cold_join_parity": true,
+    "outside_structural_structural_packet_unchanged_by_links": true,
+    "outside_structural_competing_structural_roots_retained": true,
+    "outside_structural_explicit_relations_only": true,
+    "outside_structural_outside_relation_retained": true,
+    "outside_structural_generated_origin_excluded": true,
+    "outside_structural_read_only": true,
+    "outside_structural_native_rows_read_only": true,
+    "outside_structural_cold_join_parity": true
+  },
+  "integrity_passed": 32,
+  "integrity_total": 32,
+  "native_executed": true,
+  "answer": null,
+  "qualified": false,
+  "factual_quality_status": "NOT_EVALUATED",
+  "full_report_sha256": "b52184e02576bfc06f428bd0c87567a187e8e6fcc88c8b8b10b435f251ec72a3",
+  "stages": [
+    {
+      "stage": "unlinked",
+      "structural_sha256": "7933ce32b75db95e18b5c1e83fa7f48c5fad760c6835bd2bda4135ada1fb7a96",
+      "joined_sha256": "14becad8ab9b27a8524ee69a695330413eaf0d0fe14eee60becbafcdf01254e4",
+      "candidates": [
+        {
+          "payload_id": "payload:4f74eaf98f22c892a8d16d8c1a080511d08f12f3",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-7",
+                8
+              ],
+              "explicit_reply_to_selected_target": false
+            }
+          ]
+        },
+        {
+          "payload_id": "payload:b55a91adf04602402dc40a0980e81e4cfe5216cc",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-8",
+                9
+              ],
+              "explicit_reply_to_selected_target": false
+            }
+          ]
+        }
+      ],
+      "relations": [],
+      "outside_roots": []
+    },
+    {
+      "stage": "one_link",
+      "structural_sha256": "7933ce32b75db95e18b5c1e83fa7f48c5fad760c6835bd2bda4135ada1fb7a96",
+      "joined_sha256": "bff67c87abeff4f00375c02b11ba304adacf04b842ba790b3c076ffd033776f4",
+      "candidates": [
+        {
+          "payload_id": "payload:4f74eaf98f22c892a8d16d8c1a080511d08f12f3",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-7",
+                8
+              ],
+              "explicit_reply_to_selected_target": true
+            }
+          ]
+        },
+        {
+          "payload_id": "payload:b55a91adf04602402dc40a0980e81e4cfe5216cc",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-8",
+                9
+              ],
+              "explicit_reply_to_selected_target": false
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "payload_id": "payload:4f74eaf98f22c892a8d16d8c1a080511d08f12f3",
+          "origin": [
+            "conversation:opaque-20261202",
+            "row-7",
+            8
+          ],
+          "target": [
+            "conversation:opaque-20261202",
+            "row-6",
+            7
+          ],
+          "native_trail_address": "f8cd25f79434d1fd"
+        }
+      ],
+      "outside_roots": []
+    },
+    {
+      "stage": "rival_link",
+      "structural_sha256": "7933ce32b75db95e18b5c1e83fa7f48c5fad760c6835bd2bda4135ada1fb7a96",
+      "joined_sha256": "3a802c4d4e58843c4abb91685426c03135db5f23dfd8c571b12ff9f07054aa95",
+      "candidates": [
+        {
+          "payload_id": "payload:4f74eaf98f22c892a8d16d8c1a080511d08f12f3",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-7",
+                8
+              ],
+              "explicit_reply_to_selected_target": true
+            }
+          ]
+        },
+        {
+          "payload_id": "payload:b55a91adf04602402dc40a0980e81e4cfe5216cc",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-8",
+                9
+              ],
+              "explicit_reply_to_selected_target": true
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "payload_id": "payload:4f74eaf98f22c892a8d16d8c1a080511d08f12f3",
+          "origin": [
+            "conversation:opaque-20261202",
+            "row-7",
+            8
+          ],
+          "target": [
+            "conversation:opaque-20261202",
+            "row-6",
+            7
+          ],
+          "native_trail_address": "f8cd25f79434d1fd"
+        },
+        {
+          "payload_id": "payload:b55a91adf04602402dc40a0980e81e4cfe5216cc",
+          "origin": [
+            "conversation:opaque-20261202",
+            "row-8",
+            9
+          ],
+          "target": [
+            "conversation:opaque-20261202",
+            "row-6",
+            7
+          ],
+          "native_trail_address": "e7205d2ea5039efd"
+        }
+      ],
+      "outside_roots": []
+    },
+    {
+      "stage": "outside_structural",
+      "structural_sha256": "7933ce32b75db95e18b5c1e83fa7f48c5fad760c6835bd2bda4135ada1fb7a96",
+      "joined_sha256": "f6f9a59c60ffb0989e610db5d4be5ceaa7e3ae55888d69466df0d05710cc525a",
+      "candidates": [
+        {
+          "payload_id": "payload:4f74eaf98f22c892a8d16d8c1a080511d08f12f3",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-7",
+                8
+              ],
+              "explicit_reply_to_selected_target": true
+            }
+          ]
+        },
+        {
+          "payload_id": "payload:b55a91adf04602402dc40a0980e81e4cfe5216cc",
+          "occurrences": [
+            {
+              "origin": [
+                "conversation:opaque-20261202",
+                "row-8",
+                9
+              ],
+              "explicit_reply_to_selected_target": true
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "payload_id": "payload:4f74eaf98f22c892a8d16d8c1a080511d08f12f3",
+          "origin": [
+            "conversation:opaque-20261202",
+            "row-7",
+            8
+          ],
+          "target": [
+            "conversation:opaque-20261202",
+            "row-6",
+            7
+          ],
+          "native_trail_address": "f8cd25f79434d1fd"
+        },
+        {
+          "payload_id": "payload:b55a91adf04602402dc40a0980e81e4cfe5216cc",
+          "origin": [
+            "conversation:opaque-20261202",
+            "row-8",
+            9
+          ],
+          "target": [
+            "conversation:opaque-20261202",
+            "row-6",
+            7
+          ],
+          "native_trail_address": "e7205d2ea5039efd"
+        },
+        {
+          "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+          "origin": [
+            "conversation:opaque-20261202",
+            "outside",
+            10
+          ],
+          "target": [
+            "conversation:opaque-20261202",
+            "row-6",
+            7
+          ],
+          "native_trail_address": "0728baee2dd509c2"
+        }
+      ],
+      "outside_roots": [
+        "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+      ]
+    }
+  ]
+}
