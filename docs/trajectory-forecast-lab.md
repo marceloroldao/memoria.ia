@@ -108,3 +108,8 @@ MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so PYTHONPATH=s
 ```
 
 A resposta mantém `answer=null`, `qualified=false` e `factual_quality_status=NOT_EVALUATED`. A CLI torna o fluxo operacional, mas não autentica os sensores, não aprende a veracidade das medições e não aplica automaticamente os contratos opcionais de HMAC/freshness. Uma fonte que copie a hipótese pode produzir coincidência enganosa. O núcleo cognitivo, ABI móvel e servidor publicado permanecem preservados.
+
+
+## Relatório para revisão
+
+Depois da sessão, exporte um [relatório HTML com JSON opcional](trajectory-forecast-report.md). Ele consulta o escopo existente, preserva decisões congeladas e distingue medições declaradas de confrontos efetivamente vinculados. Erros, abstenções, conflitos e operações incompletas ficam visíveis; a exportação não executa recuperação.

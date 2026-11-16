@@ -101,3 +101,8 @@ MEMORIA_NATIVE_LIBRARY=build/trajectory-native/libmemoria_mobile.so PYTHONPATH=s
 ```
 
 O exemplo reutilizável está em `examples/forecast-lab-measurements.csv`. O CI dedicado reconstrói o runtime com BDR fixado em `317882a00f041fc1568ff986af8016b09453f21a` e executa o importador junto às regressões anteriores.
+
+
+## Relatório para revisão
+
+Depois da sessão, exporte um [relatório HTML com JSON opcional](trajectory-forecast-report.md). Ele consulta o escopo existente, preserva decisões congeladas e distingue medições declaradas de confrontos efetivamente vinculados. Erros, abstenções, conflitos e operações incompletas ficam visíveis; a exportação não executa recuperação.
