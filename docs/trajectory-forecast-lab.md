@@ -1,5 +1,7 @@
 # Fluxo local de observações, previsão e confronto
 
+Para alimentar o fluxo por arquivo, usar o [importador CSV com previsão automática](trajectory-forecast-csv.md), que inclui prévia e retomada. A CLI JSON desta página permanece preservada.
+
 O piloto `scripts/trajectory_forecast_lab.py` coloca as baselines numéricas em um processo local com entrada e saída JSON por linha. Ele recebe medições fornecidas pelo chamador, congela previsões e confronta automaticamente a medição posterior com as duas regras candidatas e com o seletor. Não solicita valores ao simulador dos testes.
 
 O objetivo é permitir conectar um produtor de dados ao fluxo, preservando o BDR e os recibos, em vez de chamar manualmente cada função experimental. É uma CLI para Linux com limites pequenos e explícitos. As regras continuam sendo as baselines aritméticas fornecidas pelo programador, descritas em [escolha por desempenho anterior](trajectory-rule-selection-baseline.md).
