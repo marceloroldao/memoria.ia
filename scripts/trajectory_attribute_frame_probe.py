@@ -50,22 +50,30 @@ class AttributeFrameReader:
                         dict(source_origin=source_origin,target_origin=origin))
             previous[stream]=root,origin
 
-    def read(self,query):
+    def read(self,query,*,casefold=False):
         if not isinstance(query,str) or not query or len(query)>4096:
             raise ValueError('raw query requires 1..4096 characters')
-        symbols=encode(query,'unicode')
+        def for_matching(symbols):
+            if not casefold:
+                return symbols
+            return encode(''.join(map(chr,symbols)).casefold(),'unicode')
+
+        symbols=for_matching(encode(query,'unicode'))
         before=self.memory.snapshot(),self.memory.learning_state()
         candidates={}
+        roots={root:for_matching(self.memory.expand(root)) for root in sorted(self.origins)}
         for frame in self.frames:
             # Unlike a substring cue, the whole question must fit the frame.
-            if occurrences(frame.source_prefix,symbols)!=(0,):
+            source_prefix=for_matching(frame.source_prefix)
+            if occurrences(source_prefix,symbols)!=(0,):
                 continue
-            variable=middle(symbols,frame.source_prefix,frame.source_suffix)
+            variable=middle(symbols,source_prefix,for_matching(frame.source_suffix))
             if variable is None:
                 continue
-            head=frame.target_prefix+variable+frame.target_bridge
-            for root in sorted(self.origins):
-                if middle(self.memory.expand(root),head,frame.target_suffix) is None:
+            head=for_matching(frame.target_prefix)+variable+for_matching(frame.target_bridge)
+            target_suffix=for_matching(frame.target_suffix)
+            for root,matching_symbols in roots.items():
+                if middle(matching_symbols,head,target_suffix) is None:
                     continue
                 candidates.setdefault(root,[]).append(frame)
         result=[]
@@ -87,6 +95,8 @@ class AttributeFrameReader:
                    'COMPETING_FRAME_CANDIDATES' if result else 'NO_SUPPORTED_FRAME_CANDIDATE',
             absence_proven=False,answer=None,qualified=False,selected_target=None,selection_used=False,
             query_recorded=False,factual_quality_status='NOT_EVALUATED')
+        if casefold:
+            view['matching_mode']='unicode_casefold'
         return copy.deepcopy(view)
 
 

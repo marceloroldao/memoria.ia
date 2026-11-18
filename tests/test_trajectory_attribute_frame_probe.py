@@ -139,6 +139,38 @@ def test_every_witness_names_actual_adjacent_native_occurrences():
                 assert b==a+1 and data[a]['source_kind']==data[b]['source_kind']=='user_turn'
 
 
+def test_casefold_collisions_preserve_raw_candidates_and_witnesses():
+    observations = rows(facts=('Meu gato se chama Alt.', 'Meu GATO se chama Alt.'))
+    reader = probe.AttributeFrameReader(observations, REGION)
+    exact = reader.read('Qual nome do meu gato?')
+    folded = reader.read('Qual nome do meu gato?', casefold=True)
+
+    assert texts(exact) == {'Meu gato se chama Alt.'}
+    assert texts(folded) == {'Meu gato se chama Alt.', 'Meu GATO se chama Alt.'}
+    assert folded['matching_mode'] == 'unicode_casefold'
+    assert folded['proposal_payload_id'] is None
+    assert folded['learned_frames'] == exact['learned_frames']
+    assert len({candidate['payload_id'] for candidate in folded['candidates']}) == 2
+    assert all(candidate['witnesses'] == exact['candidates'][0]['witnesses']
+               for candidate in folded['candidates'])
+    assert {tuple(origin) for candidate in folded['candidates'] for origin in candidate['origins']} == {
+        probe.address(row) for row in observations[-2:]
+    }
+
+
+def test_wording_probe_records_both_new_matches_and_remaining_abstentions():
+    from trajectory_attribute_wording_probe import evaluate
+
+    results = evaluate()
+    assert len(results) == 24
+    assert sum(result['exact']['exact_set'] for result in results) == 8
+    assert sum(result['unicode_casefold']['exact_set'] for result in results) == 16
+    assert sum(result['unicode_casefold']['true_positive'] for result in results) == 9
+    assert all(result['unicode_casefold']['false_positive'] == 0 for result in results)
+    assert all(result['unicode_casefold']['reason'] == 'NO_SUPPORTED_FRAME_CANDIDATE'
+               for result in results if result['category'] == 'absent')
+
+
 def test_projection_limits_refuse_complete_input_instead_of_truncating():
     data=rows()
     with pytest.raises(ValueError,match='64 rows'):
@@ -199,10 +231,22 @@ def test_opt_in_real_http_preserves_default_results_and_cold_provenance(library,
         assert texts(frame)=={'Meu gato se chama Alt.','Meu gato se chama Bia.'}
         assert frame['proposal_payload_id'] is None and frame['qualified'] is False
         assert read(client,'Qual a cor do meu gato?')['attribute_frames']['candidates']==[]
+        upper = 'QUAL NOME DO MEU GATO?'
+        assert read(client,upper)['attribute_frames']['candidates'] == []
+        folded = check_response(client.post('/api/query', json=dict(
+            text=upper, attribute_frames=True, attribute_frame_matching='unicode_casefold')))
+        folded_view = folded.pop('attribute_frames')
+        assert folded == read(client,upper,False)
+        assert texts(folded_view) == {'Meu gato se chama Alt.', 'Meu gato se chama Bia.'}
+        assert folded_view['matching_mode'] == 'unicode_casefold'
+        assert folded_view['proposal_payload_id'] is None
         assert history(client)==before
     with server(library,state,key) as client:
         restored=read(client,'Qual nome do meu gato?')
         assert restored.pop('attribute_frames')==frame and restored==baseline
+        restored_folded = check_response(client.post('/api/query', json=dict(
+            text=upper, attribute_frames=True, attribute_frame_matching='unicode_casefold')))
+        assert restored_folded['attribute_frames'] == folded_view
         assert history(client)==before
 
 

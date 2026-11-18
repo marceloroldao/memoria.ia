@@ -112,6 +112,7 @@ on:
       - 'scripts/trajectory_feedback_transfer_stress.py'
       - 'tests/test_trajectory_feedback_transfer_stress.py'
       - 'scripts/trajectory_attribute_frame_probe.py'
+      - 'scripts/trajectory_attribute_wording_probe.py'
       - 'tests/test_trajectory_attribute_frame_probe.py'
       - 'docs/trajectory-attribute-frame-proof.md'
       - 'benchmark-results/trajectory-attribute-frame.json.gz'

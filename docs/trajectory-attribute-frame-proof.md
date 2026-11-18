@@ -74,3 +74,27 @@ PYTHONPATH=src python scripts/trajectory_attribute_frame_probe.py \
 Passaram **52 testes locais**, incluindo 22 novos casos do leitor/API e 30 anteriores. O gate tem `integrity_status:PASS`, mas conserva `retrieval_quality_status:FAIL_EXTRA_OR_MISSING_CONTENT` e `factual_quality_status:NOT_EVALUATED`. CI verde verifica esses contratos e a reprodução dos resultados, sem aprovar qualidade factual. PR continua em rascunho, sem alteração do servidor publicado ou integração OFF.IA.
 
 Próxima investigação: variar redação e flexão em um conjunto separado, mantendo controles de atributos ausentes e exemplos enganosos. Qualquer ganho de cobertura precisa medir os extras reintroduzidos; falta de testemunho continuará sem equivaler a prova de ausência.
+
+## Comparação de caixa e redação em perguntas novas
+
+O MVP aceita `attribute_frame_matching: "unicode_casefold"` junto de `attribute_frames: true`. O modo usa a equivalência de caixa do Unicode ao comparar a pergunta, os componentes da moldura aprendida e os candidatos. A opção padrão é `exact`. O aprendizado continua usando os registros brutos. Os resultados conservam o texto e os endereços originais. Se dois registros distintos passam a coincidir pelo novo modo, ambos aparecem e a rota se abstém de indicar uma proposta única. O teste de colisão demonstra esse limite com duas grafias da mesma entidade.
+
+O ensaio usa o catálogo e as demonstrações anteriores e acrescenta **24 perguntas sintéticas que não aparecem no ensino nem na bateria original**. As referências entram apenas na avaliação após a consulta. Os dois modos recebem os mesmos registros e as mesmas perguntas.
+
+| Grupo | Perguntas | Exatos no modo original | Exatos com comparação de caixa |
+| --- | ---: | ---: | ---: |
+| Maiúsculas e minúsculas | 8 | 0 | 8 |
+| Paráfrases | 6 | 0 | 0 |
+| Flexão e artigo | 2 | 0 | 0 |
+| Atributo ou entidade ausente | 8 | 8 | 8 |
+| Total | 24 | 8 | 16 |
+
+A comparação de caixa recuperou 9 dos 17 conteúdos esperados, sem candidatos extras neste conjunto. As oito perdas restantes vieram de mudanças de redação. A amostra mede variação formal em um catálogo conhecido. O controle de colisão mostra por que a ausência de extras nesta amostra não pode ser extrapolada.
+
+Para reproduzir a avaliação com a lista de acertos, perdas e origens por pergunta:
+
+```bash
+PYTHONPATH=src python scripts/trajectory_attribute_wording_probe.py
+```
+
+A avaliação das 24 perguntas roda na projeção em Python. A integração por HTTP usa o BDR nativo e confirma a igualdade das origens antes e depois do reinício.

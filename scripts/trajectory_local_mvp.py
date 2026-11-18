@@ -65,6 +65,7 @@ class QueryRequest(TextRequest):
     text: str = Field(min_length=1, max_length=4000)
     experimental: bool = False
     attribute_frames: bool = False
+    attribute_frame_matching: Literal["exact", "unicode_casefold"] = "exact"
 
 
 class BoundedWindow:
@@ -191,8 +192,11 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
             # adapter; their actual native storage address stays in the journal.
             experimental_rows = [dict(r, hierarchy_id=request.region) if r["source_kind"] == "assistant_generated" else r for r in rows]
             experiment = copy_relations(experimental_rows, request.region, request.text) if request.experimental else None
-            attributes = ({"attribute_frames": AttributeFrameReader(experimental_rows, request.region).read(request.text)}
-                          if request.attribute_frames else {})
+            attributes = {}
+            if request.attribute_frames:
+                reader = AttributeFrameReader(experimental_rows, request.region)
+                attributes["attribute_frames"] = reader.read(
+                    request.text, casefold=request.attribute_frame_matching == "unicode_casefold")
             verify(request.region, before)
             return dict(**attributes, scope=request.scope, status="CANDIDATES" if candidates else "UNRESOLVED",
                         candidates=candidates, experimental=experiment,
