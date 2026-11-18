@@ -1,0 +1,1111 @@
+{
+  "format": "memoria.ia-region-evidence-probe-v1",
+  "seed": 20261128,
+  "integrity_status": "PASS",
+  "structural_quality_status": "PASS",
+  "semantic_quality_status": "FAIL",
+  "counts": {
+    "cases": 36,
+    "passed": 36,
+    "answer_cases": 10,
+    "correct_answers": 10,
+    "conflict_cases": 8,
+    "conflicts_preserved": 8,
+    "absence_cases": 18,
+    "absence_empty": 18,
+    "target_cases": 18,
+    "all_targets_retained": 18,
+    "false_unique": 0
+  },
+  "reply_role_counts": {
+    "cases": 4,
+    "passed": 2,
+    "false_answers": 0
+  },
+  "unsafe_evaluator_comparator": {
+    "cases": 4,
+    "passed": 2,
+    "false_answers": 2
+  },
+  "engine_changed": false,
+  "prior_selectors_changed": false,
+  "native_executed": false,
+  "limitation": "Explicit caller-selected hierarchy metadata and exact copied frames; not autonomous situation discovery, negative evidence or semantic answer selection.",
+  "full_report_sha256": "048dfcc6c705c483449830f06b559ac9bc606a67d3d28a81b4c1ae92221a9999",
+  "evaluations": [
+    {
+      "renamed": false,
+      "regions": {
+        "left": "capture:141827896",
+        "right": "capture:141827897",
+        "isolated": "capture:141827898",
+        "unknown": "capture:141827899"
+      },
+      "stages": [
+        {
+          "name": "regions_with_competing_roots",
+          "unique_payloads": 8,
+          "cases": [
+            {
+              "name": "global",
+              "region": null,
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:25b97958adbfa181bf06cfa8a4d4d25a95831aa7",
+                "payload:b7b7924e0c1178df2c129ac60ff028404c9caf57"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "left:fact",
+                "right:fact",
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:141827896",
+                "capture:141827897",
+                "capture:141827898"
+              ],
+              "result_sha256": "d34d1e51666e6ed6807b4b4b6cc1927570e26e35cf8bee62a3bd2926e7c58843"
+            },
+            {
+              "name": "left",
+              "region": "capture:141827896",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:25b97958adbfa181bf06cfa8a4d4d25a95831aa7"
+              ],
+              "structural_hypothesis": [
+                97211,
+                17171,
+                30712,
+                86926,
+                54896,
+                55965,
+                2876,
+                24876,
+                50321,
+                84854
+              ],
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:141827896"
+              ],
+              "result_sha256": "4fbab877a1fa2b1fa2fe14a7ca8167324b9e0dbfe80345afaa80f5f26d88b86d"
+            },
+            {
+              "name": "right",
+              "region": "capture:141827897",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:b7b7924e0c1178df2c129ac60ff028404c9caf57"
+              ],
+              "structural_hypothesis": [
+                97211,
+                17171,
+                30712,
+                86926,
+                54896,
+                55965,
+                2876,
+                50511,
+                34871,
+                84854
+              ],
+              "selected_observation_ids": [
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "right:fact"
+              ],
+              "selected_regions": [
+                "capture:141827897"
+              ],
+              "result_sha256": "06f33d9a776e461809cd478980d06dd0236801284ff939922dbf00a50b9e6340"
+            },
+            {
+              "name": "isolated_root_without_frames",
+              "region": "capture:141827898",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:141827898"
+              ],
+              "result_sha256": "1a44d035d0b8f80db6a10b3c953fbe62513e81e92d8ea2cfc4b4d9e096cf59d6"
+            },
+            {
+              "name": "unknown_region",
+              "region": "capture:141827899",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [],
+              "selected_regions": [],
+              "result_sha256": "657188f8d64fb71c5ece9f3ebfc1e57506d3510add2925c4b024be5b8e06e077"
+            },
+            {
+              "name": "unknown_body",
+              "region": "capture:141827896",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:141827896"
+              ],
+              "result_sha256": "4852b2a0c6ed4b95316a320b1d85e7394a54cf857098a882e5e1b9b801e12ab5"
+            }
+          ]
+        },
+        {
+          "name": "repeated_foreign_evidence",
+          "unique_payloads": 8,
+          "cases": [
+            {
+              "name": "global",
+              "region": null,
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:25b97958adbfa181bf06cfa8a4d4d25a95831aa7",
+                "payload:b7b7924e0c1178df2c129ac60ff028404c9caf57"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "left:fact",
+                "right:fact",
+                "isolated:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact"
+              ],
+              "selected_regions": [
+                "capture:141827896",
+                "capture:141827897",
+                "capture:141827898"
+              ],
+              "result_sha256": "2d2e7eaf01dff001c9d0eed175c4629df0c394ce103b152614b57f645d1ff82a"
+            },
+            {
+              "name": "left",
+              "region": "capture:141827896",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:25b97958adbfa181bf06cfa8a4d4d25a95831aa7"
+              ],
+              "structural_hypothesis": [
+                97211,
+                17171,
+                30712,
+                86926,
+                54896,
+                55965,
+                2876,
+                24876,
+                50321,
+                84854
+              ],
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:141827896"
+              ],
+              "result_sha256": "4fbab877a1fa2b1fa2fe14a7ca8167324b9e0dbfe80345afaa80f5f26d88b86d"
+            },
+            {
+              "name": "right",
+              "region": "capture:141827897",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:b7b7924e0c1178df2c129ac60ff028404c9caf57"
+              ],
+              "structural_hypothesis": [
+                97211,
+                17171,
+                30712,
+                86926,
+                54896,
+                55965,
+                2876,
+                50511,
+                34871,
+                84854
+              ],
+              "selected_observation_ids": [
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "right:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact"
+              ],
+              "selected_regions": [
+                "capture:141827897"
+              ],
+              "result_sha256": "b178b104282d5dc3743dac5ff2599ed1653898229f60e16ba16e3b6a274df0e0"
+            },
+            {
+              "name": "isolated_root_without_frames",
+              "region": "capture:141827898",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:141827898"
+              ],
+              "result_sha256": "1a44d035d0b8f80db6a10b3c953fbe62513e81e92d8ea2cfc4b4d9e096cf59d6"
+            },
+            {
+              "name": "unknown_region",
+              "region": "capture:141827899",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [],
+              "selected_regions": [],
+              "result_sha256": "657188f8d64fb71c5ece9f3ebfc1e57506d3510add2925c4b024be5b8e06e077"
+            },
+            {
+              "name": "unknown_body",
+              "region": "capture:141827896",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:141827896"
+              ],
+              "result_sha256": "4852b2a0c6ed4b95316a320b1d85e7394a54cf857098a882e5e1b9b801e12ab5"
+            }
+          ]
+        },
+        {
+          "name": "late_same_region_rival",
+          "unique_payloads": 8,
+          "cases": [
+            {
+              "name": "global",
+              "region": null,
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:25b97958adbfa181bf06cfa8a4d4d25a95831aa7",
+                "payload:b7b7924e0c1178df2c129ac60ff028404c9caf57"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "left:fact",
+                "right:fact",
+                "isolated:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact",
+                "left:late-rival"
+              ],
+              "selected_regions": [
+                "capture:141827896",
+                "capture:141827897",
+                "capture:141827898"
+              ],
+              "result_sha256": "ad6d1b0290ca8bc1c0d003362091c01c45384a7eb8b265057a9518b54a27107d"
+            },
+            {
+              "name": "left",
+              "region": "capture:141827896",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:25b97958adbfa181bf06cfa8a4d4d25a95831aa7",
+                "payload:b7b7924e0c1178df2c129ac60ff028404c9caf57"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact",
+                "left:late-rival"
+              ],
+              "selected_regions": [
+                "capture:141827896"
+              ],
+              "result_sha256": "02d8e310d397fa76c318597785f5f7883be65be27a0fae26a5fade94e548bbe0"
+            },
+            {
+              "name": "right",
+              "region": "capture:141827897",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:b7b7924e0c1178df2c129ac60ff028404c9caf57"
+              ],
+              "structural_hypothesis": [
+                97211,
+                17171,
+                30712,
+                86926,
+                54896,
+                55965,
+                2876,
+                50511,
+                34871,
+                84854
+              ],
+              "selected_observation_ids": [
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "right:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact"
+              ],
+              "selected_regions": [
+                "capture:141827897"
+              ],
+              "result_sha256": "b178b104282d5dc3743dac5ff2599ed1653898229f60e16ba16e3b6a274df0e0"
+            },
+            {
+              "name": "isolated_root_without_frames",
+              "region": "capture:141827898",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:141827898"
+              ],
+              "result_sha256": "1a44d035d0b8f80db6a10b3c953fbe62513e81e92d8ea2cfc4b4d9e096cf59d6"
+            },
+            {
+              "name": "unknown_region",
+              "region": "capture:141827899",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [],
+              "selected_regions": [],
+              "result_sha256": "657188f8d64fb71c5ece9f3ebfc1e57506d3510add2925c4b024be5b8e06e077"
+            },
+            {
+              "name": "unknown_body",
+              "region": "capture:141827896",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact",
+                "left:late-rival"
+              ],
+              "selected_regions": [
+                "capture:141827896"
+              ],
+              "result_sha256": "3279bfeb62a3f32a42e2efa1dbe7ab4e53b9e8ab6ec4c0912ede72842cb7c0a8"
+            }
+          ]
+        }
+      ],
+      "hidden_role_twins": {
+        "snapshot_fingerprints": [
+          "148dfc18bb73b135068bae261bc26440b996bc952bb634b0b51b895aab625755",
+          "148dfc18bb73b135068bae261bc26440b996bc952bb634b0b51b895aab625755"
+        ],
+        "result_fingerprints": [
+          "4fbab877a1fa2b1fa2fe14a7ca8167324b9e0dbfe80345afaa80f5f26d88b86d",
+          "4fbab877a1fa2b1fa2fe14a7ca8167324b9e0dbfe80345afaa80f5f26d88b86d"
+        ],
+        "identical": true,
+        "query": [
+          61415,
+          17171,
+          30712,
+          86926,
+          54896,
+          55965,
+          16012
+        ],
+        "region": "capture:141827896",
+        "cases": [
+          {
+            "evaluator_role": "intended_reply",
+            "expected": [
+              97211,
+              17171,
+              30712,
+              86926,
+              54896,
+              55965,
+              2876,
+              24876,
+              50321,
+              84854
+            ],
+            "actual": null,
+            "quality_pass": false,
+            "structural_proposal": [
+              97211,
+              17171,
+              30712,
+              86926,
+              54896,
+              55965,
+              2876,
+              24876,
+              50321,
+              84854
+            ],
+            "proposal_pass": true,
+            "proposal_false": false
+          },
+          {
+            "evaluator_role": "adjacent_unrelated_event",
+            "expected": null,
+            "actual": null,
+            "quality_pass": true,
+            "structural_proposal": [
+              97211,
+              17171,
+              30712,
+              86926,
+              54896,
+              55965,
+              2876,
+              24876,
+              50321,
+              84854
+            ],
+            "proposal_pass": false,
+            "proposal_false": true
+          }
+        ]
+      }
+    },
+    {
+      "renamed": true,
+      "regions": {
+        "left": "capture:-140927896",
+        "right": "capture:-140927897",
+        "isolated": "capture:-140927898",
+        "unknown": "capture:-140927899"
+      },
+      "stages": [
+        {
+          "name": "regions_with_competing_roots",
+          "unique_payloads": 8,
+          "cases": [
+            {
+              "name": "global",
+              "region": null,
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:8d520cbc4b29ca5b0d70f5afa7122cb0b8d5c1bb",
+                "payload:e17d745d2498fda1f4696965a62c335ef0b4600b"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "left:fact",
+                "right:fact",
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927896",
+                "capture:-140927897",
+                "capture:-140927898"
+              ],
+              "result_sha256": "c654ee92dad5a1b65380748ba53eec75544784f7278de5431217c3fd829518f1"
+            },
+            {
+              "name": "left",
+              "region": "capture:-140927896",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:e17d745d2498fda1f4696965a62c335ef0b4600b"
+              ],
+              "structural_hypothesis": [
+                902789,
+                982829,
+                969288,
+                913074,
+                945104,
+                944035,
+                997124,
+                975124,
+                949679,
+                915146
+              ],
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927896"
+              ],
+              "result_sha256": "581f05726a350cdc60b8d9d3a1cf03a8dbd3923c85b7da423925a471d16f2601"
+            },
+            {
+              "name": "right",
+              "region": "capture:-140927897",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:8d520cbc4b29ca5b0d70f5afa7122cb0b8d5c1bb"
+              ],
+              "structural_hypothesis": [
+                902789,
+                982829,
+                969288,
+                913074,
+                945104,
+                944035,
+                997124,
+                949489,
+                965129,
+                915146
+              ],
+              "selected_observation_ids": [
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "right:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927897"
+              ],
+              "result_sha256": "6d47a455a621525b69bca809d5d53b1b364f40cb7082d6c8753197effe14438b"
+            },
+            {
+              "name": "isolated_root_without_frames",
+              "region": "capture:-140927898",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927898"
+              ],
+              "result_sha256": "a2f141bf35cafbdc30e0384fff089c083e1de78d0b2db7d02067f1cc38ffcfec"
+            },
+            {
+              "name": "unknown_region",
+              "region": "capture:-140927899",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [],
+              "selected_regions": [],
+              "result_sha256": "ffdb03248a43047f5482d68290c6ce3f3514aedb378ee8ef7ba467d829c384fd"
+            },
+            {
+              "name": "unknown_body",
+              "region": "capture:-140927896",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927896"
+              ],
+              "result_sha256": "1cf832bc56a2e93359be34d5a8488389ef76e8bf53ea2f47a96a9573c8ba239f"
+            }
+          ]
+        },
+        {
+          "name": "repeated_foreign_evidence",
+          "unique_payloads": 8,
+          "cases": [
+            {
+              "name": "global",
+              "region": null,
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:8d520cbc4b29ca5b0d70f5afa7122cb0b8d5c1bb",
+                "payload:e17d745d2498fda1f4696965a62c335ef0b4600b"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "left:fact",
+                "right:fact",
+                "isolated:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact"
+              ],
+              "selected_regions": [
+                "capture:-140927896",
+                "capture:-140927897",
+                "capture:-140927898"
+              ],
+              "result_sha256": "31d9a33b249da1dce0ca8c4059f725560ca78e13e741e1a9821c8502f0987e57"
+            },
+            {
+              "name": "left",
+              "region": "capture:-140927896",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:e17d745d2498fda1f4696965a62c335ef0b4600b"
+              ],
+              "structural_hypothesis": [
+                902789,
+                982829,
+                969288,
+                913074,
+                945104,
+                944035,
+                997124,
+                975124,
+                949679,
+                915146
+              ],
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927896"
+              ],
+              "result_sha256": "581f05726a350cdc60b8d9d3a1cf03a8dbd3923c85b7da423925a471d16f2601"
+            },
+            {
+              "name": "right",
+              "region": "capture:-140927897",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:8d520cbc4b29ca5b0d70f5afa7122cb0b8d5c1bb"
+              ],
+              "structural_hypothesis": [
+                902789,
+                982829,
+                969288,
+                913074,
+                945104,
+                944035,
+                997124,
+                949489,
+                965129,
+                915146
+              ],
+              "selected_observation_ids": [
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "right:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact"
+              ],
+              "selected_regions": [
+                "capture:-140927897"
+              ],
+              "result_sha256": "5e846c5f7ac807a7d9bd981872799f7882ceab539e7c0746c4825371d2598f6c"
+            },
+            {
+              "name": "isolated_root_without_frames",
+              "region": "capture:-140927898",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927898"
+              ],
+              "result_sha256": "a2f141bf35cafbdc30e0384fff089c083e1de78d0b2db7d02067f1cc38ffcfec"
+            },
+            {
+              "name": "unknown_region",
+              "region": "capture:-140927899",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [],
+              "selected_regions": [],
+              "result_sha256": "ffdb03248a43047f5482d68290c6ce3f3514aedb378ee8ef7ba467d829c384fd"
+            },
+            {
+              "name": "unknown_body",
+              "region": "capture:-140927896",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927896"
+              ],
+              "result_sha256": "1cf832bc56a2e93359be34d5a8488389ef76e8bf53ea2f47a96a9573c8ba239f"
+            }
+          ]
+        },
+        {
+          "name": "late_same_region_rival",
+          "unique_payloads": 8,
+          "cases": [
+            {
+              "name": "global",
+              "region": null,
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:8d520cbc4b29ca5b0d70f5afa7122cb0b8d5c1bb",
+                "payload:e17d745d2498fda1f4696965a62c335ef0b4600b"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "left:fact",
+                "right:fact",
+                "isolated:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact",
+                "left:late-rival"
+              ],
+              "selected_regions": [
+                "capture:-140927896",
+                "capture:-140927897",
+                "capture:-140927898"
+              ],
+              "result_sha256": "0e15a6c3176d0767b2cc565d415d5405ac98ec2a3257f6aa9a38586e6d2b29ef"
+            },
+            {
+              "name": "left",
+              "region": "capture:-140927896",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:8d520cbc4b29ca5b0d70f5afa7122cb0b8d5c1bb",
+                "payload:e17d745d2498fda1f4696965a62c335ef0b4600b"
+              ],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact",
+                "left:late-rival"
+              ],
+              "selected_regions": [
+                "capture:-140927896"
+              ],
+              "result_sha256": "9115b320984e922842fe3daf408095f4fbb48bf37888339b69ae133c949f7dcf"
+            },
+            {
+              "name": "right",
+              "region": "capture:-140927897",
+              "quality_pass": true,
+              "candidate_roots": [
+                "payload:8d520cbc4b29ca5b0d70f5afa7122cb0b8d5c1bb"
+              ],
+              "structural_hypothesis": [
+                902789,
+                982829,
+                969288,
+                913074,
+                945104,
+                944035,
+                997124,
+                949489,
+                965129,
+                915146
+              ],
+              "selected_observation_ids": [
+                "right:train:0:source",
+                "right:train:0:target",
+                "right:train:1:source",
+                "right:train:1:target",
+                "right:train:2:source",
+                "right:train:2:target",
+                "right:fact",
+                "right:repeat:source",
+                "right:repeat:target",
+                "right:repeat-fact"
+              ],
+              "selected_regions": [
+                "capture:-140927897"
+              ],
+              "result_sha256": "5e846c5f7ac807a7d9bd981872799f7882ceab539e7c0746c4825371d2598f6c"
+            },
+            {
+              "name": "isolated_root_without_frames",
+              "region": "capture:-140927898",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "isolated:fact"
+              ],
+              "selected_regions": [
+                "capture:-140927898"
+              ],
+              "result_sha256": "a2f141bf35cafbdc30e0384fff089c083e1de78d0b2db7d02067f1cc38ffcfec"
+            },
+            {
+              "name": "unknown_region",
+              "region": "capture:-140927899",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [],
+              "selected_regions": [],
+              "result_sha256": "ffdb03248a43047f5482d68290c6ce3f3514aedb378ee8ef7ba467d829c384fd"
+            },
+            {
+              "name": "unknown_body",
+              "region": "capture:-140927896",
+              "quality_pass": true,
+              "candidate_roots": [],
+              "structural_hypothesis": null,
+              "selected_observation_ids": [
+                "left:train:0:source",
+                "left:train:0:target",
+                "left:train:1:source",
+                "left:train:1:target",
+                "left:train:2:source",
+                "left:train:2:target",
+                "left:fact",
+                "left:late-rival"
+              ],
+              "selected_regions": [
+                "capture:-140927896"
+              ],
+              "result_sha256": "6505d38c4f06b2c0719e687ce68f12f8f28f2459ed2ea8006915a662a8384ce5"
+            }
+          ]
+        }
+      ],
+      "hidden_role_twins": {
+        "snapshot_fingerprints": [
+          "640fb65b39e93a9ff5de6a54edec04c58b17ccd0d834aa20ffda8ca4b2cf8c6e",
+          "640fb65b39e93a9ff5de6a54edec04c58b17ccd0d834aa20ffda8ca4b2cf8c6e"
+        ],
+        "result_fingerprints": [
+          "581f05726a350cdc60b8d9d3a1cf03a8dbd3923c85b7da423925a471d16f2601",
+          "581f05726a350cdc60b8d9d3a1cf03a8dbd3923c85b7da423925a471d16f2601"
+        ],
+        "identical": true,
+        "query": [
+          938585,
+          982829,
+          969288,
+          913074,
+          945104,
+          944035,
+          983988
+        ],
+        "region": "capture:-140927896",
+        "cases": [
+          {
+            "evaluator_role": "intended_reply",
+            "expected": [
+              902789,
+              982829,
+              969288,
+              913074,
+              945104,
+              944035,
+              997124,
+              975124,
+              949679,
+              915146
+            ],
+            "actual": null,
+            "quality_pass": false,
+            "structural_proposal": [
+              902789,
+              982829,
+              969288,
+              913074,
+              945104,
+              944035,
+              997124,
+              975124,
+              949679,
+              915146
+            ],
+            "proposal_pass": true,
+            "proposal_false": false
+          },
+          {
+            "evaluator_role": "adjacent_unrelated_event",
+            "expected": null,
+            "actual": null,
+            "quality_pass": true,
+            "structural_proposal": [
+              902789,
+              982829,
+              969288,
+              913074,
+              945104,
+              944035,
+              997124,
+              975124,
+              949679,
+              915146
+            ],
+            "proposal_pass": false,
+            "proposal_false": true
+          }
+        ]
+      }
+    }
+  ]
+}

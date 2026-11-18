@@ -1,0 +1,1598 @@
+{
+  "format": "memoria.ia-response-quality-synthetic-v1",
+  "seed": 20260930,
+  "trials": 2,
+  "integrity_status": "PASS",
+  "quality_status": "FAIL",
+  "counts": {
+    "answer_cases": 28,
+    "correct_unique_answers": 8,
+    "false_unique_outputs": 6,
+    "answer_targets_retained": 24,
+    "absence_abstentions": 22,
+    "conflicts_preserved": 4,
+    "invalid_outputs": 0,
+    "absence_cases": 24,
+    "conflict_cases": 4
+  },
+  "required_cases": 52,
+  "required_passes": 34,
+  "cases": [
+    {
+      "name": "known_query",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Daro: 791."
+      ],
+      "selected": "Daro: 791.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Daro: 791."
+      ],
+      "selected": "Daro: 791.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Daro"
+      ],
+      "selected": "Daro",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Daro"
+      ],
+      "selected": "Daro",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 415."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 415.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 415.",
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791.",
+        "Daro: 755."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Daro: 791.",
+        "Daro: 755.",
+        "Daro: 7"
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "split_capture"
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Daro: 791."
+      ],
+      "selected": "Daro: 791.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Daro: 791."
+      ],
+      "selected": "Daro: 791.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Daro"
+      ],
+      "selected": "Daro",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Neri?"
+      ],
+      "selected": "Código de Neri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Daro"
+      ],
+      "selected": "Daro",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 415."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 415.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Neri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 415.",
+        ": Daro: 791.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 791.",
+        "Daro: 755."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Daro: 791.",
+        "Daro: 755.",
+        "Daro: 7"
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Daro?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Daro?"
+      ],
+      "selected": "Código de Daro?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 0,
+      "group": "split_capture"
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 151."
+      ],
+      "selected": "Kivo: 151.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 151."
+      ],
+      "selected": "Kivo: 151.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Kivo"
+      ],
+      "selected": "Kivo",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Luma?"
+      ],
+      "selected": "Código de Luma?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Temperatura de Marte?"
+      ],
+      "selected": "Temperatura de Marte?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 680."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 680.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 680.",
+        ": Kivo: 151.",
+        ": ",
+        "o: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151.",
+        "Kivo: 824."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Kivo: 151.",
+        "Kivo: 824.",
+        "Kivo: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "split_capture"
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 151."
+      ],
+      "selected": "Kivo: 151.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 151."
+      ],
+      "selected": "Kivo: 151.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "case_change",
+      "query": "código de kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Kivo"
+      ],
+      "selected": "Kivo",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Luma?"
+      ],
+      "selected": "Código de Luma?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Temperatura de Marte?"
+      ],
+      "selected": "Temperatura de Marte?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "exact"
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "wrapped"
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 151.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Daro?",
+      "expected": [
+        "Daro: 680."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 680.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Daro: 680.",
+        ": Kivo: 151.",
+        ": ",
+        "o: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "two_subjects"
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 151.",
+        "Kivo: 824."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Kivo: 151.",
+        "Kivo: 824.",
+        "Kivo: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "conflict"
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "question_only"
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "trial": 1,
+      "group": "split_capture"
+    }
+  ],
+  "scope": "fictional text fixtures, raw Unicode/UTF-8 adapters; no personal or multimodal accuracy claim",
+  "labels_used_by_engine": false
+}

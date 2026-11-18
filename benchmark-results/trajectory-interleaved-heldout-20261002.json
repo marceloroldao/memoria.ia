@@ -1,0 +1,631 @@
+{
+  "seed": 20261002,
+  "rows": [
+    {
+      "initial_payloads": 16,
+      "cycles": 8,
+      "workload": "new_content",
+      "content_learned": 8,
+      "new_root_relations": 28,
+      "projection_builds": 8,
+      "catalogue_builds": 8,
+      "span_projection_calls": 164,
+      "profiled_observe_seconds": 0.003956,
+      "profiled_read_seconds": 0.054363,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 4439,
+          "self_seconds": 0.003119
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 172,
+          "self_seconds": 0.002556
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.002475
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.002445
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 30120,
+          "self_seconds": 0.002315
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "_reinforce",
+          "calls": 2112,
+          "self_seconds": 0.002272
+        }
+      ]
+    },
+    {
+      "initial_payloads": 16,
+      "cycles": 8,
+      "workload": "reused_new_pairs",
+      "content_learned": 0,
+      "new_root_relations": 24,
+      "projection_builds": 8,
+      "catalogue_builds": 0,
+      "span_projection_calls": 164,
+      "profiled_observe_seconds": 0.001018,
+      "profiled_read_seconds": 0.052501,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 4245,
+          "self_seconds": 0.003053
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_record_temporal_pairs",
+          "calls": 164,
+          "self_seconds": 0.002946
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.002585
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.002584
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 128,
+          "self_seconds": 0.002267
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 22314,
+          "self_seconds": 0.00203
+        }
+      ]
+    },
+    {
+      "initial_payloads": 16,
+      "cycles": 8,
+      "workload": "reused_same_pair",
+      "content_learned": 0,
+      "new_root_relations": 1,
+      "projection_builds": 8,
+      "catalogue_builds": 0,
+      "span_projection_calls": 164,
+      "profiled_observe_seconds": 0.000786,
+      "profiled_read_seconds": 0.041574,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.002869
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.002591
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 3711,
+          "self_seconds": 0.002161
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 128,
+          "self_seconds": 0.001832
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "recall",
+          "calls": 48,
+          "self_seconds": 0.001753
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 21793,
+          "self_seconds": 0.001688
+        }
+      ]
+    },
+    {
+      "initial_payloads": 16,
+      "cycles": 8,
+      "workload": "idempotent_id",
+      "content_learned": 0,
+      "new_root_relations": 0,
+      "projection_builds": 0,
+      "catalogue_builds": 0,
+      "span_projection_calls": 0,
+      "profiled_observe_seconds": 0.000763,
+      "profiled_read_seconds": 0.027684,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "recall",
+          "calls": 48,
+          "self_seconds": 0.002787
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 64,
+          "self_seconds": 0.002764
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "fields",
+          "calls": 96,
+          "self_seconds": 0.002005
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 3136,
+          "self_seconds": 0.001812
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "<genexpr>",
+          "calls": 1080,
+          "self_seconds": 0.001739
+        },
+        {
+          "file": "trajectory_generation_v2.py",
+          "function": "_frontier",
+          "calls": 24,
+          "self_seconds": 0.001403
+        }
+      ]
+    },
+    {
+      "initial_payloads": 48,
+      "cycles": 8,
+      "workload": "new_content",
+      "content_learned": 8,
+      "new_root_relations": 28,
+      "projection_builds": 8,
+      "catalogue_builds": 8,
+      "span_projection_calls": 420,
+      "profiled_observe_seconds": 0.006523,
+      "profiled_read_seconds": 0.113976,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_record_temporal_pairs",
+          "calls": 420,
+          "self_seconds": 0.007649
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.006656
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.006027
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 428,
+          "self_seconds": 0.005987
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 68888,
+          "self_seconds": 0.005334
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 9047,
+          "self_seconds": 0.004945
+        }
+      ]
+    },
+    {
+      "initial_payloads": 48,
+      "cycles": 8,
+      "workload": "reused_new_pairs",
+      "content_learned": 0,
+      "new_root_relations": 24,
+      "projection_builds": 8,
+      "catalogue_builds": 0,
+      "span_projection_calls": 420,
+      "profiled_observe_seconds": 0.001024,
+      "profiled_read_seconds": 0.094028,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.006059
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.005744
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_record_temporal_pairs",
+          "calls": 420,
+          "self_seconds": 0.004838
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 384,
+          "self_seconds": 0.0048
+        },
+        {
+          "file": "~",
+          "function": "<method 'setdefault' of 'dict' objects>",
+          "calls": 18383,
+          "self_seconds": 0.00467
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 8853,
+          "self_seconds": 0.004471
+        }
+      ]
+    },
+    {
+      "initial_payloads": 48,
+      "cycles": 8,
+      "workload": "reused_same_pair",
+      "content_learned": 0,
+      "new_root_relations": 1,
+      "projection_builds": 8,
+      "catalogue_builds": 0,
+      "span_projection_calls": 420,
+      "profiled_observe_seconds": 0.001022,
+      "profiled_read_seconds": 0.096683,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.006117
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.006025
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_record_temporal_pairs",
+          "calls": 420,
+          "self_seconds": 0.005479
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 384,
+          "self_seconds": 0.004692
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 8319,
+          "self_seconds": 0.004173
+        },
+        {
+          "file": "trajectory_generation_v2.py",
+          "function": "_frontier",
+          "calls": 24,
+          "self_seconds": 0.004102
+        }
+      ]
+    },
+    {
+      "initial_payloads": 48,
+      "cycles": 8,
+      "workload": "idempotent_id",
+      "content_learned": 0,
+      "new_root_relations": 0,
+      "projection_builds": 0,
+      "catalogue_builds": 0,
+      "span_projection_calls": 0,
+      "profiled_observe_seconds": 0.000429,
+      "profiled_read_seconds": 0.04537,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 64,
+          "self_seconds": 0.005997
+        },
+        {
+          "file": "trajectory_generation_v2.py",
+          "function": "_frontier",
+          "calls": 24,
+          "self_seconds": 0.004373
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 7744,
+          "self_seconds": 0.003866
+        },
+        {
+          "file": "trajectory_generation_v2.py",
+          "function": "_expand_view",
+          "calls": 4296,
+          "self_seconds": 0.003455
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "<genexpr>",
+          "calls": 5952,
+          "self_seconds": 0.002669
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 26264,
+          "self_seconds": 0.001954
+        }
+      ]
+    },
+    {
+      "initial_payloads": 128,
+      "cycles": 8,
+      "workload": "new_content",
+      "content_learned": 8,
+      "new_root_relations": 28,
+      "projection_builds": 8,
+      "catalogue_builds": 8,
+      "span_projection_calls": 1060,
+      "profiled_observe_seconds": 0.011175,
+      "profiled_read_seconds": 0.266032,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.016786
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.016398
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 1068,
+          "self_seconds": 0.013951
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 165352,
+          "self_seconds": 0.012024
+        },
+        {
+          "file": "hierarchical_composition_v2.py",
+          "function": "_discover_level",
+          "calls": 16,
+          "self_seconds": 0.011949
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_record_temporal_pairs",
+          "calls": 1060,
+          "self_seconds": 0.011738
+        }
+      ]
+    },
+    {
+      "initial_payloads": 128,
+      "cycles": 8,
+      "workload": "reused_new_pairs",
+      "content_learned": 0,
+      "new_root_relations": 24,
+      "projection_builds": 8,
+      "catalogue_builds": 0,
+      "span_projection_calls": 1060,
+      "profiled_observe_seconds": 0.002947,
+      "profiled_read_seconds": 0.230022,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.016389
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 1024,
+          "self_seconds": 0.014875
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.014598
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_record_temporal_pairs",
+          "calls": 1060,
+          "self_seconds": 0.013097
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 20373,
+          "self_seconds": 0.010675
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 127978,
+          "self_seconds": 0.010476
+        }
+      ]
+    },
+    {
+      "initial_payloads": 128,
+      "cycles": 8,
+      "workload": "reused_same_pair",
+      "content_learned": 0,
+      "new_root_relations": 1,
+      "projection_builds": 8,
+      "catalogue_builds": 0,
+      "span_projection_calls": 1060,
+      "profiled_observe_seconds": 0.002981,
+      "profiled_read_seconds": 0.230031,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "__init__",
+          "calls": 8,
+          "self_seconds": 0.015291
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 58,
+          "self_seconds": 0.015012
+        },
+        {
+          "file": "structural_association_continuous.py",
+          "function": "observe",
+          "calls": 1024,
+          "self_seconds": 0.01477
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_record_temporal_pairs",
+          "calls": 1060,
+          "self_seconds": 0.010711
+        },
+        {
+          "file": "trajectory_generation_v2.py",
+          "function": "_frontier",
+          "calls": 24,
+          "self_seconds": 0.010568
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 19839,
+          "self_seconds": 0.010468
+        }
+      ]
+    },
+    {
+      "initial_payloads": 128,
+      "cycles": 8,
+      "workload": "idempotent_id",
+      "content_learned": 0,
+      "new_root_relations": 0,
+      "projection_builds": 0,
+      "catalogue_builds": 0,
+      "span_projection_calls": 0,
+      "profiled_observe_seconds": 0.000502,
+      "profiled_read_seconds": 0.093736,
+      "cold_and_warm_parity": true,
+      "includes_occurrence_witnesses": true,
+      "hotspots": [
+        {
+          "file": "compositional_association_v2.py",
+          "function": "_recall_depth",
+          "calls": 64,
+          "self_seconds": 0.014951
+        },
+        {
+          "file": "trajectory_generation_v2.py",
+          "function": "_frontier",
+          "calls": 24,
+          "self_seconds": 0.009029
+        },
+        {
+          "file": "dataclasses.py",
+          "function": "_asdict_inner",
+          "calls": 19264,
+          "self_seconds": 0.008981
+        },
+        {
+          "file": "trajectory_generation_v2.py",
+          "function": "_expand_view",
+          "calls": 11336,
+          "self_seconds": 0.008613
+        },
+        {
+          "file": "~",
+          "function": "<built-in method builtins.len>",
+          "calls": 61976,
+          "self_seconds": 0.004834
+        },
+        {
+          "file": "compositional_association_v2.py",
+          "function": "<genexpr>",
+          "calls": 15872,
+          "self_seconds": 0.004618
+        }
+      ]
+    }
+  ],
+  "scope": "synthetic Python interleaved profiling; not production, Android or RAM",
+  "timing_includes_profiler": true
+}

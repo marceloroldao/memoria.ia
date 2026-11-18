@@ -1,0 +1,5843 @@
+{
+  "format": "memoria.ia-query-specificity-ablation-v1",
+  "seed": 20261005,
+  "integrity_status": "PASS",
+  "engine_policy_changed": false,
+  "quality_status": "UNRESOLVED",
+  "threshold_sweep": [
+    {
+      "threshold": 0.0,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 6,
+      "absence_false_unique": 2,
+      "suspended_selections": 0,
+      "lost_opaque_transfers": 0
+    },
+    {
+      "threshold": 0.25,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 6,
+      "lost_opaque_transfers": 4
+    },
+    {
+      "threshold": 0.5,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 6,
+      "lost_opaque_transfers": 6
+    },
+    {
+      "threshold": 0.75,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 6,
+      "lost_opaque_transfers": 8
+    },
+    {
+      "threshold": 1.0,
+      "correct_unique_answers": 8,
+      "false_unique_outputs": 0,
+      "absence_false_unique": 0,
+      "suspended_selections": 6,
+      "lost_opaque_transfers": 8
+    }
+  ],
+  "opaque_transfer_controls": [
+    {
+      "renamed": false,
+      "padding": 1,
+      "query": [
+        100,
+        1,
+        2,
+        3,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.6,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": false,
+      "padding": 4,
+      "query": [
+        100,
+        100,
+        100,
+        100,
+        1,
+        2,
+        3,
+        101,
+        101,
+        101,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2727272727272727,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": false,
+      "padding": 8,
+      "query": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        1,
+        2,
+        3,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.15789473684210525,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": false,
+      "padding": 16,
+      "query": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        1,
+        2,
+        3,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101,
+        101
+      ],
+      "selected": [
+        7,
+        8,
+        9
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            7,
+            8,
+            9
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.08571428571428572,
+          "witnesses": [
+            {
+              "source": "payload:43b88feb5398932449453ad4223d52a5afa76925",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:07b3479c6e1f7023b3fc2a4d55d61c7e0eaa2917",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9ce4128e447dcfe342e61e2e77e26fe9f820755",
+              "target": "payload:790a20fdffe6883a1b08b8328117f4ad7ff7ea5d",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 1,
+      "query": [
+        10117,
+        118,
+        219,
+        320,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.6,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 4,
+      "query": [
+        10117,
+        10117,
+        10117,
+        10117,
+        118,
+        219,
+        320,
+        10218,
+        10218,
+        10218,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2727272727272727,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 8,
+      "query": [
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        118,
+        219,
+        320,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.15789473684210525,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "renamed": true,
+      "padding": 16,
+      "query": [
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        10117,
+        118,
+        219,
+        320,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218,
+        10218
+      ],
+      "selected": [
+        724,
+        825,
+        926
+      ],
+      "diagnostics": [
+        {
+          "symbols": [
+            724,
+            825,
+            926
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.08571428571428572,
+          "witnesses": [
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:10e2b2aa90cb3545dc33b1943453f451f248622f",
+              "target": "payload:9ae669357b8cdef6be5edcb584265269af0ce3a8",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            },
+            {
+              "source": "payload:cb7fc5100f5df93cd075f0896fd576ca79f95982",
+              "target": "payload:7f19e6bbd462040c9970f5b30aa567c1f818e5d2",
+              "stream": "default",
+              "shared_span": 3,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "known_query",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Vero: 509."
+      ],
+      "selected": "Vero: 509.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Vero: 509."
+      ],
+      "selected": "Vero: 509.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Vero"
+      ],
+      "selected": "Vero",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            86,
+            101,
+            114,
+            111
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2,
+          "witnesses": [
+            {
+              "source": "payload:4f43ec29b32535c5553d9d104014773c8be8f037",
+              "target": "payload:27317493560d87cf64c48afb8646b55738f60c03",
+              "stream": "capture:0",
+              "shared_span": 9,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Zuri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Zuri?"
+      ],
+      "selected": "Código de Zuri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Vero"
+      ],
+      "selected": "Vero",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            86,
+            101,
+            114,
+            111
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.09523809523809523,
+          "witnesses": [
+            {
+              "source": "payload:4f43ec29b32535c5553d9d104014773c8be8f037",
+              "target": "payload:27317493560d87cf64c48afb8646b55738f60c03",
+              "stream": "capture:0",
+              "shared_span": 4,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Zuri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:56dfb28d1d61f4762cd50b5465115a0747116baa",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 258."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 258.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            50,
+            53,
+            56,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Zuri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": Kivo: 258.",
+        ": ",
+        "o: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            50,
+            53,
+            56,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            111,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:b9b5e11b2f68f6b7600b859b5b34d763be4b7af4",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:a5900c0926b5bdea2bedc5d6a961962c837a3e37",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509.",
+        "Vero: 197."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Vero: 509.",
+        "Vero: 197.",
+        "Vero: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            86,
+            101,
+            114,
+            111,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.26666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:4f43ec29b32535c5553d9d104014773c8be8f037",
+              "target": "payload:27317493560d87cf64c48afb8646b55738f60c03",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:4f43ec29b32535c5553d9d104014773c8be8f037",
+              "target": "payload:5433dd6102821a7b2d4ad16741bc4220b58ae3f0",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Vero?"
+      ],
+      "selected": "Código de Vero?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Vero?"
+      ],
+      "selected": "Código de Vero?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Vero: 509."
+      ],
+      "selected": "Vero: 509.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Vero: 509."
+      ],
+      "selected": "Vero: 509.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Vero"
+      ],
+      "selected": "Vero",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            86,
+            101,
+            114,
+            111
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.1875,
+          "witnesses": [
+            {
+              "source": "payload:00bb8f68e41c17482b6eaa1a0e704011e592ff18",
+              "target": "payload:27317493560d87cf64c48afb8646b55738f60c03",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Zuri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Zuri?"
+      ],
+      "selected": "Código de Zuri?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Vero"
+      ],
+      "selected": "Vero",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            86,
+            101,
+            114,
+            111
+          ],
+          "source_width": 2,
+          "primary_cue_coverage": 0.09523809523809523,
+          "witnesses": [
+            {
+              "source": "payload:00bb8f68e41c17482b6eaa1a0e704011e592ff18",
+              "target": "payload:27317493560d87cf64c48afb8646b55738f60c03",
+              "stream": "capture:0",
+              "shared_span": 4,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Zuri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:c5020cdbcc7deee0da1ca2b62de06c1fc8fb5f17",
+              "target": "payload:0ef622e0baa1779615bdf093d81fb8340708942b",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 258."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 258.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            50,
+            53,
+            56,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Zuri?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Vero: 509.",
+        ": Kivo: 258.",
+        ": ",
+        "o: ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            86,
+            101,
+            114,
+            111,
+            58,
+            32,
+            53,
+            48,
+            57,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            50,
+            53,
+            56,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            111,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:955c4367713759a24d4482160a1706a4a8cca2ad",
+              "target": "payload:43a1e803a2d7f389a030edb8b3a25149ef8b0984",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:ff484d6a439d892f075c959615b88578ea8899fd",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:64d0e79805037e622403343d9b3321e9d78ab404",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:84e2b9cd3d244a9a61d5e274d2b2415229db82c6",
+              "target": "payload:a7a6e64315710604f29e6e9d9489b048ca09b0dc",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Vero?",
+      "expected": [
+        "Vero: 509.",
+        "Vero: 197."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Vero: 509.",
+        "Vero: 197.",
+        "Vero: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 0,
+      "diagnostics": [
+        {
+          "symbols": [
+            86,
+            101,
+            114,
+            111,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.25,
+          "witnesses": [
+            {
+              "source": "payload:00bb8f68e41c17482b6eaa1a0e704011e592ff18",
+              "target": "payload:27317493560d87cf64c48afb8646b55738f60c03",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:00bb8f68e41c17482b6eaa1a0e704011e592ff18",
+              "target": "payload:5433dd6102821a7b2d4ad16741bc4220b58ae3f0",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Vero?"
+      ],
+      "selected": "Código de Vero?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Vero?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Vero?"
+      ],
+      "selected": "Código de Vero?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 0,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 193."
+      ],
+      "selected": "Kivo: 193.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 193."
+      ],
+      "selected": "Kivo: 193.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Kivo"
+      ],
+      "selected": "Kivo",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            75,
+            105,
+            118,
+            111
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.2,
+          "witnesses": [
+            {
+              "source": "payload:0cda073d92c4037d3f83fa1d34f1701777921ee0",
+              "target": "payload:111f1fb58ed4035b9adc213a3f5a3d784f765873",
+              "stream": "capture:0",
+              "shared_span": 9,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Luma?"
+      ],
+      "selected": "Código de Luma?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Temperatura de Marte?"
+      ],
+      "selected": "Temperatura de Marte?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 17,
+          "primary_cue_coverage": 0.7391304347826086,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 17,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:3664ed0a3bd45a84901e8bede34cb81f3419f5d5",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 214."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 214.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            50,
+            49,
+            52,
+            46
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 15,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": Zuri: 214.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            50,
+            49,
+            52,
+            46
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:011303be5a350585d9caabec44671bd16cff05e2",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:4769b54d8b274958465c9037205a3de1bcafd828",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 10,
+          "primary_cue_coverage": 0.6666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:cf4921e3bd001733058119ad379bbb89fac06739",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 10,
+              "full_query": false
+            },
+            {
+              "source": "payload:dbf2815197f643d17f3e9342d8808691c9024b62",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193.",
+        "Kivo: 833."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Kivo: 193.",
+        "Kivo: 833.",
+        "Kivo: ",
+        "3."
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            75,
+            105,
+            118,
+            111,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.26666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:0cda073d92c4037d3f83fa1d34f1701777921ee0",
+              "target": "payload:111f1fb58ed4035b9adc213a3f5a3d784f765873",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:0cda073d92c4037d3f83fa1d34f1701777921ee0",
+              "target": "payload:4d0f536f8b5457a02a2240d9a1e949894c711383",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            51,
+            46
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.26666666666666666,
+          "witnesses": [
+            {
+              "source": "payload:0cda073d92c4037d3f83fa1d34f1701777921ee0",
+              "target": "payload:111f1fb58ed4035b9adc213a3f5a3d784f765873",
+              "stream": "capture:0",
+              "shared_span": 15,
+              "full_query": true
+            },
+            {
+              "source": "payload:0cda073d92c4037d3f83fa1d34f1701777921ee0",
+              "target": "payload:4d0f536f8b5457a02a2240d9a1e949894c711383",
+              "stream": "capture:1",
+              "shared_span": 15,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "unicode",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "known_query",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 193."
+      ],
+      "selected": "Kivo: 193.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "EMBEDDED_TEMPORAL_RECALL",
+      "outputs": [
+        "Kivo: 193."
+      ],
+      "selected": "Kivo: 193.",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": true,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "case_change",
+      "query": "código de kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": false,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        "Kivo"
+      ],
+      "selected": "Kivo",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [
+        false
+      ],
+      "selected_correct": false,
+      "false_unique": true,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            75,
+            105,
+            118,
+            111
+          ],
+          "source_width": 3,
+          "primary_cue_coverage": 0.1875,
+          "witnesses": [
+            {
+              "source": "payload:b661e7c43697847c2af64bbeefa642397041be6e",
+              "target": "payload:111f1fb58ed4035b9adc213a3f5a3d784f765873",
+              "stream": "capture:0",
+              "shared_span": 10,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": true,
+        "0.5": true,
+        "0.75": true,
+        "1.0": true
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Luma?"
+      ],
+      "selected": "Código de Luma?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unrelated",
+      "query": "Temperatura de Marte?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Temperatura de Marte?"
+      ],
+      "selected": "Temperatura de Marte?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "exact",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_surface",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "new_prefix",
+      "query": "Lembre: Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 18,
+          "primary_cue_coverage": 0.75,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 18,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "unknown_subject",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": ",
+        "r0: ",
+        "r1: ",
+        "r2: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "wrapped",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            50,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:778e40a7d9ce3a81c3c7d75a2d8338659017d83c",
+              "target": "payload:b6b00a4ef63098083fd7dc8c9d257f47bf1192c4",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "first_subject",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "second_subject",
+      "query": "Código de Zuri?",
+      "expected": [
+        "Zuri: 214."
+      ],
+      "kind": "answer",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Zuri: 214.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": false,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            50,
+            49,
+            52,
+            46
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 16,
+          "primary_cue_coverage": 1.0,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "absent_third",
+      "query": "Código de Luma?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "NODULE_RECALL",
+      "outputs": [
+        ": Kivo: 193.",
+        ": Zuri: 214.",
+        ": ",
+        "r0: ",
+        "r1: "
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "two_subjects",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            58,
+            32,
+            75,
+            105,
+            118,
+            111,
+            58,
+            32,
+            49,
+            57,
+            51,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32,
+            90,
+            117,
+            114,
+            105,
+            58,
+            32,
+            50,
+            49,
+            52,
+            46
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            48,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:7f50cc38ff6dca419faca8011486a7d39ff447a3",
+              "target": "payload:6e6e693b657fd0f1353e9ae3c54532e87aa0ee31",
+              "stream": "capture:1",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:9f08e79770c8024bbf539fce884bfad61d1c9e30",
+              "target": "payload:b8d2d5f6bff2664c42181282a13e6db9508d238a",
+              "stream": "capture:0",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        },
+        {
+          "symbols": [
+            114,
+            49,
+            58,
+            32
+          ],
+          "source_width": 11,
+          "primary_cue_coverage": 0.6875,
+          "witnesses": [
+            {
+              "source": "payload:4b39a73fee513178794ba489a4d7a82da0ecc79d",
+              "target": "payload:0a908a26fa1d4eeb52a91207e57538ca59d8df10",
+              "stream": "capture:3",
+              "shared_span": 11,
+              "full_query": false
+            },
+            {
+              "source": "payload:7f666eb67c8c553648a7d7b2b489fb8d2e13f68f",
+              "target": "payload:8ee57d4df254a8bb0470a5a3ea48d9fb786b7684",
+              "stream": "capture:2",
+              "shared_span": 11,
+              "full_query": false
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "competing_replies",
+      "query": "Código de Kivo?",
+      "expected": [
+        "Kivo: 193.",
+        "Kivo: 833."
+      ],
+      "kind": "conflict",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "COMBINED_RECALL",
+      "outputs": [
+        "Kivo: 193.",
+        "Kivo: 833.",
+        "Kivo: ",
+        "3."
+      ],
+      "selected": null,
+      "invalid_output_count": 0,
+      "ambiguous": true,
+      "truncated": false,
+      "targets_retained": [
+        true,
+        true
+      ],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "conflict",
+      "trial": 1,
+      "diagnostics": [
+        {
+          "symbols": [
+            75,
+            105,
+            118,
+            111,
+            58,
+            32
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.25,
+          "witnesses": [
+            {
+              "source": "payload:b661e7c43697847c2af64bbeefa642397041be6e",
+              "target": "payload:111f1fb58ed4035b9adc213a3f5a3d784f765873",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:b661e7c43697847c2af64bbeefa642397041be6e",
+              "target": "payload:4d0f536f8b5457a02a2240d9a1e949894c711383",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        },
+        {
+          "symbols": [
+            51,
+            46
+          ],
+          "source_width": 4,
+          "primary_cue_coverage": 0.25,
+          "witnesses": [
+            {
+              "source": "payload:b661e7c43697847c2af64bbeefa642397041be6e",
+              "target": "payload:111f1fb58ed4035b9adc213a3f5a3d784f765873",
+              "stream": "capture:0",
+              "shared_span": 16,
+              "full_query": true
+            },
+            {
+              "source": "payload:b661e7c43697847c2af64bbeefa642397041be6e",
+              "target": "payload:4d0f536f8b5457a02a2240d9a1e949894c711383",
+              "stream": "capture:1",
+              "shared_span": 16,
+              "full_query": true
+            }
+          ]
+        }
+      ],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_observed_reply",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "question_only",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    },
+    {
+      "name": "no_ordered_pair",
+      "query": "Código de Kivo?",
+      "expected": [],
+      "kind": "absence",
+      "required": true,
+      "adapter": "utf8",
+      "mode": "ECHO",
+      "outputs": [
+        "Código de Kivo?"
+      ],
+      "selected": "Código de Kivo?",
+      "invalid_output_count": 0,
+      "ambiguous": false,
+      "truncated": false,
+      "targets_retained": [],
+      "selected_correct": false,
+      "false_unique": false,
+      "quality_pass": true,
+      "read_only": true,
+      "cold_parity": true,
+      "group": "split_capture",
+      "trial": 1,
+      "diagnostics": [],
+      "vetoes": {
+        "0.0": false,
+        "0.25": false,
+        "0.5": false,
+        "0.75": false,
+        "1.0": false
+      }
+    }
+  ]
+}

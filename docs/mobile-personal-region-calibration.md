@@ -1,0 +1,512 @@
+# Personal evidence region: calibration gate
+
+The native `personal_evidence` mode is an opt-in, read-only probe. It preserves
+the source hierarchy and source ID. It is **not** enabled in OFF.IA's default
+response path. A nonempty result returns `CANDIDATES`, `qualified:false` and
+the native `UNRESOLVED` status. These records cannot yet establish a fact.
+
+## Private device replay, 25 September 2026
+
+The supplied OFF.IA export had 83 structural observations across 25 conversation
+hierarchies. Some legacy observations are tagged `user_assertion` despite being
+questions. The raw export is not stored in this repository.
+
+| Cross-conversation probe | Initial native ranking | Gate |
+| --- | --- | --- |
+| Family subject A | Relevant name record first, but related questions also appear in top results | Fail: unqualified context |
+| Family subject B | Name-bearing record first, but a question about subject A also appears | Fail: region contamination |
+| Family subject C | A repeated question with an extra word ranks ahead of repeated name records | Fail: question echo |
+| Absent technical subject | Unrelated family questions appear | Fail: false HIT |
+
+These failures occur even with assistant output excluded and source provenance
+retained. The probe no longer returns `HIT` for them; this is a contract safety
+change, not a retrieval fix. A successful 8/8 isolated native diagnostic does
+not cover this cross-conversation gate.
+
+The opt-in `probe_structural_regions` preview now groups direct symbol matches
+by conversation. It reports the count of exact query-trail echoes separately
+from other matching observations, the region's sequence span and its origin ID.
+It returns `UNRESOLVED` with `qualified:false` even when candidate regions
+exist. An observation with extra symbols is merely *distinct*; it is not
+classified as an assertion. The preview does not traverse cognitive
+trajectories. It now scans observations once and locates each conversation in
+an ordered region index; token comparison and the private replay remain open
+gates. This changes traversal cost, not the activation or evidence criteria.
+
+The preview additionally reports `embedded_query_count`: observations whose
+ordered symbol trail contains the whole query trail as a proper contiguous
+span. The trail recurrence probe exposes `contains_query_trail` on each
+distinct full payload. Thus an exact repeated question and a new narrative
+containing the same question remain separate observations. This is a read-only
+structural diagnostic; it does **not** infer that the narrative supports an
+answer, create a persistent phrase node, or reinforce any field on lookup.
+Case and punctuation follow the native tokenizer; paraphrases and inserted
+words inside the query span do not count as exact containment.
+The trail result separately reports `query_echo_occurrences`,
+`embedded_occurrences` and `embedded_payload_count` over the complete probe,
+before pagination. Two copies of the same containing payload in different
+conversation regions count as two occurrences but only one distinct containing
+payload. These counts describe structure, not independent factual support.
+When the exact query trail was itself observed from a user source, a distinct
+containing trail now exposes a read-only `composition`: the observed base's
+fingerprint, its first starting position, its length, the remaining suffix
+length and the number of positions containing it. For example, a new request
+can be represented as three prefix symbols plus the already observed five
+symbol question trail. The fingerprint identifies the full symbol trail used
+by this probe; it is not a persisted nodule or a claim of semantic equivalence.
+Without an observed base the `composition` is null even if the query text is
+contained. Exact echoes also have null composition. Raw occurrences remain
+stored separately. The private replay checks base-address links across cold
+reopen and emits aggregate counts only.
+In the 83-observation replay, the four private probes yielded 1, 0, 0 and 0
+distinct compositions, respectively. The first had a prefix and no suffix;
+all 64 displayed witnesses remained addressable. The absent technical probe
+had neither an observed base nor a composition. This validates the structural
+address link in this sample, not factual selection or compression. The
+decomposition compares the current corpus and does not establish whether the
+base was observed before the containing payload.
+
+The native observation runtime now indexes distinct normalized symbol trails
+**within each conversation field**. A second source with the same trail is
+persisted as another raw occurrence but does not advance that field's tick,
+within-trail weights or temporal recent set. This also holds across case and
+punctuation differences under the native tokenizer; an identical source ID
+and sequence remains an idempotent duplicate and creates no second raw record.
+`observe_structural_text` reports `duplicate` for that source identity,
+`new_trail` for a field update and `distinct_trail_count` for the conversation.
+
+A different payload containing a previously observed complete symbol trail
+remains a new field observation. The longest contained trail is treated as a
+reused nodule. Its internal within-trail links receive **zero** additional
+weight; new links from/to the surrounding symbols receive the existing
+`1 / token_distance` contribution. Temporal links to an earlier trail skip
+the reused span on both sides when it also appears there; the surrounding
+context can still form temporal associations. A repeat of the
+whole normalized trail does not advance the field clock or add any edge.
+Occurrences are kept for provenance, never converted into factual strength.
+
+BDR structural-text schema 2 stores the first raw occurrence inline. An exact
+byte copy stores source metadata plus a reference to that earlier occurrence.
+A new text with a **byte-identical and token-aligned** contained payload stores
+its prefix, earlier occurrence reference and suffix. The longest available
+payload wins; a later composition can itself be referenced. Reconstruction
+reads earlier occurrences in order, preserving exact UTF-8 text, source IDs,
+source kinds and sequences across a cold reopen. References can cross
+conversation fields within the same organization. Existing schema 1 inline
+rows remain readable and acquire references on later writes without rewriting
+history. A case or punctuation variation that shares normalized symbols but
+does not contain the prior raw bytes still stores its own surface text inline;
+the field still recognizes the normalized nodule and avoids internal weight.
+The current implementation chooses one longest reused span per new trail and
+does not yet optimize the duplicate text reconstructed in process memory.
+These are structural storage and association weights, not factual confidence.
+
+On the private export, 83 raw observations across 25 conversations yielded
+75 distinct region trails:
+8 repeat occurrences did not update their local field. The four cross-region
+probes still returned `UNRESOLVED`, and all 64 displayed witnesses resolved
+after cold reopen. The clock now counts distinct structural trails, not raw
+events; elapsed-time forgetting needs its own later policy.
+The host Python adapter gate exposed the expected ranking change: in a local
+synthetic history, a repeated cat-name record no longer outranks an unrelated
+cat observation merely because it was copied twice. Both raw sources and the
+other observation remain addressable before and after restart, but the legacy
+default local resolver may still label this ambiguous candidate list `HIT`.
+That label is not a qualified personal fact; the local selection ambiguity is
+an open integration gate alongside the cross-conversation failures. The
+adapter test now checks provenance and recurrence without requiring the old
+duplicate-driven first position.
+
+The region preview now exposes `max_ordered_span`: the longest contiguous
+symbol path shared by the query and any **distinct** observation in a region.
+Exact query echoes do not contribute. This preserves order without a vocabulary
+of question templates; it still measures a text path, not a cognitive or
+factual trajectory, and does not change ranking or qualification.
+Each region also returns one `witness` with the source ID, source kind, order
+and ordered-span length of the distinct observation supporting that maximum.
+An echo-only region has `witness:null`. Ties use the earliest sequence and
+then source ID, so the addressable window read can inspect the same occurrence
+after cold reopen. The legacy source kind is provenance, not proof of assertion.
+The local private replay checked each non-null witness in the first 16 regions
+of four probes against the addressable raw window: 64/64 source IDs and
+sequence numbers resolved. No raw witness or personal text is committed.
+
+In a local replay of the same private 83-observation export, one repeatedly
+asked family query activated 23/25 regions. Among the first 16 returned, 14
+had an ordered span of at most two symbols, while two reached four or five.
+An absent technical question activated 22/25 regions; the first 16 had spans
+of one (13 regions) or two (3 regions), with no exact echo or containing
+payload. The preview limit means these distributions cover the first 16
+regions only. Near-question variants can also have a long ordered span, so
+none of these counts qualifies an answer or supplies a selection threshold.
+The raw export and responses remain outside Git.
+
+The replay can be repeated with `scripts/mobile_region_replay.py` using a local
+OFF.IA JSON export, a private JSON array of query strings, and the built native
+shared library. It opens a temporary BDR database, replays observations,
+flushes and reopens it, checks the read-only probes, and resolves every
+displayed witness through its raw window. Standard output contains only case
+indices and aggregate counts; the input files stay local. This gate verifies
+provenance and the unqualified response contract. It does not decide whether
+a returned region answers a question.
+
+An exploratory branch contrast used symbols that differed between nearby
+observed question trails. On four private probes it reduced raw activation
+from 23, 21, 19 and 22 regions to 17, 4, 12 and 0, respectively. The absent
+control improved, but two personal probes still spread across many regions.
+This contrast is **not** a retrieval rule, factual gate, or native code path.
+
+## Region preview replay, 26 September 2026
+
+Running the preview against the same 83 private observations, without storing
+the export or raw responses in Git, produced these aggregate counts:
+
+| Probe | Activated regions | Unseen query symbols | Observation |
+| --- | ---: | ---: | --- |
+| Family subject A | 21 of 25 | 0 | Shared query structure activates many regions |
+| Family subject B | 21 of 25 | 0 | Exact echoes are separated, but nearby questions remain distinct |
+| Absent technical subject | 22 of 25 | 3 | Direct overlap alone has unacceptable false activation |
+
+This fails the cross-conversation selection gate. The preview is useful for
+inspecting where activation spreads, but its ordering cannot feed a factual
+answer. The next gate must compare regional trajectories and confirm that an
+absent subject stays unresolved.
+The count of unseen query symbols is a diagnostic signal, not a rule that
+missing symbols always imply an absent fact; paraphrases can contain new words.
+
+An exploratory contrastive score combined query-symbol co-occurrence within
+an observation, recurrence across regions and distance from a repeated query
+within its conversation. In the private replay, the expected region for family
+subject A ranked first, and the three regions carrying observations for family
+subject B ranked in the first three positions. The absent technical subject
+still gave a high score to an unrelated region. This score is **not** part of
+the native selection or answer contract. A new synthetic negative test also
+records that a question with one extra word is a distinct trail, while it
+remains unqualified evidence.
+
+A separate read-only trail recurrence probe groups identical observed symbol
+sequences and reports `occurrences` and `region_count` independently. The gate
+checks two repeats in one conversation plus one in another as three occurrences
+from two regions. A different continuation remains a separate trail, and an
+exact repeated question is marked `query_echo`. Assistant-generated text is
+excluded. These are structural observations, not corroborated facts or an
+automatic conflict decision; the probe still returns `UNRESOLVED`.
+Each group now includes the first 16 source references with conversation ID,
+source ID and sequence, plus `sources_truncated`. The addressable window read
+can inspect the full raw region when a group has more occurrences.
+The trail probe also records the deepest shared token prefix where two distinct
+trails have different next symbols. `branch_address` fingerprints that prefix,
+`branch_depth` counts its symbols, and `divergent_trail_count` counts other
+trails diverging there. An exact prefix extension is not a fork. Two alternative
+continuations can thus point to the same compositional address without being
+declared a contradiction or a fact. This diagnostic currently compares every
+pair of distinct trails, so its quadratic group cost remains a runtime gate.
+
+The private replay illustrates why region count cannot equal corroboration:
+the exact repeated question for family subject C occurred 12 times in 10
+conversation regions. Exact query echoes for subjects A and B appeared 3 times
+in 2 regions and 7 times in 4 regions, respectively. The absent technical
+query had no exact echo. These aggregate counts are not entered as factual
+support; repeated questioning can span independent conversation IDs.
+
+## Required before app integration
+
+1. Preserve the whole conversation window as an addressable region, retaining
+   observation IDs, order, source kind and origin hierarchy.
+2. Activate related regions and distinguish query echoes from new evidence by
+   their trajectories and recurrence **within the activated region**. Do not
+   infer that the old `user_assertion` label proves assertion.
+3. Compare competing regions and expose ambiguity; return unresolved when the
+   evidence does not support a specific subject. Do not promote a retrieved
+   question or assistant output into a factual answer.
+4. Run a synthetic gate for the four rows above, then replay the private export
+   locally. Check cold reopen, unrelated queries and runtime cost as the number
+   of windows grows. Only then enable a fallback in OFF.IA.
+
+No family words, personal names or language-specific question templates should
+be encoded as the retrieval rule. Corpus-wide token frequency and fixed novelty
+thresholds were tried against the replay; they improved individual probes but
+failed on sparse test histories and reinforced repeated questions. They are not
+accepted as the integration gate.
+
+## Functional proof gate, 26 September 2026
+
+`scripts/mobile_personal_proof_gate.py` exercises the built native library with
+25 invented observations. It checks positive retrieval, a different subject,
+an absent recombination whose individual words all occur elsewhere, repeated
+questions, a near question, two competing name records, assistant-output
+exclusion, exact source addresses and cold BDR reopen. The `--strict` mode
+returns failure until **all** functional gates pass; it is intentionally not
+an app acceptance gate or a factual fallback.
+
+| Test | Current observation | Result |
+| --- | --- | --- |
+| Known name | Answer source addressable, but the near question ranks first | Fail |
+| Other subject | Its answer source is present, but an earlier question ranks first | Fail |
+| Absent recombination | Eight unrelated/question candidates, led by a different subject's power record | Fail |
+| Assistant text | Generated output excluded from the personal candidates | Pass |
+| Competing sources | Both conflicting user sources remain visible and unqualified | Pass |
+| Cold reopen | Candidates and exact source addresses survive | Pass |
+
+The initial gate passed 13 of 16 checks; subsequent explicit-link checks bring
+it to 23 of 26, with the same three selection and absence failures. Merely
+returning `UNRESOLVED` alongside irrelevant `CANDIDATES` is
+not proof that the system has recognized the missing answer. The old local
+resolver's `HIT` and the opt-in personal probe remain separate contracts.
+
+The same script also inspects an occurrence-local continuation path through
+the native trail and window APIs. It anchors on an observed exact query trail
+and reads only the immediate next observation in **that same conversation**;
+it never jumps through a shared symbol into another conversation or skips an
+assistant turn. Two independent synthetic conversations continue with the
+same text, one continues with a competing text, and another repeats the
+question. An assistant turn blocks traversal even when a user turn follows
+it. All four user continuations remain addressable after cold reopen. An
+absent query with no observed echo has zero such continuations.
+These are observed transitions, **not verified answers**: an immediate next
+user turn may itself be another question. The path is a research diagnostic,
+not a selector or a weight rule.
+
+In a local private replay, the four most frequent exact surface texts occurred
+6, 5, 4 and 3 times. Their immediate user-successor counts were 6, 3, 4 and
+2, respectively, across 6, 2, 2 and 2 conversation regions. These counts do
+not classify the successor texts or qualify a fact. No private text, source ID
+or raw response is stored in Git. Further work should compare the competing
+regional trajectories and test whether a candidate survives absent-subject
+and near-question controls before changing OFF.IA or optimizing throughput.
+
+The occurrence-local path is now exposed directly by the native read-only
+`probe_structural_continuations` API, rather than relying on a host-side join
+of trail pages and conversation windows. For each observed exact normalized
+user query, it looks at the lowest higher sequence in the **same** conversation.
+An immediate user turn gets a source address and normalized trail address;
+an identical question is `REPEAT_ECHO`. An assistant turn is `BLOCKED`, with
+its text omitted and no jump to a later user turn. Missing successors are
+`TERMINAL`; tied sequence numbers are `AMBIGUOUS_ORDER` and expose no claimed
+successor. Counts and source-addressed witnesses are paginated separately.
+Every response has `qualified:false`, `trajectory_used:false` and native
+`UNRESOLVED` status, including one with `CANDIDATES`. Distinct continuation
+trails count normalized forms, while occurrence counts retain the original
+records. Neither count reinforces a field or verifies a personal answer.
+An unseen paraphrase will have no exact echo; the probe does not establish
+that the answer is absent from memory.
+
+The synthetic gate checks 9 echoes: 3 user continuations with 2 distinct
+trails, 1 repeat echo, 1 assistant barrier and 4 terminal occurrences. It
+checks all sources after cold reopen, plus an absent query with zero echoes.
+On the private 83-observation replay, four frequent query surfaces activated
+12, 6, 7 and 3 normalized echoes. Their user continuation counts were 5, 3,
+3 and 2, with 4, 2, 3 and 2 distinct normalized trails, respectively; two
+immediate repeated questions were categorized as echoes. All 28 echo witnesses
+resolved to the raw conversation window after cold reopen. This result shows
+observed alternatives and correct provenance, not a selected factual value.
+The older host-side counts above include question repeats among user successors
+and use surface-level occurrence grouping, so they should not be treated as
+native factual support.
+
+## Structural analogy stress, 26 September 2026
+
+`scripts/mobile_analogy_stress.py` tests a possible next link without changing
+the native resolver. From an observed question and its immediate user successor,
+it finds another user payload containing that successor, then projects the
+shared symbol positions onto a different query. All links retain their source
+IDs; the output is explicitly unqualified. The synthetic test also renames the
+subject, relation and value words to check that it is not recognizing a fixed
+family or name vocabulary.
+
+The invented history finds two competing records for the original question
+and no record for an absent subject–attribute combination. For another subject
+it finds **two** records: the intended statement and a question with the same
+normalized symbol trail, tagged with the legacy `user_assertion` kind. The
+question is a false candidate. Even an observed continuation plus a matching
+statement shape does not establish whether the latter is a claim.
+
+On the private 83-observation replay, the four frequent surfaces formed
+39, 24, 1 and 17 tentative exemplars, leading to 24, 13, 1 and 19 distinct
+candidate sources. Only these counts are printed. The broad first, second and
+fourth sets reject this analogy as a factual selector. The experiment does
+not alter storage, association weights, native retrieval or OFF.IA. Further
+evidence must preserve the speaker's observed reply/confirmation relation
+and the epistemic status of the source; a normalized trail or legacy source
+kind alone cannot supply those distinctions. The three strict functional
+selection failures remain open.
+
+## Explicit reply provenance, 26 September 2026
+
+The native mobile API now accepts `link_structural_reply` for a caller-observed
+user reply to an earlier source address in the same conversation. The request
+names `hierarchy_id`, `source_id`, `sequence`, `reply_to_source_id` and
+`reply_to_sequence`. Both observations must already exist, the reply must be a
+user observation, and its sequence must be later than its target. An exact
+retry is idempotent; a conflicting target, assistant source or cross-conversation
+address is rejected. The API reports `qualified:false`. It records an observed
+relation between two source addresses, without deciding whether the reply is
+an answer, confirmation or truthful personal fact.
+
+The relation has its own atomic BDR log and count alongside structural-text
+schema 2. It does not rewrite raw observations, advance the conversation field
+clock, strengthen an existing nodule or change resolution. The structural
+export and paged conversation window expose `reply_to` as a target source
+address or `null`; a new link invalidates an older window token. Cold reopen
+restores the link, and replay imports exported links after their observations
+and checks each source address after another reopen. Exports without the field
+continue to replay unchanged.
+
+The synthetic proof gate now has 17 passing checks out of 20. Three distinct
+reply relations, their idempotence, their cold-reopen provenance and their lack
+of effect on retrieval pass. A repeated question and assistant-generated turn
+remain unlinked. The remaining failures are still the wrong first candidate
+for a known question, the wrong first candidate for another subject and eight
+irrelevant candidates for an absent recombination. An invented two-observation
+export replayed 1 of 1 reply links. The private 83-observation export contains
+no explicit `reply_to` metadata, so its replay correctly restored zero links;
+it cannot establish that older adjacent turns were replies. No automatic
+factual answer selection or OFF.IA behavior changes in this step.
+
+## Read linked replies without selecting a fact, 26 September 2026
+
+`probe_structural_linked_replies` follows only persisted `reply_to` addresses.
+It compares the complete normalized query trail with the linked target, either
+as an exact trail or as a contiguous span in a larger observed payload. For a
+question embedded in a narrative, this permits a linked reply to be inspected
+without inventing a second copy of the question or any link from adjacency.
+The result exposes each question and reply source address, reply text, trail
+address, both source kinds, exact/embedded match and pagination. An earlier
+assistant prompt may be a target, but its kind stays visible and its text is
+never counted as the user's reply. It reports distinct reply trails,
+competing trails and linked question repeats separately. Repeated reply
+occurrences remain visible but are not factual votes; a repeated question is
+marked and excluded from the distinct reply trail count. Assistant-generated
+text is not a reply source. The native status remains `UNRESOLVED`, the JSON
+is `qualified:false` and `selection_used:false`, even for one apparent answer.
+
+The adversarial native fixture links three occurrences of one reply trail,
+including a repeated raw payload in the same conversation, one conflicting
+reply, one answer to a larger narrative and a repeated question. It yields
+six linked occurrences, two distinct non-question reply trails, one embedded
+target and one repeated-question link. The paged result is identical
+after a cold reopen; an unrelated query returns zero links. The synthetic
+functional gate now passes 19/22 checks, with the same three selection gaps.
+The private 83-observation export still has no `reply_to` addresses, so the
+four replayed probes correctly return zero linked replies. This diagnostic
+does not resolve paraphrases that interrupt or reorder the stored query trail.
+It is not part of OFF.IA's answer path.
+
+## Organized reply evidence packet, 26 September 2026
+
+`resolve_structural_text` now accepts opt-in mode `linked_reply_evidence`.
+It reads the persisted reply links and groups their reply payloads by exact
+normalized symbol trail, comparing full trails rather than trusting the
+fingerprint alone. Two surfaces such as `Auri.` and `Auri` share one group,
+while `Boreal` remains a competing group. The group lists source IDs,
+conversation addresses, raw reply text and the target question address; raw
+occurrences and distinct source regions are descriptive counts, not votes or
+association weights. A repeated question linked as a reply is excluded from
+the reply groups and counted separately. `top_k` bounds groups, each group's
+source list shows at most 16 references and marks truncation; the paged link
+probe remains available for the full provenance audit. A separate 17-link
+synthetic check after cold reopen reported 17 occurrences, 17 source regions,
+16 displayed references and `sources_truncated:true`.
+
+Without an explicit link, the mode returns empty groups and
+`NO_EXPLICIT_REPLY_EVIDENCE` even if a loose symbol search finds plausible
+sentences. One reply trail returns `CANDIDATES`, multiple distinct trails
+return `CONFLICT`, and both retain native `UNRESOLVED`, `qualified:false`,
+`selection_used:false` and `answer:null`. This packet is a safe input to later
+reasoning, not a validated answer or a factual promotion. It does not replace
+the older `personal_evidence` diagnostic or alter OFF.IA. The synthetic gate
+now passes 23/26 checks: the organized boundary, single-trail abstention,
+conflict and absent case pass, while the three legacy selection failures
+remain. The private 83-observation export has no explicit reply links, so
+the four organized probes return no groups. To test actual personal answers,
+new observations must carry source-addressed reply provenance.
+
+## Device capture bridge, 27 September 2026
+
+The draft [OFF.IA #69](https://github.com/marceloroldao/off.ia/pull/69)
+pins this experimental mobile commit and adds an opt-in laboratory action:
+select an earlier user message, then send a new user message explicitly
+addressed to it. OFF.IA observes the new payload first and calls
+`link_structural_reply` with both stable source addresses. It does not infer
+replies from temporal adjacency or link generated assistant text. The normal
+answer resolver remains unchanged; the exported structural observations expose
+the native `reply_to` metadata. A persisted, unrecorded user selection can be
+retried on conversation reopen, using the idempotent native link.
+
+The OFF.IA CI and full Android APK workflow passed, including the native gate
+for duplicate links, diagnostic evidence, export and cold reopen, as well as
+Kotlin selection/recovery tests. The experimental APK is in the
+[Android workflow artifact](https://github.com/marceloroldao/off.ia/actions/runs/36282662502).
+The 83-observation export above remains a baseline with zero explicit links.
+The new device export below also has no recorded reply relations, so a
+source-addressed answer test still requires another capture.
+
+## First new device export, 27 September 2026
+
+The next private OFF.IA diagnostic contains 86 structural observations across
+26 conversations: three more user turns in one new conversation than the
+previous 83/25 baseline. Every exported observation has the new `reply_to`
+field, but all 86 values are `null`. This establishes that the newer native
+export contract ran, while **no explicit reply relation was persisted**. It
+does not reveal whether the laboratory reply action was selected, left pending
+or unavailable in the installed app. None of its raw personal payloads are
+stored in Git.
+
+The follow-up OFF.IA export includes application build identity, laboratory
+mode at export time and aggregate counts of selected, pending, recorded and
+native-linked replies. It compares recorded chat intentions with native links
+without reinterpreting any payload as an answer. A subsequent device export
+will distinguish a missing selection from a failed or interrupted link. With
+zero links in this export, all organized linked-reply probes still have zero
+evidence, regardless of surface similarity. Replaying all 86 observations in
+the native runtime and probing each of the three new entry surfaces returned
+`UNRESOLVED`, zero groups and `qualified:false` in every case.
+
+The revised OFF.IA alpha.13 Android workflow passed unit tests, the native
+gate, full APK build and signature verification. Its signed experimental APK
+is the artifact of [workflow 36284502542](https://github.com/marceloroldao/off.ia/actions/runs/36284502542).
+
+## First source-addressed device reply, 27 September 2026
+
+The next private alpha.13 export identifies OFF.IA commit
+`7e2ea8b916bf8d00b30b4a8a4f7ed74347065296` and Memoria.ia commit
+`0627e9bd365421e88f5d2a9f6039c807139efb4f`, with laboratory mode
+enabled at export. It contains 99 observations in 28 conversations: 13 new
+user observations in two new conversations since the 86/26 export. Existing
+payloads did not change. One new user observation has a `reply_to` address
+pointing to an earlier user observation in the same conversation. OFF.IA
+reports one selected, one recorded and one native link; pending and mismatch
+counts are zero. No raw personal payloads or source IDs are stored in Git.
+
+Replaying all 99 observations and their one link in the native runtime:
+the first link was accepted, a duplicate call preserved the count at one,
+the linked target query yielded one reply group, and an absent query yielded
+zero groups. After a cold reopen the linked query still yielded the same one
+group. The native result remains `CANDIDATES`, `qualified:false`,
+`selection_used:false`, `answer:null` and `MEMORIA_MOBILE_UNRESOLVED`. This
+proves the source-addressed capture and durable diagnostic retrieval on one
+real device example. It does not establish factual truth or validate an
+automatic method for inferring reply links; the three legacy selection
+failures remain open.
+
+## Address-scoped reply inspection, 27 September 2026
+
+The opt-in `linked_reply_evidence` request now accepts both
+`target_source_id` and `target_sequence`. With this pair, `hierarchy_id`
+identifies the exact observed target and the runtime assembles only links
+addressed to it; the query trail must still be present in that target.
+The response marks `evidence_scope:"exact_target"`. Without the pair, the
+existing query-wide inspection remains available with
+`evidence_scope:"matching_targets"`. A missing half of the address is
+rejected. This prevents two identical texts in different conversations
+from being silently combined when inspecting one selected message; neither
+scope promotes a reply to a fact.
+
+The native fixture has multiple identical target texts with competing linked
+replies. The exact-target probe returns only the selected target's one group;
+the same source ID in another conversation and an unrelated query return zero.
+The result survives a cold reopen. Replaying the private 99-observation
+alpha.13 export with its one real link yields one group and one occurrence
+for that exact target both before and after reopening. Status remains
+`CANDIDATES`, `qualified:false`, `answer:null`. No raw source IDs or payloads
+from that export are stored here. The legacy synthetic gate remains 23/26.
