@@ -32,6 +32,8 @@ def test_learning_taught_wording_from_aligned_examples_on_native_bdr():
         'aligned': (10, 8, 0, 2),
         'shuffled': (6, 2, 0, 8),
         'wrong_attribute': (5, 2, 3, 8),
+        'mixed_one': (7, 8, 3, 2),
+        'mixed_all': (7, 8, 3, 2),
     }
     for case in results['aligned']:
         view = case['view']
@@ -42,3 +44,17 @@ def test_learning_taught_wording_from_aligned_examples_on_native_bdr():
             assert len(candidate['witnesses']) == 3
         if case['category'] in {'unseen_form', 'absent_attribute', 'absent_entity'}:
             assert not view['candidates'] and not view['absence_proven']
+
+    cautious = evaluate(library, require_agreement=True)
+    for arm, cases in results.items():
+        suppressed = []
+        for before, after in zip(cases, cautious[arm], strict=True):
+            original, guarded = before['view'], after['view']
+            assert original['candidates'] == guarded['candidates']
+            assert original['observation_sha256'] == guarded['observation_sha256']
+            if original['proposal_payload_id'] != guarded['proposal_payload_id']:
+                assert guarded['proposal_payload_id'] is None
+                assert guarded['reason'] == 'UNSUPPORTED_MATCHING_FRAMES'
+                assert guarded['frame_agreement']['unsupported_frame_ids']
+                suppressed.append((after['domain'], after['category']))
+        assert suppressed == ([('names', 'absent_attribute')] if arm.startswith('mixed_') else [])

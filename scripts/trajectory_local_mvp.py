@@ -66,6 +66,7 @@ class QueryRequest(TextRequest):
     experimental: bool = False
     attribute_frames: bool = False
     attribute_frame_matching: Literal["exact", "unicode_casefold"] = "exact"
+    attribute_frame_require_agreement: bool = False
 
 
 class BoundedWindow:
@@ -196,7 +197,8 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
             if request.attribute_frames:
                 reader = AttributeFrameReader(experimental_rows, request.region)
                 attributes["attribute_frames"] = reader.read(
-                    request.text, casefold=request.attribute_frame_matching == "unicode_casefold")
+                    request.text, casefold=request.attribute_frame_matching == "unicode_casefold",
+                    require_agreement=request.attribute_frame_require_agreement)
             verify(request.region, before)
             return dict(**attributes, scope=request.scope, status="CANDIDATES" if candidates else "UNRESOLVED",
                         candidates=candidates, experimental=experiment,

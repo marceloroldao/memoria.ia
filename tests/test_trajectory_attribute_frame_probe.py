@@ -250,6 +250,33 @@ def test_opt_in_real_http_preserves_default_results_and_cold_provenance(library,
         assert history(client)==before
 
 
+def test_http_agreement_mode_preserves_candidates_and_withholds_lone_proposal(library, tmp_path):
+    from trajectory_attribute_paraphrase_probe import DOMAINS, fixture
+    from trajectory_local_mvp_gate import server, check_response
+
+    _, observations = fixture('names', 'mixed_one')
+    request = dict(text=DOMAINS['names']['alternative'].format('monitor'),
+                   attribute_frames=True)
+    with server(library, tmp_path / 'state', 'frame-agreement-test') as client:
+        for row in observations:
+            check_response(client.post('/api/entries', json={
+                key: row[key] for key in ('text', 'source_kind')
+            }))
+        before = check_response(client.get('/api/entries'))
+        normal = check_response(client.post('/api/query', json=request))['attribute_frames']
+        guarded = check_response(client.post('/api/query', json=dict(
+            request, attribute_frame_require_agreement=True)))['attribute_frames']
+        assert texts(guarded) == {'Meu monitor fica no escritório.'}
+        assert guarded['candidates'] == normal['candidates']
+        assert normal['proposal_payload_id'] is not None
+        assert guarded['proposal_payload_id'] is None
+        assert guarded['reason'] == 'UNSUPPORTED_MATCHING_FRAMES'
+        assert len(guarded['frame_agreement']['matched_frame_ids']) == 2
+        assert len(guarded['frame_agreement']['unsupported_frame_ids']) == 1
+        assert not guarded['absence_proven']
+        assert check_response(client.get('/api/entries')) == before
+
+
 def test_opt_in_http_limit_rejects_whole_projection_without_affecting_default_query(library,tmp_path):
     from fastapi.testclient import TestClient
     from trajectory_local_mvp import create_app

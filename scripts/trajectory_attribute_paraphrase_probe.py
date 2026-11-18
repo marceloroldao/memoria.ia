@@ -58,7 +58,7 @@ DOMAINS = {
     },
 }
 
-ARMS = ('no_alternative', 'aligned', 'shuffled', 'wrong_attribute')
+ARMS = ('no_alternative', 'aligned', 'shuffled', 'wrong_attribute', 'mixed_one', 'mixed_all')
 
 
 def fixture(domain, arm):
@@ -83,12 +83,16 @@ def fixture(domain, arm):
                     correct = distractor
             add(correct)
             add('pausa', 'assistant_generated')
+            if form == 'alternative' and (arm == 'mixed_all' or (arm == 'mixed_one' and index == 0)):
+                add(data[form].format(entity))
+                add(distractor)
+                add('pausa', 'assistant_generated')
     for fact in data['facts']:
         add(fact)
     return region, rows
 
 
-def evaluate(library):
+def evaluate(library, *, require_agreement=False):
     results = {}
     for arm in ARMS:
         results[arm] = []
@@ -109,7 +113,7 @@ def evaluate(library):
 
                     def read(records):
                         reader = AttributeFrameReader(records, region)
-                        return [reader.read(data[form].format(entity))
+                        return [reader.read(data[form].format(entity), require_agreement=require_agreement)
                                 for _, form, entity, _ in data['cases']]
 
                     views = read(stored)
@@ -140,5 +144,6 @@ def evaluate(library):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--library', type=Path, required=True)
+    parser.add_argument('--require-agreement', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(evaluate(args.library), ensure_ascii=False, indent=2))
+    print(json.dumps(evaluate(args.library, require_agreement=args.require_agreement), ensure_ascii=False, indent=2))

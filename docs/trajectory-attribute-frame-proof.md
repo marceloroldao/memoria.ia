@@ -120,3 +120,25 @@ Cada condição usa um BDR temporário e compara registros e consultas completas
 PYTHONPATH=src python scripts/trajectory_attribute_paraphrase_probe.py \
   --library build/trajectory-native/libmemoria_mobile.so
 ```
+
+## Exemplos contraditórios e proposta única
+
+O ensaio anterior agora inclui duas condições mistas. Ambas conservam os três exemplos corretos. Uma acrescenta um exemplo de atributo errado, e a outra acrescenta três. Em cada condição mista, o leitor recuperou 8 dos 10 conteúdos esperados e trouxe três candidatos indevidos. Uma única demonstração errada já foi suficiente para produzir o mesmo conjunto de candidatos que três nos casos avaliados.
+
+O MVP local oferece a opção `attribute_frame_require_agreement: true` junto de `attribute_frames: true` em `POST /api/query`. Uma proposta única exige que todas as molduras que encaixam na consulta sustentem o mesmo registro. Se alguma moldura encaixa na pergunta e fica sem candidato, a resposta preserva os candidatos e as origens para inspeção, deixa `proposal_payload_id` vazio e informa `UNSUPPORTED_MATCHING_FRAMES`. A resposta inclui os identificadores das molduras que encaixaram e das que ficaram sem suporte.
+
+| Ensino | Propostas únicas no modo padrão | Propostas únicas com a opção | Propostas indevidas antes → depois |
+| --- | ---: | ---: | ---: |
+| Exemplos corretos | 4 | 4 | 0 → 0 |
+| Três corretos e um errado | 3 | 2 | 1 → 0 |
+| Três corretos e três errados | 3 | 2 | 1 → 0 |
+| Somente atributo errado na forma alternativa | 5 | 5 | 3 → 3 |
+
+Nas duas condições mistas, a única proposta barrada foi a localização do monitor para uma pergunta sobre seu nome. A moldura de nome encaixou na consulta e ficou sem candidato. A moldura ensinada pelo exemplo errado encontrou a localização. Os resultados com vários candidatos continuam sem proposta única e o modo mantém os textos e seus endereços. Quando o ensino da forma alternativa contém apenas o atributo errado, as molduras disponíveis podem concordar no erro. A concordância mede consistência entre molduras e a ferramenta continua sinalizando `qualified:false`.
+
+O ensaio automatizado verifica as respostas das duas opções antes e depois de reabrir o BDR. Para gerar os resultados por pergunta com a opção ativa:
+
+```bash
+PYTHONPATH=src python scripts/trajectory_attribute_paraphrase_probe.py \
+  --library build/trajectory-native/libmemoria_mobile.so --require-agreement
+```

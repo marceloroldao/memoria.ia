@@ -50,7 +50,7 @@ class AttributeFrameReader:
                         dict(source_origin=source_origin,target_origin=origin))
             previous[stream]=root,origin
 
-    def read(self,query,*,casefold=False):
+    def read(self,query,*,casefold=False,require_agreement=False):
         if not isinstance(query,str) or not query or len(query)>4096:
             raise ValueError('raw query requires 1..4096 characters')
         def for_matching(symbols):
@@ -61,6 +61,8 @@ class AttributeFrameReader:
         symbols=for_matching(encode(query,'unicode'))
         before=self.memory.snapshot(),self.memory.learning_state()
         candidates={}
+        matched_frames = set()
+        supported_frames = set()
         roots={root:for_matching(self.memory.expand(root)) for root in sorted(self.origins)}
         for frame in self.frames:
             # Unlike a substring cue, the whole question must fit the frame.
@@ -70,12 +72,17 @@ class AttributeFrameReader:
             variable=middle(symbols,source_prefix,for_matching(frame.source_suffix))
             if variable is None:
                 continue
+            if require_agreement:
+                frame_id = frame.frame_id
+                matched_frames.add(frame_id)
             head=for_matching(frame.target_prefix)+variable+for_matching(frame.target_bridge)
             target_suffix=for_matching(frame.target_suffix)
             for root,matching_symbols in roots.items():
                 if middle(matching_symbols,head,target_suffix) is None:
                     continue
                 candidates.setdefault(root,[]).append(frame)
+                if require_agreement:
+                    supported_frames.add(frame_id)
         result=[]
         for root,frames in sorted(candidates.items()):
             witnesses=[]
@@ -97,6 +104,13 @@ class AttributeFrameReader:
             query_recorded=False,factual_quality_status='NOT_EVALUATED')
         if casefold:
             view['matching_mode']='unicode_casefold'
+        if require_agreement:
+            unsupported = sorted(matched_frames - supported_frames)
+            view['frame_agreement'] = dict(matched_frame_ids=sorted(matched_frames),
+                                           unsupported_frame_ids=unsupported)
+            if view['proposal_payload_id'] is not None and unsupported:
+                view['proposal_payload_id'] = None
+                view['reason'] = 'UNSUPPORTED_MATCHING_FRAMES'
         return copy.deepcopy(view)
 
 
