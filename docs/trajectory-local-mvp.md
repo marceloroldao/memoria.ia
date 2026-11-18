@@ -84,3 +84,8 @@ A continuação em `docs/trajectory-local-mvp-variation.md` amplia a avaliação
 ## Próximo passo de produto
 
 Experimentar esta tela com memórias e perguntas variadas do usuário, guardar os casos sem evidência, com conteúdo extra e com informações concorrentes, e melhorar a recuperação sem transformar a consulta em aprendizado implícito. Depois disso, integrar o fluxo ao servidor de produto existente e validar a distribuição desejada. Conversação autônoma, geração de linguagem sem LLM e qualificação factual continuam sem comprovação.
+
+
+## Molduras por atributo, opção posterior
+
+A API aceita `attribute_frames:true` em `/api/query`, após ensino explícito por exemplos no mesmo escopo. O [relatório e contrato da opção](trajectory-attribute-frame-proof.md) mostram a comparação nas 37 perguntas, os candidatos com testemunhos, as perdas de cobertura e contraexemplos de ensino enganoso. A consulta comum e a rota `experimental:true` permanecem preservadas. A UI ainda não seleciona essa opção; nenhuma candidata vira resposta factual automaticamente.

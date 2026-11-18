@@ -24,6 +24,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field, field_validator
 
 from mobile_region_replay import NativeProbe
+from trajectory_attribute_frame_probe import AttributeFrameReader
 from trajectory_copy_relation_probe import copy_relations
 from trajectory_window_consistency_probe import WindowChanged, window_snapshot
 
@@ -63,6 +64,7 @@ class ObserveRequest(TextRequest):
 class QueryRequest(TextRequest):
     text: str = Field(min_length=1, max_length=4000)
     experimental: bool = False
+    attribute_frames: bool = False
 
 
 class BoundedWindow:
@@ -165,7 +167,7 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
             before = snapshot(request.region)
             rows = before["rows"]
             accepted = [r for r in rows if r["source_kind"] != "assistant_generated"]
-            if request.experimental and (len(rows) > 64 or sum(len(r["text"]) for r in rows) > 4096):
+            if (request.experimental or request.attribute_frames) and (len(rows) > 64 or sum(len(r["text"]) for r in rows) > 4096):
                 raise HTTPException(413, "Hipóteses experimentais limitadas a 64 entradas e 4096 caracteres; consulta comum continua disponível.")
             status, recall = app.state.native.call("resolve_structural_text", dict(
                 hierarchy_id=request.region, query=request.text, top_k=16))
@@ -189,8 +191,10 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
             # adapter; their actual native storage address stays in the journal.
             experimental_rows = [dict(r, hierarchy_id=request.region) if r["source_kind"] == "assistant_generated" else r for r in rows]
             experiment = copy_relations(experimental_rows, request.region, request.text) if request.experimental else None
+            attributes = ({"attribute_frames": AttributeFrameReader(experimental_rows, request.region).read(request.text)}
+                          if request.attribute_frames else {})
             verify(request.region, before)
-            return dict(scope=request.scope, status="CANDIDATES" if candidates else "UNRESOLVED",
+            return dict(**attributes, scope=request.scope, status="CANDIDATES" if candidates else "UNRESOLVED",
                         candidates=candidates, experimental=experiment,
                         answer=None, qualified=False, selected_target=None, selection_used=False,
                         query_recorded=False, revision=before["revision"], window_token=before["token"],

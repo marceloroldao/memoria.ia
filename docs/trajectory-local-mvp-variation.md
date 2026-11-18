@@ -70,3 +70,6 @@ Relatório: `benchmark-results/trajectory-local-mvp-variation.json`. Para execut
 ## Próxima investigação
 
 Testar se demonstrações brutas observadas de pergunta/conteúdo permitem aprender relações que discriminem o tipo de informação solicitado, com consultas novas e atributos não informados como controles. A seleção não deve receber a resposta do avaliador, deduzir fatos inexistentes nem reforçar suas próprias consultas. As molduras experimentais e suas falhas históricas continuam como referência; melhorar o assunto recuperado não basta para validar uma resposta.
+
+
+Continuação executada: [molduras aprendidas por atributo](trajectory-attribute-frame-proof.md). O ensaio conserva as 37 consultas e mede, separadamente, o efeito do ensino explícito e o leitor restrito; há melhora local de discriminação com perdas de conteúdo, sem aprovação de compreensão geral ou factual.
