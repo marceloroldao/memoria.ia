@@ -277,6 +277,40 @@ def test_http_agreement_mode_preserves_candidates_and_withholds_lone_proposal(li
         assert check_response(client.get('/api/entries')) == before
 
 
+def test_http_comparison_detects_disagreement_and_reused_examples(library, tmp_path):
+    from trajectory_attribute_paraphrase_probe import DOMAINS, fixture
+    from trajectory_local_mvp_gate import server, check_response
+
+    data = DOMAINS['names']
+    _, observations = fixture('names', 'wrong_attribute')
+    alternative = data['alternative'].format('rádio')
+    canonical = data['canonical'].format('rádio')
+    with server(library, tmp_path / 'state', 'frame-comparison-test') as client:
+        for row in observations:
+            check_response(client.post('/api/entries', json={
+                key: row[key] for key in ('text', 'source_kind')
+            }))
+        before = check_response(client.get('/api/entries'))
+
+        def compare(question, other):
+            return check_response(client.post('/api/query', json=dict(
+                text=question, attribute_frames=True, attribute_frame_require_agreement=True,
+                attribute_frame_comparison_query=other)))['attribute_frames']
+
+        different = compare(alternative, canonical)
+        assert different['proposal_payload_id'] is None
+        assert different['reason'] == 'DIFFERENT_PROPOSALS'
+        assert texts(different) == {'Meu rádio fica na bancada.'}
+        assert texts(different['comparison']) == {'Meu rádio se chama Faísca.'}
+        repeated = compare(canonical, canonical)
+        assert repeated['reason'] == 'SHARED_QUESTION_EXAMPLES'
+        assert repeated['proposal_payload_id'] is None and repeated['qualified'] is False
+        assert check_response(client.get('/api/entries')) == before
+        invalid = client.post('/api/query', json=dict(
+            text=canonical, attribute_frames=True, attribute_frame_comparison_query=' '))
+        assert invalid.status_code == 422
+
+
 def test_opt_in_http_limit_rejects_whole_projection_without_affecting_default_query(library,tmp_path):
     from fastapi.testclient import TestClient
     from trajectory_local_mvp import create_app

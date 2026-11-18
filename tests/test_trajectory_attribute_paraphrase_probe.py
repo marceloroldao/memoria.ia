@@ -34,6 +34,7 @@ def test_learning_taught_wording_from_aligned_examples_on_native_bdr():
         'wrong_attribute': (5, 2, 3, 8),
         'mixed_one': (7, 8, 3, 2),
         'mixed_all': (7, 8, 3, 2),
+        'wrong_both': (3, 0, 5, 10),
     }
     for case in results['aligned']:
         view = case['view']
@@ -58,3 +59,23 @@ def test_learning_taught_wording_from_aligned_examples_on_native_bdr():
                 assert guarded['frame_agreement']['unsupported_frame_ids']
                 suppressed.append((after['domain'], after['category']))
         assert suppressed == ([('names', 'absent_attribute')] if arm.startswith('mixed_') else [])
+
+    compared = evaluate(library, require_agreement=True, compare_forms=True)
+    for arm, cases in cautious.items():
+        removed = []
+        for before, after in zip(cases, compared[arm], strict=True):
+            initial, checked = before['view'], after['view']
+            assert initial['candidates'] == checked['candidates']
+            assert initial['observation_sha256'] == checked['observation_sha256']
+            if initial['proposal_payload_id'] != checked['proposal_payload_id']:
+                assert checked['proposal_payload_id'] is None
+                assert not before['exact_set']
+                removed.append(checked['comparison']['status'])
+        assert Counter(removed) == (
+            {'DIFFERENT_PROPOSALS': 2, 'COMPARISON_UNRESOLVED': 1}
+            if arm == 'wrong_attribute' else {})
+    for arm in ('aligned', 'wrong_both'):
+        transferred = [case for case in compared[arm] if case['category'] == 'new_entity']
+        assert all(case['view']['comparison']['status'] == 'MATCHING_PROPOSALS'
+                   and case['view']['proposal_payload_id'] is not None for case in transferred)
+        assert all(case['exact_set'] == (arm == 'aligned') for case in transferred)

@@ -142,3 +142,22 @@ O ensaio automatizado verifica as respostas das duas opções antes e depois de 
 PYTHONPATH=src python scripts/trajectory_attribute_paraphrase_probe.py \
   --library build/trajectory-native/libmemoria_mobile.so --require-agreement
 ```
+
+## Comparação entre duas formas de perguntar
+
+Quando a forma alternativa é ensinada com o atributo errado, suas molduras podem concordar entre si. O MVP local aceita uma segunda pergunta explícita no mesmo escopo, com a mesma política de consulta:
+
+```json
+{
+  "text": "Você lembra o nome do meu rádio?",
+  "attribute_frames": true,
+  "attribute_frame_require_agreement": true,
+  "attribute_frame_comparison_query": "Qual nome do meu rádio?"
+}
+```
+
+Com a opção ativa, a proposta única exige que ambas as consultas proponham o mesmo registro e que os textos das perguntas usados como exemplos de ensino sejam distintos entre os dois conjuntos de testemunhos. Repetir a mesma consulta e reaproveitar seus exemplos resulta em `SHARED_QUESTION_EXAMPLES` quando há uma proposta única. Os candidatos das duas consultas e suas origens continuam disponíveis. Uma divergência susta a proposta e fica visível em `comparison.status`. A opção compara duas perguntas fornecidas pelo chamador, que continua responsável por usar formas equivalentes para a mesma entidade. Exemplos textualmente distintos podem compartilhar a mesma fonte ou o mesmo erro de ensino.
+
+No ensaio com BDR, a comparação preservou as duas propostas corretas para a forma alternativa com ensino alinhado. Quando apenas o ensino da forma alternativa estava errado, suspendeu três propostas indevidas. Duas divergiam da forma canônica e uma ficou sem proposta canônica. Quando as duas formas foram ensinadas com o mesmo atributo errado, as duas propostas sobre novas entidades continuaram erradas e coincidiram na comparação. Propostas continuam com `qualified:false`.
+
+O teste automatizado compara candidatos, origens e resultados após reabrir o BDR. A reprodução usa `--require-agreement --compare-forms` no ensaio de paráfrases.

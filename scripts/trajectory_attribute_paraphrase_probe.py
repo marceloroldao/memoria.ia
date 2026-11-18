@@ -58,7 +58,7 @@ DOMAINS = {
     },
 }
 
-ARMS = ('no_alternative', 'aligned', 'shuffled', 'wrong_attribute', 'mixed_one', 'mixed_all')
+ARMS = ('no_alternative', 'aligned', 'shuffled', 'wrong_attribute', 'mixed_one', 'mixed_all', 'wrong_both')
 
 
 def fixture(domain, arm):
@@ -76,7 +76,9 @@ def fixture(domain, arm):
             continue
         for index, (entity, correct, distractor) in enumerate(data['training']):
             add(data[form].format(entity))
-            if form == 'alternative':
+            if arm == 'wrong_both':
+                correct = distractor
+            elif form == 'alternative':
                 if arm == 'shuffled':
                     correct = data['training'][(index + 1) % 3][1]
                 if arm == 'wrong_attribute':
@@ -92,7 +94,7 @@ def fixture(domain, arm):
     return region, rows
 
 
-def evaluate(library, *, require_agreement=False):
+def evaluate(library, *, require_agreement=False, compare_forms=False):
     results = {}
     for arm in ARMS:
         results[arm] = []
@@ -113,7 +115,9 @@ def evaluate(library, *, require_agreement=False):
 
                     def read(records):
                         reader = AttributeFrameReader(records, region)
-                        return [reader.read(data[form].format(entity), require_agreement=require_agreement)
+                        return [reader.read(data[form].format(entity), require_agreement=require_agreement,
+                                            comparison_query=data['canonical'].format(entity)
+                                            if compare_forms and form == 'alternative' else None)
                                 for _, form, entity, _ in data['cases']]
 
                     views = read(stored)
@@ -145,5 +149,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--library', type=Path, required=True)
     parser.add_argument('--require-agreement', action='store_true')
+    parser.add_argument('--compare-forms', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(evaluate(args.library, require_agreement=args.require_agreement), ensure_ascii=False, indent=2))
+    print(json.dumps(evaluate(args.library, require_agreement=args.require_agreement,
+                              compare_forms=args.compare_forms), ensure_ascii=False, indent=2))

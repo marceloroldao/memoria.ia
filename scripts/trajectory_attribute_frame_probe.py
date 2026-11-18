@@ -50,7 +50,7 @@ class AttributeFrameReader:
                         dict(source_origin=source_origin,target_origin=origin))
             previous[stream]=root,origin
 
-    def read(self,query,*,casefold=False,require_agreement=False):
+    def read(self,query,*,casefold=False,require_agreement=False,comparison_query=None):
         if not isinstance(query,str) or not query or len(query)>4096:
             raise ValueError('raw query requires 1..4096 characters')
         def for_matching(symbols):
@@ -111,6 +111,27 @@ class AttributeFrameReader:
             if view['proposal_payload_id'] is not None and unsupported:
                 view['proposal_payload_id'] = None
                 view['reason'] = 'UNSUPPORTED_MATCHING_FRAMES'
+        if comparison_query is not None:
+            comparison = self.read(comparison_query, casefold=casefold,
+                                   require_agreement=require_agreement)
+            proposal = view['proposal_payload_id']
+            other = comparison['proposal_payload_id']
+            if proposal is None:
+                status = 'PRIMARY_UNRESOLVED'
+            elif other is None:
+                status = 'COMPARISON_UNRESOLVED'
+            elif proposal != other:
+                status = 'DIFFERENT_PROPOSALS'
+            else:
+                primary_sources = {w['source_payload_id'] for w in result[0]['witnesses']}
+                comparison_sources = {w['source_payload_id'] for w in comparison['candidates'][0]['witnesses']}
+                status = ('SHARED_QUESTION_EXAMPLES' if not primary_sources.isdisjoint(comparison_sources)
+                          else 'MATCHING_PROPOSALS')
+            view['comparison'] = dict(query=comparison_query, status=status, reason=comparison['reason'],
+                                      proposal_payload_id=other, candidates=comparison['candidates'])
+            if proposal is not None and status != 'MATCHING_PROPOSALS':
+                view['proposal_payload_id'] = None
+                view['reason'] = status
         return copy.deepcopy(view)
 
 

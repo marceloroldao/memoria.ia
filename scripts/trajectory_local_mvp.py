@@ -67,6 +67,14 @@ class QueryRequest(TextRequest):
     attribute_frames: bool = False
     attribute_frame_matching: Literal["exact", "unicode_casefold"] = "exact"
     attribute_frame_require_agreement: bool = False
+    attribute_frame_comparison_query: str | None = Field(default=None, min_length=1, max_length=4000)
+
+    @field_validator("attribute_frame_comparison_query")
+    @classmethod
+    def comparison_nonempty(cls, value):
+        if value is not None and not value.strip():
+            raise ValueError("comparison query must contain non-whitespace characters")
+        return value
 
 
 class BoundedWindow:
@@ -198,7 +206,8 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
                 reader = AttributeFrameReader(experimental_rows, request.region)
                 attributes["attribute_frames"] = reader.read(
                     request.text, casefold=request.attribute_frame_matching == "unicode_casefold",
-                    require_agreement=request.attribute_frame_require_agreement)
+                    require_agreement=request.attribute_frame_require_agreement,
+                    comparison_query=request.attribute_frame_comparison_query)
             verify(request.region, before)
             return dict(**attributes, scope=request.scope, status="CANDIDATES" if candidates else "UNRESOLVED",
                         candidates=candidates, experimental=experiment,
