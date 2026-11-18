@@ -98,3 +98,25 @@ PYTHONPATH=src python scripts/trajectory_attribute_wording_probe.py
 ```
 
 A avaliação das 24 perguntas roda na projeção em Python. A integração por HTTP usa o BDR nativo e confirma a igualdade das origens antes e depois do reinício.
+
+## Transferência de uma paráfrase ensinada
+
+O ensaio acrescenta três pares de demonstração por domínio e consulta entidades que ficaram fora do ensino. Para nomes, a forma adicional é “Você lembra o nome do meu …?”. Para tensão, é “Qual é a tensão em volts do …?”. Os registros de avaliação incluem atributos concorrentes da mesma entidade e duas ocorrências com valores incompatíveis. As doze consultas ficam fora da memória, e suas referências entram apenas no avaliador.
+
+| Ensino da forma alternativa | Conjuntos exatos | Conteúdos recuperados | Extras | Perdidos |
+| --- | ---: | ---: | ---: | ---: |
+| Ausente | 6/12 | 2 | 0 | 8 |
+| Entidade e atributo correspondentes | 10/12 | 8 | 0 | 2 |
+| Mesmos textos, destinos de outras entidades | 6/12 | 2 | 0 | 8 |
+| Entidade correspondente, atributo errado | 5/12 | 2 | 3 | 8 |
+
+Com pares correspondentes, as duas novas entidades tiveram candidatos corretos, os dois conflitos conservaram ambos os candidatos e os quatro controles de ausência ficaram vazios. As duas formas de pergunta fora do ensino continuaram sem candidatos. Permutar os destinos das demonstrações conserva a frequência dos textos, mas remove o ganho. A correspondência entre as ocorrências de ensino importa para a transferência observada.
+
+O ensino de atributo errado produziu três candidatos indevidos. Em um deles, perguntar o nome do monitor trouxe sua localização. O ensaio demonstra transferência de uma forma ensinada a outras entidades e registra a dependência da qualidade dos exemplos. As hipóteses mantêm `qualified:false`.
+
+Cada condição usa um BDR temporário e compara registros e consultas completas antes e depois de reabrir a memória. A leitura conserva texto e endereços das ocorrências aceitas. O relatório por pergunta é reproduzível com o comando abaixo.
+
+```bash
+PYTHONPATH=src python scripts/trajectory_attribute_paraphrase_probe.py \
+  --library build/trajectory-native/libmemoria_mobile.so
+```

@@ -113,6 +113,8 @@ on:
       - 'tests/test_trajectory_feedback_transfer_stress.py'
       - 'scripts/trajectory_attribute_frame_probe.py'
       - 'scripts/trajectory_attribute_wording_probe.py'
+      - 'scripts/trajectory_attribute_paraphrase_probe.py'
+      - 'tests/test_trajectory_attribute_paraphrase_probe.py'
       - 'tests/test_trajectory_attribute_frame_probe.py'
       - 'docs/trajectory-attribute-frame-proof.md'
       - 'benchmark-results/trajectory-attribute-frame.json.gz'
@@ -203,7 +205,7 @@ jobs:
           MEMORIA_NATIVE_LIBRARY: build/trajectory-native/libmemoria_mobile.so
           PYTHONPATH: src
         run: |
-          python -m pytest -q tests/test_trajectory_attribute_frame_probe.py tests/test_trajectory_analogy_frame_probe.py tests/test_trajectory_native_evidence_join_probe.py tests/test_trajectory_local_mvp.py tests/test_trajectory_local_mvp_variation.py
+          python -m pytest -q tests/test_trajectory_attribute_paraphrase_probe.py tests/test_trajectory_attribute_frame_probe.py tests/test_trajectory_analogy_frame_probe.py tests/test_trajectory_native_evidence_join_probe.py tests/test_trajectory_local_mvp.py tests/test_trajectory_local_mvp_variation.py
           python scripts/trajectory_attribute_frame_probe.py --library build/trajectory-native/libmemoria_mobile.so --output /tmp/trajectory-attribute-frame.json
           python - <<'PYCODE'
           import gzip
