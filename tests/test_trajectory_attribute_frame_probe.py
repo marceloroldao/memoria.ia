@@ -311,6 +311,72 @@ def test_http_comparison_detects_disagreement_and_reused_examples(library, tmp_p
         assert invalid.status_code == 422
 
 
+def test_http_teaching_corrections_preserve_native_history_across_restart(library, tmp_path):
+    from trajectory_attribute_paraphrase_probe import DOMAINS, correction_fixture
+    from trajectory_local_mvp_gate import server, check_response
+
+    state, key = tmp_path / 'state', 'frame-correction-test'
+
+    def ingest(client, scope, rows):
+        return [check_response(client.post('/api/entries', json=dict(
+            scope=scope, text=row['text'], source_kind=row['source_kind'])))['entry'] for row in rows]
+
+    def history(client, scope):
+        return check_response(client.get('/api/entries', params={'scope': scope}))
+
+    def query(client, scope, form, entity, exclusions):
+        template = DOMAINS[scope]
+        body = dict(scope=scope, text=template[form].format(entity), attribute_frames=True,
+                    attribute_frame_require_agreement=True,
+                    attribute_frame_excluded_teaching_targets=exclusions)
+        if form == 'alternative':
+            body['attribute_frame_comparison_query'] = template['canonical'].format(entity)
+        return check_response(client.post('/api/query', json=body))['attribute_frames']
+
+    saved = {}
+    with server(library, state, key) as client:
+        for scope, domain in DOMAINS.items():
+            _, original, additions, removed = correction_fixture(scope)
+            stored = ingest(client, scope, original)
+            exclusions = [{field: row[field] for field in ('source_id', 'sequence')}
+                          for row in (stored[sequence - 1] for _, _, sequence in removed)]
+            _, form, entity, expected = domain['cases'][0]
+            wrong = query(client, scope, form, entity, [])
+            assert wrong['comparison']['status'] == 'MATCHING_PROPOSALS'
+            assert texts(wrong).isdisjoint(expected)
+            assert query(client, scope, form, entity, exclusions)['proposal_payload_id'] is None
+
+            ingest(client, scope, additions)
+            before = history(client, scope)
+            mixed = query(client, scope, form, entity, [])
+            assert texts(mixed) == set(expected) | texts(wrong)
+            assert mixed['proposal_payload_id'] is None
+
+            corrected = []
+            for category, form, entity, expected in domain['cases']:
+                view = query(client, scope, form, entity, exclusions)
+                assert texts(view) == (set() if category == 'unseen_form' else set(expected))
+                assert (view['proposal_payload_id'] is not None) == (category in {'canonical', 'new_entity'})
+                assert {item['target_origin'][1] for item in view['excluded_teaching_transitions']} == {
+                    item['source_id'] for item in exclusions
+                }
+                assert not view['qualified']
+                corrected.append(view)
+            invalid = client.post('/api/query', json=dict(
+                scope=scope, text='teste', attribute_frames=True,
+                attribute_frame_excluded_teaching_targets=[dict(exclusions[0], sequence=999)]))
+            assert invalid.status_code == 422
+            assert history(client, scope) == before
+            assert set(row['source_id'] for row in stored) <= {row['source_id'] for row in before['entries']}
+            saved[scope] = before, exclusions, corrected
+
+    with server(library, state, key) as client:
+        for scope, (before, exclusions, corrected) in saved.items():
+            assert history(client, scope) == before
+            assert [query(client, scope, form, entity, exclusions)
+                    for _, form, entity, _ in DOMAINS[scope]['cases']] == corrected
+
+
 def test_opt_in_http_limit_rejects_whole_projection_without_affecting_default_query(library,tmp_path):
     from fastapi.testclient import TestClient
     from trajectory_local_mvp import create_app

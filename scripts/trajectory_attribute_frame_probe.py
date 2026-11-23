@@ -29,7 +29,7 @@ class AttributeFrameReader:
     Reuses learn_frames without adding attribute names, question classification,
     label access, a ranking threshold, or an observed-query requirement.
     """
-    def __init__(self, rows, region):
+    def __init__(self, rows, region, *, excluded_targets=()):
         if not isinstance(region,str) or not region.strip():
             raise ValueError('explicit nonempty region required')
         self.region=region
@@ -37,18 +37,27 @@ class AttributeFrameReader:
         if len(local)>64 or sum(len(r['text']) for r in local)>4096:
             raise ValueError('frame projection limited to 64 rows and 4096 characters')
         self.memory,self.origins=adapt_regions(local)
-        self.frames=learn_frames(self.memory)
         self.observation_sha256=fingerprint(local)
         previous={};self.pair_origins={}
+        excluded = set(excluded_targets)
+        excluded_ids = set()
+        self.excluded_targets = []
         for row in self.memory.snapshot()['observations']:
             stream=row['stream_id'];root=row['payload_id']
             origin=address(local[int(row['observation_id'].split(':')[1])])
             if stream in previous:
                 source,source_origin=previous[stream]
                 if source!=root:
-                    self.pair_origins.setdefault((source,root,stream),[]).append(
-                        dict(source_origin=source_origin,target_origin=origin))
+                    if origin in excluded:
+                        excluded_ids.add(row['observation_id'])
+                        self.excluded_targets.append(dict(source_origin=source_origin,target_origin=origin))
+                    else:
+                        self.pair_origins.setdefault((source,root,stream),[]).append(
+                            dict(source_origin=source_origin,target_origin=origin))
             previous[stream]=root,origin
+        if len(excluded_ids) != len(excluded):
+            raise ValueError('excluded targets must identify existing teaching transitions in this scope')
+        self.frames=learn_frames(self.memory, excluded_targets=excluded_ids)
 
     def read(self,query,*,casefold=False,require_agreement=False,comparison_query=None):
         if not isinstance(query,str) or not query or len(query)>4096:
@@ -104,6 +113,8 @@ class AttributeFrameReader:
             query_recorded=False,factual_quality_status='NOT_EVALUATED')
         if casefold:
             view['matching_mode']='unicode_casefold'
+        if self.excluded_targets:
+            view['excluded_teaching_transitions'] = self.excluded_targets
         if require_agreement:
             unsupported = sorted(matched_frames - supported_frames)
             view['frame_agreement'] = dict(matched_frame_ids=sorted(matched_frames),

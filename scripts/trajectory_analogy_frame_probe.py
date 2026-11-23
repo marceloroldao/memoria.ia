@@ -53,11 +53,12 @@ class Frame:
         return blake2b(repr(self).encode(), digest_size=16).hexdigest()
 
 
-def learn_frames(memory):
+def learn_frames(memory, *, excluded_targets=()):
     previous, pairs = {}, set()
     for row in memory.snapshot()['observations']:
         scope = row['hierarchy_id'], row['stream_id']
-        if scope in previous and previous[scope] != row['payload_id']:
+        if (scope in previous and previous[scope] != row['payload_id']
+                and row['observation_id'] not in excluded_targets):
             pairs.add((previous[scope], row['payload_id'], row['stream_id']))
         previous[scope] = row['payload_id']
     frames = set()

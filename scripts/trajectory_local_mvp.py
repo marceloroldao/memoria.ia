@@ -61,6 +61,11 @@ class ObserveRequest(TextRequest):
     source_kind: Literal["user_turn", "assistant_generated"] = "user_turn"
 
 
+class TeachingTarget(BaseModel):
+    source_id: str = Field(min_length=1, max_length=256)
+    sequence: int = Field(ge=0, strict=True)
+
+
 class QueryRequest(TextRequest):
     text: str = Field(min_length=1, max_length=4000)
     experimental: bool = False
@@ -68,6 +73,7 @@ class QueryRequest(TextRequest):
     attribute_frame_matching: Literal["exact", "unicode_casefold"] = "exact"
     attribute_frame_require_agreement: bool = False
     attribute_frame_comparison_query: str | None = Field(default=None, min_length=1, max_length=4000)
+    attribute_frame_excluded_teaching_targets: list[TeachingTarget] = Field(default_factory=list, max_length=64)
 
     @field_validator("attribute_frame_comparison_query")
     @classmethod
@@ -176,6 +182,9 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
         with lock:
             before = snapshot(request.region)
             rows = before["rows"]
+            exclusions = request.attribute_frame_excluded_teaching_targets
+            if exclusions and not request.attribute_frames:
+                raise HTTPException(422, "A exclusão de exemplos exige attribute_frames")
             accepted = [r for r in rows if r["source_kind"] != "assistant_generated"]
             if (request.experimental or request.attribute_frames) and (len(rows) > 64 or sum(len(r["text"]) for r in rows) > 4096):
                 raise HTTPException(413, "Hipóteses experimentais limitadas a 64 entradas e 4096 caracteres; consulta comum continua disponível.")
@@ -203,7 +212,12 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
             experiment = copy_relations(experimental_rows, request.region, request.text) if request.experimental else None
             attributes = {}
             if request.attribute_frames:
-                reader = AttributeFrameReader(experimental_rows, request.region)
+                try:
+                    reader = AttributeFrameReader(experimental_rows, request.region, excluded_targets={
+                        (request.region, target.source_id, target.sequence) for target in exclusions
+                    })
+                except ValueError as exc:
+                    raise HTTPException(422, str(exc)) from exc
                 attributes["attribute_frames"] = reader.read(
                     request.text, casefold=request.attribute_frame_matching == "unicode_casefold",
                     require_agreement=request.attribute_frame_require_agreement,

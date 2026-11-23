@@ -94,6 +94,19 @@ def fixture(domain, arm):
     return region, rows
 
 
+def correction_fixture(domain):
+    """Replay wrong teaching, then append aligned examples at new addresses."""
+    region, initial = fixture(domain, 'wrong_both')
+    _, aligned = fixture(domain, 'aligned')
+    teaching_count = 2 * len(DOMAINS[domain]['training']) * 3
+    additions = [initial[2], *aligned[:teaching_count]]
+    appended = [dict(row, source_id=f'row-{index}', sequence=index)
+                for index, row in enumerate(additions, start=len(initial) + 1)]
+    excluded = [(region, row['source_id'], row['sequence'])
+                for row in initial[1:teaching_count:3]]
+    return region, initial, appended, excluded
+
+
 def evaluate(library, *, require_agreement=False, compare_forms=False):
     results = {}
     for arm in ARMS:

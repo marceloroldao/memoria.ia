@@ -161,3 +161,25 @@ Com a opção ativa, a proposta única exige que ambas as consultas proponham o 
 No ensaio com BDR, a comparação preservou as duas propostas corretas para a forma alternativa com ensino alinhado. Quando apenas o ensino da forma alternativa estava errado, suspendeu três propostas indevidas. Duas divergiam da forma canônica e uma ficou sem proposta canônica. Quando as duas formas foram ensinadas com o mesmo atributo errado, as duas propostas sobre novas entidades continuaram erradas e coincidiram na comparação. Propostas continuam com `qualified:false`.
 
 O teste automatizado compara candidatos, origens e resultados após reabrir o BDR. A reprodução usa `--require-agreement --compare-forms` no ensaio de paráfrases.
+
+## Correção de exemplos por endereço
+
+Quando duas formas de perguntar aprendem o mesmo atributo errado, acrescente exemplos corrigidos pelo fluxo de registro existente. O MVP local aceita uma lista de destinos a desconsiderar na aprendizagem durante uma consulta. Cada destino é identificado pelo par `source_id` e `sequence` devolvido em `/api/entries` no escopo consultado.
+
+```json
+{
+  "text": "Você lembra o nome do meu rádio?",
+  "attribute_frames": true,
+  "attribute_frame_require_agreement": true,
+  "attribute_frame_comparison_query": "Qual nome do meu rádio?",
+  "attribute_frame_excluded_teaching_targets": [
+    {"source_id": "local:exemplo", "sequence": 2}
+  ]
+}
+```
+
+O endereço no exemplo é ilustrativo. A lista exclui a transição que chega a cada destino indicado. A transição seguinte conserva sua origem original, e o leitor não liga por atalho os registros anteriores e posteriores. O mesmo filtro vale para a pergunta principal e para a de comparação. A resposta apresenta as origens e os destinos desconsiderados em `excluded_teaching_transitions`. Endereços sem uma transição correspondente no escopo recebem HTTP 422.
+
+A lista faz parte da consulta. O BDR preserva tanto o histórico original quanto os exemplos acrescentados. Para repetir a correção após reiniciar, envie os mesmos endereços. Os registros antigos continuam recuperáveis como conteúdo, e identificar quais ligações estavam erradas depende da revisão do usuário ou do chamador.
+
+No teste por HTTP, perguntar o nome do rádio inicialmente propunha sua localização. Perguntar a tensão do adaptador propunha sua corrente. Só acrescentar exemplos corretos levou a candidatos concorrentes. Ao também desconsiderar as seis transições erradas de cada escopo, ambas as novas entidades receberam o candidato correto, os conflitos de valores conservaram dois candidatos e os controles de ausência ficaram vazios. As duas formas de pergunta fora do ensino continuaram sem candidatos. A reabertura do BDR reproduziu as respostas corrigidas e devolveu o histórico completo.
