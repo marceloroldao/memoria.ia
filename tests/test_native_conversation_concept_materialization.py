@@ -193,3 +193,69 @@ def test_confirmed_entity_aliases_resolve_attributes_after_reopen(tmp_path):
         assert service.resolve(
             query="Qual era a cor do medidor da feira antes?", session_id="workshop",
         ).status == "UNRESOLVED"
+
+
+@pytest.mark.parametrize(("canonical", "alias", "old_text", "new_text", "old_query", "new_query",
+                          "property_name", "old_value", "new_value"), [
+    (
+        "maleta Norte", "caixa de ferramentas",
+        "A maleta Norte pesa 9,5 quilos.", "A caixa de ferramentas pesa 12 quilos.",
+        "Quanto pesava a caixa de ferramentas antes?", "Qual o peso atual da caixa de ferramentas?",
+        "weight", "9,5 quilos", "12 quilos",
+    ),
+    (
+        "bicicleta Índigo", "bike de passeio",
+        "A dona da bicicleta Índigo é Lia.", "A bike de passeio pertence a Iara.",
+        "A quem pertencia a bike de passeio antes?", "Quem é a proprietária da bike de passeio agora?",
+        "owner", "Lia", "Iara",
+    ),
+    (
+        "ônibus Aurora", "circular da praça",
+        "O motorista do ônibus Aurora é Rui.", "O motorista do circular da praça é Caio.",
+        "Quem dirigia o circular da praça antes?", "Quem é o motorista do circular da praça agora?",
+        "driver", "Rui", "Caio",
+    ),
+])
+def test_confirmed_aliases_resolve_more_temporal_attributes(
+    tmp_path, canonical, alias, old_text, new_text, old_query, new_query,
+    property_name, old_value, new_value,
+):
+    library_path = os.environ.get("MEMORIA_NATIVE_LIB")
+    if not library_path:
+        pytest.skip("MEMORIA_NATIVE_LIB is required for the native catalog integration test")
+
+    def open_service():
+        return closing(NativeConversationService(
+            library_path=Path(library_path),
+            data_dir=tmp_path / "native",
+            organization_id="org-temporal-attributes",
+            concept_namespace="objects",
+        ))
+
+    with open_service() as service:
+        service.materialize_concept_catalog(NativeConceptCatalog(
+            schema=1,
+            namespace="objects",
+            concepts=({
+                "concept_id": "object-a",
+                "namespace": "objects",
+                "canonical": canonical,
+                "aliases": [alias],
+            },),
+            fingerprint="sha256:" + "c" * 64,
+        ))
+        new = service.ingest(role="user", text=new_text, session_id="habits", order=20)
+        old = service.ingest(role="user", text=old_text, session_id="habits", order=10)
+        service.ingest(role="user", text=new_text, session_id="other", order=1)
+        service.ingest(role="assistant", text=old_text, session_id="habits", order=40)
+        service.flush()
+
+    with open_service() as service:
+        for query, value in ((old_query, old_value), (new_query, new_value)):
+            result = service.resolve(query=query, session_id="habits")
+            assert result.memory_ids == (old.memory_ids[0], new.memory_ids[0])
+            assert result.relations[0]["predicate"] == property_name
+            assert result.relations[0]["object"] == value
+        assert service.resolve(query=old_query, session_id="other").status == "UNRESOLVED"
+        missing_entity = new_query.replace(alias, "computador ausente")
+        assert service.resolve(query=missing_entity, session_id="habits").status == "UNRESOLVED"

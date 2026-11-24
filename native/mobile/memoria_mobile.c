@@ -666,21 +666,30 @@ static int temporal_target_from_query(memoria_mobile_handle *h, const char *quer
 }
 
 /* Typed questions select a property before looking for an entity mention. */
-static const char *temporal_requested_property(const char *query, const char **entity_query) {
+static const char *temporal_requested_property(const char *query, const char **entity_query,
+                                                int *requires_typed_history) {
     static const struct {
         const char *cue;
         const char *property;
+        int requires_typed_history;
     } cues[] = {
-        {"cor", "color"}, {"tensao", "voltage"}, {"volts", "voltage"},
-        {"a que horas", "departure_time"}, {"horario de partida", "departure_time"},
-        {"onde", "location"},
+        {"cor", "color", 0}, {"tensao", "voltage", 0}, {"volts", "voltage", 0},
+        {"a que horas", "departure_time", 0}, {"horario de partida", "departure_time", 0},
+        {"horario de saida", "departure_time", 0}, {"onde", "location", 0},
+        {"quanto pesa", "weight", 1}, {"quanto pesava", "weight", 1}, {"peso", "weight", 1},
+        {"a quem pertence", "owner", 1}, {"a quem pertencia", "owner", 1},
+        {"dono", "owner", 1}, {"dona", "owner", 1}, {"proprietario", "owner", 1},
+        {"proprietaria", "owner", 1},
+        {"quem dirige", "driver", 1}, {"quem dirigia", "driver", 1},
+        {"motorista", "driver", 1},
     };
-    for (size_t i = 0; i < sizeof(cues) / sizeof(cues[0]); ++i) {
-        const size_t length = strlen(cues[i].cue);
-        for (const char *p = query; *p; ++p) {
-            if ((p == query || p[-1] == ' ') && strncmp(p, cues[i].cue, length) == 0 &&
-                (p[length] == 0 || p[length] == ' ')) {
+    for (const char *p = query; *p; ++p) {
+        if (p != query && p[-1] != ' ') continue;
+        for (size_t i = 0; i < sizeof(cues) / sizeof(cues[0]); ++i) {
+            const size_t length = strlen(cues[i].cue);
+            if (strncmp(p, cues[i].cue, length) == 0 && (p[length] == 0 || p[length] == ' ')) {
                 *entity_query = p + length;
+                *requires_typed_history = cues[i].requires_typed_history;
                 return cues[i].property;
             }
         }
@@ -720,7 +729,7 @@ static int typed_temporal_facts(
              strcmp(turn->source_type, "user_correction") != 0 &&
              strcmp(turn->source_type, "direct_observation") != 0 &&
              strcmp(turn->source_type, "external_import") != 0)) continue;
-        if (!memoria_extract_temporal_relation(turn->text, relation)) continue;
+        if (!memoria_extract_attribute_relation(turn->text, relation)) continue;
         if (concept_id) {
             memoria_concept_resolution source =
                 memoria_concept_resolve(concepts, concept_namespace, relation->subject);
@@ -762,7 +771,7 @@ static int try_temporal_response(
     const char *entity_query = NULL;
     const char *concept_id = NULL;
     memoria_concept_rewrite_result mention;
-    int target_state, typed = 0;
+    int target_state, typed = 0, requires_typed_history = 0;
     memoria_temporal_relation_source *sources = NULL;
     memoria_state_fact *facts = NULL;
     size_t source_count = 0, fact_capacity = 0, fact_count = 0, i;
@@ -776,7 +785,8 @@ static int try_temporal_response(
     if (!temporal_query_flags(query, &wants_previous, &wants_current)) return 0;
     if (!fallback_turn &&
         memoria_concept_normalize(query, normalized_query, sizeof(normalized_query)) == MEMORIA_CONCEPT_OK)
-        requested_property = temporal_requested_property(normalized_query, &entity_query);
+        requested_property = temporal_requested_property(normalized_query, &entity_query,
+                                                         &requires_typed_history);
 
     if (requested_property && concept_namespace[0]) {
         mention = memoria_concept_rewrite_query(memoria_concept_runtime_index(h->concept_runtime),
@@ -806,7 +816,7 @@ static int try_temporal_response(
             free(typed_relations);
             free(facts);
             typed_relations = NULL;
-            if (typed < 0) {
+            if (typed < 0 || requires_typed_history) {
                 *status_out = typed_temporal_unresolved(out, "temporal entity or requested property is not uniquely justified");
                 return 1;
             }
@@ -889,13 +899,10 @@ static int try_temporal_response(
     }
     int relations_ok;
     if (typed) {
-        memoria_relation selected_relation = typed_target;
-        const turn_row *selected_turn = current_turn;
-        if (wants_previous && !wants_current) {
-            snprintf(selected_relation.object, sizeof(selected_relation.object), "%s", state.previous_value);
-            selected_turn = previous_turn;
-        }
-        if (concept_id && !memoria_extract_temporal_relation(selected_turn->text, &selected_relation)) {
+        memoria_relation selected_relation = {0};
+        const turn_row *selected_turn = wants_previous && !wants_current
+            ? previous_turn : current_turn;
+        if (!memoria_extract_attribute_relation(selected_turn->text, &selected_relation)) {
             *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
             return 1;
         }
