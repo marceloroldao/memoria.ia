@@ -990,18 +990,33 @@ static const char *attribute_question(const char *query, char *entity, char *sur
 
 static int try_attribute_response(
     memoria_mobile_handle *h, const char *query, const char *namespace_id,
-    memoria_mobile_buffer *out, memoria_mobile_status *status
+    const char *concept_namespace, memoria_mobile_buffer *out, memoria_mobile_status *status
 ) {
     char entity[96], entity_surface[96], subject[96], subject_surface[96], selected_surface[96];
     char relations[1024];
     const char *property;
     const turn_row *selected = NULL;
     memoria_relation result = {0};
+    const memoria_concept_index *concepts = NULL;
+    memoria_concept_resolution identity = {0};
     int value_conflict = 0, ambiguous_alias = 0, exact_match = 0;
 
     if (temporal_query_flags(query, NULL, NULL)) return 0;
     property = attribute_question(query, entity, entity_surface, sizeof(entity));
     if (!property) return 0;
+
+    if (concept_namespace[0]) {
+        concepts = memoria_concept_runtime_index(h->concept_runtime);
+        identity = memoria_concept_resolve(concepts, concept_namespace, entity_surface);
+        if (identity.reason == MEMORIA_CONCEPT_REASON_AMBIGUOUS) {
+            *status = set_response(out,
+                "{\"status\":\"UNRESOLVED\",\"attribute_resolution_used\":true,"
+                "\"reason\":\"attribute entity is ambiguous in the concept catalog\"}",
+                MEMORIA_MOBILE_UNRESOLVED);
+            return 1;
+        }
+    }
+    const int confirmed_identity = identity.status == MEMORIA_CONCEPT_HIT;
     for (size_t i = 0; i < h->turn_count; ++i) {
         const turn_row *turn = &h->turns[i];
         memoria_relation relation = {0};
@@ -1010,14 +1025,22 @@ static int try_attribute_response(
             !turn->text || strchr(turn->text, '?') ||
             !memoria_extract_attribute_relation(turn->text, &relation) ||
             strcmp(property, relation.predicate) != 0 ||
-            !attribute_entity_key(relation.subject, subject, subject_surface, sizeof(subject)) ||
-            strcmp(entity, subject) != 0) continue;
+            !attribute_entity_key(relation.subject, subject, subject_surface, sizeof(subject))) continue;
 
-        int exact = strcmp(entity_surface, subject_surface) == 0;
-        if (exact_match && !exact) continue;
-        if (selected && exact == exact_match && strcmp(selected_surface, subject_surface) != 0) {
-            ambiguous_alias = 1;
-            continue;
+        int exact = 0;
+        if (confirmed_identity) {
+            memoria_concept_resolution source_identity =
+                memoria_concept_resolve(concepts, concept_namespace, subject_surface);
+            if (source_identity.status != MEMORIA_CONCEPT_HIT ||
+                strcmp(source_identity.concept_id, identity.concept_id) != 0) continue;
+        } else {
+            if (strcmp(entity, subject) != 0) continue;
+            exact = strcmp(entity_surface, subject_surface) == 0;
+            if (exact_match && !exact) continue;
+            if (selected && exact == exact_match && strcmp(selected_surface, subject_surface) != 0) {
+                ambiguous_alias = 1;
+                continue;
+            }
         }
         if (!selected || exact > exact_match || turn->order > selected->order) {
             if (exact > exact_match) ambiguous_alias = 0;
@@ -1451,7 +1474,7 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         free(namespace_id); free(concept_namespace); free(query); free(json);
         return unresolved(out, "native memory store is empty");
     }
-    if (try_attribute_response(h, query, namespace_id, out, &response_status)) {
+    if (try_attribute_response(h, query, namespace_id, concept_namespace, out, &response_status)) {
         free(query); free(namespace_id); free(concept_namespace); free(json);
         return response_status;
     }

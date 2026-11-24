@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from contextlib import closing
+import os
+from pathlib import Path
+
+import pytest
+
 from memoria_resolutiva.native_concept_catalog import NativeConceptCatalog
 from memoria_resolutiva.native_conversation import NativeConversationService
 
@@ -67,3 +73,93 @@ def test_native_conversation_materialization_preserves_idempotent_noop(tmp_path)
         runtime_manager=_Manager(lease),
     )
     assert service.materialize_concept_catalog(_catalog()) is False
+
+
+def test_confirmed_entity_aliases_resolve_attributes_after_reopen(tmp_path):
+    library_path = os.environ.get("MEMORIA_NATIVE_LIB")
+    if not library_path:
+        pytest.skip("MEMORIA_NATIVE_LIB is required for the native catalog integration test")
+
+    def open_service(concept_namespace="equipment"):
+        return closing(NativeConversationService(
+            library_path=Path(library_path),
+            data_dir=tmp_path / "native",
+            organization_id="org-equipment",
+            concept_namespace=concept_namespace,
+        ))
+
+    def catalog(fingerprint_char, *concepts):
+        return NativeConceptCatalog(
+            schema=1,
+            namespace="equipment",
+            concepts=concepts,
+            fingerprint="sha256:" + fingerprint_char * 64,
+        )
+
+    scale = {
+        "concept_id": "scale-lotus",
+        "namespace": "equipment",
+        "canonical": "balança Lótus",
+        "aliases": ["medidor da feira", "aferidor da bancada", "equipamento"],
+    }
+    bag = {
+        "concept_id": "bag-north",
+        "namespace": "equipment",
+        "canonical": "maleta Norte",
+        "aliases": ["equipamento"],
+    }
+    query = "Qual é a cor do medidor da feira?"
+
+    with open_service() as service:
+        previous = service.ingest(
+            role="user", text="A balança Lótus é verde.", session_id="workshop", order=10,
+        )
+        service.ingest(
+            role="user", text="O medidor da feira é a balança Lótus.", session_id="workshop", order=11,
+        )
+        assert service.resolve(query=query, session_id="workshop").status == "UNRESOLVED"
+        assert service.materialize_concept_catalog(catalog("a", scale, bag))
+        before = service.resolve(query=query, session_id="workshop")
+        assert before.selected_context == "A balança Lótus é verde."
+        assert before.provenance[0]["ultimate_source_memory_id"] == previous.memory_ids[0]
+
+        updated = service.ingest(
+            role="user", text="O aferidor da bancada é amarelo.", session_id="workshop", order=20,
+        )
+        service.ingest(
+            role="user", text="O medidor da feira é azul.", session_id="other", order=30,
+        )
+        service.ingest(
+            role="assistant", text="O medidor da feira é branco.", session_id="workshop", order=40,
+        )
+        service.ingest(
+            role="user", text="O equipamento é vermelho.", session_id="workshop", order=50,
+        )
+        service.flush()
+
+    with open_service() as service:
+        for mention in ("balança Lótus", "medidor da feira", "aferidor da bancada"):
+            result = service.resolve(query=f"Qual a cor de {mention}?", session_id="workshop")
+            assert result.selected_context == "O aferidor da bancada é amarelo."
+            assert result.provenance[0]["ultimate_source_memory_id"] == updated.memory_ids[0]
+            assert result.relations[0]["predicate"] == "color"
+
+        for question in ("Qual a cor do equipamento?", "Quanto pesa o medidor da feira?"):
+            assert service.resolve(query=question, session_id="workshop").status == "UNRESOLVED"
+
+        assert service.resolve(query=query, session_id="other").selected_context == "O medidor da feira é azul."
+
+    with open_service("another_catalog") as service:
+        assert service.resolve(query=query, session_id="workshop").status == "UNRESOLVED"
+
+    with open_service() as service:
+        assert service.materialize_concept_catalog(catalog("b", {
+            **scale, "aliases": ["aferidor da bancada"],
+        }, bag))
+        assert service.resolve(query=query, session_id="workshop").status == "UNRESOLVED"
+
+    with open_service() as service:
+        assert service.resolve(query=query, session_id="workshop").status == "UNRESOLVED"
+        assert service.resolve(
+            query="Qual a cor da balança Lótus?", session_id="workshop",
+        ).selected_context == "O aferidor da bancada é amarelo."
