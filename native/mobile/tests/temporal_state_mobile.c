@@ -91,6 +91,8 @@ static int learn_portuguese_history(memoria_mobile_handle *h) {
         "{\"role\":\"user\",\"text\":\"O sensor Polaris fica na garagem.\",\"memory_id\":\"polaris-a\",\"order\":100}",
         "{\"role\":\"user\",\"text\":\"O sensor Polaris fica no depósito.\",\"memory_id\":\"polaris-b\",\"order\":100}",
         "{\"role\":\"user\",\"text\":\"O projetor Aurora é branco.\",\"memory_id\":\"aurora-only\",\"order\":15}",
+        "{\"role\":\"user\",\"text\":\"O projetor Aurora é branco.\",\"memory_id\":\"aurora-repeat\",\"order\":18}",
+        "{\"role\":\"user\",\"text\":\"A fonte Vega fornece 12 volts.\",\"memory_id\":\"vega-confirmed\",\"order\":25}",
     };
     for (size_t i = 0; i < sizeof(turns) / sizeof(turns[0]); ++i) {
         memoria_mobile_buffer out = {0};
@@ -115,13 +117,13 @@ static int assert_portuguese_history(memoria_mobile_handle *h) {
         CHECK(call(h, 0, questions[i], &out) == MEMORIA_MOBILE_OK);
         CHECK(contains(out, "\"temporal_state_used\":true"));
         CHECK(contains(out, "\"previous_memory_id\":\"vega-old\""));
-        CHECK(contains(out, "\"current_memory_id\":\"vega-now\""));
+        CHECK(contains(out, "\"current_memory_id\":\"vega-confirmed\""));
         CHECK(contains(out, "\"previous_value\":\"24 volts\""));
         CHECK(contains(out, "\"current_value\":\"12 volts\""));
         CHECK(contains(out, "\"property\":\"voltage\""));
         CHECK(contains(out, i == 0 ? "\"object\":\"24 volts\"" : "\"object\":\"12 volts\""));
         CHECK(contains(out, "\"previous_order\":10"));
-        CHECK(contains(out, "\"current_order\":20"));
+        CHECK(contains(out, "\"current_order\":25"));
         memoria_mobile_free_buffer(out);
     }
     for (size_t i = 0; i < sizeof(unresolved_questions) / sizeof(unresolved_questions[0]); ++i) {

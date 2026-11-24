@@ -12,6 +12,10 @@ static int eq_ci(const char *a, const char *b) {
     return *a == 0 && *b == 0;
 }
 
+static int matches_property(const memoria_state_fact *fact, const char *entity, const char *property) {
+    return fact->memory_id && fact->value && eq_ci(entity, fact->entity) && eq_ci(property, fact->property);
+}
+
 memoria_temporal_state_result memoria_temporal_state_resolve(
     const char *entity,
     const char *property,
@@ -20,33 +24,35 @@ memoria_temporal_state_result memoria_temporal_state_resolve(
 ) {
     memoria_temporal_state_result none = {0,0,0,0,0,0,0,0.0,0};
     size_t i;
-    int latest_conflict = 0, previous_conflict = 0;
     const memoria_state_fact *latest = 0;
     const memoria_state_fact *previous = 0;
 
     if (!entity || !*entity || !property || !*property || !facts || !fact_count) return none;
 
     for (i = 0; i < fact_count; ++i) {
-        const memoria_state_fact *f = &facts[i];
-        if (!f->memory_id || !f->entity || !f->property || !f->value) continue;
-        if (!eq_ci(entity, f->entity) || !eq_ci(property, f->property)) continue;
-        if (!latest || f->order > latest->order) {
-            previous = latest;
-            previous_conflict = latest_conflict;
-            latest = f;
-            latest_conflict = 0;
-        } else if (f->order == latest->order) {
-            if (!eq_ci(f->value, latest->value)) latest_conflict = 1;
-        } else if (!previous || f->order > previous->order) {
-            previous = f;
-            previous_conflict = 0;
-        } else if (f->order == previous->order) {
-            if (!eq_ci(f->value, previous->value)) previous_conflict = 1;
-        }
+        const memoria_state_fact *fact = &facts[i];
+        if (matches_property(fact, entity, property) && (!latest || fact->order > latest->order))
+            latest = fact;
+    }
+    if (!latest) return none;
+
+    /* Repeated observations of the current value do not mark a transition. */
+    for (i = 0; i < fact_count; ++i) {
+        const memoria_state_fact *fact = &facts[i];
+        if (matches_property(fact, entity, property) &&
+            fact->order < latest->order && !eq_ci(fact->value, latest->value) &&
+            (!previous || fact->order > previous->order))
+            previous = fact;
     }
 
-    if (!latest || latest_conflict) return none;
-    if (previous_conflict) previous = NULL;
+    /* Check all values at both boundaries, including repeats skipped above. */
+    for (i = 0; i < fact_count; ++i) {
+        const memoria_state_fact *fact = &facts[i];
+        if (!matches_property(fact, entity, property)) continue;
+        if (fact->order == latest->order && !eq_ci(fact->value, latest->value)) return none;
+        if (previous && fact->order == previous->order && !eq_ci(fact->value, previous->value))
+            previous = NULL;
+    }
 
     {
         memoria_temporal_state_result r;
@@ -57,7 +63,7 @@ memoria_temporal_state_result memoria_temporal_state_resolve(
         r.current_value = latest->value;
         r.previous_order = previous ? previous->order : 0;
         r.current_order = latest->order;
-        r.transition_detected = previous && !eq_ci(previous->value, latest->value);
+        r.transition_detected = previous != NULL;
         r.confidence = latest->authority;
         if (previous && previous->authority < r.confidence) r.confidence = previous->authority;
         if (r.confidence < 0.0) r.confidence = 0.0;
