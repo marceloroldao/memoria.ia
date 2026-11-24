@@ -25,6 +25,7 @@ class ConversationResolveResult:
     selected_context: str
     relations: tuple[dict, ...]
     provenance: tuple[dict, ...] = ()
+    temporal_changes: tuple[dict, ...] = ()
 
 
 class ConversationIngestRequest(BaseModel):
@@ -101,7 +102,7 @@ def attach_conversation_routes(app: FastAPI, *, api_key: str, service: Conversat
             result = service.resolve(query=request.query, session_id=request.session_id)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        return {
+        response = {
             "status": result.status,
             "confidence": result.confidence,
             "memory_ids": list(result.memory_ids),
@@ -109,3 +110,7 @@ def attach_conversation_routes(app: FastAPI, *, api_key: str, service: Conversat
             "relations": list(result.relations),
             "provenance": [_provenance_with_memory_space(row) for row in result.provenance],
         }
+        temporal_changes = getattr(result, "temporal_changes", ())
+        if temporal_changes:
+            response["temporal_changes"] = list(temporal_changes)
+        return response

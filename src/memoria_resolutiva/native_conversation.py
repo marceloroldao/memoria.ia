@@ -178,6 +178,10 @@ class NativeConversationService:
                     provenance_rows[0]["immediate_source_type"] = "derived_relation"
                     provenance_rows[0]["parent_memory_ids"] = [turn_id]
 
+        changes = response.get("temporal_changes", [])
+        if not isinstance(changes, list) or any(not isinstance(change, dict) for change in changes):
+            raise RuntimeError("native conversation resolve returned invalid temporal changes")
+
         return ConversationResolveResult(
             "HIT",
             float(response.get("confidence", 0.0)),
@@ -185,6 +189,7 @@ class NativeConversationService:
             str(response.get("selected_context") or ""),
             relations,
             tuple(provenance_rows),
+            tuple(changes),
         )
 
     def activate_relations(

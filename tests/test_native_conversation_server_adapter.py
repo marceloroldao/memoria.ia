@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 
+from memoria_resolutiva.conversation_contract import attach_conversation_routes as attach_server_conversation_routes
 from memoria_resolutiva.native_conversation import NativeConversationService
 from memoria_resolutiva.product_conversation import ConversationSemanticService, attach_conversation_routes
 from memoria_resolutiva.product_evidence import ProductEvidenceService
@@ -160,5 +161,51 @@ def test_native_conversation_exposes_temporal_previous_current(tmp_path: Path):
         assert result["status"] == "HIT"
         assert result["selected_context"] == "PREVIOUS: device = standby\nCURRENT: device = active"
         assert len(result["memory_ids"]) == 2
+    finally:
+        service.close()
+
+
+def test_native_conversation_reports_multiple_changes_with_their_own_sources_after_restart(tmp_path):
+    library = _native_library()
+    service = _native_service(tmp_path, library)
+    try:
+        client = _app(service)
+
+        def record(text, order, session_id="workshop"):
+            return _ingest(client, role="user", text=text, order=order, session_id=session_id)["stored_memory_ids"][0]
+
+        record("A fonte Vega fornece 12 volts.", 40)
+        old_color = record("A fonte Vega é cinza.", 10)
+        old_voltage = record("A fonte Vega fornece 24 volts.", 20)
+        current_color = record("A fonte Vega é preta.", 30)
+        current_voltage = record("A fonte Vega fornece 12 volts.", 50)
+        record("A fonte Vega fica na bancada.", 30)
+        record("A fonte Vega fica na bancada.", 60)
+        record("A fonte Vega fornece 48 volts.", 80, session_id="other")
+        record("A fonte Vega pesa 2 quilos.", 10)
+        record("A fonte Vega pesa 3 quilos.", 40)
+        record("A fonte Vega pesa 4 quilos.", 40)
+        service.flush()
+    finally:
+        service.close()
+
+    service = _native_service(tmp_path, library)
+    try:
+        app = FastAPI()
+        attach_server_conversation_routes(app, api_key="secret", service=service)
+        result = _resolve(TestClient(app), "O que mudou na fonte Vega?", "workshop")
+        assert result["status"] == "HIT"
+        assert result["memory_ids"] == [old_color, current_color, old_voltage, current_voltage]
+        assert [item["memory_id"] for item in result["provenance"]] == result["memory_ids"]
+        assert [
+            (item["property"], item["previous_value"], item["current_value"],
+             item["previous_memory_id"], item["current_memory_id"])
+            for item in result["temporal_changes"]
+        ] == [
+            ("color", "cinza", "preta", old_color, current_color),
+            ("voltage", "24 volts", "12 volts", old_voltage, current_voltage),
+        ]
+        assert [item["predicate"] for item in result["relations"]] == ["color", "voltage"]
+        assert result["selected_context"].count("TRANSITION:") == 2
     finally:
         service.close()

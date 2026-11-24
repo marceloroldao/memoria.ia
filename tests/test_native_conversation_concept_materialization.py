@@ -183,9 +183,12 @@ def test_confirmed_entity_aliases_resolve_attributes_after_reopen(tmp_path):
 
         service.ingest(role="user", text="A balança Lótus pesa 3 quilos.", session_id="workshop", order=15)
         service.ingest(role="user", text="A balança Lótus pesa 5 quilos.", session_id="workshop", order=20)
-        assert service.resolve(
-            query="O que mudou no medidor da feira?", session_id="workshop",
-        ).status == "UNRESOLVED"
+        changes = service.resolve(query="O que mudou no medidor da feira?", session_id="workshop")
+        assert changes.status == "HIT"
+        assert [
+            (change["property"], change["previous_value"], change["current_value"])
+            for change in changes.temporal_changes
+        ] == [("color", "cinza", "amarelo"), ("weight", "3 quilos", "5 quilos")]
 
     with open_service("another_catalog") as service:
         assert service.resolve(query=query, session_id="workshop").status == "UNRESOLVED"

@@ -715,25 +715,103 @@ static const char *transition_entity_name(const char *normalized_query) {
     return entity;
 }
 
-static memoria_temporal_state_result unique_entity_transition(
-    const char *entity, const memoria_state_fact *facts, size_t fact_count, const char **property
+static const struct {
+    const char *property;
+    const char *label;
+} entity_transition_properties[] = {
+    {"color", "cor"}, {"voltage", "tensão"}, {"departure_time", "horário de partida"},
+    {"location", "localização"}, {"weight", "peso"}, {"owner", "proprietário"},
+    {"driver", "motorista"},
+};
+
+typedef struct entity_transition {
+    size_t property_index;
+    memoria_temporal_state_result state;
+} entity_transition;
+
+static size_t collect_entity_transitions(
+    const char *entity, const memoria_state_fact *facts, size_t fact_count, entity_transition *out
 ) {
-    static const char *properties[] = {
-        "color", "voltage", "departure_time", "location", "weight", "owner", "driver",
-    };
-    memoria_temporal_state_result selected = {0};
-    for (size_t i = 0; i < sizeof(properties) / sizeof(properties[0]); ++i) {
-        memoria_temporal_state_result candidate =
-            memoria_temporal_state_resolve(entity, properties[i], facts, fact_count);
-        if (!candidate.transition_detected) continue;
-        if (selected.hit) {
-            *property = NULL;
-            return (memoria_temporal_state_result){0};
-        }
-        selected = candidate;
-        *property = properties[i];
+    size_t count = 0;
+    for (size_t i = 0; i < sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0]); ++i) {
+        memoria_temporal_state_result state = memoria_temporal_state_resolve(
+            entity, entity_transition_properties[i].property, facts, fact_count
+        );
+        if (state.transition_detected) out[count++] = (entity_transition){i, state};
     }
-    return selected;
+    return count;
+}
+
+static int append_transition_provenance(
+    mobile_response_builder *builder, const char *separator, const char *id, const turn_row *turn
+) {
+    char *type = json_escape(turn->source_type);
+    char *root = json_escape(turn->ultimate_source_memory_id);
+    char *time = json_escape(turn->created_time);
+    int written = type && root && time && mobile_response_appendf(builder,
+        "%s{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,"
+        "\"ultimate_source_memory_id\":\"%s\",\"created_order\":%ld,\"created_time\":\"%s\"}",
+        separator, id, type, turn->authority, root, turn->order, time);
+    free(type);
+    free(root);
+    free(time);
+    return written;
+}
+
+static memoria_mobile_status render_entity_transitions(
+    memoria_mobile_handle *h, const char *namespace_id, const entity_transition *transitions,
+    size_t count, memoria_mobile_buffer *out
+) {
+    mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
+    double confidence = 1.0;
+    memoria_mobile_status status = MEMORIA_MOBILE_INTERNAL_ERROR;
+
+    for (size_t i = 0; i < count; ++i) {
+        const entity_transition *transition = &transitions[i];
+        const memoria_temporal_state_result *state = &transition->state;
+        const turn_row *before = find_turn_in_namespace(h, state->previous_memory_id, namespace_id);
+        const turn_row *after = find_turn_in_namespace(h, state->current_memory_id, namespace_id);
+        const char *property = entity_transition_properties[transition->property_index].property;
+        const char *label = entity_transition_properties[transition->property_index].label;
+        if (!before || !after) goto done;
+
+        memoria_relation latest_relation = {0};
+        char relation_json[1024];
+        if (!memoria_extract_attribute_relation(after->text, &latest_relation) ||
+            !memoria_relations_to_json(&latest_relation, 1, after->memory_id, relation_json, sizeof(relation_json)))
+            goto done;
+
+        char *before_id = json_escape(before->memory_id), *after_id = json_escape(after->memory_id);
+        char *before_text = json_escape(before->text), *after_text = json_escape(after->text);
+        char *before_value = json_escape(state->previous_value), *after_value = json_escape(state->current_value);
+        const char *comma = i ? "," : "";
+        int written = before_id && after_id && before_text && after_text && before_value && after_value &&
+            mobile_response_appendf(&ids, "%s\"%s\",\"%s\"", comma, before_id, after_id) &&
+            mobile_response_appendf(&context, "%sTRANSITION: %s\\nPREVIOUS: %s\\nCURRENT: %s",
+                                    i ? "\\n\\n" : "", label, before_text, after_text) &&
+            append_transition_provenance(&provenance, comma, before_id, before) &&
+            append_transition_provenance(&provenance, ",", after_id, after) &&
+            mobile_response_appendf(&changes,
+                "%s{\"property\":\"%s\",\"previous_value\":\"%s\",\"current_value\":\"%s\","
+                "\"previous_memory_id\":\"%s\",\"current_memory_id\":\"%s\","
+                "\"previous_order\":%ld,\"current_order\":%ld}",
+                comma, property, before_value, after_value, before_id, after_id,
+                state->previous_order, state->current_order) &&
+            mobile_response_appendf(&relations, "%s%.*s", comma, (int)strlen(relation_json) - 2, relation_json + 1);
+        free(before_id); free(after_id); free(before_text); free(after_text);
+        free(before_value); free(after_value);
+        if (!written) goto done;
+        if (state->confidence < confidence) confidence = state->confidence;
+    }
+
+    status = set_responsef(out, MEMORIA_MOBILE_OK,
+        "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[%s],\"selected_context\":\"%s\","
+        "\"relations\":[%s],\"provenance\":[%s],\"temporal_state_used\":true,"
+        "\"transition_detected\":true,\"temporal_changes\":[%s]}",
+        confidence, ids.data, context.data, relations.data, provenance.data, changes.data);
+done:
+    free(ids.data); free(context.data); free(provenance.data); free(changes.data); free(relations.data);
+    return status;
 }
 
 /* Extract from persisted turns so histories written by earlier versions are
@@ -934,10 +1012,20 @@ static int try_temporal_response(
         free(sources);
     }
     if (asks_for_transition) {
-        const char *changed_property = NULL;
-        state = unique_entity_transition(target->subject, facts, fact_count, &changed_property);
-        if (state.hit)
-            snprintf(typed_target.predicate, sizeof(typed_target.predicate), "%s", changed_property);
+        entity_transition transitions[sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0])];
+        size_t count = collect_entity_transitions(target->subject, facts, fact_count, transitions);
+        if (count > 1) {
+            *status_out = render_entity_transitions(h, namespace_id, transitions, count, out);
+            free(facts);
+            free(typed_relations);
+            return 1;
+        }
+        state = (memoria_temporal_state_result){0};
+        if (count == 1) {
+            state = transitions[0].state;
+            snprintf(typed_target.predicate, sizeof(typed_target.predicate), "%s",
+                     entity_transition_properties[transitions[0].property_index].property);
+        }
     } else {
         state = memoria_temporal_state_resolve(target->subject, target->predicate, facts, fact_count);
     }
@@ -953,7 +1041,7 @@ static int try_temporal_response(
     free(typed_relations);
     if (!state.hit) {
         if (status_out) *status_out = typed
-            ? typed_temporal_unresolved(out, asks_for_transition ? "no single supported transition for entity"
+            ? typed_temporal_unresolved(out, asks_for_transition ? "no supported transition for entity"
                                                                   : "no justified temporal state for target")
             : unresolved(out, "no justified temporal state for target");
         return 1;
