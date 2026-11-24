@@ -377,3 +377,101 @@ int memoria_extract_temporal_relation(const char *text, memoria_relation *out) {
     }
     return 0;
 }
+
+static int has_weekday_value(const char *value) {
+    static const char *days[] = {
+        "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira",
+        "sexta-feira", "sábado", "domingo"
+    };
+    char day[96];
+    const char *after;
+    if (keyword_at(value, "na", &after) || keyword_at(value, "no", &after) ||
+        keyword_at(value, "em", &after)) value = skip_spaces(after);
+    if (!copy_word(value, day, sizeof(day), NULL)) return 0;
+    return listed_ci(day, days, sizeof(days) / sizeof(days[0]));
+}
+
+static int has_weight_value(const char *value) {
+    static const char *units[] = {
+        "kg", "quilo", "quilos", "quilograma", "quilogramas", "g", "grama", "gramas",
+        "mg", "miligrama", "miligramas", "t", "tonelada", "toneladas"
+    };
+    const char *unit = value;
+    if (!isdigit((unsigned char)*unit)) return 0;
+    while (isdigit((unsigned char)*unit)) ++unit;
+    if ((*unit == '.' || *unit == ',') && isdigit((unsigned char)unit[1])) {
+        ++unit;
+        while (isdigit((unsigned char)*unit)) ++unit;
+    }
+    return listed_ci(skip_spaces(unit), units, sizeof(units) / sizeof(units[0]));
+}
+
+int memoria_extract_attribute_relation(const char *text, memoria_relation *out) {
+    static const struct {
+        const char *prefix;
+        const char *separator;
+        const char *property;
+    } forms[] = {
+        {"dona da", "é", "owner"},
+        {"dono da", "é", "owner"},
+        {"dona do", "é", "owner"},
+        {"dono do", "é", "owner"},
+        {"quem cuida da", "é", "caretaker"},
+        {"quem cuida do", "é", "caretaker"},
+        {"motorista do", "é", "driver"},
+        {"motorista da", "é", "driver"},
+        {"instalador do", "é", "installer"},
+        {"instalador da", "é", "installer"},
+        {"instaladora do", "é", "installer"},
+        {"instaladora da", "é", "installer"},
+        {NULL, "pertence a", "owner"},
+        {NULL, "está", "location"},
+        {NULL, "chegou", "arrival_day"},
+        {NULL, "foi entregue", "delivery_day"},
+        {NULL, "pesa", "weight"},
+    };
+    const char *start, *end, *subject, *separator, *after_prefix;
+
+    if (!text || !out) return 0;
+    start = skip_spaces(text);
+    if (keyword_at(start, "a", &after_prefix) || keyword_at(start, "o", &after_prefix))
+        start = skip_spaces(after_prefix);
+    for (end = start; *end; ++end) {
+        if (!strchr(".?!;,\n", *end)) continue;
+        if ((*end == '.' || *end == ',') && end > start &&
+            isdigit((unsigned char)end[-1]) && isdigit((unsigned char)end[1])) continue;
+        break;
+    }
+    if (*end == '?' || (*end && *skip_spaces(end + 1))) return 0;
+
+    for (size_t i = 0; i < sizeof(forms) / sizeof(forms[0]); ++i) {
+        subject = start;
+        if (forms[i].prefix) {
+            if (!keyword_at(start, forms[i].prefix, &after_prefix)) continue;
+            subject = skip_spaces(after_prefix);
+        }
+        for (separator = subject; separator < end; ++separator) {
+            const char *value;
+            if (separator == subject || !isspace((unsigned char)separator[-1]) ||
+                !keyword_at(separator, forms[i].separator, &value) ||
+                !isspace((unsigned char)*value)) continue;
+            value = skip_spaces(value);
+            if (strcmp(forms[i].property, "location") == 0 &&
+                !keyword_at(value, "na", NULL) && !keyword_at(value, "no", NULL) &&
+                !keyword_at(value, "em", NULL)) continue;
+            if (value >= end || (size_t)(separator - subject) >= sizeof(out->subject) ||
+                (size_t)(end - value) >= sizeof(out->object)) continue;
+            trim_range_copy(subject, separator, out->subject, sizeof(out->subject));
+            trim_range_copy(value, end, out->object, sizeof(out->object));
+            if (!is_stable_relation_term(out->subject) || !out->object[0]) continue;
+            if ((strcmp(forms[i].property, "arrival_day") == 0 ||
+                 strcmp(forms[i].property, "delivery_day") == 0) &&
+                !has_weekday_value(out->object)) continue;
+            if (strcmp(forms[i].property, "weight") == 0 && !has_weight_value(out->object)) continue;
+            strcpy(out->predicate, forms[i].property);
+            out->confidence = 0.95;
+            return 1;
+        }
+    }
+    return memoria_extract_temporal_relation(text, out);
+}

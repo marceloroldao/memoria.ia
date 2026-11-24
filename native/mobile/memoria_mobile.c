@@ -895,6 +895,168 @@ static int try_temporal_response(
     return 1;
 }
 
+/* These aliases describe supported language variants, without creating facts. */
+static int attribute_entity_key(const char *entity, char *key, char *surface, size_t capacity) {
+    static const struct {
+        const char *surface;
+        const char *canonical;
+    } aliases[] = {
+        {"bike que se dobra", "bicicleta dobravel"},
+        {"bicicleta que se dobra", "bicicleta dobravel"},
+        {"bike", "bicicleta"},
+        {"pilha sobressalente", "bateria reserva"},
+        {"bateria sobressalente", "bateria reserva"},
+        {"encomenda com as", "pacote de"},
+        {"encomenda com os", "pacote de"},
+        {"cultivo das hortalicas", "horta"},
+        {"composicao ferroviaria", "trem"},
+    };
+    static const char *articles[] = {"a ", "o ", "as ", "os ", "da ", "do ", "dos ", "das ", "de "};
+    char normalized[256];
+    const char *part;
+    size_t used = 0;
+    if (memoria_concept_normalize(entity, normalized, sizeof(normalized)) != MEMORIA_CONCEPT_OK)
+        return 0;
+    part = normalized;
+    for (size_t i = 0; i < sizeof(articles) / sizeof(articles[0]); ++i) {
+        size_t length = strlen(articles[i]);
+        if (strncmp(part, articles[i], length) == 0) {
+            part += length;
+            break;
+        }
+    }
+    if (strlen(part) >= capacity) return 0;
+    strcpy(surface, part);
+    while (*part) {
+        size_t consumed = strcspn(part, " ");
+        const char *replacement = part;
+        size_t length = consumed;
+        for (size_t i = 0; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
+            size_t surface_length = strlen(aliases[i].surface);
+            if (strncmp(part, aliases[i].surface, surface_length) == 0 &&
+                (part[surface_length] == 0 || part[surface_length] == ' ')) {
+                replacement = aliases[i].canonical;
+                length = strlen(replacement);
+                consumed = surface_length;
+                break;
+            }
+        }
+        if (used + length + (used != 0) >= capacity) return 0;
+        if (used) key[used++] = ' ';
+        memcpy(key + used, replacement, length);
+        used += length;
+        part += consumed;
+        if (*part == ' ') ++part;
+    }
+    key[used] = 0;
+    return used != 0;
+}
+
+static const char *attribute_question(const char *query, char *entity, char *surface, size_t capacity) {
+    static const struct {
+        const char *prefix;
+        const char *property;
+    } forms[] = {
+        {"de que cor e", "color"},
+        {"qual e a cor", "color"},
+        {"qual a cor", "color"},
+        {"quanto pesa", "weight"},
+        {"qual e o peso", "weight"},
+        {"quem dirige", "driver"},
+        {"quem instalou", "installer"},
+        {"onde guardaram", "location"},
+        {"em que dia entregaram", "delivery_day"},
+        {"em que dia foi entregue", "delivery_day"},
+        {"em que dia chegou", "arrival_day"},
+        {"quem e responsavel pelo", "caretaker"},
+        {"quem e responsavel pela", "caretaker"},
+        {"quem cuida", "caretaker"},
+        {"a quem pertence", "owner"},
+        {"qual o horario de saida", "departure_time"},
+        {"qual e o horario de saida", "departure_time"},
+        {"qual o horario de partida", "departure_time"},
+    };
+    char normalized[256];
+    if (memoria_concept_normalize(query, normalized, sizeof(normalized)) != MEMORIA_CONCEPT_OK)
+        return NULL;
+    for (size_t i = 0; i < sizeof(forms) / sizeof(forms[0]); ++i) {
+        size_t length = strlen(forms[i].prefix);
+        if (strncmp(normalized, forms[i].prefix, length) == 0 && normalized[length] == ' ' &&
+            attribute_entity_key(normalized + length + 1, entity, surface, capacity))
+            return forms[i].property;
+    }
+    return NULL;
+}
+
+static int try_attribute_response(
+    memoria_mobile_handle *h, const char *query, const char *namespace_id,
+    memoria_mobile_buffer *out, memoria_mobile_status *status
+) {
+    char entity[96], entity_surface[96], subject[96], subject_surface[96], selected_surface[96];
+    char relations[1024];
+    const char *property;
+    const turn_row *selected = NULL;
+    memoria_relation result = {0};
+    int value_conflict = 0, ambiguous_alias = 0, exact_match = 0;
+
+    if (temporal_query_flags(query, NULL, NULL)) return 0;
+    property = attribute_question(query, entity, entity_surface, sizeof(entity));
+    if (!property) return 0;
+    for (size_t i = 0; i < h->turn_count; ++i) {
+        const turn_row *turn = &h->turns[i];
+        memoria_relation relation = {0};
+        if (!turn_namespace_matches(turn, namespace_id) || turn->superseded || turn->superseded_by[0] ||
+            !memoria_lineage_is_factual_root_type(turn->source_type) || turn->authority < 0.5 ||
+            !turn->text || strchr(turn->text, '?') ||
+            !memoria_extract_attribute_relation(turn->text, &relation) ||
+            strcmp(property, relation.predicate) != 0 ||
+            !attribute_entity_key(relation.subject, subject, subject_surface, sizeof(subject)) ||
+            strcmp(entity, subject) != 0) continue;
+
+        int exact = strcmp(entity_surface, subject_surface) == 0;
+        if (exact_match && !exact) continue;
+        if (selected && exact == exact_match && strcmp(selected_surface, subject_surface) != 0) {
+            ambiguous_alias = 1;
+            continue;
+        }
+        if (!selected || exact > exact_match || turn->order > selected->order) {
+            if (exact > exact_match) ambiguous_alias = 0;
+            exact_match = exact;
+            selected = turn;
+            result = relation;
+            strcpy(selected_surface, subject_surface);
+            value_conflict = 0;
+        } else if (turn->order == selected->order && strcasecmp(result.object, relation.object) != 0) {
+            value_conflict = 1;
+        }
+    }
+    if (!selected || ambiguous_alias || value_conflict) {
+        *status = set_response(out,
+            "{\"status\":\"UNRESOLVED\",\"attribute_resolution_used\":true}",
+            MEMORIA_MOBILE_UNRESOLVED);
+        return 1;
+    }
+    char *text = json_escape(selected->text);
+    char *time = json_escape(selected->created_time);
+    char *source_id = json_escape(selected->memory_id);
+    if (!text || !time || !source_id ||
+        !memoria_relations_to_json(&result, 1, selected->memory_id, relations, sizeof(relations))) {
+        *status = MEMORIA_MOBILE_INTERNAL_ERROR;
+    } else {
+        *status = set_responsef(out, MEMORIA_MOBILE_OK,
+            "{\"status\":\"HIT\",\"attribute_resolution_used\":true,\"confidence\":%.6f,"
+            "\"selected_context\":\"%s\",\"memory_ids\":[\"%s\"],\"relations\":%s,"
+            "\"provenance\":[{\"memory_id\":\"%s\",\"source_type\":\"%s\",\"source_authority\":%.6f,"
+            "\"ultimate_source_memory_id\":\"%s\",\"created_order\":%ld,\"created_time\":\"%s\"}]}",
+            result.confidence * selected->authority, text, source_id, relations,
+            source_id, selected->source_type, selected->authority, source_id, selected->order, time);
+    }
+    free(text);
+    free(time);
+    free(source_id);
+    return 1;
+}
+
 static void free_turn(turn_row *r) { memoria_persistence_free_turn(r); }
 static void free_episode(episode_row *r) { memoria_persistence_free_episode(r); }
 
@@ -1288,6 +1450,10 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     if (h->turn_count == 0) {
         free(namespace_id); free(concept_namespace); free(query); free(json);
         return unresolved(out, "native memory store is empty");
+    }
+    if (try_attribute_response(h, query, namespace_id, out, &response_status)) {
+        free(query); free(namespace_id); free(concept_namespace); free(json);
+        return response_status;
     }
     if (!ensure_semantic_capacity(h, h->turn_count)) {
         free(query); free(namespace_id); free(concept_namespace); free(json);

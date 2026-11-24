@@ -14,4 +14,6 @@ size_t memoria_extract_relations(const char *text, memoria_relation *out, size_t
 
 int memoria_extract_temporal_relation(const char *text, memoria_relation *out);
 
+int memoria_extract_attribute_relation(const char *text, memoria_relation *out);
+
 #endif

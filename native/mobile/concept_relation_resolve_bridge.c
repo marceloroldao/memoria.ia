@@ -327,6 +327,8 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     base_status = memoria_mobile_resolve_context_json_base(handle, request_json, response_json);
     if (base_status != MEMORIA_MOBILE_UNRESOLVED) return base_status;
     if (!handle || !response_json || !request_json.data || !request_json.size) return base_status;
+    if (response_json->data &&
+        strstr((const char *)response_json->data, "\"attribute_resolution_used\":true")) return base_status;
 
     json = (char *)malloc(request_json.size + 1u);
     if (!json) return base_status;
