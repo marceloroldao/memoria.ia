@@ -20,6 +20,7 @@ memoria_temporal_state_result memoria_temporal_state_resolve(
 ) {
     memoria_temporal_state_result none = {0,0,0,0,0,0,0,0.0,0};
     size_t i;
+    int latest_conflict = 0, previous_conflict = 0;
     const memoria_state_fact *latest = 0;
     const memoria_state_fact *previous = 0;
 
@@ -31,13 +32,21 @@ memoria_temporal_state_result memoria_temporal_state_resolve(
         if (!eq_ci(entity, f->entity) || !eq_ci(property, f->property)) continue;
         if (!latest || f->order > latest->order) {
             previous = latest;
+            previous_conflict = latest_conflict;
             latest = f;
-        } else if ((!previous || f->order > previous->order) && f->order < latest->order) {
+            latest_conflict = 0;
+        } else if (f->order == latest->order) {
+            if (!eq_ci(f->value, latest->value)) latest_conflict = 1;
+        } else if (!previous || f->order > previous->order) {
             previous = f;
+            previous_conflict = 0;
+        } else if (f->order == previous->order) {
+            if (!eq_ci(f->value, previous->value)) previous_conflict = 1;
         }
     }
 
-    if (!latest) return none;
+    if (!latest || latest_conflict) return none;
+    if (previous_conflict) previous = NULL;
 
     {
         memoria_temporal_state_result r;

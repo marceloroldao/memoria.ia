@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 
 #define INITIAL_TURN_CAPACITY 256u
@@ -370,23 +371,23 @@ static int contains_ci(const char *text, const char *needle) {
     return 0;
 }
 
+static int temporal_word_byte(unsigned char c) {
+    return isalnum(c) || c >= 0x80 || c == '_' || c == '-';
+}
+
 static int contains_word_ci(const char *text, const char *word) {
-    size_t n;
-    const char *p;
-    if (!text || !word || !*word) return 0;
-    n = strlen(word);
-    for (p = text; *p; ++p) {
-        if ((p == text || !isalnum((unsigned char)p[-1])) &&
-            contains_ci(p, word) &&
-            strlen(p) >= n &&
-            (p[n] == 0 || !isalnum((unsigned char)p[n]))) return 1;
+    size_t length = strlen(word);
+    for (const char *p = text; *p; ++p) {
+        if ((p == text || !temporal_word_byte((unsigned char)p[-1])) &&
+            strncasecmp(p, word, length) == 0 &&
+            !temporal_word_byte((unsigned char)p[length])) return 1;
     }
     return 0;
 }
 
 static int temporal_query_flags(const char *query, int *wants_previous, int *wants_current) {
-    static const char *previous_words[] = {"before", "previous", "prior", "earlier", "old", "antes", "anterior", "antigo", "era"};
-    static const char *current_words[] = {"now", "current", "latest", "present", "agora", "atual", "ultimo"};
+    static const char *previous_words[] = {"before", "previous", "prior", "earlier", "old", "antes", "anterior", "antigo", "era", "anteriormente"};
+    static const char *current_words[] = {"now", "current", "latest", "present", "agora", "atual", "ultimo", "atualmente"};
     size_t i;
     int p = 0, c = 0;
     if (!query) return 0;
@@ -664,6 +665,56 @@ static int temporal_target_from_query(memoria_mobile_handle *h, const char *quer
     return found ? 1 : 0;
 }
 
+/* Typed questions select a property, even when the same entity has other facts. */
+static const char *temporal_requested_property(const char *query) {
+    if (contains_word_ci(query, "cor")) return "color";
+    if (contains_word_ci(query, "tensão") || contains_word_ci(query, "volts")) return "voltage";
+    if (contains_word_ci(query, "a que horas") || contains_word_ci(query, "horário de partida")) {
+        return "departure_time";
+    }
+    if (contains_word_ci(query, "onde")) return "location";
+    return NULL;
+}
+
+/* Extract from persisted turns so histories written by earlier versions are
+ * available without a database migration. Only factual roots supply values. */
+static int typed_temporal_facts(
+    memoria_mobile_handle *h,
+    const char *query,
+    const char *namespace_id,
+    const char *property,
+    memoria_relation *target,
+    memoria_relation *relations,
+    memoria_state_fact *facts,
+    size_t *count
+) {
+    int named_entity = 0;
+    *count = 0;
+    for (size_t i = 0; i < h->turn_count; ++i) {
+        const turn_row *turn = &h->turns[i];
+        memoria_relation *relation = &relations[*count];
+        if (!turn_namespace_matches(turn, namespace_id) || !turn->source_type ||
+            turn->authority < 0.5 || !turn->text || looks_like_question_text(turn->text) ||
+            (strcmp(turn->source_type, "user_assertion") != 0 &&
+             strcmp(turn->source_type, "user_correction") != 0 &&
+             strcmp(turn->source_type, "direct_observation") != 0 &&
+             strcmp(turn->source_type, "external_import") != 0)) continue;
+        if (!memoria_extract_temporal_relation(turn->text, relation) ||
+            !contains_word_ci(query, relation->subject)) continue;
+        named_entity = 1;
+        if (strcmp(relation->predicate, property) != 0) continue;
+        if (*count == 0) *target = *relation;
+        else if (!same_relation_key(target, relation)) return -1;
+        facts[*count] = (memoria_state_fact){
+            turn->memory_id, relation->subject, relation->predicate, relation->object,
+            turn->order, turn->authority
+        };
+        ++*count;
+    }
+    if (*count) return 1;
+    return named_entity ? -1 : 0;
+}
+
 static int try_temporal_response(
     memoria_mobile_handle *h,
     const char *query,
@@ -674,7 +725,11 @@ static int try_temporal_response(
 ) {
     int wants_previous = 0, wants_current = 0;
     const memoria_relation *target = NULL;
-    int target_state;
+    memoria_relation typed_target = {0};
+    memoria_relation *typed_relations = NULL;
+    char typed_previous_value[sizeof(typed_target.object)];
+    const char *requested_property;
+    int target_state, typed = 0;
     memoria_temporal_relation_source *sources = NULL;
     memoria_state_fact *facts = NULL;
     size_t source_count = 0, fact_capacity = 0, fact_count = 0, i;
@@ -686,49 +741,85 @@ static int try_temporal_response(
     memoria_mobile_status response_status;
 
     if (!temporal_query_flags(query, &wants_previous, &wants_current)) return 0;
-    target_state = temporal_target_from_query(h, query, namespace_id, &target);
-    if (target_state < 0) {
-        if (status_out) *status_out = unresolved(out, "temporal state target is ambiguous");
-        return 1;
-    }
-    if (target_state == 0 && fallback_turn) {
-        if (fallback_turn->relation_count != 1) {
-            if (status_out) *status_out = unresolved(out, "temporal state target is not uniquely justified");
+    requested_property = fallback_turn ? NULL : temporal_requested_property(query);
+    if (requested_property) {
+        typed_relations = calloc(h->turn_count, sizeof(*typed_relations));
+        facts = calloc(h->turn_count, sizeof(*facts));
+        if (!typed_relations || !facts) {
+            free(typed_relations);
+            free(facts);
+            *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
             return 1;
         }
-        target = &fallback_turn->relations[0];
+        typed = typed_temporal_facts(h, query, namespace_id, requested_property,
+                                     &typed_target, typed_relations, facts, &fact_count);
+        if (typed <= 0) {
+            free(typed_relations);
+            free(facts);
+            typed_relations = NULL;
+            if (typed < 0) {
+                *status_out = unresolved(out, "temporal entity or requested property is not uniquely justified");
+                return 1;
+            }
+        } else {
+            target = &typed_target;
+        }
     }
-    if (!target) return 0;
+    if (!typed) {
+        target_state = temporal_target_from_query(h, query, namespace_id, &target);
+        if (target_state < 0) {
+            if (status_out) *status_out = unresolved(out, "temporal state target is ambiguous");
+            return 1;
+        }
+        if (target_state == 0 && fallback_turn) {
+            if (fallback_turn->relation_count != 1) {
+                if (status_out) *status_out = unresolved(out, "temporal state target is not uniquely justified");
+                return 1;
+            }
+            target = &fallback_turn->relations[0];
+        }
+        if (!target) return 0;
 
-    for (i = 0; i < h->turn_count; ++i) if (turn_namespace_matches(&h->turns[i], namespace_id) && temporal_turn_eligible(&h->turns[i])) {
-        ++source_count;
-        fact_capacity += h->turns[i].relation_count;
+        for (i = 0; i < h->turn_count; ++i) if (turn_namespace_matches(&h->turns[i], namespace_id) && temporal_turn_eligible(&h->turns[i])) {
+            ++source_count;
+            fact_capacity += h->turns[i].relation_count;
+        }
+        if (!source_count || !fact_capacity) {
+            if (status_out) *status_out = unresolved(out, "no authoritative temporal state history");
+            return 1;
+        }
+        sources = (memoria_temporal_relation_source *)calloc(source_count, sizeof(*sources));
+        facts = (memoria_state_fact *)calloc(fact_capacity, sizeof(*facts));
+        if (!sources || !facts) {
+            free(sources); free(facts);
+            if (status_out) *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
+            return 1;
+        }
+        source_count = 0;
+        for (i = 0; i < h->turn_count; ++i) {
+            turn_row *turn = &h->turns[i];
+            if (!turn_namespace_matches(turn, namespace_id) || !temporal_turn_eligible(turn)) continue;
+            sources[source_count].memory_id = turn->memory_id;
+            sources[source_count].relations = turn->relations;
+            sources[source_count].relation_count = turn->relation_count;
+            sources[source_count].order = turn->order;
+            sources[source_count].authority = turn->authority;
+            ++source_count;
+        }
+        fact_count = memoria_temporal_build_facts(sources, source_count, facts, fact_capacity);
+        free(sources);
     }
-    if (!source_count || !fact_capacity) {
-        if (status_out) *status_out = unresolved(out, "no authoritative temporal state history");
-        return 1;
-    }
-    sources = (memoria_temporal_relation_source *)calloc(source_count, sizeof(*sources));
-    facts = (memoria_state_fact *)calloc(fact_capacity, sizeof(*facts));
-    if (!sources || !facts) {
-        free(sources); free(facts);
-        if (status_out) *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
-        return 1;
-    }
-    source_count = 0;
-    for (i = 0; i < h->turn_count; ++i) {
-        turn_row *turn = &h->turns[i];
-        if (!turn_namespace_matches(turn, namespace_id) || !temporal_turn_eligible(turn)) continue;
-        sources[source_count].memory_id = turn->memory_id;
-        sources[source_count].relations = turn->relations;
-        sources[source_count].relation_count = turn->relation_count;
-        sources[source_count].order = turn->order;
-        sources[source_count].authority = turn->authority;
-        ++source_count;
-    }
-    fact_count = memoria_temporal_build_facts(sources, source_count, facts, fact_capacity);
     state = memoria_temporal_state_resolve(target->subject, target->predicate, facts, fact_count);
-    free(sources); free(facts);
+    free(facts);
+    if (typed && state.hit) {
+        snprintf(typed_target.object, sizeof(typed_target.object), "%s", state.current_value);
+        state.current_value = typed_target.object;
+    }
+    if (typed && state.previous_value) {
+        snprintf(typed_previous_value, sizeof(typed_previous_value), "%s", state.previous_value);
+        state.previous_value = typed_previous_value;
+    }
+    free(typed_relations);
     if (!state.hit) {
         if (status_out) *status_out = unresolved(out, "no justified temporal state for target");
         return 1;
@@ -743,7 +834,20 @@ static int try_temporal_response(
         if (status_out) *status_out = unresolved(out, "temporal source missing from native state");
         return 1;
     }
-    if (!turn_relations_to_json(current_turn, relations_json, sizeof(relations_json))) {
+    int relations_ok;
+    if (typed) {
+        memoria_relation selected_relation = typed_target;
+        const turn_row *selected_turn = current_turn;
+        if (wants_previous && !wants_current) {
+            snprintf(selected_relation.object, sizeof(selected_relation.object), "%s", state.previous_value);
+            selected_turn = previous_turn;
+        }
+        relations_ok = memoria_relations_to_json(&selected_relation, 1, selected_turn->memory_id,
+                                                 relations_json, sizeof(relations_json));
+    } else {
+        relations_ok = turn_relations_to_json(current_turn, relations_json, sizeof(relations_json));
+    }
+    if (!relations_ok) {
         if (status_out) *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
         return 1;
     }

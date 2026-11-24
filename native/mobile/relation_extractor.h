@@ -12,4 +12,6 @@ typedef struct memoria_relation {
 
 size_t memoria_extract_relations(const char *text, memoria_relation *out, size_t capacity);
 
+int memoria_extract_temporal_relation(const char *text, memoria_relation *out);
+
 #endif

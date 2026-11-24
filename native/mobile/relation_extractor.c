@@ -306,3 +306,74 @@ size_t memoria_extract_relations(const char *text, memoria_relation *out, size_t
 
     return count;
 }
+
+int memoria_extract_temporal_relation(const char *text, memoria_relation *out) {
+    static const struct {
+        const char *verb;
+        const char *property;
+        const char *value_prefix;
+    } patterns[] = {
+        {"fornece", "voltage", NULL},
+        {"parte", "departure_time", "às"},
+        {"fica", "location", "na"},
+        {"fica", "location", "no"},
+        {"é", "color", NULL},
+        {"eh", "color", NULL},
+    };
+    static const char *colors[] = {
+        "amarelo", "amarela", "azul", "branco", "branca", "cinza", "laranja",
+        "marrom", "preto", "preta", "prata", "rosa", "roxo", "roxa", "verde",
+        "vermelho", "vermelha", "violeta", "bege", "dourado", "dourada"
+    };
+    static const char *articles[] = {"a", "o", "as", "os"};
+    const char *subject, *verb, *end, *after;
+    size_t i;
+
+    if (!text || !out) return 0;
+    subject = skip_spaces(text);
+    for (i = 0; i < sizeof(articles) / sizeof(articles[0]); ++i) {
+        if (keyword_at(subject, articles[i], &after) && isspace((unsigned char)*after)) {
+            subject = skip_spaces(after);
+            break;
+        }
+    }
+    end = subject + strcspn(subject, ".!?;\n");
+    if (*end == '?' || (*end && *skip_spaces(end + 1))) return 0;
+
+    for (verb = subject; verb < end; ++verb) {
+        if (verb == subject || !isspace((unsigned char)verb[-1])) continue;
+        for (i = 0; i < sizeof(patterns) / sizeof(patterns[0]); ++i) {
+            const char *value;
+            if (!keyword_at(verb, patterns[i].verb, &after) || !isspace((unsigned char)*after)) continue;
+            value = skip_spaces(after);
+            if (patterns[i].value_prefix &&
+                (!keyword_at(value, patterns[i].value_prefix, &after) ||
+                 !isspace((unsigned char)*after))) continue;
+            if (end <= value || (size_t)(end - value) >= sizeof(out->object) ||
+                (size_t)(verb - subject) >= sizeof(out->subject)) continue;
+            trim_range_copy(subject, verb, out->subject, sizeof(out->subject));
+            trim_range_copy(value, end, out->object, sizeof(out->object));
+            if (!is_stable_relation_term(out->subject) || !out->object[0] ||
+                strchr(out->object, ',') || strchr(out->subject, ',')) continue;
+            if (strcmp(patterns[i].property, "voltage") == 0) {
+                const char *unit = out->object;
+                if (!isdigit((unsigned char)*unit)) continue;
+                while (isdigit((unsigned char)*unit)) ++unit;
+                unit = skip_spaces(unit);
+                if (!string_equal_ci_ascii(unit, "volts") && !string_equal_ci_ascii(unit, "volt") &&
+                    !string_equal_ci_ascii(unit, "v")) continue;
+            }
+            if (strcmp(patterns[i].property, "color") == 0 &&
+                !listed_ci(out->object, colors, sizeof(colors) / sizeof(colors[0]))) continue;
+            if (strcmp(patterns[i].property, "departure_time") == 0) {
+                /* The assertion must describe a clock time. */
+                size_t length = strlen(out->object);
+                if (length < 5 || strcmp(out->object + length - 5, "horas") != 0) continue;
+            }
+            strcpy(out->predicate, patterns[i].property);
+            out->confidence = 0.95;
+            return 1;
+        }
+    }
+    return 0;
+}
