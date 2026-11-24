@@ -106,11 +106,15 @@ static int assert_portuguese_history(memoria_mobile_handle *h) {
     static const char *questions[] = {
         "{\"query\":\"Quantos volts a fonte Vega fornecia antes da mudança?\"}",
         "{\"query\":\"Qual é a tensão atual da fonte Vega?\"}",
+        "{\"query\":\"O que mudou na fonte Vega?\"}",
     };
     static const char *unresolved_questions[] = {
         "{\"query\":\"Onde fica o sensor Polaris agora?\"}",
         "{\"query\":\"De que cor era o projetor Aurora antes?\"}",
         "{\"query\":\"De que cor é a fonte Vega agora?\"}",
+        "{\"query\":\"O que mudou no projetor Aurora?\"}",
+        "{\"query\":\"O que mudou na fonte Vega Mini?\"}",
+        "{\"query\":\"O que mudou?\"}",
     };
     for (size_t i = 0; i < sizeof(questions) / sizeof(questions[0]); ++i) {
         memoria_mobile_buffer out = {0};

@@ -162,16 +162,30 @@ def test_confirmed_entity_aliases_resolve_attributes_after_reopen(tmp_path):
             assert present.relations[0]["subject"] == "aferidor da bancada"
             assert present.provenance[1]["memory_id"] == updated.memory_ids[0]
 
+        change = service.resolve(query="O que mudou no medidor da feira?", session_id="workshop")
+        assert change.memory_ids == (historical.memory_ids[0], updated.memory_ids[0])
+        assert change.selected_context == (
+            "PREVIOUS: A balança Lótus é cinza.\nCURRENT: O aferidor da bancada é amarelo."
+        )
+        assert change.relations[0]["predicate"] == "color"
+
         for question in (
             "Qual a cor do equipamento?",
             "Quanto pesa o medidor da feira?",
             "Onde ficava a balança Lótus antes?",
             "Qual era a cor do equipamento antes?",
+            "O que mudou no equipamento?",
             "Qual a cor da balança Lótus e da maleta Norte agora?",
         ):
             assert service.resolve(query=question, session_id="workshop").status == "UNRESOLVED"
 
         assert service.resolve(query=query, session_id="other").selected_context == "O medidor da feira é azul."
+
+        service.ingest(role="user", text="A balança Lótus pesa 3 quilos.", session_id="workshop", order=15)
+        service.ingest(role="user", text="A balança Lótus pesa 5 quilos.", session_id="workshop", order=20)
+        assert service.resolve(
+            query="O que mudou no medidor da feira?", session_id="workshop",
+        ).status == "UNRESOLVED"
 
     with open_service("another_catalog") as service:
         assert service.resolve(query=query, session_id="workshop").status == "UNRESOLVED"

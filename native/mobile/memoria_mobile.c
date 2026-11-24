@@ -703,6 +703,39 @@ static memoria_mobile_status typed_temporal_unresolved(memoria_mobile_buffer *ou
                          reason);
 }
 
+static const char *transition_entity_name(const char *normalized_query) {
+    static const char *prefixes[] = {"na ", "no ", "da ", "do ", "em ", "com a ", "com o "};
+    const char *entity = normalized_query + strlen("o que mudou");
+    if (*entity != ' ') return "";
+    ++entity;
+    for (size_t i = 0; i < sizeof(prefixes) / sizeof(prefixes[0]); ++i) {
+        size_t width = strlen(prefixes[i]);
+        if (strncmp(entity, prefixes[i], width) == 0) return entity + width;
+    }
+    return entity;
+}
+
+static memoria_temporal_state_result unique_entity_transition(
+    const char *entity, const memoria_state_fact *facts, size_t fact_count, const char **property
+) {
+    static const char *properties[] = {
+        "color", "voltage", "departure_time", "location", "weight", "owner", "driver",
+    };
+    memoria_temporal_state_result selected = {0};
+    for (size_t i = 0; i < sizeof(properties) / sizeof(properties[0]); ++i) {
+        memoria_temporal_state_result candidate =
+            memoria_temporal_state_resolve(entity, properties[i], facts, fact_count);
+        if (!candidate.transition_detected) continue;
+        if (selected.hit) {
+            *property = NULL;
+            return (memoria_temporal_state_result){0};
+        }
+        selected = candidate;
+        *property = properties[i];
+    }
+    return selected;
+}
+
 /* Extract from persisted turns so histories written by earlier versions are
  * available without a database migration. Only factual roots supply values. */
 static int typed_temporal_facts(
@@ -712,6 +745,7 @@ static int typed_temporal_facts(
     const char *property,
     const char *concept_namespace,
     const char *concept_id,
+    const char *exact_entity,
     memoria_relation *target,
     memoria_relation *relations,
     memoria_state_fact *facts,
@@ -735,13 +769,17 @@ static int typed_temporal_facts(
                 memoria_concept_resolve(concepts, concept_namespace, relation->subject);
             if (source.status != MEMORIA_CONCEPT_HIT || strcmp(source.concept_id, concept_id) != 0)
                 continue;
+        } else if (exact_entity) {
+            char subject[MEMORIA_CONCEPT_SURFACE_CAP];
+            if (memoria_concept_normalize(relation->subject, subject, sizeof(subject)) != MEMORIA_CONCEPT_OK ||
+                strcmp(exact_entity, subject) != 0) continue;
         } else if (!contains_word_ci(query, relation->subject)) {
             continue;
         }
         named_entity = 1;
-        if (strcmp(relation->predicate, property) != 0) continue;
+        if (property && strcmp(relation->predicate, property) != 0) continue;
         if (*count == 0) *target = *relation;
-        else if (!concept_id && !same_relation_key(target, relation)) return -1;
+        else if (property && !concept_id && !same_relation_key(target, relation)) return -1;
         facts[*count] = (memoria_state_fact){
             turn->memory_id, target->subject, relation->predicate, relation->object,
             turn->order, turn->authority
@@ -782,11 +820,37 @@ static int try_temporal_response(
     char *prev_type = NULL, *prev_root = NULL, *curr_type = NULL, *curr_root = NULL;
     memoria_mobile_status response_status;
 
-    if (!temporal_query_flags(query, &wants_previous, &wants_current)) return 0;
-    if (!fallback_turn &&
-        memoria_concept_normalize(query, normalized_query, sizeof(normalized_query)) == MEMORIA_CONCEPT_OK)
+    const int asks_for_transition = starts_word_ci(query, "o que mudou");
+    if (!asks_for_transition && !temporal_query_flags(query, &wants_previous, &wants_current)) return 0;
+    if (asks_for_transition) {
+        if (memoria_concept_normalize(query, normalized_query, sizeof(normalized_query)) != MEMORIA_CONCEPT_OK) {
+            *status_out = typed_temporal_unresolved(out, "temporal entity name is unavailable");
+            return 1;
+        }
+        entity_query = transition_entity_name(normalized_query);
+        if (!entity_query[0]) {
+            *status_out = typed_temporal_unresolved(out, "temporal entity name is unavailable");
+            return 1;
+        }
+        wants_previous = wants_current = requires_typed_history = 1;
+        if (concept_namespace[0]) {
+            memoria_concept_resolution identity =
+                memoria_concept_resolve(memoria_concept_runtime_index(h->concept_runtime),
+                                        concept_namespace, entity_query);
+            if (identity.reason == MEMORIA_CONCEPT_REASON_AMBIGUOUS) {
+                *status_out = typed_temporal_unresolved(out, "temporal entity is ambiguous in the concept catalog");
+                return 1;
+            }
+            if (identity.status == MEMORIA_CONCEPT_HIT) {
+                snprintf(mention.concept_ids[0], sizeof(mention.concept_ids[0]), "%s", identity.concept_id);
+                concept_id = mention.concept_ids[0];
+            }
+        }
+    } else if (!fallback_turn &&
+               memoria_concept_normalize(query, normalized_query, sizeof(normalized_query)) == MEMORIA_CONCEPT_OK) {
         requested_property = temporal_requested_property(normalized_query, &entity_query,
                                                          &requires_typed_history);
+    }
 
     if (requested_property && concept_namespace[0]) {
         mention = memoria_concept_rewrite_query(memoria_concept_runtime_index(h->concept_runtime),
@@ -800,7 +864,7 @@ static int try_temporal_response(
         if (mention.status != MEMORIA_CONCEPT_REWRITE_UNRESOLVED && mention.concept_count == 1)
             concept_id = mention.concept_ids[0];
     }
-    if (requested_property) {
+    if (requested_property || asks_for_transition) {
         typed_relations = calloc(h->turn_count, sizeof(*typed_relations));
         facts = calloc(h->turn_count, sizeof(*facts));
         if (!typed_relations || !facts) {
@@ -811,6 +875,7 @@ static int try_temporal_response(
         }
         typed = typed_temporal_facts(h, query, namespace_id, requested_property,
                                      concept_namespace, concept_id,
+                                     asks_for_transition ? entity_query : NULL,
                                      &typed_target, typed_relations, facts, &fact_count);
         if (typed <= 0) {
             free(typed_relations);
@@ -868,7 +933,14 @@ static int try_temporal_response(
         fact_count = memoria_temporal_build_facts(sources, source_count, facts, fact_capacity);
         free(sources);
     }
-    state = memoria_temporal_state_resolve(target->subject, target->predicate, facts, fact_count);
+    if (asks_for_transition) {
+        const char *changed_property = NULL;
+        state = unique_entity_transition(target->subject, facts, fact_count, &changed_property);
+        if (state.hit)
+            snprintf(typed_target.predicate, sizeof(typed_target.predicate), "%s", changed_property);
+    } else {
+        state = memoria_temporal_state_resolve(target->subject, target->predicate, facts, fact_count);
+    }
     free(facts);
     if (typed && state.hit) {
         snprintf(typed_target.object, sizeof(typed_target.object), "%s", state.current_value);
@@ -881,7 +953,8 @@ static int try_temporal_response(
     free(typed_relations);
     if (!state.hit) {
         if (status_out) *status_out = typed
-            ? typed_temporal_unresolved(out, "no justified temporal state for target")
+            ? typed_temporal_unresolved(out, asks_for_transition ? "no single supported transition for entity"
+                                                                  : "no justified temporal state for target")
             : unresolved(out, "no justified temporal state for target");
         return 1;
     }
