@@ -1,0 +1,4949 @@
+{
+  "seed": 20261218,
+  "gates": {
+    "adjacent_true_native_read_only": true,
+    "adjacent_true_link_intervention_masked": true,
+    "adjacent_true_complete_native_cold_parity": true,
+    "adjacent_true_unqualified": true,
+    "adjacent_true_all_inferred_origins_observed_local_users": true,
+    "adjacent_true_base_evidence_retained": true,
+    "adjacent_true_fragment_not_root": true,
+    "adjacent_unrelated_native_read_only": true,
+    "adjacent_unrelated_link_intervention_masked": true,
+    "adjacent_unrelated_complete_native_cold_parity": true,
+    "adjacent_unrelated_unqualified": true,
+    "adjacent_unrelated_all_inferred_origins_observed_local_users": true,
+    "adjacent_unrelated_base_evidence_retained": true,
+    "adjacent_unrelated_fragment_not_root": true,
+    "structural_single_native_read_only": true,
+    "structural_single_link_intervention_masked": true,
+    "structural_single_complete_native_cold_parity": true,
+    "structural_single_unqualified": true,
+    "structural_single_all_inferred_origins_observed_local_users": true,
+    "structural_single_base_evidence_retained": true,
+    "structural_single_fragment_not_root": true,
+    "nonadjacent_true_native_read_only": true,
+    "nonadjacent_true_link_intervention_masked": true,
+    "nonadjacent_true_complete_native_cold_parity": true,
+    "nonadjacent_true_unqualified": true,
+    "nonadjacent_true_all_inferred_origins_observed_local_users": true,
+    "nonadjacent_true_base_evidence_retained": true,
+    "nonadjacent_true_fragment_not_root": true,
+    "outside_frame_native_read_only": true,
+    "outside_frame_link_intervention_masked": true,
+    "outside_frame_complete_native_cold_parity": true,
+    "outside_frame_unqualified": true,
+    "outside_frame_all_inferred_origins_observed_local_users": true,
+    "outside_frame_base_evidence_retained": true,
+    "outside_frame_fragment_not_root": true,
+    "conflicting_successors_native_read_only": true,
+    "conflicting_successors_link_intervention_masked": true,
+    "conflicting_successors_complete_native_cold_parity": true,
+    "conflicting_successors_unqualified": true,
+    "conflicting_successors_all_inferred_origins_observed_local_users": true,
+    "conflicting_successors_base_evidence_retained": true,
+    "conflicting_successors_fragment_not_root": true,
+    "repeated_single_native_read_only": true,
+    "repeated_single_link_intervention_masked": true,
+    "repeated_single_complete_native_cold_parity": true,
+    "repeated_single_unqualified": true,
+    "repeated_single_all_inferred_origins_observed_local_users": true,
+    "repeated_single_base_evidence_retained": true,
+    "repeated_single_fragment_not_root": true,
+    "repeated_conflict_native_read_only": true,
+    "repeated_conflict_link_intervention_masked": true,
+    "repeated_conflict_complete_native_cold_parity": true,
+    "repeated_conflict_unqualified": true,
+    "repeated_conflict_all_inferred_origins_observed_local_users": true,
+    "repeated_conflict_base_evidence_retained": true,
+    "repeated_conflict_fragment_not_root": true,
+    "multiple_targets_native_read_only": true,
+    "multiple_targets_link_intervention_masked": true,
+    "multiple_targets_complete_native_cold_parity": true,
+    "multiple_targets_unqualified": true,
+    "multiple_targets_all_inferred_origins_observed_local_users": true,
+    "multiple_targets_base_evidence_retained": true,
+    "multiple_targets_fragment_not_root": true,
+    "generated_barrier_native_read_only": true,
+    "generated_barrier_link_intervention_masked": true,
+    "generated_barrier_complete_native_cold_parity": true,
+    "generated_barrier_unqualified": true,
+    "generated_barrier_all_inferred_origins_observed_local_users": true,
+    "generated_barrier_base_evidence_retained": true,
+    "generated_barrier_fragment_not_root": true,
+    "foreign_copy_native_read_only": true,
+    "foreign_copy_link_intervention_masked": true,
+    "foreign_copy_complete_native_cold_parity": true,
+    "foreign_copy_unqualified": true,
+    "foreign_copy_all_inferred_origins_observed_local_users": true,
+    "foreign_copy_base_evidence_retained": true,
+    "foreign_copy_fragment_not_root": true,
+    "no_raw_target_native_read_only": true,
+    "no_raw_target_link_intervention_masked": true,
+    "no_raw_target_complete_native_cold_parity": true,
+    "no_raw_target_unqualified": true,
+    "no_raw_target_all_inferred_origins_observed_local_users": true,
+    "no_raw_target_base_evidence_retained": true,
+    "no_raw_target_fragment_not_root": true,
+    "terminal_target_native_read_only": true,
+    "terminal_target_link_intervention_masked": true,
+    "terminal_target_complete_native_cold_parity": true,
+    "terminal_target_unqualified": true,
+    "terminal_target_all_inferred_origins_observed_local_users": true,
+    "terminal_target_base_evidence_retained": true,
+    "terminal_target_fragment_not_root": true,
+    "unique_context_native_read_only": true,
+    "unique_context_link_intervention_masked": true,
+    "unique_context_complete_native_cold_parity": true,
+    "unique_context_unqualified": true,
+    "unique_context_all_inferred_origins_observed_local_users": true,
+    "unique_context_base_evidence_retained": true,
+    "unique_context_fragment_not_root": true,
+    "unique_context_unrelated_native_read_only": true,
+    "unique_context_unrelated_link_intervention_masked": true,
+    "unique_context_unrelated_complete_native_cold_parity": true,
+    "unique_context_unrelated_unqualified": true,
+    "unique_context_unrelated_all_inferred_origins_observed_local_users": true,
+    "unique_context_unrelated_base_evidence_retained": true,
+    "unique_context_unrelated_fragment_not_root": true,
+    "fragment_only_native_read_only": true,
+    "fragment_only_link_intervention_masked": true,
+    "fragment_only_complete_native_cold_parity": true,
+    "fragment_only_unqualified": true,
+    "fragment_only_all_inferred_origins_observed_local_users": true,
+    "fragment_only_base_evidence_retained": true,
+    "fragment_only_fragment_not_root": true,
+    "twins_0_same_complete_view": true,
+    "twins_0_different_reference": true,
+    "twins_1_same_complete_view": true,
+    "twins_1_different_reference": true
+  },
+  "integrity_status": "PASS",
+  "integrity_passed": 116,
+  "integrity_total": 116,
+  "route_totals": {
+    "contextual_root": {
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 53,
+      "exact_relation_set": 5,
+      "proposal_matches": 8
+    },
+    "transported_contextual_root": {
+      "true_positive": 1,
+      "false_positive": 1,
+      "false_negative": 53,
+      "exact_relation_set": 5,
+      "proposal_matches": 8
+    }
+  },
+  "base_route_totals": {
+    "adjacent": {
+      "true_positive": 10,
+      "false_positive": 3,
+      "false_negative": 44,
+      "exact_relation_set": 9,
+      "proposal_matches": 10
+    },
+    "structural_adjacent": {
+      "true_positive": 10,
+      "false_positive": 3,
+      "false_negative": 44,
+      "exact_relation_set": 9,
+      "proposal_matches": 10
+    },
+    "structural_successors": {
+      "true_positive": 53,
+      "false_positive": 10,
+      "false_negative": 1,
+      "exact_relation_set": 8,
+      "proposal_matches": 10
+    }
+  },
+  "relation_quality_status": "FAIL_FALSE_OR_MISSING_RELATIONS",
+  "semantic_quality_status": "FAIL_HIDDEN_RELATION_TWINS",
+  "factual_quality_status": "NOT_EVALUATED",
+  "hidden_relation_twins": [
+    {
+      "identical_view": true,
+      "view_sha256": "8b38c3ed8002568ad2cbd46128e8214db5e4f052a6968b876dbfcd99ea84aa9a",
+      "route_matches": {
+        "contextual_root": 1,
+        "transported_contextual_root": 1
+      },
+      "total": 2
+    },
+    {
+      "identical_view": true,
+      "view_sha256": "867f526ba9405b3cdf92ab33d505565a9f3d8242f9cb3636978efb419c535f54",
+      "route_matches": {
+        "contextual_root": 1,
+        "transported_contextual_root": 1
+      },
+      "total": 2
+    }
+  ],
+  "native_executed": true,
+  "engine_changed": false,
+  "answer": null,
+  "qualified": false,
+  "full_report_sha256": "b1e179f2ee48c6a3d46c082e1b9ca4c1634353fb70b6a30cf2c40c5760e50d27",
+  "cases": [
+    {
+      "case": "adjacent_true",
+      "view_sha256": "8b38c3ed8002568ad2cbd46128e8214db5e4f052a6968b876dbfcd99ea84aa9a",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "adjacent_unrelated",
+      "view_sha256": "8b38c3ed8002568ad2cbd46128e8214db5e4f052a6968b876dbfcd99ea84aa9a",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 2,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "structural_single",
+      "view_sha256": "9a91e9739861782630341d1f1ff1694d175cbda8a9c68c84da8d7b87169f41e4",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "860656a8278eff318d160f5b27b2d1fda92e61614ec255af7e211d8e091f106d",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "860656a8278eff318d160f5b27b2d1fda92e61614ec255af7e211d8e091f106d",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "nonadjacent_true",
+      "view_sha256": "a0c8c6879cda76f10286c9fbe20bee7bea4f2723c0c74d86238e7b31eb7c6d31",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            9
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 2,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "07773887bd3e2da8863f104760969862e5a23805004413b4b447f2ce692250f6",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "outside",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                10
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "07773887bd3e2da8863f104760969862e5a23805004413b4b447f2ce692250f6",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "outside",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                10
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "outside_frame",
+      "view_sha256": "a0c8c6879cda76f10286c9fbe20bee7bea4f2723c0c74d86238e7b31eb7c6d31",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "outside",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 2,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:ebe352046d9debc62067903d8ebcf396e27a8152"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "07773887bd3e2da8863f104760969862e5a23805004413b4b447f2ce692250f6",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "outside",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                10
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "07773887bd3e2da8863f104760969862e5a23805004413b4b447f2ce692250f6",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "outside",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:ebe352046d9debc62067903d8ebcf396e27a8152",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                10
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "conflicting_successors",
+      "view_sha256": "8b38c3ed8002568ad2cbd46128e8214db5e4f052a6968b876dbfcd99ea84aa9a",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-8",
+            9
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 2,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 2,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 2,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "repeated_single",
+      "view_sha256": "7c738ff4d3d4008c8e0731c180906f75c9662986af1ef0400b40af9bc99a2ed6",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-0",
+            10
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-1",
+            11
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-2",
+            12
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-3",
+            13
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-4",
+            14
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-5",
+            15
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-6",
+            16
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-7",
+            17
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-8",
+            18
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-9",
+            19
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-10",
+            20
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-11",
+            21
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-12",
+            22
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-13",
+            23
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-14",
+            24
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-15",
+            25
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-16",
+            26
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-17",
+            27
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-18",
+            28
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-19",
+            29
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 21,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 21,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 20,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 20,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_successors": {
+          "true_positive": 21,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "860656a8278eff318d160f5b27b2d1fda92e61614ec255af7e211d8e091f106d",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-0",
+                10
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-1",
+                11
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-2",
+                12
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-3",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-4",
+                14
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-5",
+                15
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-6",
+                16
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-7",
+                17
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-8",
+                18
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-9",
+                19
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-10",
+                20
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-11",
+                21
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-12",
+                22
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-13",
+                23
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-14",
+                24
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-15",
+                25
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-16",
+                26
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-17",
+                27
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-18",
+                28
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-19",
+                29
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "860656a8278eff318d160f5b27b2d1fda92e61614ec255af7e211d8e091f106d",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-0",
+                10
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-1",
+                11
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-2",
+                12
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-3",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-4",
+                14
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-5",
+                15
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-6",
+                16
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-7",
+                17
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-8",
+                18
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-9",
+                19
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-10",
+                20
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-11",
+                21
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-12",
+                22
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-13",
+                23
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-14",
+                24
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-15",
+                25
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-16",
+                26
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-17",
+                27
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-18",
+                28
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-19",
+                29
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "repeated_conflict",
+      "view_sha256": "491978ce2cd53dc4f753d41533e74e31371f7a53876abeb0d6e4a84b6e1cc56d",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-8",
+            9
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-0",
+            11
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-1",
+            12
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-2",
+            13
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-3",
+            14
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-4",
+            15
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-5",
+            16
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-6",
+            17
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-7",
+            18
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-8",
+            19
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-9",
+            20
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-10",
+            21
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-11",
+            22
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-12",
+            23
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-13",
+            24
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-14",
+            25
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-15",
+            26
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-16",
+            27
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-17",
+            28
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-18",
+            29
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "copy-19",
+            30
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 22,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 22,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 21,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 21,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 22,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "53ad8bab3cc6d3a8e0cdd2a9a979f4890f21f7bda361f07258d5da689dbb5d9d",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-0",
+                11
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-1",
+                12
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-2",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-3",
+                14
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-4",
+                15
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-5",
+                16
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-6",
+                17
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-7",
+                18
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-8",
+                19
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-9",
+                20
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-10",
+                21
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-11",
+                22
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-12",
+                23
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-13",
+                24
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-14",
+                25
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-15",
+                26
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-16",
+                27
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-17",
+                28
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-18",
+                29
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-19",
+                30
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "53ad8bab3cc6d3a8e0cdd2a9a979f4890f21f7bda361f07258d5da689dbb5d9d",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-0",
+                11
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-1",
+                12
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-2",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-3",
+                14
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-4",
+                15
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-5",
+                16
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-6",
+                17
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-7",
+                18
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-8",
+                19
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-9",
+                20
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-10",
+                21
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-11",
+                22
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-12",
+                23
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-13",
+                24
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-14",
+                25
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-15",
+                26
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-16",
+                27
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-17",
+                28
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-18",
+                29
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "copy-19",
+                30
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "multiple_targets",
+      "view_sha256": "f1f18564e5d6794edc4f6e69177214408780f942ceddf312e3ec745ba947d71c",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ],
+        [
+          "conversation:opaque-20261218",
+          "other-q",
+          12
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            },
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "other-q",
+                12
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "AMBIGUOUS_TARGETS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            },
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "other-q",
+                12
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "AMBIGUOUS_TARGETS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ],
+        [
+          [
+            "conversation:opaque-20261218",
+            "other-q",
+            12
+          ],
+          [
+            "conversation:opaque-20261218",
+            "other-a",
+            13
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 2,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 2,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 2,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 2,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 2,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "4c0e819db916fa866211ee97d2b8fed115407433df623502a6eacff0762ad425",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "other-a",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "other-q",
+                12
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "4c0e819db916fa866211ee97d2b8fed115407433df623502a6eacff0762ad425",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "other-a",
+                13
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "other-q",
+                12
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "generated_barrier",
+      "view_sha256": "ea5ef140c48d76e62a152794dab4b5a2951a43e46d1c70791e87dda8e43b209a",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            9
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "UNMATCHED_SHARED_SOURCE_CONTEXT",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "40d683d0acfc429214c53e44bd77699d3ba0ad3d1ca3d2773b89802b8a994e1a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "UNMATCHED_SHARED_SOURCE_CONTEXT",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "40d683d0acfc429214c53e44bd77699d3ba0ad3d1ca3d2773b89802b8a994e1a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "foreign_copy",
+      "view_sha256": "7f4368a5e64ec5ec38e808ec49af792cbe79e94383f1b28c42724ee32e6ca9ab",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 1,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "06d7b63063903cb8109cf6f9577ba55eaefecc6eb4fcea006a54359fff59709a",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-7",
+                8
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            },
+            {
+              "origin": [
+                "conversation:opaque-20261218",
+                "row-8",
+                9
+              ],
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "payload_id": "payload:768ab0b47b99274dec4626529d75ac432e7dd029",
+              "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+              "observed_reply_to": false,
+              "structural_candidate": true
+            }
+          ],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "no_raw_target",
+      "view_sha256": "440471309ef3c22340468ad424343c4b8b83de7fac58e69adb021a9216281856",
+      "targets": [],
+      "routes": {
+        "contextual_root": {
+          "episodes": [],
+          "proposal_payload_id": null,
+          "reason": "NO_OBSERVED_TARGET",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [],
+          "proposal_payload_id": null,
+          "reason": "NO_OBSERVED_TARGET",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "dab45034847e431c2314dd7b4b53e4390c76089ffa5ddc8d1131367ff2fa9e0c",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "COMPETING_OR_BOUNDED_ROUTES",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "dab45034847e431c2314dd7b4b53e4390c76089ffa5ddc8d1131367ff2fa9e0c",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "terminal_target",
+      "view_sha256": "fd121f0a45dbb25128ef2196591dbf393c67f23ffaaba8270d52c2cb37a42aeb",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NO_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "ECHO_ONLY",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "8edc171ba9dbbddafc25dc8935afa645455ec884b487771a2243f5cbabb70fc3",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "ECHO_ONLY",
+          "contextual_hypothesis": null,
+          "contextual_diagnostic_sha256": "8edc171ba9dbbddafc25dc8935afa645455ec884b487771a2243f5cbabb70fc3",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "unique_context",
+      "view_sha256": "867f526ba9405b3cdf92ab33d505565a9f3d8242f9cb3636978efb419c535f54",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261218",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261218",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "reason": "UNIQUE_CONTEXTUAL_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261218",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261218",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "reason": "UNIQUE_CONTEXTUAL_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [
+        [
+          [
+            "conversation:opaque-20261218",
+            "row-6",
+            7
+          ],
+          [
+            "conversation:opaque-20261218",
+            "row-7",
+            8
+          ]
+        ]
+      ],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "transported_contextual_root": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_adjacent": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        },
+        "structural_successors": {
+          "true_positive": 1,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "EXISTING_UNIQUE_ROUTE",
+          "contextual_hypothesis": [
+            231,
+            247,
+            49,
+            227,
+            224,
+            102,
+            104,
+            120,
+            114,
+            226
+          ],
+          "contextual_diagnostic_sha256": "c4bed3fcc5203b5b154eb81f5a8de730e5e253e76dd92ab61ebd7b697d82027d",
+          "matched_observed_root": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "removed_inferred_relations": [],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "EXISTING_UNIQUE_ROUTE",
+          "contextual_hypothesis": [
+            231,
+            247,
+            49,
+            227,
+            224,
+            102,
+            104,
+            120,
+            114,
+            226
+          ],
+          "contextual_diagnostic_sha256": "c4bed3fcc5203b5b154eb81f5a8de730e5e253e76dd92ab61ebd7b697d82027d",
+          "matched_observed_root": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "removed_inferred_relations": [],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "unique_context_unrelated",
+      "view_sha256": "867f526ba9405b3cdf92ab33d505565a9f3d8242f9cb3636978efb419c535f54",
+      "targets": [
+        [
+          "conversation:opaque-20261218",
+          "row-6",
+          7
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261218",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261218",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "reason": "UNIQUE_CONTEXTUAL_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "conversation:opaque-20261218",
+                "row-6",
+                7
+              ],
+              "inferred_relations": [
+                {
+                  "origin": [
+                    "conversation:opaque-20261218",
+                    "row-7",
+                    8
+                  ],
+                  "target": [
+                    "conversation:opaque-20261218",
+                    "row-6",
+                    7
+                  ],
+                  "payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+                  "evidence_kind": "INFERRED_SEQUENCE_RELATION",
+                  "observed_reply_to": false,
+                  "structural_candidate": true
+                }
+              ],
+              "alternative_payload_ids": [
+                "payload:1bbb80dc1012773976c4ee07adea41f864940647"
+              ]
+            }
+          ],
+          "proposal_payload_id": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "reason": "UNIQUE_CONTEXTUAL_ROOT",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 1,
+          "false_negative": 0,
+          "exact_relation_set": false,
+          "proposal_matches": false,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "EXISTING_UNIQUE_ROUTE",
+          "contextual_hypothesis": [
+            231,
+            247,
+            49,
+            227,
+            224,
+            102,
+            104,
+            120,
+            114,
+            226
+          ],
+          "contextual_diagnostic_sha256": "c4bed3fcc5203b5b154eb81f5a8de730e5e253e76dd92ab61ebd7b697d82027d",
+          "matched_observed_root": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "removed_inferred_relations": [],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "EXISTING_UNIQUE_ROUTE",
+          "contextual_hypothesis": [
+            231,
+            247,
+            49,
+            227,
+            224,
+            102,
+            104,
+            120,
+            114,
+            226
+          ],
+          "contextual_diagnostic_sha256": "c4bed3fcc5203b5b154eb81f5a8de730e5e253e76dd92ab61ebd7b697d82027d",
+          "matched_observed_root": "payload:1bbb80dc1012773976c4ee07adea41f864940647",
+          "removed_inferred_relations": [],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    },
+    {
+      "case": "fragment_only",
+      "view_sha256": "d27423fc27cc12202c2fd2a63b6a385e6ac251be880e5fe7091fdab2fa2ba8a4",
+      "targets": [
+        [
+          "fragment-region:20261218",
+          "q",
+          5
+        ]
+      ],
+      "routes": {
+        "contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "fragment-region:20261218",
+                "q",
+                5
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NON_ROOT_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        },
+        "transported_contextual_root": {
+          "episodes": [
+            {
+              "target": [
+                "fragment-region:20261218",
+                "q",
+                5
+              ],
+              "inferred_relations": [],
+              "alternative_payload_ids": []
+            }
+          ],
+          "proposal_payload_id": null,
+          "reason": "NON_ROOT_CONTEXTUAL_HYPOTHESIS",
+          "answer": null,
+          "qualified": false,
+          "selected_target": null,
+          "selection_used": false
+        }
+      },
+      "reference_relations": [],
+      "checks": {
+        "native_read_only": true,
+        "link_intervention_masked": true,
+        "complete_native_cold_parity": true,
+        "unqualified": true,
+        "all_inferred_origins_observed_local_users": true,
+        "base_evidence_retained": true,
+        "fragment_not_root": true
+      },
+      "scores": {
+        "contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "transported_contextual_root": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "base_scores": {
+        "adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_adjacent": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        },
+        "structural_successors": {
+          "true_positive": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "exact_relation_set": true,
+          "proposal_matches": true,
+          "expected_proposal": null
+        }
+      },
+      "audits": {
+        "contextual_root": {
+          "contextual_reason": "SOURCE_CONTEXT_SUPPORTED_ROUTE",
+          "contextual_hypothesis": [
+            112,
+            113,
+            114
+          ],
+          "contextual_diagnostic_sha256": "32e641b85a29194e324517d156e331d85d1ce46446454620eb59d90fe22082ae",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": false,
+          "learned_fragment_promoted_to_root": false
+        },
+        "transported_contextual_root": {
+          "contextual_reason": "SOURCE_CONTEXT_SUPPORTED_ROUTE",
+          "contextual_hypothesis": [
+            112,
+            113,
+            114
+          ],
+          "contextual_diagnostic_sha256": "32e641b85a29194e324517d156e331d85d1ce46446454620eb59d90fe22082ae",
+          "matched_observed_root": null,
+          "removed_inferred_relations": [],
+          "source_scope_option": true,
+          "learned_fragment_promoted_to_root": false
+        }
+      }
+    }
+  ]
+}

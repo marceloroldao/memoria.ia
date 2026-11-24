@@ -288,7 +288,18 @@ class ContinuousStructuralAssociationField:
                 kept.append((tick, profile, temporal))
         self._recent[hierarchy_id] = kept
 
-    def observe(self, envelope: dict[str, Any]) -> int:
+    def observe(
+        self,
+        envelope: dict[str, Any],
+        *,
+        spans: tuple[tuple[int, int], ...] | None = None,
+    ) -> int:
+        """Observe addresses, optionally at lossless [start, end) positions.
+
+        Composition projections can overlap. Only non-overlapping, forward
+        pairs contribute to the within-event channel. Without spans the
+        historical one-position-per-address behavior is unchanged.
+        """
         if envelope.get("semantic_projection") not in {False, None}:
             raise ValueError("continuous structural field accepts raw observations only")
         observation_id = str(envelope.get("observation_id") or "").strip()
@@ -301,6 +312,21 @@ class ContinuousStructuralAssociationField:
         if not isinstance(event, dict):
             raise ValueError("structural observation event must be an object")
         trail = self._trail(event)
+        if spans is not None:
+            if not isinstance(spans, (tuple, list)) or len(spans) != len(trail):
+                raise ValueError("spans must align with the structural trail")
+            last_start = -1
+            for interval in spans:
+                if (
+                    not isinstance(interval, (tuple, list))
+                    or len(interval) != 2
+                    or any(type(position) is not int for position in interval)
+                    or interval[0] < 0
+                    or interval[1] <= interval[0]
+                    or interval[0] < last_start
+                ):
+                    raise ValueError("spans must be ordered nonempty [start, end) intervals")
+                last_start = interval[0]
         temporal = self._temporal_coordinate(envelope)
         self._validate_physical_temporal_input(hierarchy_id, temporal)
 
@@ -313,12 +339,18 @@ class ContinuousStructuralAssociationField:
             self._latest_temporal[(hierarchy_id, temporal.clock_id)] = temporal
         self._trim_history(hierarchy_id)
 
+        positions = spans if spans is not None else tuple(
+            (position, position + 1) for position in range(len(trail))
+        )
         horizon = self.within_horizon
         for i, source in enumerate(trail):
-            upper = min(len(trail), i + horizon + 1)
-            for j in range(i + 1, upper):
-                distance = j - i
-                kernel = exp(-self.within_decay * float(distance - 1))
+            for j in range(i + 1, len(trail)):
+                gap = positions[j][0] - positions[i][1]
+                if gap < 0:
+                    continue
+                if gap >= horizon:
+                    break
+                kernel = exp(-self.within_decay * float(gap))
                 if kernel < self.trace_floor:
                     break
                 self._reinforce(hierarchy_id, source, trail[j], "within", kernel)
