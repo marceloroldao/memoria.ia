@@ -7,6 +7,7 @@ Run one Linux process per data directory. See docs/trajectory-local-mvp.md.
 from __future__ import annotations
 
 import argparse
+from base64 import b64decode, urlsafe_b64encode
 from contextlib import asynccontextmanager
 import ctypes
 import fcntl
@@ -64,6 +65,11 @@ class ObserveRequest(TextRequest):
 class TeachingTarget(BaseModel):
     source_id: str = Field(min_length=1, max_length=256)
     sequence: int = Field(ge=0, strict=True)
+
+
+class TeachingCorrection(ScopedRequest):
+    targets: list[TeachingTarget] = Field(min_length=1, max_length=64)
+    excluded: bool = Field(strict=True)
 
 
 class QueryRequest(TextRequest):
@@ -145,6 +151,79 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
         if before != after:
             raise HTTPException(409, "Memória mudou durante a consulta; tente novamente.")
 
+    def teaching_rows(rows, region):
+        # Generated rows split the teaching stream while retaining their own native scope.
+        return [dict(row, hierarchy_id=region) if row["source_kind"] == "assistant_generated"
+                else row for row in rows]
+
+    def teaching_reader(rows, region, targets):
+        try:
+            return AttributeFrameReader(teaching_rows(rows, region), region, excluded_targets={
+                (region, source_id, sequence) for source_id, sequence in targets
+            })
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    def corrections(region):
+        journal_region = region + ":teaching-corrections"
+        try:
+            journal = window_snapshot(BoundedWindow(app.state.native), journal_region)
+        except WindowChanged as exc:
+            raise HTTPException(409, "Correções mudaram durante a leitura.") from exc
+        active = set()
+        for row in sorted(journal["rows"], key=lambda item: item["sequence"]):
+            try:
+                version, separator, payload = row["text"].partition(" ")
+                if version != "correction-v1" or not separator or row["source_kind"] != "user_assertion":
+                    raise ValueError("invalid correction format")
+                event = TeachingCorrection.model_validate_json(b64decode(payload, altchars=b"-_", validate=True))
+                if event.region != region:
+                    raise ValueError("correction outside journal scope")
+            except ValueError as exc:
+                raise HTTPException(500, "Registro de correção inválido no BDR") from exc
+            targets = {(target.source_id, target.sequence) for target in event.targets}
+            if event.excluded:
+                active.update(targets)
+            else:
+                active.difference_update(targets)
+        return journal_region, journal["rows"], active
+
+    def correction_view(scope, revision, active):
+        return dict(scope=scope, revision=revision, excluded_teaching_targets=[
+            dict(source_id=source_id, sequence=sequence) for source_id, sequence in sorted(active)
+        ])
+
+    @app.get("/api/teaching-corrections", dependencies=[Depends(authorize)])
+    def list_corrections(request: ScopedRequest = Depends()):
+        with lock:
+            _, events, active = corrections(request.region)
+            return correction_view(request.scope, len(events), active)
+
+    @app.post("/api/teaching-corrections", dependencies=[Depends(authorize)])
+    def save_correction(request: TeachingCorrection):
+        with lock:
+            rows = snapshot(request.region)["rows"]
+            region, events, active = corrections(request.region)
+            targets = {(target.source_id, target.sequence) for target in request.targets}
+            teaching_reader(rows, request.region, active | targets)
+            updated = active | targets if request.excluded else active - targets
+            revision = len(events)
+            if updated != active:
+                if revision >= 4096:
+                    raise HTTPException(413, "Limite local de correções atingido")
+                # Encode the journal payload as a plain token for the native text transport.
+                payload = urlsafe_b64encode(request.model_dump_json().encode()).decode("ascii")
+                row = dict(hierarchy_id=region, source_id="correction:" + uuid4().hex,
+                           sequence=1 + max((event["sequence"] for event in events), default=0),
+                           text="correction-v1 " + payload, source_kind="user_assertion")
+                status, result = app.state.native.call("observe_structural_text", row)
+                if status != 0 or result.get("duplicate"):
+                    raise HTTPException(500, "Registro de correção rejeitado pelo BDR")
+                revision += 1
+            if app.state.native.lib.memoria_mobile_flush(app.state.native.handle) != 0:
+                raise HTTPException(500, "Não foi possível confirmar a persistência da correção")
+            return correction_view(request.scope, revision, updated)
+
     @app.get("/", response_class=HTMLResponse)
     def index():
         return Path(__file__).with_suffix(".html").read_text(encoding="utf-8")
@@ -208,16 +287,13 @@ def create_app(*, library: Path, data_dir: Path, api_key: str) -> FastAPI:
                         native_support=support.get(text), support_is_factual_confidence=False))
             # Generated rows are timeline barriers only in the experimental
             # adapter; their actual native storage address stays in the journal.
-            experimental_rows = [dict(r, hierarchy_id=request.region) if r["source_kind"] == "assistant_generated" else r for r in rows]
-            experiment = copy_relations(experimental_rows, request.region, request.text) if request.experimental else None
+            experiment = (copy_relations(teaching_rows(rows, request.region), request.region, request.text)
+                          if request.experimental else None)
             attributes = {}
             if request.attribute_frames:
-                try:
-                    reader = AttributeFrameReader(experimental_rows, request.region, excluded_targets={
-                        (request.region, target.source_id, target.sequence) for target in exclusions
-                    })
-                except ValueError as exc:
-                    raise HTTPException(422, str(exc)) from exc
+                _, _, active = corrections(request.region)
+                requested = {(target.source_id, target.sequence) for target in exclusions}
+                reader = teaching_reader(rows, request.region, active | requested)
                 attributes["attribute_frames"] = reader.read(
                     request.text, casefold=request.attribute_frame_matching == "unicode_casefold",
                     require_agreement=request.attribute_frame_require_agreement,

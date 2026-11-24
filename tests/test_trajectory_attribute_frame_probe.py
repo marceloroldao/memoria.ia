@@ -366,15 +366,43 @@ def test_http_teaching_corrections_preserve_native_history_across_restart(librar
                 scope=scope, text='teste', attribute_frames=True,
                 attribute_frame_excluded_teaching_targets=[dict(exclusions[0], sequence=999)]))
             assert invalid.status_code == 422
+            correction = dict(scope=scope, targets=exclusions, excluded=True)
+            invalid = client.post('/api/teaching-corrections', json=dict(
+                correction, targets=[*exclusions, dict(exclusions[0], sequence=999)]))
+            assert invalid.status_code == 422
+            assert check_response(client.get('/api/teaching-corrections', params={'scope': scope}))['revision'] == 0
+            persisted = check_response(client.post('/api/teaching-corrections', json=correction))
+            assert persisted['revision'] == 1
+            assert check_response(client.post('/api/teaching-corrections', json=correction)) == persisted
+            assert [query(client, scope, form, entity, [])
+                    for _, form, entity, _ in domain['cases']] == corrected
             assert history(client, scope) == before
             assert set(row['source_id'] for row in stored) <= {row['source_id'] for row in before['entries']}
             saved[scope] = before, exclusions, corrected
 
     with server(library, state, key) as client:
+        assert check_response(client.get('/api/teaching-corrections', params={'scope': 'other'})) == {
+            'scope': 'other', 'revision': 0, 'excluded_teaching_targets': []
+        }
         for scope, (before, exclusions, corrected) in saved.items():
             assert history(client, scope) == before
-            assert [query(client, scope, form, entity, exclusions)
+            persisted = check_response(client.get('/api/teaching-corrections', params={'scope': scope}))
+            assert persisted['revision'] == 1
+            assert sorted(persisted['excluded_teaching_targets'], key=lambda row: row['sequence']) == exclusions
+            assert [query(client, scope, form, entity, [])
                     for _, form, entity, _ in DOMAINS[scope]['cases']] == corrected
+            restored = check_response(client.post('/api/teaching-corrections', json=dict(
+                scope=scope, targets=exclusions, excluded=False)))
+            assert restored == dict(scope=scope, revision=2, excluded_teaching_targets=[])
+            _, form, entity, expected = DOMAINS[scope]['cases'][0]
+            mixed = query(client, scope, form, entity, [])
+            assert set(expected) < texts(mixed)
+            assert mixed['proposal_payload_id'] is None
+            assert history(client, scope) == before
+    with server(library, state, key) as client:
+        for scope in saved:
+            persisted = check_response(client.get('/api/teaching-corrections', params={'scope': scope}))
+            assert persisted == dict(scope=scope, revision=2, excluded_teaching_targets=[])
 
 
 def test_opt_in_http_limit_rejects_whole_projection_without_affecting_default_query(library,tmp_path):

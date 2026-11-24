@@ -183,3 +183,21 @@ O endereço no exemplo é ilustrativo. A lista exclui a transição que chega a 
 A lista faz parte da consulta. O BDR preserva tanto o histórico original quanto os exemplos acrescentados. Para repetir a correção após reiniciar, envie os mesmos endereços. Os registros antigos continuam recuperáveis como conteúdo, e identificar quais ligações estavam erradas depende da revisão do usuário ou do chamador.
 
 No teste por HTTP, perguntar o nome do rádio inicialmente propunha sua localização. Perguntar a tensão do adaptador propunha sua corrente. Só acrescentar exemplos corretos levou a candidatos concorrentes. Ao também desconsiderar as seis transições erradas de cada escopo, ambas as novas entidades receberam o candidato correto, os conflitos de valores conservaram dois candidatos e os controles de ausência ficaram vazios. As duas formas de pergunta fora do ensino continuaram sem candidatos. A reabertura do BDR reproduziu as respostas corrigidas e devolveu o histórico completo.
+
+## Correções persistentes de ensino
+
+O MVP local também permite salvar a correção no BDR. Envie a `POST /api/teaching-corrections` os endereços do escopo consultado. Use a mesma chave da API de consultas.
+
+```json
+{
+  "scope": "principal",
+  "targets": [{"source_id": "local:exemplo", "sequence": 2}],
+  "excluded": true
+}
+```
+
+O endereço acima é ilustrativo. Obtenha os endereços em `/api/entries`. A operação valida todos os alvos antes de registrar a mudança. Se um endereço for inválido, a requisição inteira recebe HTTP 422. Repetir um pedido que já está em vigor conserva a revisão. Para reativar as ligações, envie os mesmos endereços com `excluded: false`.
+
+`GET /api/teaching-corrections?scope=principal` mostra a revisão e os endereços desconsiderados. As mudanças ficam em um diário separado do BDR, por escopo. Consultas com `attribute_frames: true` usam a lista salva e podem acrescentar exclusões temporárias pelo campo descrito acima. A configuração persiste após reiniciar o MVP. Os registros originais continuam disponíveis no histórico e podem ser inspecionados.
+
+O ensaio por HTTP confirmou a consulta corrigida sem reenviar os endereços em dois escopos. Após reiniciar, reativar as ligações fez os candidatos voltarem a competir. Um segundo reinício preservou a reativação. O ensaio também verificou a rejeição integral de um lote com um endereço inválido.
