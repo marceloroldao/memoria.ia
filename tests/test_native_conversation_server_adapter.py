@@ -177,7 +177,7 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         record("A fonte Vega fornece 12 volts.", 40)
         old_color = record("A fonte Vega é cinza.", 10)
         old_voltage = record("A fonte Vega fornece 24 volts.", 20)
-        current_color = record("A fonte Vega é preta.", 30)
+        current_color = record("A fonte Vega é preta.", 45)
         current_voltage = record("A fonte Vega fornece 12 volts.", 50)
         record("A fonte Vega fica na bancada.", 30)
         record("A fonte Vega fica na bancada.", 60)
@@ -207,5 +207,27 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         ]
         assert [item["predicate"] for item in result["relations"]] == ["color", "voltage"]
         assert result["selected_context"].count("TRANSITION:") == 2
+        assert [item["transition_order"] for item in result["temporal_changes"]] == [45, 40]
+
+        client = TestClient(app)
+        latest_query = "Qual foi a última mudança na fonte Vega?"
+        latest = _resolve(client, latest_query, "workshop")
+        assert latest["status"] == "HIT"
+        assert latest["memory_ids"] == [old_color, current_color]
+        assert [(item["property"], item["transition_order"]) for item in latest["temporal_changes"]] == [
+            ("color", 45),
+        ]
+        _ingest(client, role="user", text="A fonte Vega é preta.", order=70, session_id="workshop")
+        _ingest(client, role="user", text="A fonte Vega fica no almoxarifado.", order=65, session_id="workshop")
+        newest = _resolve(client, latest_query, "workshop")
+        assert [(item["property"], item["transition_order"]) for item in newest["temporal_changes"]] == [
+            ("location", 65),
+        ]
+        _ingest(client, role="user", text="A fonte Vega fornece 18 volts.", order=65, session_id="workshop")
+        tied = _resolve(client, latest_query, "workshop")
+        assert [(item["property"], item["transition_order"]) for item in tied["temporal_changes"]] == [
+            ("voltage", 65), ("location", 65),
+        ]
+        assert _resolve(client, "Qual foi a última mudança?", "workshop")["status"] == "UNRESOLVED"
     finally:
         service.close()

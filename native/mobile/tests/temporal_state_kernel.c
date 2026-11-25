@@ -22,9 +22,12 @@ static int check_repeated_values(void) {
     CHECK(result.hit && result.transition_detected);
     CHECK(strcmp(result.current_memory_id, "repeated") == 0);
     CHECK(strcmp(result.previous_memory_id, "old") == 0);
+    CHECK(strcmp(result.transition_memory_id, "first") == 0);
+    CHECK(result.transition_order == 20);
 
     result = memoria_temporal_state_resolve("sensor", "location", facts, 6);
     CHECK(result.hit && !result.transition_detected && result.previous_memory_id == NULL);
+    CHECK(result.transition_memory_id == NULL);
     CHECK(strcmp(result.current_memory_id, "repeated") == 0);
 
     result = memoria_temporal_state_resolve("sensor", "location", facts, 7);

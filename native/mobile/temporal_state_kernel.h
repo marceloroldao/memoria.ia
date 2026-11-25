@@ -22,6 +22,8 @@ typedef struct memoria_temporal_state_result {
     long current_order;
     double confidence;
     int transition_detected;
+    const char *transition_memory_id;
+    long transition_order;
 } memoria_temporal_state_result;
 
 memoria_temporal_state_result memoria_temporal_state_resolve(

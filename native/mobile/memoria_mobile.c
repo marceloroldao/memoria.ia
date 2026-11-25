@@ -703,9 +703,8 @@ static memoria_mobile_status typed_temporal_unresolved(memoria_mobile_buffer *ou
                          reason);
 }
 
-static const char *transition_entity_name(const char *normalized_query) {
+static const char *transition_entity_name(const char *entity) {
     static const char *prefixes[] = {"na ", "no ", "da ", "do ", "em ", "com a ", "com o "};
-    const char *entity = normalized_query + strlen("o que mudou");
     if (*entity != ' ') return "";
     ++entity;
     for (size_t i = 0; i < sizeof(prefixes) / sizeof(prefixes[0]); ++i) {
@@ -730,14 +729,21 @@ typedef struct entity_transition {
 } entity_transition;
 
 static size_t collect_entity_transitions(
-    const char *entity, const memoria_state_fact *facts, size_t fact_count, entity_transition *out
+    const char *entity, const memoria_state_fact *facts, size_t fact_count,
+    int latest_only, entity_transition *out
 ) {
     size_t count = 0;
     for (size_t i = 0; i < sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0]); ++i) {
         memoria_temporal_state_result state = memoria_temporal_state_resolve(
             entity, entity_transition_properties[i].property, facts, fact_count
         );
-        if (state.transition_detected) out[count++] = (entity_transition){i, state};
+        if (!state.transition_detected) continue;
+        if (latest_only && count) {
+            long newest_order = out[0].state.transition_order;
+            if (state.transition_order < newest_order) continue;
+            if (state.transition_order > newest_order) count = 0;
+        }
+        out[count++] = (entity_transition){i, state};
     }
     return count;
 }
@@ -760,7 +766,7 @@ static int append_transition_provenance(
 
 static memoria_mobile_status render_entity_transitions(
     memoria_mobile_handle *h, const char *namespace_id, const entity_transition *transitions,
-    size_t count, memoria_mobile_buffer *out
+    size_t count, int latest_only, memoria_mobile_buffer *out
 ) {
     mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
     double confidence = 1.0;
@@ -770,7 +776,9 @@ static memoria_mobile_status render_entity_transitions(
         const entity_transition *transition = &transitions[i];
         const memoria_temporal_state_result *state = &transition->state;
         const turn_row *before = find_turn_in_namespace(h, state->previous_memory_id, namespace_id);
-        const turn_row *after = find_turn_in_namespace(h, state->current_memory_id, namespace_id);
+        const turn_row *after = find_turn_in_namespace(
+            h, latest_only ? state->transition_memory_id : state->current_memory_id, namespace_id
+        );
         const char *property = entity_transition_properties[transition->property_index].property;
         const char *label = entity_transition_properties[transition->property_index].label;
         if (!before || !after) goto done;
@@ -783,7 +791,7 @@ static memoria_mobile_status render_entity_transitions(
 
         char *before_id = json_escape(before->memory_id), *after_id = json_escape(after->memory_id);
         char *before_text = json_escape(before->text), *after_text = json_escape(after->text);
-        char *before_value = json_escape(state->previous_value), *after_value = json_escape(state->current_value);
+        char *before_value = json_escape(state->previous_value), *after_value = json_escape(latest_relation.object);
         const char *comma = i ? "," : "";
         int written = before_id && after_id && before_text && after_text && before_value && after_value &&
             mobile_response_appendf(&ids, "%s\"%s\",\"%s\"", comma, before_id, after_id) &&
@@ -794,14 +802,15 @@ static memoria_mobile_status render_entity_transitions(
             mobile_response_appendf(&changes,
                 "%s{\"property\":\"%s\",\"previous_value\":\"%s\",\"current_value\":\"%s\","
                 "\"previous_memory_id\":\"%s\",\"current_memory_id\":\"%s\","
-                "\"previous_order\":%ld,\"current_order\":%ld}",
+                "\"previous_order\":%ld,\"current_order\":%ld,\"transition_order\":%ld}",
                 comma, property, before_value, after_value, before_id, after_id,
-                state->previous_order, state->current_order) &&
+                state->previous_order, after->order, state->transition_order) &&
             mobile_response_appendf(&relations, "%s%.*s", comma, (int)strlen(relation_json) - 2, relation_json + 1);
         free(before_id); free(after_id); free(before_text); free(after_text);
         free(before_value); free(after_value);
         if (!written) goto done;
         if (state->confidence < confidence) confidence = state->confidence;
+        if (after->authority < confidence) confidence = after->authority;
     }
 
     status = set_responsef(out, MEMORIA_MOBILE_OK,
@@ -898,14 +907,28 @@ static int try_temporal_response(
     char *prev_type = NULL, *prev_root = NULL, *curr_type = NULL, *curr_root = NULL;
     memoria_mobile_status response_status;
 
-    const int asks_for_transition = starts_word_ci(query, "o que mudou");
-    if (!asks_for_transition && !temporal_query_flags(query, &wants_previous, &wants_current)) return 0;
+    const char *latest_phrase = NULL;
+    const int asks_what_changed = starts_word_ci(query, "o que mudou");
+    const int asks_before_or_now = temporal_query_flags(query, &wants_previous, &wants_current);
+    if (!asks_what_changed && !asks_before_or_now && !starts_word_ci(query, "qual")) return 0;
+
+    const int normalized = memoria_concept_normalize(query, normalized_query, sizeof(normalized_query))
+        == MEMORIA_CONCEPT_OK;
+    if (normalized) {
+        if (starts_word_ci(normalized_query, "qual foi a ultima mudanca"))
+            latest_phrase = "qual foi a ultima mudanca";
+        else if (starts_word_ci(normalized_query, "qual a ultima mudanca"))
+            latest_phrase = "qual a ultima mudanca";
+    }
+    const int asks_for_transition = latest_phrase || asks_what_changed;
+    if (!asks_for_transition && !asks_before_or_now) return 0;
     if (asks_for_transition) {
-        if (memoria_concept_normalize(query, normalized_query, sizeof(normalized_query)) != MEMORIA_CONCEPT_OK) {
+        if (!normalized) {
             *status_out = typed_temporal_unresolved(out, "temporal entity name is unavailable");
             return 1;
         }
-        entity_query = transition_entity_name(normalized_query);
+        const char *phrase = latest_phrase ? latest_phrase : "o que mudou";
+        entity_query = transition_entity_name(normalized_query + strlen(phrase));
         if (!entity_query[0]) {
             *status_out = typed_temporal_unresolved(out, "temporal entity name is unavailable");
             return 1;
@@ -924,8 +947,7 @@ static int try_temporal_response(
                 concept_id = mention.concept_ids[0];
             }
         }
-    } else if (!fallback_turn &&
-               memoria_concept_normalize(query, normalized_query, sizeof(normalized_query)) == MEMORIA_CONCEPT_OK) {
+    } else if (!fallback_turn && normalized) {
         requested_property = temporal_requested_property(normalized_query, &entity_query,
                                                          &requires_typed_history);
     }
@@ -1013,9 +1035,11 @@ static int try_temporal_response(
     }
     if (asks_for_transition) {
         entity_transition transitions[sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0])];
-        size_t count = collect_entity_transitions(target->subject, facts, fact_count, transitions);
-        if (count > 1) {
-            *status_out = render_entity_transitions(h, namespace_id, transitions, count, out);
+        size_t count = collect_entity_transitions(target->subject, facts, fact_count,
+                                                   latest_phrase != NULL, transitions);
+        if (count && (latest_phrase || count > 1)) {
+            *status_out = render_entity_transitions(h, namespace_id, transitions, count,
+                                                    latest_phrase != NULL, out);
             free(facts);
             free(typed_relations);
             return 1;

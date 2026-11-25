@@ -22,10 +22,11 @@ memoria_temporal_state_result memoria_temporal_state_resolve(
     const memoria_state_fact *facts,
     size_t fact_count
 ) {
-    memoria_temporal_state_result none = {0,0,0,0,0,0,0,0.0,0};
+    memoria_temporal_state_result none = {0};
     size_t i;
     const memoria_state_fact *latest = 0;
     const memoria_state_fact *previous = 0;
+    const memoria_state_fact *transition = 0;
 
     if (!entity || !*entity || !property || !*property || !facts || !fact_count) return none;
 
@@ -52,6 +53,9 @@ memoria_temporal_state_result memoria_temporal_state_resolve(
         if (fact->order == latest->order && !eq_ci(fact->value, latest->value)) return none;
         if (previous && fact->order == previous->order && !eq_ci(fact->value, previous->value))
             previous = NULL;
+        if (previous && fact->order > previous->order && eq_ci(fact->value, latest->value) &&
+            (!transition || fact->order < transition->order))
+            transition = fact;
     }
 
     {
@@ -64,6 +68,8 @@ memoria_temporal_state_result memoria_temporal_state_resolve(
         r.previous_order = previous ? previous->order : 0;
         r.current_order = latest->order;
         r.transition_detected = previous != NULL;
+        r.transition_memory_id = previous ? transition->memory_id : NULL;
+        r.transition_order = previous ? transition->order : 0;
         r.confidence = latest->authority;
         if (previous && previous->authority < r.confidence) r.confidence = previous->authority;
         if (r.confidence < 0.0) r.confidence = 0.0;
