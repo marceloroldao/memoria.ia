@@ -802,6 +802,7 @@ static int compare_timeline_changes(const void *left, const void *right) {
 typedef struct timeline_conflict {
     const memoria_state_fact *facts;
     size_t count;
+    const memoria_state_fact *resume;
 } timeline_conflict;
 
 typedef struct timeline_conflicts {
@@ -824,6 +825,8 @@ static size_t collect_timeline_changes(
     for (size_t i = 0; i < sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0]); ++i) {
         const char *property = entity_transition_properties[i].property;
         const memoria_state_fact *previous = NULL;
+        timeline_conflict prior_conflict = {0};
+        size_t unrecovered = conflicts->count;
         for (size_t j = 0; j < count;) {
             const size_t start = j;
             const memoria_state_fact *fact = &facts[j++];
@@ -833,10 +836,22 @@ static size_t collect_timeline_changes(
                 if (strcasecmp(fact->value, facts[j].value) != 0) conflict = 1;
                 ++j;
             }
-            /* A conflict interrupts the trace until a later observation establishes a state. */
+            const timeline_conflict group = {fact, j - start, NULL};
+            if (fact->order < from_order) {
+                prior_conflict = conflict ? group : (timeline_conflict){0};
+            } else {
+                if (prior_conflict.facts && fact->order > from_order)
+                    conflicts->items[conflicts->count++] = prior_conflict;
+                prior_conflict = (timeline_conflict){0};
+                if (conflict) {
+                    conflicts->items[conflicts->count++] = group;
+                } else {
+                    for (; unrecovered < conflicts->count; ++unrecovered)
+                        conflicts->items[unrecovered].resume = fact;
+                }
+            }
+            /* Conflicting readings cannot support a transition across the gap. */
             if (conflict) {
-                if (fact->order >= from_order)
-                    conflicts->items[conflicts->count++] = (timeline_conflict){fact, j - start};
                 previous = NULL;
                 continue;
             }
@@ -852,6 +867,7 @@ static size_t collect_timeline_changes(
             }
             previous = fact;
         }
+        if (prior_conflict.facts) conflicts->items[conflicts->count++] = prior_conflict;
     }
     qsort(out, changes, sizeof(*out), compare_timeline_changes);
     qsort(conflicts->items, conflicts->count, sizeof(*conflicts->items), compare_timeline_conflicts);
@@ -940,8 +956,10 @@ static memoria_mobile_status render_entity_transitions(
         const timeline_conflict *conflict = &timeline->items[i];
         const memoria_state_fact *first = conflict->facts;
         if (!mobile_response_appendf(&conflict_json,
-            "%s{\"property\":\"%s\",\"order\":%ld,\"from_order\":%ld,\"to_order\":%ld,\"observations\":[",
-            i ? "," : "", first->property, first->order, range->from, range->to) ||
+            "%s{\"property\":\"%s\",\"order\":%ld,\"from_order\":%ld,\"to_order\":%ld,"
+            "\"inherited\":%s,\"observations\":[",
+            i ? "," : "", first->property, first->order, range->from, range->to,
+            first->order < range->from ? "true" : "false") ||
             !mobile_response_appendf(&context, "%sCONFLITO na ordem %ld", context.size ? "\\n\\n" : "", first->order))
             goto done;
         for (size_t j = 0; j < conflict->count; ++j) {
@@ -962,7 +980,27 @@ static memoria_mobile_status render_entity_transitions(
             if (!written) goto done;
             if (fact->authority < confidence) confidence = fact->authority;
         }
-        if (!mobile_response_appendf(&conflict_json, "]}")) goto done;
+        if (conflict->resume) {
+            const memoria_state_fact *resume = conflict->resume;
+            memory_ref source;
+            if (!find_memory_ref(h, resume->memory_id, namespace_id, &source) || source.relation_index >= 0)
+                goto done;
+            char *id = json_escape(resume->memory_id);
+            char *value = json_escape(resume->value);
+            char *text = json_escape(source.turn->text);
+            int written = id && value && text &&
+                mobile_response_appendf(&conflict_json,
+                    "],\"resume\":{\"memory_id\":\"%s\",\"value\":\"%s\",\"order\":%ld}}",
+                    id, value, resume->order) &&
+                mobile_response_appendf(&context, "\\nESTADO RETOMADO na ordem %ld: %s", resume->order, text) &&
+                mobile_response_appendf(&ids, ",\"%s\"", id) &&
+                append_transition_provenance(&provenance, ",", id, source.turn);
+            free(id); free(value); free(text);
+            if (!written) goto done;
+            if (resume->authority < confidence) confidence = resume->authority;
+        } else if (!mobile_response_appendf(&conflict_json, "],\"resume\":null}")) {
+            goto done;
+        }
     }
 
     status = set_responsef(out, MEMORIA_MOBILE_OK,

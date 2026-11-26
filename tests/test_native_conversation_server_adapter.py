@@ -249,7 +249,9 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         _ingest(client, role="user", text="A fonte Vega fica na bancada.", order=75, session_id="workshop")
         reverted = _resolve(client, "O que mudou na fonte Vega entre as ordens 60 e 75?", "workshop")
         assert [item["property"] for item in reverted["temporal_changes"]] == ["voltage"]
-        _ingest(client, role="user", text="A fonte Vega pesa 3 quilos.", order=63, session_id="workshop")
+        recovery = _ingest(
+            client, role="user", text="A fonte Vega pesa 3 quilos.", order=63, session_id="workshop",
+        )["stored_memory_ids"][0]
         _ingest(client, role="user", text="A fonte Vega pesa 4 quilos.", order=68, session_id="workshop")
         timeline = _resolve(
             client, "Quais mudanças ocorreram na fonte Vega entre as ordens 60 e 75?", "workshop",
@@ -270,8 +272,23 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
             (item["from_order"], item["to_order"]) == (60, 75)
             for item in timeline["temporal_changes"]
         )
-        assert _resolve(
+        inherited = _resolve(
             client, "Quais mudanças ocorreram na fonte Vega entre as ordens 60 e 64?", "workshop",
+        )
+        assert inherited["status"] == "HIT"
+        assert "temporal_changes" not in inherited
+        carried = inherited["temporal_conflicts"][0]
+        assert (carried["order"], carried["inherited"]) == (40, True)
+        assert carried["resume"] == {"memory_id": recovery, "value": "3 quilos", "order": 63}
+        assert {item["memory_id"] for item in inherited["provenance"]} == {weight_a, weight_b, recovery}
+
+        still_open = _resolve(
+            client, "Quais mudanças ocorreram na fonte Vega entre as ordens 60 e 62?", "workshop",
+        )
+        assert still_open["temporal_conflicts"][0]["inherited"] is True
+        assert still_open["temporal_conflicts"][0]["resume"] is None
+        assert _resolve(
+            client, "Quais mudanças ocorreram na fonte Vega entre as ordens 63 e 64?", "workshop",
         )["status"] == "UNRESOLVED"
         assert _resolve(
             client, "Quais mudanças ocorreram na fonte Vega entre as ordens 75 e 60?", "workshop",
@@ -298,6 +315,8 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         assert conflict_only["relations"] == []
         assert set(conflict_only["memory_ids"]) == {weight_a, weight_b}
         assert conflict_only["temporal_conflicts"][0]["observations"] == conflict["observations"]
+        assert conflict_only["temporal_conflicts"][0]["inherited"] is False
+        assert conflict_only["temporal_conflicts"][0]["resume"] is None
 
         for question in (
             "O que mudou na fonte Vega entre as ordens 25 e 27?",
