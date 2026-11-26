@@ -162,6 +162,13 @@ def test_confirmed_entity_aliases_resolve_attributes_after_reopen(tmp_path):
             assert present.relations[0]["subject"] == "aferidor da bancada"
             assert present.provenance[1]["memory_id"] == updated.memory_ids[0]
 
+        snapshot = service.resolve(
+            query="Qual era a cor do medidor da feira na ordem 15?", session_id="workshop",
+        )
+        assert snapshot.as_of_order == 15
+        assert snapshot.memory_ids == (historical.memory_ids[0],)
+        assert snapshot.relations[0]["object"] == "cinza"
+
         change = service.resolve(query="O que mudou no medidor da feira?", session_id="workshop")
         assert change.memory_ids == (historical.memory_ids[0], updated.memory_ids[0])
         assert change.selected_context == (

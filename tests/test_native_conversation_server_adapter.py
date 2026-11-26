@@ -229,5 +229,23 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
             ("voltage", 65), ("location", 65),
         ]
         assert _resolve(client, "Qual foi a última mudança?", "workshop")["status"] == "UNRESOLVED"
+
+        for order, expected_id, expected_value in (
+            (25, old_color, "cinza"), (45, current_color, "preta"),
+        ):
+            snapshot = _resolve(client, f"Qual era a cor da fonte Vega na ordem {order}?", "workshop")
+            assert snapshot["status"] == "HIT"
+            assert snapshot["as_of_order"] == order
+            assert snapshot["memory_ids"] == [expected_id]
+            assert snapshot["relations"][0]["object"] == expected_value
+            assert snapshot["provenance"][0]["created_order"] <= order
+        for question in (
+            "Qual a cor da fonte Vega na ordem 5?",
+            "Qual a cor da fonte Vega na ordem -25?",
+            "Qual a cor da fonte Vega na ordem 25 ou 45?",
+            "Qual era o peso da fonte Vega na ordem 40?",
+            "Qual era a cor da fonte Vega Mini na ordem 25?",
+        ):
+            assert _resolve(client, question, "workshop")["status"] == "UNRESOLVED"
     finally:
         service.close()

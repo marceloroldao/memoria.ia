@@ -16,6 +16,7 @@
 #include "structural_text_runtime.h"
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -823,6 +824,79 @@ done:
     return status;
 }
 
+/* The cutoff is the stored event order, inclusive. Parse the raw suffix so
+ * normalization cannot turn a negative or malformed order into a valid one. */
+static int parse_temporal_order(const char *query, long *order, size_t *length) {
+    static const char marker[] = "na ordem";
+    const size_t marker_length = sizeof(marker) - 1;
+    for (const char *p = query; *p; ++p) {
+        if ((p != query && temporal_word_byte((unsigned char)p[-1])) ||
+            strncasecmp(p, marker, marker_length) != 0 ||
+            temporal_word_byte((unsigned char)p[marker_length])) continue;
+        const char *number = p + marker_length;
+        if (!isspace((unsigned char)*number)) return -1;
+        while (isspace((unsigned char)*number)) ++number;
+        if (!isdigit((unsigned char)*number)) return -1;
+        char *end;
+        errno = 0;
+        long value = strtol(number, &end, 10);
+        if (errno == ERANGE) return -1;
+        while (isspace((unsigned char)*end)) ++end;
+        if (*end == '?') ++end;
+        while (isspace((unsigned char)*end)) ++end;
+        if (*end) return -1;
+        *order = value;
+        *length = (size_t)(p - query);
+        return 1;
+    }
+    return 0;
+}
+
+static const char *snapshot_entity_name(const char *entity) {
+    static const char *const verbs[] = {"fica ", "ficava ", "esta ", "estava "};
+    static const char *const articles[] = {"da ", "do ", "de ", "a ", "o ", "das ", "dos "};
+    while (*entity == ' ') ++entity;
+    for (size_t i = 0; i < sizeof(verbs) / sizeof(verbs[0]); ++i) {
+        size_t size = strlen(verbs[i]);
+        if (strncmp(entity, verbs[i], size) == 0) {
+            entity += size;
+            break;
+        }
+    }
+    for (size_t i = 0; i < sizeof(articles) / sizeof(articles[0]); ++i) {
+        size_t size = strlen(articles[i]);
+        if (strncmp(entity, articles[i], size) == 0) return entity + size;
+    }
+    return entity;
+}
+
+static memoria_mobile_status render_temporal_snapshot(
+    const turn_row *source, long order, double confidence, memoria_mobile_buffer *out
+) {
+    memoria_relation relation = {0};
+    char relations[1024];
+    if (!source) return typed_temporal_unresolved(out, "temporal snapshot source is unavailable");
+    if (!memoria_extract_attribute_relation(source->text, &relation) ||
+        !memoria_relations_to_json(&relation, 1, source->memory_id, relations, sizeof(relations)))
+        return MEMORIA_MOBILE_INTERNAL_ERROR;
+
+    char *id = json_escape(source->memory_id);
+    char *text = json_escape(source->text);
+    mobile_response_builder provenance = {0};
+    memoria_mobile_status status = MEMORIA_MOBILE_INTERNAL_ERROR;
+    if (id && text && append_transition_provenance(&provenance, "", id, source)) {
+        status = set_responsef(out, MEMORIA_MOBILE_OK,
+            "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[\"%s\"],"
+            "\"selected_context\":\"Na ordem %ld: %s\",\"relations\":%s,"
+            "\"provenance\":[%s],\"temporal_state_used\":true,\"as_of_order\":%ld}",
+            confidence, id, order, text, relations, provenance.data, order);
+    }
+    free(id);
+    free(text);
+    free(provenance.data);
+    return status;
+}
+
 /* Extract from persisted turns so histories written by earlier versions are
  * available without a database migration. Only factual roots supply values. */
 static int typed_temporal_facts(
@@ -833,6 +907,7 @@ static int typed_temporal_facts(
     const char *concept_namespace,
     const char *concept_id,
     const char *exact_entity,
+    const long *as_of_order,
     memoria_relation *target,
     memoria_relation *relations,
     memoria_state_fact *facts,
@@ -844,7 +919,8 @@ static int typed_temporal_facts(
     for (size_t i = 0; i < h->turn_count; ++i) {
         const turn_row *turn = &h->turns[i];
         memoria_relation *relation = &relations[*count];
-        if (!turn_namespace_matches(turn, namespace_id) || !turn->source_type ||
+        if ((as_of_order && turn->order > *as_of_order) ||
+            !turn_namespace_matches(turn, namespace_id) || !turn->source_type ||
             turn->authority < 0.5 || !turn->text || looks_like_question_text(turn->text) ||
             (strcmp(turn->source_type, "user_assertion") != 0 &&
              strcmp(turn->source_type, "user_correction") != 0 &&
@@ -895,6 +971,7 @@ static int try_temporal_response(
     const char *requested_property = NULL;
     const char *entity_query = NULL;
     const char *concept_id = NULL;
+    memoria_concept_resolution identity = {0};
     memoria_concept_rewrite_result mention;
     int target_state, typed = 0, requires_typed_history = 0;
     memoria_temporal_relation_source *sources = NULL;
@@ -907,21 +984,44 @@ static int try_temporal_response(
     char *prev_type = NULL, *prev_root = NULL, *curr_type = NULL, *curr_root = NULL;
     memoria_mobile_status response_status;
 
+    long as_of_order = 0;
+    size_t cutoff_prefix_length = 0;
+    const int cutoff_status = parse_temporal_order(query, &as_of_order, &cutoff_prefix_length);
+    if (cutoff_status < 0) {
+        *status_out = typed_temporal_unresolved(out, "invalid event order");
+        return 1;
+    }
+    if (cutoff_status > 0) {
+        char snapshot_query[MEMORIA_CONCEPT_QUERY_CAP];
+        if (!cutoff_prefix_length || cutoff_prefix_length >= sizeof(snapshot_query)) {
+            *status_out = typed_temporal_unresolved(out, "temporal entity or property is unavailable");
+            return 1;
+        }
+        memcpy(snapshot_query, query, cutoff_prefix_length);
+        snapshot_query[cutoff_prefix_length] = 0;
+        if (memoria_concept_normalize(snapshot_query, normalized_query, sizeof(normalized_query)) != MEMORIA_CONCEPT_OK ||
+            !(requested_property = temporal_requested_property(normalized_query, &entity_query, &requires_typed_history)) ||
+            !*(entity_query = snapshot_entity_name(entity_query))) {
+            *status_out = typed_temporal_unresolved(out, "temporal entity or property is unavailable");
+            return 1;
+        }
+    }
+
     const char *latest_phrase = NULL;
     const int asks_what_changed = starts_word_ci(query, "o que mudou");
     const int asks_before_or_now = temporal_query_flags(query, &wants_previous, &wants_current);
-    if (!asks_what_changed && !asks_before_or_now && !starts_word_ci(query, "qual")) return 0;
+    if (!cutoff_status && !asks_what_changed && !asks_before_or_now && !starts_word_ci(query, "qual")) return 0;
 
-    const int normalized = memoria_concept_normalize(query, normalized_query, sizeof(normalized_query))
-        == MEMORIA_CONCEPT_OK;
-    if (normalized) {
+    const int normalized = cutoff_status ||
+        memoria_concept_normalize(query, normalized_query, sizeof(normalized_query)) == MEMORIA_CONCEPT_OK;
+    if (!cutoff_status && normalized) {
         if (starts_word_ci(normalized_query, "qual foi a ultima mudanca"))
             latest_phrase = "qual foi a ultima mudanca";
         else if (starts_word_ci(normalized_query, "qual a ultima mudanca"))
             latest_phrase = "qual a ultima mudanca";
     }
-    const int asks_for_transition = latest_phrase || asks_what_changed;
-    if (!asks_for_transition && !asks_before_or_now) return 0;
+    const int asks_for_transition = !cutoff_status && (latest_phrase || asks_what_changed);
+    if (!cutoff_status && !asks_for_transition && !asks_before_or_now) return 0;
     if (asks_for_transition) {
         if (!normalized) {
             *status_out = typed_temporal_unresolved(out, "temporal entity name is unavailable");
@@ -934,25 +1034,20 @@ static int try_temporal_response(
             return 1;
         }
         wants_previous = wants_current = requires_typed_history = 1;
-        if (concept_namespace[0]) {
-            memoria_concept_resolution identity =
-                memoria_concept_resolve(memoria_concept_runtime_index(h->concept_runtime),
-                                        concept_namespace, entity_query);
-            if (identity.reason == MEMORIA_CONCEPT_REASON_AMBIGUOUS) {
-                *status_out = typed_temporal_unresolved(out, "temporal entity is ambiguous in the concept catalog");
-                return 1;
-            }
-            if (identity.status == MEMORIA_CONCEPT_HIT) {
-                snprintf(mention.concept_ids[0], sizeof(mention.concept_ids[0]), "%s", identity.concept_id);
-                concept_id = mention.concept_ids[0];
-            }
-        }
-    } else if (!fallback_turn && normalized) {
+    } else if (!cutoff_status && !fallback_turn && normalized) {
         requested_property = temporal_requested_property(normalized_query, &entity_query,
                                                          &requires_typed_history);
     }
 
-    if (requested_property && concept_namespace[0]) {
+    if ((cutoff_status || asks_for_transition) && concept_namespace[0]) {
+        identity = memoria_concept_resolve(memoria_concept_runtime_index(h->concept_runtime),
+                                    concept_namespace, entity_query);
+        if (identity.reason == MEMORIA_CONCEPT_REASON_AMBIGUOUS) {
+            *status_out = typed_temporal_unresolved(out, "temporal entity is ambiguous in the concept catalog");
+            return 1;
+        }
+        if (identity.status == MEMORIA_CONCEPT_HIT) concept_id = identity.concept_id;
+    } else if (requested_property && concept_namespace[0]) {
         mention = memoria_concept_rewrite_query(memoria_concept_runtime_index(h->concept_runtime),
                                                 concept_namespace, entity_query, 6u);
         if (mention.concept_count > 1 ||
@@ -975,13 +1070,13 @@ static int try_temporal_response(
         }
         typed = typed_temporal_facts(h, query, namespace_id, requested_property,
                                      concept_namespace, concept_id,
-                                     asks_for_transition ? entity_query : NULL,
-                                     &typed_target, typed_relations, facts, &fact_count);
+                                     asks_for_transition || cutoff_status ? entity_query : NULL,
+                                     cutoff_status ? &as_of_order : NULL, &typed_target, typed_relations, facts, &fact_count);
         if (typed <= 0) {
             free(typed_relations);
             free(facts);
             typed_relations = NULL;
-            if (typed < 0 || requires_typed_history) {
+            if (typed < 0 || requires_typed_history || cutoff_status) {
                 *status_out = typed_temporal_unresolved(out, "temporal entity or requested property is not uniquely justified");
                 return 1;
             }
@@ -1054,6 +1149,14 @@ static int try_temporal_response(
         state = memoria_temporal_state_resolve(target->subject, target->predicate, facts, fact_count);
     }
     free(facts);
+    if (cutoff_status) {
+        *status_out = state.hit
+            ? render_temporal_snapshot(find_turn_in_namespace(h, state.current_memory_id, namespace_id),
+                                       as_of_order, state.confidence, out)
+            : typed_temporal_unresolved(out, "no justified state at that event order");
+        free(typed_relations);
+        return 1;
+    }
     if (typed && state.hit) {
         snprintf(typed_target.object, sizeof(typed_target.object), "%s", state.current_value);
         state.current_value = typed_target.object;
@@ -1250,7 +1353,7 @@ static int try_attribute_response(
     memoria_concept_resolution identity = {0};
     int value_conflict = 0, ambiguous_alias = 0, exact_match = 0;
 
-    if (temporal_query_flags(query, NULL, NULL)) return 0;
+    if (contains_word_ci(query, "na ordem") || temporal_query_flags(query, NULL, NULL)) return 0;
     property = attribute_question(query, entity, entity_surface, sizeof(entity));
     if (!property) return 0;
 
