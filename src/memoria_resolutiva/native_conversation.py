@@ -191,6 +191,10 @@ class NativeConversationService:
         if not isinstance(conflicts, list) or any(not isinstance(conflict, dict) for conflict in conflicts):
             raise RuntimeError("native conversation resolve returned invalid temporal conflicts")
 
+        equal_endpoints = response.get("temporal_equal_endpoints", [])
+        if not isinstance(equal_endpoints, list) or any(not isinstance(pair, dict) for pair in equal_endpoints):
+            raise RuntimeError("native conversation resolve returned invalid temporal endpoint pairs")
+
         return ConversationResolveResult(
             "UNRESOLVED" if unresolved else "HIT",
             float(response.get("confidence", 0.0)),
@@ -201,6 +205,7 @@ class NativeConversationService:
             tuple(changes),
             as_of_order,
             tuple(conflicts),
+            tuple(equal_endpoints),
         )
 
     def activate_relations(

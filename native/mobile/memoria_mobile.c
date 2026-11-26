@@ -727,6 +727,7 @@ static const struct {
 typedef struct entity_transition {
     size_t property_index;
     memoria_temporal_state_result state;
+    int equal_endpoints;
 } entity_transition;
 
 static size_t collect_entity_transitions(
@@ -744,7 +745,7 @@ static size_t collect_entity_transitions(
             if (state.transition_order < newest_order) continue;
             if (state.transition_order > newest_order) count = 0;
         }
-        out[count++] = (entity_transition){i, state};
+        out[count++] = (entity_transition){.property_index = i, .state = state};
     }
     return count;
 }
@@ -771,15 +772,20 @@ static size_t compare_entity_states(
             memoria_temporal_state_resolve(entity, property, facts, earlier_count);
         memoria_temporal_state_result after =
             memoria_temporal_state_resolve(entity, property, facts, count);
-        if (!before.hit || !after.hit || strcasecmp(before.current_value, after.current_value) == 0)
-            continue;
-        out[changes++] = (entity_transition){i, {
-            .previous_memory_id = before.current_memory_id,
-            .current_memory_id = after.current_memory_id,
-            .previous_value = before.current_value,
-            .previous_order = before.current_order,
-            .confidence = before.confidence < after.confidence ? before.confidence : after.confidence,
-        }};
+        /* A second observation is needed to corroborate equality. Carrying
+         * a single old reading through both endpoints is not corroboration. */
+        if (!before.hit || !after.hit || before.current_order == after.current_order) continue;
+        out[changes++] = (entity_transition){
+            .property_index = i,
+            .state = {
+                .previous_memory_id = before.current_memory_id,
+                .current_memory_id = after.current_memory_id,
+                .previous_value = before.current_value,
+                .previous_order = before.current_order,
+                .confidence = before.confidence < after.confidence ? before.confidence : after.confidence,
+            },
+            .equal_endpoints = strcasecmp(before.current_value, after.current_value) == 0,
+        };
     }
     return changes;
 }
@@ -856,7 +862,7 @@ static size_t collect_timeline_changes(
                 continue;
             }
             if (fact->order > from_order && previous && strcasecmp(previous->value, fact->value) != 0) {
-                out[changes++] = (entity_transition){i, {
+                out[changes++] = (entity_transition){.property_index = i, .state = {
                     .previous_memory_id = previous->memory_id,
                     .current_memory_id = fact->memory_id,
                     .previous_value = previous->value,
@@ -896,7 +902,7 @@ static memoria_mobile_status render_entity_transitions(
     memoria_mobile_status result_status, memoria_mobile_buffer *out
 ) {
     mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
-    mobile_response_builder conflict_json = {0};
+    mobile_response_builder conflict_json = {0}, equal_endpoints = {0};
     double confidence = 1.0;
     memoria_mobile_status status = MEMORIA_MOBILE_INTERNAL_ERROR;
 
@@ -922,29 +928,33 @@ static memoria_mobile_status render_entity_transitions(
         char *before_text = json_escape(before->text), *after_text = json_escape(after->text);
         char *before_value = json_escape(state->previous_value), *after_value = json_escape(latest_relation.object);
         const char *comma = i ? "," : "";
+        mobile_response_builder *difference = transition->equal_endpoints ? &equal_endpoints : &changes;
         int written = before_id && after_id && before_text && after_text && before_value && after_value &&
             mobile_response_appendf(&ids, "%s\"%s\",\"%s\"", comma, before_id, after_id) &&
             (range
-                ? mobile_response_appendf(&context, "%sTRANSITION: %s\\nORDEM %ld: %s\\nORDEM %ld: %s",
-                                          i ? "\\n\\n" : "", label,
-                                          timeline ? before->order : range->from, before_text,
+                ? mobile_response_appendf(&context, "%s%s: %s\\nORDEM %ld: %s\\nORDEM %ld: %s",
+                                          i ? "\\n\\n" : "",
+                                          transition->equal_endpoints ? "MESMO VALOR NOS DOIS PONTOS" : "TRANSITION",
+                                          label, timeline ? before->order : range->from, before_text,
                                           timeline ? after->order : range->to, after_text)
                 : mobile_response_appendf(&context, "%sTRANSITION: %s\\nPREVIOUS: %s\\nCURRENT: %s",
                                           i ? "\\n\\n" : "", label, before_text, after_text)) &&
             append_transition_provenance(&provenance, comma, before_id, before) &&
             append_transition_provenance(&provenance, ",", after_id, after) &&
-            mobile_response_appendf(&changes,
+            mobile_response_appendf(difference,
                 "%s{\"property\":\"%s\",\"previous_value\":\"%s\",\"current_value\":\"%s\","
                 "\"previous_memory_id\":\"%s\",\"current_memory_id\":\"%s\","
                 "\"previous_order\":%ld,\"current_order\":%ld",
-                comma, property, before_value, after_value, before_id, after_id,
+                difference->size ? "," : "", property, before_value, after_value, before_id, after_id,
                 state->previous_order, after->order) &&
-            (!range || mobile_response_appendf(&changes, ",\"from_order\":%ld,\"to_order\":%ld",
+            (!range || mobile_response_appendf(difference, ",\"from_order\":%ld,\"to_order\":%ld",
                                                range->from, range->to)) &&
-            ((range && !timeline) || mobile_response_appendf(&changes, ",\"transition_order\":%ld",
+            ((range && !timeline) || mobile_response_appendf(difference, ",\"transition_order\":%ld",
                                                              state->transition_order)) &&
-            mobile_response_appendf(&changes, "}") &&
-            mobile_response_appendf(&relations, "%s%.*s", comma, (int)strlen(relation_json) - 2, relation_json + 1);
+            mobile_response_appendf(difference, "}") &&
+            (transition->equal_endpoints ||
+             mobile_response_appendf(&relations, "%s%.*s", relations.size ? "," : "",
+                                     (int)strlen(relation_json) - 2, relation_json + 1));
         free(before_id); free(after_id); free(before_text); free(after_text);
         free(before_value); free(after_value);
         if (!written) goto done;
@@ -1009,15 +1019,17 @@ static memoria_mobile_status render_entity_transitions(
     status = set_responsef(out, result_status,
         "{\"status\":\"%s\",\"confidence\":%.6f,\"memory_ids\":[%s],\"selected_context\":\"%s\","
         "\"relations\":[%s],\"provenance\":[%s],\"temporal_state_used\":true,"
-        "\"transition_detected\":%s,\"temporal_changes\":[%s],\"temporal_conflicts\":[%s]%s}",
+        "\"transition_detected\":%s,\"temporal_changes\":[%s],\"temporal_conflicts\":[%s],"
+        "\"temporal_equal_endpoints\":[%s]%s}",
         result_status == MEMORIA_MOBILE_OK ? "HIT" : "UNRESOLVED",
         result_status == MEMORIA_MOBILE_OK ? confidence : 0.0,
         ids.data, context.data, relations.data ? relations.data : "", provenance.data,
-        count ? "true" : "false", changes.data ? changes.data : "",
-        conflict_json.data ? conflict_json.data : "", cutoff_json);
+        changes.size ? "true" : "false", changes.data ? changes.data : "",
+        conflict_json.data ? conflict_json.data : "", equal_endpoints.data ? equal_endpoints.data : "", cutoff_json);
 done:
     free(ids.data); free(context.data); free(provenance.data); free(changes.data); free(relations.data);
     free(conflict_json.data);
+    free(equal_endpoints.data);
     return status;
 }
 

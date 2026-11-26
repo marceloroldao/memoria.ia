@@ -246,9 +246,33 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         assert "ORDEM 45:" in compared["selected_context"]
         assert all("transition_order" not in item for item in compared["temporal_changes"])
 
+        equal = _resolve(client, "O que mudou na fonte Vega entre as ordens 45 e 55?", "workshop")
+        assert equal["status"] == "HIT"
+        assert "temporal_changes" not in equal
+        assert equal["relations"] == []
+        assert equal["memory_ids"] == [first_12v, current_voltage]
+        assert [item["memory_id"] for item in equal["provenance"]] == equal["memory_ids"]
+        assert equal["temporal_equal_endpoints"] == [{
+            "property": "voltage",
+            "previous_value": "12 volts",
+            "current_value": "12 volts",
+            "previous_memory_id": first_12v,
+            "current_memory_id": current_voltage,
+            "previous_order": 40,
+            "current_order": 50,
+            "from_order": 45,
+            "to_order": 55,
+        }]
+        assert "MESMO VALOR NOS DOIS PONTOS" in equal["selected_context"]
+
         _ingest(client, role="user", text="A fonte Vega fica na bancada.", order=75, session_id="workshop")
         reverted = _resolve(client, "O que mudou na fonte Vega entre as ordens 60 e 75?", "workshop")
         assert [item["property"] for item in reverted["temporal_changes"]] == ["voltage"]
+        assert [(item["property"], item["current_value"]) for item in reverted["temporal_equal_endpoints"]] == [
+            ("color", "preta"), ("location", "na bancada"),
+        ]
+        assert [item["predicate"] for item in reverted["relations"]] == ["voltage"]
+
         recovery = _ingest(
             client, role="user", text="A fonte Vega pesa 3 quilos.", order=63, session_id="workshop",
         )["stored_memory_ids"][0]

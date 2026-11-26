@@ -28,6 +28,7 @@ class ConversationResolveResult:
     temporal_changes: tuple[dict, ...] = ()
     as_of_order: int | None = None
     temporal_conflicts: tuple[dict, ...] = ()
+    temporal_equal_endpoints: tuple[dict, ...] = ()
 
 
 class ConversationIngestRequest(BaseModel):
@@ -118,6 +119,9 @@ def attach_conversation_routes(app: FastAPI, *, api_key: str, service: Conversat
         temporal_conflicts = getattr(result, "temporal_conflicts", ())
         if temporal_conflicts:
             response["temporal_conflicts"] = list(temporal_conflicts)
+        temporal_equal_endpoints = getattr(result, "temporal_equal_endpoints", ())
+        if temporal_equal_endpoints:
+            response["temporal_equal_endpoints"] = list(temporal_equal_endpoints)
         as_of_order = getattr(result, "as_of_order", None)
         if as_of_order is not None:
             response["as_of_order"] = as_of_order
