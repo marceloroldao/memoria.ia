@@ -176,6 +176,16 @@ def test_confirmed_entity_aliases_resolve_attributes_after_reopen(tmp_path):
         assert compared.temporal_changes[0]["previous_value"] == "verde"
         assert compared.temporal_changes[0]["current_value"] == "cinza"
 
+        timeline = service.resolve(
+            query="Quais mudanças ocorreram no medidor da feira entre as ordens 10 e 20?",
+            session_id="workshop",
+        )
+        assert [item["transition_order"] for item in timeline.temporal_changes] == [15, 20]
+        assert timeline.memory_ids == (
+            previous.memory_ids[0], historical.memory_ids[0],
+            historical.memory_ids[0], updated.memory_ids[0],
+        )
+
         change = service.resolve(query="O que mudou no medidor da feira?", session_id="workshop")
         assert change.memory_ids == (historical.memory_ids[0], updated.memory_ids[0])
         assert change.selected_context == (

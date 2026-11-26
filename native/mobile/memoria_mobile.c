@@ -784,6 +784,59 @@ static size_t compare_entity_states(
     return changes;
 }
 
+static int compare_timeline_facts(const void *left, const void *right) {
+    const memoria_state_fact *a = left, *b = right;
+    int property = strcmp(a->property, b->property);
+    if (property) return property;
+    if (a->order != b->order) return a->order < b->order ? -1 : 1;
+    return strcmp(a->memory_id, b->memory_id);
+}
+
+static int compare_timeline_changes(const void *left, const void *right) {
+    const entity_transition *a = left, *b = right;
+    if (a->state.transition_order != b->state.transition_order)
+        return a->state.transition_order < b->state.transition_order ? -1 : 1;
+    return (a->property_index > b->property_index) - (a->property_index < b->property_index);
+}
+
+static size_t collect_timeline_changes(
+    memoria_state_fact *facts, size_t count, long from_order, entity_transition *out
+) {
+    size_t changes = 0;
+    qsort(facts, count, sizeof(*facts), compare_timeline_facts);
+    for (size_t i = 0; i < sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0]); ++i) {
+        const char *property = entity_transition_properties[i].property;
+        const memoria_state_fact *previous = NULL;
+        for (size_t j = 0; j < count;) {
+            const memoria_state_fact *fact = &facts[j++];
+            if (strcmp(fact->property, property) != 0) continue;
+            int conflict = 0;
+            while (j < count && facts[j].order == fact->order && strcmp(facts[j].property, property) == 0) {
+                if (strcasecmp(fact->value, facts[j].value) != 0) conflict = 1;
+                ++j;
+            }
+            /* A conflict interrupts the trace until a later observation establishes a state. */
+            if (conflict) {
+                previous = NULL;
+                continue;
+            }
+            if (fact->order > from_order && previous && strcasecmp(previous->value, fact->value) != 0) {
+                out[changes++] = (entity_transition){i, {
+                    .previous_memory_id = previous->memory_id,
+                    .current_memory_id = fact->memory_id,
+                    .previous_value = previous->value,
+                    .previous_order = previous->order,
+                    .confidence = previous->authority < fact->authority ? previous->authority : fact->authority,
+                    .transition_order = fact->order,
+                }};
+            }
+            previous = fact;
+        }
+    }
+    qsort(out, changes, sizeof(*out), compare_timeline_changes);
+    return changes;
+}
+
 static int append_transition_provenance(
     mobile_response_builder *builder, const char *separator, const char *id, const turn_row *turn
 ) {
@@ -802,7 +855,8 @@ static int append_transition_provenance(
 
 static memoria_mobile_status render_entity_transitions(
     memoria_mobile_handle *h, const char *namespace_id, const entity_transition *transitions,
-    size_t count, int latest_only, const temporal_order_range *range, memoria_mobile_buffer *out
+    size_t count, int latest_only, const temporal_order_range *range, int timeline,
+    memoria_mobile_buffer *out
 ) {
     mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
     double confidence = 1.0;
@@ -811,13 +865,14 @@ static memoria_mobile_status render_entity_transitions(
     for (size_t i = 0; i < count; ++i) {
         const entity_transition *transition = &transitions[i];
         const memoria_temporal_state_result *state = &transition->state;
-        const turn_row *before = find_turn_in_namespace(h, state->previous_memory_id, namespace_id);
-        const turn_row *after = find_turn_in_namespace(
-            h, latest_only ? state->transition_memory_id : state->current_memory_id, namespace_id
-        );
+        memory_ref before_ref, after_ref;
+        const char *after_id_raw = latest_only ? state->transition_memory_id : state->current_memory_id;
+        if (!find_memory_ref(h, state->previous_memory_id, namespace_id, &before_ref) ||
+            !find_memory_ref(h, after_id_raw, namespace_id, &after_ref) ||
+            before_ref.relation_index >= 0 || after_ref.relation_index >= 0) goto done;
+        const turn_row *before = before_ref.turn, *after = after_ref.turn;
         const char *property = entity_transition_properties[transition->property_index].property;
         const char *label = entity_transition_properties[transition->property_index].label;
-        if (!before || !after) goto done;
 
         memoria_relation latest_relation = {0};
         char relation_json[1024];
@@ -833,8 +888,9 @@ static memoria_mobile_status render_entity_transitions(
             mobile_response_appendf(&ids, "%s\"%s\",\"%s\"", comma, before_id, after_id) &&
             (range
                 ? mobile_response_appendf(&context, "%sTRANSITION: %s\\nORDEM %ld: %s\\nORDEM %ld: %s",
-                                          i ? "\\n\\n" : "", label, range->from, before_text,
-                                          range->to, after_text)
+                                          i ? "\\n\\n" : "", label,
+                                          timeline ? before->order : range->from, before_text,
+                                          timeline ? after->order : range->to, after_text)
                 : mobile_response_appendf(&context, "%sTRANSITION: %s\\nPREVIOUS: %s\\nCURRENT: %s",
                                           i ? "\\n\\n" : "", label, before_text, after_text)) &&
             append_transition_provenance(&provenance, comma, before_id, before) &&
@@ -845,9 +901,11 @@ static memoria_mobile_status render_entity_transitions(
                 "\"previous_order\":%ld,\"current_order\":%ld",
                 comma, property, before_value, after_value, before_id, after_id,
                 state->previous_order, after->order) &&
-            (range
-                ? mobile_response_appendf(&changes, ",\"from_order\":%ld,\"to_order\":%ld}", range->from, range->to)
-                : mobile_response_appendf(&changes, ",\"transition_order\":%ld}", state->transition_order)) &&
+            (!range || mobile_response_appendf(&changes, ",\"from_order\":%ld,\"to_order\":%ld",
+                                               range->from, range->to)) &&
+            ((range && !timeline) || mobile_response_appendf(&changes, ",\"transition_order\":%ld",
+                                                             state->transition_order)) &&
+            mobile_response_appendf(&changes, "}") &&
             mobile_response_appendf(&relations, "%s%.*s", comma, (int)strlen(relation_json) - 2, relation_json + 1);
         free(before_id); free(after_id); free(before_text); free(after_text);
         free(before_value); free(after_value);
@@ -1042,6 +1100,7 @@ static int try_temporal_response(
     size_t cutoff_prefix_length = 0;
     const int cutoff_status = parse_temporal_order(query, &orders, &cutoff_prefix_length);
     const int compares_orders = cutoff_status == 2;
+    const char *timeline_phrase = NULL;
     if (cutoff_status < 0) {
         *status_out = typed_temporal_unresolved(out, "invalid event order");
         return 1;
@@ -1064,6 +1123,8 @@ static int try_temporal_response(
                 *status_out = typed_temporal_unresolved(out, "temporal entity or property is unavailable");
                 return 1;
             }
+        } else if (starts_word_ci(normalized_query, "quais mudancas ocorreram")) {
+            timeline_phrase = "quais mudancas ocorreram";
         } else if (!starts_word_ci(normalized_query, "o que mudou")) {
             *status_out = typed_temporal_unresolved(out, "event range requires an entity change query");
             return 1;
@@ -1090,7 +1151,9 @@ static int try_temporal_response(
             *status_out = typed_temporal_unresolved(out, "temporal entity name is unavailable");
             return 1;
         }
-        const char *phrase = latest_phrase ? latest_phrase : "o que mudou";
+        const char *phrase = "o que mudou";
+        if (timeline_phrase) phrase = timeline_phrase;
+        if (latest_phrase) phrase = latest_phrase;
         entity_query = transition_entity_name(normalized_query + strlen(phrase));
         if (!entity_query[0]) {
             *status_out = typed_temporal_unresolved(out, "temporal entity name is unavailable");
@@ -1191,6 +1254,21 @@ static int try_temporal_response(
         fact_count = memoria_temporal_build_facts(sources, source_count, facts, fact_capacity);
         free(sources);
     }
+    if (timeline_phrase) {
+        entity_transition *transitions = calloc(fact_count, sizeof(*transitions));
+        if (transitions) {
+            size_t count = collect_timeline_changes(facts, fact_count, orders.from, transitions);
+            *status_out = count
+                ? render_entity_transitions(h, namespace_id, transitions, count, 0, &orders, 1, out)
+                : typed_temporal_unresolved(out, "no justified transitions within the event range");
+        } else {
+            *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
+        }
+        free(transitions);
+        free(facts);
+        free(typed_relations);
+        return 1;
+    }
     if (asks_for_transition) {
         entity_transition transitions[sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0])];
         size_t count = compares_orders
@@ -1199,7 +1277,7 @@ static int try_temporal_response(
         if (compares_orders || (count && (latest_phrase || count > 1))) {
             *status_out = count
                 ? render_entity_transitions(h, namespace_id, transitions, count, latest_phrase != NULL,
-                                            compares_orders ? &orders : NULL, out)
+                                            compares_orders ? &orders : NULL, 0, out)
                 : typed_temporal_unresolved(out, "no justified differences between the event orders");
             free(facts);
             free(typed_relations);

@@ -249,6 +249,34 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         _ingest(client, role="user", text="A fonte Vega fica na bancada.", order=75, session_id="workshop")
         reverted = _resolve(client, "O que mudou na fonte Vega entre as ordens 60 e 75?", "workshop")
         assert [item["property"] for item in reverted["temporal_changes"]] == ["voltage"]
+        _ingest(client, role="user", text="A fonte Vega pesa 3 quilos.", order=63, session_id="workshop")
+        _ingest(client, role="user", text="A fonte Vega pesa 4 quilos.", order=68, session_id="workshop")
+        timeline = _resolve(
+            client, "Quais mudanças ocorreram na fonte Vega entre as ordens 60 e 75?", "workshop",
+        )
+        assert timeline["status"] == "HIT"
+        assert [
+            (item["property"], item["previous_value"], item["current_value"],
+             item["previous_order"], item["transition_order"])
+            for item in timeline["temporal_changes"]
+        ] == [
+            ("voltage", "12 volts", "18 volts", 50, 65),
+            ("location", "na bancada", "no almoxarifado", 60, 65),
+            ("weight", "3 quilos", "4 quilos", 63, 68),
+            ("location", "no almoxarifado", "na bancada", 65, 75),
+        ]
+        assert [item["memory_id"] for item in timeline["provenance"]] == timeline["memory_ids"]
+        assert all(
+            (item["from_order"], item["to_order"]) == (60, 75)
+            for item in timeline["temporal_changes"]
+        )
+        assert _resolve(
+            client, "Quais mudanças ocorreram na fonte Vega entre as ordens 60 e 64?", "workshop",
+        )["status"] == "UNRESOLVED"
+        assert _resolve(
+            client, "Quais mudanças ocorreram na fonte Vega entre as ordens 75 e 60?", "workshop",
+        )["status"] == "UNRESOLVED"
+
         for question in (
             "O que mudou na fonte Vega entre as ordens 25 e 27?",
             "O que mudou na fonte Vega entre as ordens 5 e 45?",
