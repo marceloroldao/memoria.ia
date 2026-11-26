@@ -186,6 +186,10 @@ class NativeConversationService:
         if as_of_order is not None and (type(as_of_order) is not int or as_of_order < 0):
             raise RuntimeError("native conversation resolve returned invalid event order")
 
+        conflicts = response.get("temporal_conflicts", [])
+        if not isinstance(conflicts, list) or any(not isinstance(conflict, dict) for conflict in conflicts):
+            raise RuntimeError("native conversation resolve returned invalid temporal conflicts")
+
         return ConversationResolveResult(
             "HIT",
             float(response.get("confidence", 0.0)),
@@ -195,6 +199,7 @@ class NativeConversationService:
             tuple(provenance_rows),
             tuple(changes),
             as_of_order,
+            tuple(conflicts),
         )
 
     def activate_relations(

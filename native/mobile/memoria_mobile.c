@@ -799,8 +799,25 @@ static int compare_timeline_changes(const void *left, const void *right) {
     return (a->property_index > b->property_index) - (a->property_index < b->property_index);
 }
 
+typedef struct timeline_conflict {
+    const memoria_state_fact *facts;
+    size_t count;
+} timeline_conflict;
+
+typedef struct timeline_conflicts {
+    timeline_conflict *items;
+    size_t count;
+} timeline_conflicts;
+
+static int compare_timeline_conflicts(const void *left, const void *right) {
+    const timeline_conflict *a = left, *b = right;
+    if (a->facts->order != b->facts->order) return a->facts->order < b->facts->order ? -1 : 1;
+    return strcmp(a->facts->property, b->facts->property);
+}
+
 static size_t collect_timeline_changes(
-    memoria_state_fact *facts, size_t count, long from_order, entity_transition *out
+    memoria_state_fact *facts, size_t count, long from_order, entity_transition *out,
+    timeline_conflicts *conflicts
 ) {
     size_t changes = 0;
     qsort(facts, count, sizeof(*facts), compare_timeline_facts);
@@ -808,6 +825,7 @@ static size_t collect_timeline_changes(
         const char *property = entity_transition_properties[i].property;
         const memoria_state_fact *previous = NULL;
         for (size_t j = 0; j < count;) {
+            const size_t start = j;
             const memoria_state_fact *fact = &facts[j++];
             if (strcmp(fact->property, property) != 0) continue;
             int conflict = 0;
@@ -817,6 +835,8 @@ static size_t collect_timeline_changes(
             }
             /* A conflict interrupts the trace until a later observation establishes a state. */
             if (conflict) {
+                if (fact->order >= from_order)
+                    conflicts->items[conflicts->count++] = (timeline_conflict){fact, j - start};
                 previous = NULL;
                 continue;
             }
@@ -834,6 +854,7 @@ static size_t collect_timeline_changes(
         }
     }
     qsort(out, changes, sizeof(*out), compare_timeline_changes);
+    qsort(conflicts->items, conflicts->count, sizeof(*conflicts->items), compare_timeline_conflicts);
     return changes;
 }
 
@@ -855,10 +876,11 @@ static int append_transition_provenance(
 
 static memoria_mobile_status render_entity_transitions(
     memoria_mobile_handle *h, const char *namespace_id, const entity_transition *transitions,
-    size_t count, int latest_only, const temporal_order_range *range, int timeline,
+    size_t count, int latest_only, const temporal_order_range *range, const timeline_conflicts *timeline,
     memoria_mobile_buffer *out
 ) {
     mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
+    mobile_response_builder conflict_json = {0};
     double confidence = 1.0;
     memoria_mobile_status status = MEMORIA_MOBILE_INTERNAL_ERROR;
 
@@ -914,13 +936,44 @@ static memoria_mobile_status render_entity_transitions(
         if (after->authority < confidence) confidence = after->authority;
     }
 
+    for (size_t i = 0; timeline && i < timeline->count; ++i) {
+        const timeline_conflict *conflict = &timeline->items[i];
+        const memoria_state_fact *first = conflict->facts;
+        if (!mobile_response_appendf(&conflict_json,
+            "%s{\"property\":\"%s\",\"order\":%ld,\"from_order\":%ld,\"to_order\":%ld,\"observations\":[",
+            i ? "," : "", first->property, first->order, range->from, range->to) ||
+            !mobile_response_appendf(&context, "%sCONFLITO na ordem %ld", context.size ? "\\n\\n" : "", first->order))
+            goto done;
+        for (size_t j = 0; j < conflict->count; ++j) {
+            const memoria_state_fact *fact = &conflict->facts[j];
+            memory_ref source;
+            if (!find_memory_ref(h, fact->memory_id, namespace_id, &source) || source.relation_index >= 0)
+                goto done;
+            char *id = json_escape(fact->memory_id);
+            char *value = json_escape(fact->value);
+            char *text = json_escape(source.turn->text);
+            int written = id && value && text &&
+                mobile_response_appendf(&conflict_json, "%s{\"memory_id\":\"%s\",\"value\":\"%s\"}",
+                                        j ? "," : "", id, value) &&
+                mobile_response_appendf(&context, "\\n%s", text) &&
+                mobile_response_appendf(&ids, "%s\"%s\"", ids.size ? "," : "", id) &&
+                append_transition_provenance(&provenance, provenance.size ? "," : "", id, source.turn);
+            free(id); free(value); free(text);
+            if (!written) goto done;
+            if (fact->authority < confidence) confidence = fact->authority;
+        }
+        if (!mobile_response_appendf(&conflict_json, "]}")) goto done;
+    }
+
     status = set_responsef(out, MEMORIA_MOBILE_OK,
         "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[%s],\"selected_context\":\"%s\","
         "\"relations\":[%s],\"provenance\":[%s],\"temporal_state_used\":true,"
-        "\"transition_detected\":true,\"temporal_changes\":[%s]}",
-        confidence, ids.data, context.data, relations.data, provenance.data, changes.data);
+        "\"transition_detected\":%s,\"temporal_changes\":[%s],\"temporal_conflicts\":[%s]}",
+        confidence, ids.data, context.data, relations.data ? relations.data : "", provenance.data,
+        count ? "true" : "false", changes.data ? changes.data : "", conflict_json.data ? conflict_json.data : "");
 done:
     free(ids.data); free(context.data); free(provenance.data); free(changes.data); free(relations.data);
+    free(conflict_json.data);
     return status;
 }
 
@@ -1256,14 +1309,16 @@ static int try_temporal_response(
     }
     if (timeline_phrase) {
         entity_transition *transitions = calloc(fact_count, sizeof(*transitions));
-        if (transitions) {
-            size_t count = collect_timeline_changes(facts, fact_count, orders.from, transitions);
-            *status_out = count
-                ? render_entity_transitions(h, namespace_id, transitions, count, 0, &orders, 1, out)
+        timeline_conflicts conflicts = {calloc(fact_count, sizeof(*conflicts.items)), 0};
+        if (transitions && conflicts.items) {
+            size_t count = collect_timeline_changes(facts, fact_count, orders.from, transitions, &conflicts);
+            *status_out = count || conflicts.count
+                ? render_entity_transitions(h, namespace_id, transitions, count, 0, &orders, &conflicts, out)
                 : typed_temporal_unresolved(out, "no justified transitions within the event range");
         } else {
             *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
         }
+        free(conflicts.items);
         free(transitions);
         free(facts);
         free(typed_relations);
@@ -1277,7 +1332,7 @@ static int try_temporal_response(
         if (compares_orders || (count && (latest_phrase || count > 1))) {
             *status_out = count
                 ? render_entity_transitions(h, namespace_id, transitions, count, latest_phrase != NULL,
-                                            compares_orders ? &orders : NULL, 0, out)
+                                            compares_orders ? &orders : NULL, NULL, out)
                 : typed_temporal_unresolved(out, "no justified differences between the event orders");
             free(facts);
             free(typed_relations);

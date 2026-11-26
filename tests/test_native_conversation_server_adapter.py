@@ -183,8 +183,8 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         record("A fonte Vega fica na bancada.", 60)
         record("A fonte Vega fornece 48 volts.", 80, session_id="other")
         record("A fonte Vega pesa 2 quilos.", 10)
-        record("A fonte Vega pesa 3 quilos.", 40)
-        record("A fonte Vega pesa 4 quilos.", 40)
+        weight_a = record("A fonte Vega pesa 3 quilos.", 40)
+        weight_b = record("A fonte Vega pesa 4 quilos.", 40)
         service.flush()
     finally:
         service.close()
@@ -276,6 +276,28 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         assert _resolve(
             client, "Quais mudanças ocorreram na fonte Vega entre as ordens 75 e 60?", "workshop",
         )["status"] == "UNRESOLVED"
+
+        mixed = _resolve(
+            client, "Quais mudanças ocorreram na fonte Vega entre as ordens 25 e 45?", "workshop",
+        )
+        assert [item["property"] for item in mixed["temporal_changes"]] == ["voltage", "color"]
+        assert len(mixed["temporal_conflicts"]) == 1
+        conflict = mixed["temporal_conflicts"][0]
+        assert (conflict["property"], conflict["order"]) == ("weight", 40)
+        assert {item["memory_id"]: item["value"] for item in conflict["observations"]} == {
+            weight_a: "3 quilos", weight_b: "4 quilos",
+        }
+        assert {weight_a, weight_b} <= {item["memory_id"] for item in mixed["provenance"]}
+        assert "CONFLITO na ordem 40" in mixed["selected_context"]
+
+        conflict_only = _resolve(
+            client, "Quais mudanças ocorreram na fonte Vega entre as ordens 40 e 41?", "workshop",
+        )
+        assert conflict_only["status"] == "HIT"
+        assert "temporal_changes" not in conflict_only
+        assert conflict_only["relations"] == []
+        assert set(conflict_only["memory_ids"]) == {weight_a, weight_b}
+        assert conflict_only["temporal_conflicts"][0]["observations"] == conflict["observations"]
 
         for question in (
             "O que mudou na fonte Vega entre as ordens 25 e 27?",
