@@ -893,7 +893,7 @@ static int append_transition_provenance(
 static memoria_mobile_status render_entity_transitions(
     memoria_mobile_handle *h, const char *namespace_id, const entity_transition *transitions,
     size_t count, int latest_only, const temporal_order_range *range, const timeline_conflicts *timeline,
-    memoria_mobile_buffer *out
+    memoria_mobile_status result_status, memoria_mobile_buffer *out
 ) {
     mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
     mobile_response_builder conflict_json = {0};
@@ -1003,16 +1003,41 @@ static memoria_mobile_status render_entity_transitions(
         }
     }
 
-    status = set_responsef(out, MEMORIA_MOBILE_OK,
-        "{\"status\":\"HIT\",\"confidence\":%.6f,\"memory_ids\":[%s],\"selected_context\":\"%s\","
+    char cutoff_json[64] = "";
+    if (result_status == MEMORIA_MOBILE_UNRESOLVED)
+        snprintf(cutoff_json, sizeof(cutoff_json), ",\"as_of_order\":%ld", range->to);
+    status = set_responsef(out, result_status,
+        "{\"status\":\"%s\",\"confidence\":%.6f,\"memory_ids\":[%s],\"selected_context\":\"%s\","
         "\"relations\":[%s],\"provenance\":[%s],\"temporal_state_used\":true,"
-        "\"transition_detected\":%s,\"temporal_changes\":[%s],\"temporal_conflicts\":[%s]}",
-        confidence, ids.data, context.data, relations.data ? relations.data : "", provenance.data,
-        count ? "true" : "false", changes.data ? changes.data : "", conflict_json.data ? conflict_json.data : "");
+        "\"transition_detected\":%s,\"temporal_changes\":[%s],\"temporal_conflicts\":[%s]%s}",
+        result_status == MEMORIA_MOBILE_OK ? "HIT" : "UNRESOLVED",
+        result_status == MEMORIA_MOBILE_OK ? confidence : 0.0,
+        ids.data, context.data, relations.data ? relations.data : "", provenance.data,
+        count ? "true" : "false", changes.data ? changes.data : "",
+        conflict_json.data ? conflict_json.data : "", cutoff_json);
 done:
     free(ids.data); free(context.data); free(provenance.data); free(changes.data); free(relations.data);
     free(conflict_json.data);
     return status;
+}
+
+/* An indeterminate snapshot has one entity and property. Its newest
+ * equivalent-order group contains all observations behind the conflict. */
+static memoria_mobile_status render_snapshot_conflict(
+    memoria_mobile_handle *h, const char *namespace_id, memoria_state_fact *facts,
+    size_t count, long order, memoria_mobile_buffer *out
+) {
+    if (!count) return typed_temporal_unresolved(out, "no justified state at that event order");
+    qsort(facts, count, sizeof(*facts), compare_timeline_facts);
+    const long latest_order = facts[count - 1].order;
+    size_t first = count - 1;
+    while (first && facts[first - 1].order == latest_order) --first;
+    if (count - first < 2) return typed_temporal_unresolved(out, "no justified state at that event order");
+    timeline_conflict conflict = {facts + first, count - first, NULL};
+    timeline_conflicts conflicts = {&conflict, 1};
+    temporal_order_range point = {order, order};
+    return render_entity_transitions(h, namespace_id, NULL, 0, 0, &point, &conflicts,
+                                     MEMORIA_MOBILE_UNRESOLVED, out);
 }
 
 static const char *parse_order_number(const char *text, long *value) {
@@ -1351,7 +1376,8 @@ static int try_temporal_response(
         if (transitions && conflicts.items) {
             size_t count = collect_timeline_changes(facts, fact_count, orders.from, transitions, &conflicts);
             *status_out = count || conflicts.count
-                ? render_entity_transitions(h, namespace_id, transitions, count, 0, &orders, &conflicts, out)
+                ? render_entity_transitions(h, namespace_id, transitions, count, 0, &orders, &conflicts,
+                                            MEMORIA_MOBILE_OK, out)
                 : typed_temporal_unresolved(out, "no justified transitions within the event range");
         } else {
             *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
@@ -1370,7 +1396,7 @@ static int try_temporal_response(
         if (compares_orders || (count && (latest_phrase || count > 1))) {
             *status_out = count
                 ? render_entity_transitions(h, namespace_id, transitions, count, latest_phrase != NULL,
-                                            compares_orders ? &orders : NULL, NULL, out)
+                                            compares_orders ? &orders : NULL, NULL, MEMORIA_MOBILE_OK, out)
                 : typed_temporal_unresolved(out, "no justified differences between the event orders");
             free(facts);
             free(typed_relations);
@@ -1385,15 +1411,16 @@ static int try_temporal_response(
     } else {
         state = memoria_temporal_state_resolve(target->subject, target->predicate, facts, fact_count);
     }
-    free(facts);
     if (cutoff_status) {
         *status_out = state.hit
             ? render_temporal_snapshot(find_turn_in_namespace(h, state.current_memory_id, namespace_id),
                                        orders.to, state.confidence, out)
-            : typed_temporal_unresolved(out, "no justified state at that event order");
+            : render_snapshot_conflict(h, namespace_id, facts, fact_count, orders.to, out);
+        free(facts);
         free(typed_relations);
         return 1;
     }
+    free(facts);
     if (typed && state.hit) {
         snprintf(typed_target.object, sizeof(typed_target.object), "%s", state.current_value);
         state.current_value = typed_target.object;

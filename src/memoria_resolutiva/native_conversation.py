@@ -130,11 +130,12 @@ class NativeConversationService:
                 "concept_namespace": self.concept_namespace or "",
             },
         )
-        if status == MEMORIA_MOBILE_UNRESOLVED or response.get("status") == "UNRESOLVED":
+        unresolved = status == MEMORIA_MOBILE_UNRESOLVED or response.get("status") == "UNRESOLVED"
+        if unresolved and not response.get("temporal_conflicts"):
             return ConversationResolveResult("UNRESOLVED", 0.0, (), "", (), ())
         if status == MEMORIA_MOBILE_INVALID_ARGUMENT:
             raise ValueError(str(response.get("reason") or "native conversation resolve rejected request"))
-        if status != MEMORIA_MOBILE_OK or response.get("status") != "HIT":
+        if not unresolved and (status != MEMORIA_MOBILE_OK or response.get("status") != "HIT"):
             raise RuntimeError(f"native conversation resolve failed: status={status}")
 
         rows = response.get("relations", [])
@@ -191,7 +192,7 @@ class NativeConversationService:
             raise RuntimeError("native conversation resolve returned invalid temporal conflicts")
 
         return ConversationResolveResult(
-            "HIT",
+            "UNRESOLVED" if unresolved else "HIT",
             float(response.get("confidence", 0.0)),
             public_memory_ids,
             str(response.get("selected_context") or ""),

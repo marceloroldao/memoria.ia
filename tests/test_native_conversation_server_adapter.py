@@ -336,11 +336,28 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
             assert snapshot["memory_ids"] == [expected_id]
             assert snapshot["relations"][0]["object"] == expected_value
             assert snapshot["provenance"][0]["created_order"] <= order
+        for order in (40, 62):
+            indeterminate = _resolve(client, f"Qual era o peso da fonte Vega na ordem {order}?", "workshop")
+            assert indeterminate["status"] == "UNRESOLVED"
+            assert indeterminate["confidence"] == 0.0
+            assert indeterminate["as_of_order"] == order
+            assert indeterminate["relations"] == []
+            assert {item["memory_id"] for item in indeterminate["provenance"]} == {weight_a, weight_b}
+            conflict = indeterminate["temporal_conflicts"][0]
+            assert (conflict["property"], conflict["order"], conflict["inherited"]) == ("weight", 40, order > 40)
+            assert {item["memory_id"]: item["value"] for item in conflict["observations"]} == {
+                weight_a: "3 quilos", weight_b: "4 quilos",
+            }
+        recovered = _resolve(client, "Qual era o peso da fonte Vega na ordem 63?", "workshop")
+        assert recovered["status"] == "HIT"
+        assert recovered["memory_ids"] == [recovery]
+        assert recovered["relations"][0]["object"] == "3 quilos"
+        assert "temporal_conflicts" not in recovered
+
         for question in (
             "Qual a cor da fonte Vega na ordem 5?",
             "Qual a cor da fonte Vega na ordem -25?",
             "Qual a cor da fonte Vega na ordem 25 ou 45?",
-            "Qual era o peso da fonte Vega na ordem 40?",
             "Qual era a cor da fonte Vega Mini na ordem 25?",
         ):
             assert _resolve(client, question, "workshop")["status"] == "UNRESOLVED"
