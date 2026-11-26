@@ -232,8 +232,15 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
 
         compared = _resolve(client, "O que mudou na fonte Vega entre as ordens 25 e 45?", "workshop")
         assert compared["status"] == "HIT"
-        assert compared["memory_ids"] == [old_color, current_color, old_voltage, first_12v]
+        assert compared["memory_ids"][:4] == [old_color, current_color, old_voltage, first_12v]
+        assert set(compared["memory_ids"][4:]) == {weight_a, weight_b}
         assert [item["memory_id"] for item in compared["provenance"]] == compared["memory_ids"]
+        blocked = compared["temporal_conflicts"][0]
+        assert (blocked["property"], blocked["order"], blocked["endpoint_orders"]) == ("weight", 40, [45])
+        assert "Conflito no ponto 45 da comparação" in compared["selected_context"]
+        assert {item["memory_id"]: item["value"] for item in blocked["observations"]} == {
+            weight_a: "3 quilos", weight_b: "4 quilos",
+        }
         assert [
             (item["property"], item["previous_value"], item["current_value"],
              item["from_order"], item["to_order"])
@@ -250,7 +257,10 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         assert equal["status"] == "HIT"
         assert "temporal_changes" not in equal
         assert equal["relations"] == []
-        assert equal["memory_ids"] == [first_12v, current_voltage]
+        assert equal["memory_ids"][:2] == [first_12v, current_voltage]
+        assert set(equal["memory_ids"][2:]) == {weight_a, weight_b}
+        assert len(equal["temporal_conflicts"]) == 1
+        assert equal["temporal_conflicts"][0]["endpoint_orders"] == [45, 55]
         assert [item["memory_id"] for item in equal["provenance"]] == equal["memory_ids"]
         assert equal["temporal_equal_endpoints"] == [{
             "property": "voltage",
@@ -341,6 +351,21 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         assert conflict_only["temporal_conflicts"][0]["observations"] == conflict["observations"]
         assert conflict_only["temporal_conflicts"][0]["inherited"] is False
         assert conflict_only["temporal_conflicts"][0]["resume"] is None
+
+        conflict_comparison = _resolve(
+            client, "O que mudou na fonte Vega entre as ordens 41 e 42?", "workshop",
+        )
+        assert conflict_comparison["status"] == "UNRESOLVED"
+        assert "as_of_order" not in conflict_comparison
+        assert "temporal_changes" not in conflict_comparison
+        assert conflict_comparison["temporal_conflicts"][0]["endpoint_orders"] == [41, 42]
+        assert set(conflict_comparison["memory_ids"]) == {weight_a, weight_b}
+
+        recovered_comparison = _resolve(
+            client, "O que mudou na fonte Vega entre as ordens 62 e 64?", "workshop",
+        )
+        assert recovered_comparison["status"] == "UNRESOLVED"
+        assert recovered_comparison["temporal_conflicts"][0]["endpoint_orders"] == [62]
 
         for question in (
             "O que mudou na fonte Vega entre as ordens 25 e 27?",

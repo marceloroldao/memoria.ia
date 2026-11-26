@@ -755,26 +755,74 @@ typedef struct temporal_order_range {
     long to;
 } temporal_order_range;
 
+typedef struct timeline_conflict {
+    const memoria_state_fact *facts;
+    size_t count;
+    const memoria_state_fact *resume;
+    int at_from_endpoint;
+    int at_to_endpoint;
+} timeline_conflict;
+
+typedef struct timeline_conflicts {
+    timeline_conflict *items;
+    size_t count;
+    int chronological;
+} timeline_conflicts;
+
+static int compare_event_facts(const void *left, const void *right) {
+    const memoria_state_fact *a = left, *b = right;
+    if (a->order != b->order) return a->order < b->order ? -1 : 1;
+    int property = strcmp(a->property, b->property);
+    return property ? property : strcmp(a->memory_id, b->memory_id);
+}
+
+/* The kernel reports an indeterminate state when the latest readings clash.
+ * Locate that property group within the order-sorted endpoint history. */
+static timeline_conflict endpoint_conflict(
+    const char *property, const memoria_state_fact *facts, size_t count
+) {
+    while (count && strcmp(property, facts[count - 1].property) != 0) --count;
+    if (!count) return (timeline_conflict){0};
+    const long order = facts[count - 1].order;
+    size_t first = count - 1;
+    while (first && facts[first - 1].order == order &&
+           strcmp(property, facts[first - 1].property) == 0) --first;
+    if (count - first < 2) return (timeline_conflict){0};
+    return (timeline_conflict){.facts = facts + first, .count = count - first};
+}
+
 static size_t compare_entity_states(
     const char *entity, memoria_state_fact *facts, size_t count,
-    long from_order, entity_transition *out
+    long from_order, entity_transition *out, timeline_conflicts *conflicts
 ) {
     size_t earlier_count = 0, changes = 0;
-    for (size_t i = 0; i < count; ++i) {
-        if (facts[i].order > from_order) continue;
-        memoria_state_fact fact = facts[i];
-        facts[i] = facts[earlier_count];
-        facts[earlier_count++] = fact;
-    }
+    qsort(facts, count, sizeof(*facts), compare_event_facts);
+    while (earlier_count < count && facts[earlier_count].order <= from_order) ++earlier_count;
     for (size_t i = 0; i < sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0]); ++i) {
         const char *property = entity_transition_properties[i].property;
         memoria_temporal_state_result before =
             memoria_temporal_state_resolve(entity, property, facts, earlier_count);
         memoria_temporal_state_result after =
             memoria_temporal_state_resolve(entity, property, facts, count);
+        if (!before.hit || !after.hit) {
+            timeline_conflict initial = before.hit ? (timeline_conflict){0}
+                : endpoint_conflict(property, facts, earlier_count);
+            timeline_conflict final = after.hit ? (timeline_conflict){0}
+                : endpoint_conflict(property, facts, count);
+            if (initial.facts) {
+                initial.at_from_endpoint = 1;
+                initial.at_to_endpoint = initial.facts == final.facts;
+                conflicts->items[conflicts->count++] = initial;
+            }
+            if (final.facts && final.facts != initial.facts) {
+                final.at_to_endpoint = 1;
+                conflicts->items[conflicts->count++] = final;
+            }
+            continue;
+        }
         /* A second observation is needed to corroborate equality. Carrying
          * a single old reading through both endpoints is not corroboration. */
-        if (!before.hit || !after.hit || before.current_order == after.current_order) continue;
+        if (before.current_order == after.current_order) continue;
         out[changes++] = (entity_transition){
             .property_index = i,
             .state = {
@@ -805,17 +853,6 @@ static int compare_timeline_changes(const void *left, const void *right) {
     return (a->property_index > b->property_index) - (a->property_index < b->property_index);
 }
 
-typedef struct timeline_conflict {
-    const memoria_state_fact *facts;
-    size_t count;
-    const memoria_state_fact *resume;
-} timeline_conflict;
-
-typedef struct timeline_conflicts {
-    timeline_conflict *items;
-    size_t count;
-} timeline_conflicts;
-
 static int compare_timeline_conflicts(const void *left, const void *right) {
     const timeline_conflict *a = left, *b = right;
     if (a->facts->order != b->facts->order) return a->facts->order < b->facts->order ? -1 : 1;
@@ -842,7 +879,7 @@ static size_t collect_timeline_changes(
                 if (strcasecmp(fact->value, facts[j].value) != 0) conflict = 1;
                 ++j;
             }
-            const timeline_conflict group = {fact, j - start, NULL};
+            const timeline_conflict group = {.facts = fact, .count = j - start};
             if (fact->order < from_order) {
                 prior_conflict = conflict ? group : (timeline_conflict){0};
             } else {
@@ -898,9 +935,10 @@ static int append_transition_provenance(
 
 static memoria_mobile_status render_entity_transitions(
     memoria_mobile_handle *h, const char *namespace_id, const entity_transition *transitions,
-    size_t count, int latest_only, const temporal_order_range *range, const timeline_conflicts *timeline,
+    size_t count, int latest_only, const temporal_order_range *range, const timeline_conflicts *conflicts,
     memoria_mobile_status result_status, memoria_mobile_buffer *out
 ) {
+    const int timeline = conflicts && conflicts->chronological;
     mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
     mobile_response_builder conflict_json = {0}, equal_endpoints = {0};
     double confidence = 1.0;
@@ -962,16 +1000,27 @@ static memoria_mobile_status render_entity_transitions(
         if (after->authority < confidence) confidence = after->authority;
     }
 
-    for (size_t i = 0; timeline && i < timeline->count; ++i) {
-        const timeline_conflict *conflict = &timeline->items[i];
+    for (size_t i = 0; conflicts && i < conflicts->count; ++i) {
+        const timeline_conflict *conflict = &conflicts->items[i];
         const memoria_state_fact *first = conflict->facts;
         if (!mobile_response_appendf(&conflict_json,
             "%s{\"property\":\"%s\",\"order\":%ld,\"from_order\":%ld,\"to_order\":%ld,"
-            "\"inherited\":%s,\"observations\":[",
+            "\"inherited\":%s",
             i ? "," : "", first->property, first->order, range->from, range->to,
             first->order < range->from ? "true" : "false") ||
             !mobile_response_appendf(&context, "%sCONFLITO na ordem %ld", context.size ? "\\n\\n" : "", first->order))
             goto done;
+        if (conflict->at_from_endpoint || conflict->at_to_endpoint) {
+            long endpoint = conflict->at_from_endpoint ? range->from : range->to;
+            if (!mobile_response_appendf(&conflict_json, ",\"endpoint_orders\":[%ld", endpoint) ||
+                !mobile_response_appendf(&context, "\\nConflito no ponto %ld da comparação", endpoint))
+                goto done;
+            if (conflict->at_from_endpoint && conflict->at_to_endpoint &&
+                (!mobile_response_appendf(&conflict_json, ",%ld", range->to) ||
+                 !mobile_response_appendf(&context, " e no ponto %ld", range->to))) goto done;
+            if (!mobile_response_appendf(&conflict_json, "]")) goto done;
+        }
+        if (!mobile_response_appendf(&conflict_json, ",\"observations\":[")) goto done;
         for (size_t j = 0; j < conflict->count; ++j) {
             const memoria_state_fact *fact = &conflict->facts[j];
             memory_ref source;
@@ -1014,7 +1063,7 @@ static memoria_mobile_status render_entity_transitions(
     }
 
     char cutoff_json[64] = "";
-    if (result_status == MEMORIA_MOBILE_UNRESOLVED)
+    if (result_status == MEMORIA_MOBILE_UNRESOLVED && range && range->from == range->to)
         snprintf(cutoff_json, sizeof(cutoff_json), ",\"as_of_order\":%ld", range->to);
     status = set_responsef(out, result_status,
         "{\"status\":\"%s\",\"confidence\":%.6f,\"memory_ids\":[%s],\"selected_context\":\"%s\","
@@ -1045,8 +1094,8 @@ static memoria_mobile_status render_snapshot_conflict(
     size_t first = count - 1;
     while (first && facts[first - 1].order == latest_order) --first;
     if (count - first < 2) return typed_temporal_unresolved(out, "no justified state at that event order");
-    timeline_conflict conflict = {facts + first, count - first, NULL};
-    timeline_conflicts conflicts = {&conflict, 1};
+    timeline_conflict conflict = {.facts = facts + first, .count = count - first};
+    timeline_conflicts conflicts = {.items = &conflict, .count = 1};
     temporal_order_range point = {order, order};
     return render_entity_transitions(h, namespace_id, NULL, 0, 0, &point, &conflicts,
                                      MEMORIA_MOBILE_UNRESOLVED, out);
@@ -1384,7 +1433,10 @@ static int try_temporal_response(
     }
     if (timeline_phrase) {
         entity_transition *transitions = calloc(fact_count, sizeof(*transitions));
-        timeline_conflicts conflicts = {calloc(fact_count, sizeof(*conflicts.items)), 0};
+        timeline_conflicts conflicts = {
+            .items = calloc(fact_count, sizeof(*conflicts.items)),
+            .chronological = 1,
+        };
         if (transitions && conflicts.items) {
             size_t count = collect_timeline_changes(facts, fact_count, orders.from, transitions, &conflicts);
             *status_out = count || conflicts.count
@@ -1402,14 +1454,25 @@ static int try_temporal_response(
     }
     if (asks_for_transition) {
         entity_transition transitions[sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0])];
-        size_t count = compares_orders
-            ? compare_entity_states(target->subject, facts, fact_count, orders.from, transitions)
-            : collect_entity_transitions(target->subject, facts, fact_count, latest_phrase != NULL, transitions);
-        if (compares_orders || (count && (latest_phrase || count > 1))) {
-            *status_out = count
-                ? render_entity_transitions(h, namespace_id, transitions, count, latest_phrase != NULL,
-                                            compares_orders ? &orders : NULL, NULL, MEMORIA_MOBILE_OK, out)
+        if (compares_orders) {
+            timeline_conflict items[2 * (sizeof(transitions) / sizeof(transitions[0]))];
+            timeline_conflicts conflicts = {.items = items};
+            size_t count = compare_entity_states(target->subject, facts, fact_count, orders.from,
+                                                 transitions, &conflicts);
+            qsort(items, conflicts.count, sizeof(*items), compare_timeline_conflicts);
+            *status_out = count || conflicts.count
+                ? render_entity_transitions(h, namespace_id, transitions, count, 0, &orders, &conflicts,
+                                            count ? MEMORIA_MOBILE_OK : MEMORIA_MOBILE_UNRESOLVED, out)
                 : typed_temporal_unresolved(out, "no justified differences between the event orders");
+            free(facts);
+            free(typed_relations);
+            return 1;
+        }
+        size_t count = collect_entity_transitions(target->subject, facts, fact_count,
+                                                  latest_phrase != NULL, transitions);
+        if (count && (latest_phrase || count > 1)) {
+            *status_out = render_entity_transitions(h, namespace_id, transitions, count, latest_phrase != NULL,
+                                                    NULL, NULL, MEMORIA_MOBILE_OK, out);
             free(facts);
             free(typed_relations);
             return 1;
