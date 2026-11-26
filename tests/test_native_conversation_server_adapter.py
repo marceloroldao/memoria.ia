@@ -174,7 +174,7 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
         def record(text, order, session_id="workshop"):
             return _ingest(client, role="user", text=text, order=order, session_id=session_id)["stored_memory_ids"][0]
 
-        record("A fonte Vega fornece 12 volts.", 40)
+        first_12v = record("A fonte Vega fornece 12 volts.", 40)
         old_color = record("A fonte Vega é cinza.", 10)
         old_voltage = record("A fonte Vega fornece 24 volts.", 20)
         current_color = record("A fonte Vega é preta.", 45)
@@ -229,6 +229,34 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
             ("voltage", 65), ("location", 65),
         ]
         assert _resolve(client, "Qual foi a última mudança?", "workshop")["status"] == "UNRESOLVED"
+
+        compared = _resolve(client, "O que mudou na fonte Vega entre as ordens 25 e 45?", "workshop")
+        assert compared["status"] == "HIT"
+        assert compared["memory_ids"] == [old_color, current_color, old_voltage, first_12v]
+        assert [item["memory_id"] for item in compared["provenance"]] == compared["memory_ids"]
+        assert [
+            (item["property"], item["previous_value"], item["current_value"],
+             item["from_order"], item["to_order"])
+            for item in compared["temporal_changes"]
+        ] == [
+            ("color", "cinza", "preta", 25, 45),
+            ("voltage", "24 volts", "12 volts", 25, 45),
+        ]
+        assert "ORDEM 25:" in compared["selected_context"]
+        assert "ORDEM 45:" in compared["selected_context"]
+        assert all("transition_order" not in item for item in compared["temporal_changes"])
+
+        _ingest(client, role="user", text="A fonte Vega fica na bancada.", order=75, session_id="workshop")
+        reverted = _resolve(client, "O que mudou na fonte Vega entre as ordens 60 e 75?", "workshop")
+        assert [item["property"] for item in reverted["temporal_changes"]] == ["voltage"]
+        for question in (
+            "O que mudou na fonte Vega entre as ordens 25 e 27?",
+            "O que mudou na fonte Vega entre as ordens 5 e 45?",
+            "O que mudou na fonte Vega entre as ordens 45 e 25?",
+            "O que mudou na fonte Vega entre as ordens -25 e 45?",
+            "O que mudou na fonte Vega entre as ordens 25 e 45 ou 60?",
+        ):
+            assert _resolve(client, question, "workshop")["status"] == "UNRESOLVED"
 
         for order, expected_id, expected_value in (
             (25, old_color, "cinza"), (45, current_color, "preta"),

@@ -169,6 +169,13 @@ def test_confirmed_entity_aliases_resolve_attributes_after_reopen(tmp_path):
         assert snapshot.memory_ids == (historical.memory_ids[0],)
         assert snapshot.relations[0]["object"] == "cinza"
 
+        compared = service.resolve(
+            query="O que mudou no medidor da feira entre as ordens 10 e 15?", session_id="workshop",
+        )
+        assert compared.memory_ids == (previous.memory_ids[0], historical.memory_ids[0])
+        assert compared.temporal_changes[0]["previous_value"] == "verde"
+        assert compared.temporal_changes[0]["current_value"] == "cinza"
+
         change = service.resolve(query="O que mudou no medidor da feira?", session_id="workshop")
         assert change.memory_ids == (historical.memory_ids[0], updated.memory_ids[0])
         assert change.selected_context == (

@@ -749,6 +749,41 @@ static size_t collect_entity_transitions(
     return count;
 }
 
+typedef struct temporal_order_range {
+    long from;
+    long to;
+} temporal_order_range;
+
+static size_t compare_entity_states(
+    const char *entity, memoria_state_fact *facts, size_t count,
+    long from_order, entity_transition *out
+) {
+    size_t earlier_count = 0, changes = 0;
+    for (size_t i = 0; i < count; ++i) {
+        if (facts[i].order > from_order) continue;
+        memoria_state_fact fact = facts[i];
+        facts[i] = facts[earlier_count];
+        facts[earlier_count++] = fact;
+    }
+    for (size_t i = 0; i < sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0]); ++i) {
+        const char *property = entity_transition_properties[i].property;
+        memoria_temporal_state_result before =
+            memoria_temporal_state_resolve(entity, property, facts, earlier_count);
+        memoria_temporal_state_result after =
+            memoria_temporal_state_resolve(entity, property, facts, count);
+        if (!before.hit || !after.hit || strcasecmp(before.current_value, after.current_value) == 0)
+            continue;
+        out[changes++] = (entity_transition){i, {
+            .previous_memory_id = before.current_memory_id,
+            .current_memory_id = after.current_memory_id,
+            .previous_value = before.current_value,
+            .previous_order = before.current_order,
+            .confidence = before.confidence < after.confidence ? before.confidence : after.confidence,
+        }};
+    }
+    return changes;
+}
+
 static int append_transition_provenance(
     mobile_response_builder *builder, const char *separator, const char *id, const turn_row *turn
 ) {
@@ -767,7 +802,7 @@ static int append_transition_provenance(
 
 static memoria_mobile_status render_entity_transitions(
     memoria_mobile_handle *h, const char *namespace_id, const entity_transition *transitions,
-    size_t count, int latest_only, memoria_mobile_buffer *out
+    size_t count, int latest_only, const temporal_order_range *range, memoria_mobile_buffer *out
 ) {
     mobile_response_builder ids = {0}, context = {0}, provenance = {0}, changes = {0}, relations = {0};
     double confidence = 1.0;
@@ -796,16 +831,23 @@ static memoria_mobile_status render_entity_transitions(
         const char *comma = i ? "," : "";
         int written = before_id && after_id && before_text && after_text && before_value && after_value &&
             mobile_response_appendf(&ids, "%s\"%s\",\"%s\"", comma, before_id, after_id) &&
-            mobile_response_appendf(&context, "%sTRANSITION: %s\\nPREVIOUS: %s\\nCURRENT: %s",
-                                    i ? "\\n\\n" : "", label, before_text, after_text) &&
+            (range
+                ? mobile_response_appendf(&context, "%sTRANSITION: %s\\nORDEM %ld: %s\\nORDEM %ld: %s",
+                                          i ? "\\n\\n" : "", label, range->from, before_text,
+                                          range->to, after_text)
+                : mobile_response_appendf(&context, "%sTRANSITION: %s\\nPREVIOUS: %s\\nCURRENT: %s",
+                                          i ? "\\n\\n" : "", label, before_text, after_text)) &&
             append_transition_provenance(&provenance, comma, before_id, before) &&
             append_transition_provenance(&provenance, ",", after_id, after) &&
             mobile_response_appendf(&changes,
                 "%s{\"property\":\"%s\",\"previous_value\":\"%s\",\"current_value\":\"%s\","
                 "\"previous_memory_id\":\"%s\",\"current_memory_id\":\"%s\","
-                "\"previous_order\":%ld,\"current_order\":%ld,\"transition_order\":%ld}",
+                "\"previous_order\":%ld,\"current_order\":%ld",
                 comma, property, before_value, after_value, before_id, after_id,
-                state->previous_order, after->order, state->transition_order) &&
+                state->previous_order, after->order) &&
+            (range
+                ? mobile_response_appendf(&changes, ",\"from_order\":%ld,\"to_order\":%ld}", range->from, range->to)
+                : mobile_response_appendf(&changes, ",\"transition_order\":%ld}", state->transition_order)) &&
             mobile_response_appendf(&relations, "%s%.*s", comma, (int)strlen(relation_json) - 2, relation_json + 1);
         free(before_id); free(after_id); free(before_text); free(after_text);
         free(before_value); free(after_value);
@@ -824,30 +866,42 @@ done:
     return status;
 }
 
-/* The cutoff is the stored event order, inclusive. Parse the raw suffix so
- * normalization cannot turn a negative or malformed order into a valid one. */
-static int parse_temporal_order(const char *query, long *order, size_t *length) {
-    static const char marker[] = "na ordem";
-    const size_t marker_length = sizeof(marker) - 1;
+static const char *parse_order_number(const char *text, long *value) {
+    if (!isspace((unsigned char)*text)) return NULL;
+    while (isspace((unsigned char)*text)) ++text;
+    if (!isdigit((unsigned char)*text)) return NULL;
+    char *end;
+    errno = 0;
+    *value = strtol(text, &end, 10);
+    return errno == ERANGE ? NULL : end;
+}
+
+/* Inspect raw suffixes so normalization cannot turn invalid orders into valid
+ * ones. Return two for a range, one for a point, and zero for ordinary queries. */
+static int parse_temporal_order(const char *query, temporal_order_range *orders, size_t *length) {
+    static const char *const markers[] = {"na ordem", "entre as ordens"};
     for (const char *p = query; *p; ++p) {
-        if ((p != query && temporal_word_byte((unsigned char)p[-1])) ||
-            strncasecmp(p, marker, marker_length) != 0 ||
-            temporal_word_byte((unsigned char)p[marker_length])) continue;
-        const char *number = p + marker_length;
-        if (!isspace((unsigned char)*number)) return -1;
-        while (isspace((unsigned char)*number)) ++number;
-        if (!isdigit((unsigned char)*number)) return -1;
-        char *end;
-        errno = 0;
-        long value = strtol(number, &end, 10);
-        if (errno == ERANGE) return -1;
-        while (isspace((unsigned char)*end)) ++end;
-        if (*end == '?') ++end;
-        while (isspace((unsigned char)*end)) ++end;
-        if (*end) return -1;
-        *order = value;
-        *length = (size_t)(p - query);
-        return 1;
+        if (p != query && temporal_word_byte((unsigned char)p[-1])) continue;
+        for (size_t i = 0; i < sizeof(markers) / sizeof(markers[0]); ++i) {
+            const size_t width = strlen(markers[i]);
+            if (strncasecmp(p, markers[i], width) != 0 ||
+                temporal_word_byte((unsigned char)p[width])) continue;
+            const char *end = parse_order_number(p + width, i ? &orders->from : &orders->to);
+            if (!end) return -1;
+            if (i) {
+                if (!isspace((unsigned char)*end)) return -1;
+                while (isspace((unsigned char)*end)) ++end;
+                if (*end != 'e' && *end != 'E') return -1;
+                end = parse_order_number(end + 1, &orders->to);
+                if (!end || orders->from >= orders->to) return -1;
+            }
+            while (isspace((unsigned char)*end)) ++end;
+            if (*end == '?') ++end;
+            while (isspace((unsigned char)*end)) ++end;
+            if (*end) return -1;
+            *length = (size_t)(p - query);
+            return i ? 2 : 1;
+        }
     }
     return 0;
 }
@@ -984,9 +1038,10 @@ static int try_temporal_response(
     char *prev_type = NULL, *prev_root = NULL, *curr_type = NULL, *curr_root = NULL;
     memoria_mobile_status response_status;
 
-    long as_of_order = 0;
+    temporal_order_range orders = {0};
     size_t cutoff_prefix_length = 0;
-    const int cutoff_status = parse_temporal_order(query, &as_of_order, &cutoff_prefix_length);
+    const int cutoff_status = parse_temporal_order(query, &orders, &cutoff_prefix_length);
+    const int compares_orders = cutoff_status == 2;
     if (cutoff_status < 0) {
         *status_out = typed_temporal_unresolved(out, "invalid event order");
         return 1;
@@ -999,10 +1054,18 @@ static int try_temporal_response(
         }
         memcpy(snapshot_query, query, cutoff_prefix_length);
         snapshot_query[cutoff_prefix_length] = 0;
-        if (memoria_concept_normalize(snapshot_query, normalized_query, sizeof(normalized_query)) != MEMORIA_CONCEPT_OK ||
-            !(requested_property = temporal_requested_property(normalized_query, &entity_query, &requires_typed_history)) ||
-            !*(entity_query = snapshot_entity_name(entity_query))) {
+        if (memoria_concept_normalize(snapshot_query, normalized_query, sizeof(normalized_query)) != MEMORIA_CONCEPT_OK) {
             *status_out = typed_temporal_unresolved(out, "temporal entity or property is unavailable");
+            return 1;
+        }
+        if (!compares_orders) {
+            requested_property = temporal_requested_property(normalized_query, &entity_query, &requires_typed_history);
+            if (!requested_property || !*(entity_query = snapshot_entity_name(entity_query))) {
+                *status_out = typed_temporal_unresolved(out, "temporal entity or property is unavailable");
+                return 1;
+            }
+        } else if (!starts_word_ci(normalized_query, "o que mudou")) {
+            *status_out = typed_temporal_unresolved(out, "event range requires an entity change query");
             return 1;
         }
     }
@@ -1020,7 +1083,7 @@ static int try_temporal_response(
         else if (starts_word_ci(normalized_query, "qual a ultima mudanca"))
             latest_phrase = "qual a ultima mudanca";
     }
-    const int asks_for_transition = !cutoff_status && (latest_phrase || asks_what_changed);
+    const int asks_for_transition = compares_orders || (!cutoff_status && (latest_phrase || asks_what_changed));
     if (!cutoff_status && !asks_for_transition && !asks_before_or_now) return 0;
     if (asks_for_transition) {
         if (!normalized) {
@@ -1071,7 +1134,7 @@ static int try_temporal_response(
         typed = typed_temporal_facts(h, query, namespace_id, requested_property,
                                      concept_namespace, concept_id,
                                      asks_for_transition || cutoff_status ? entity_query : NULL,
-                                     cutoff_status ? &as_of_order : NULL, &typed_target, typed_relations, facts, &fact_count);
+                                     cutoff_status ? &orders.to : NULL, &typed_target, typed_relations, facts, &fact_count);
         if (typed <= 0) {
             free(typed_relations);
             free(facts);
@@ -1130,11 +1193,14 @@ static int try_temporal_response(
     }
     if (asks_for_transition) {
         entity_transition transitions[sizeof(entity_transition_properties) / sizeof(entity_transition_properties[0])];
-        size_t count = collect_entity_transitions(target->subject, facts, fact_count,
-                                                   latest_phrase != NULL, transitions);
-        if (count && (latest_phrase || count > 1)) {
-            *status_out = render_entity_transitions(h, namespace_id, transitions, count,
-                                                    latest_phrase != NULL, out);
+        size_t count = compares_orders
+            ? compare_entity_states(target->subject, facts, fact_count, orders.from, transitions)
+            : collect_entity_transitions(target->subject, facts, fact_count, latest_phrase != NULL, transitions);
+        if (compares_orders || (count && (latest_phrase || count > 1))) {
+            *status_out = count
+                ? render_entity_transitions(h, namespace_id, transitions, count, latest_phrase != NULL,
+                                            compares_orders ? &orders : NULL, out)
+                : typed_temporal_unresolved(out, "no justified differences between the event orders");
             free(facts);
             free(typed_relations);
             return 1;
@@ -1152,7 +1218,7 @@ static int try_temporal_response(
     if (cutoff_status) {
         *status_out = state.hit
             ? render_temporal_snapshot(find_turn_in_namespace(h, state.current_memory_id, namespace_id),
-                                       as_of_order, state.confidence, out)
+                                       orders.to, state.confidence, out)
             : typed_temporal_unresolved(out, "no justified state at that event order");
         free(typed_relations);
         return 1;
@@ -1353,7 +1419,8 @@ static int try_attribute_response(
     memoria_concept_resolution identity = {0};
     int value_conflict = 0, ambiguous_alias = 0, exact_match = 0;
 
-    if (contains_word_ci(query, "na ordem") || temporal_query_flags(query, NULL, NULL)) return 0;
+    if (contains_word_ci(query, "na ordem") || contains_word_ci(query, "entre as ordens") ||
+        temporal_query_flags(query, NULL, NULL)) return 0;
     property = attribute_question(query, entity, entity_surface, sizeof(entity));
     if (!property) return 0;
 
