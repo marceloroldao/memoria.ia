@@ -308,6 +308,33 @@ static memoria_mobile_status bridge_set_collection_hit(
     return MEMORIA_MOBILE_OK;
 }
 
+/* A bare request for "relations" has no defined graph scope. Keep a
+ * literal recall, but do not represent a partial lexical match as an answer. */
+static memoria_mobile_status bridge_check_vague_relation_hit(const char *query, memoria_mobile_buffer *out) {
+    char normalized[512], context_normalized[512];
+    if (!out->data ||
+        memoria_concept_normalize(query, normalized, sizeof(normalized)) != MEMORIA_CONCEPT_OK)
+        return MEMORIA_MOBILE_OK;
+    const char *last_word = strrchr(normalized, ' ');
+    if (!last_word || (strcmp(last_word, " relations") != 0 && strcmp(last_word, " relacoes") != 0))
+        return MEMORIA_MOBILE_OK;
+    char *context = bridge_json_string((const char *)out->data, "selected_context");
+    int exact = context &&
+        memoria_concept_normalize(context, context_normalized, sizeof(context_normalized)) == MEMORIA_CONCEPT_OK &&
+        strcmp(normalized, context_normalized) == 0;
+    free(context);
+    if (exact) return MEMORIA_MOBILE_OK;
+
+    const char reason[] = "{\"status\":\"UNRESOLVED\",\"reason\":\"relation query has no defined scope\"}";
+    uint8_t *data = malloc(sizeof(reason));
+    if (!data) return MEMORIA_MOBILE_OK;
+    memcpy(data, reason, sizeof(reason));
+    memoria_mobile_free_buffer(*out);
+    out->data = data;
+    out->size = sizeof(reason) - 1;
+    return MEMORIA_MOBILE_UNRESOLVED;
+}
+
 memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle *handle, memoria_mobile_buffer request_json, memoria_mobile_buffer *response_json) {
     memoria_mobile_status base_status;
     char *json = NULL, *source = NULL, *target = NULL, *namespace_id = NULL;
@@ -325,11 +352,12 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     memoria_concept_collection_status collection_status;
 
     base_status = memoria_mobile_resolve_context_json_base(handle, request_json, response_json);
-    if (base_status != MEMORIA_MOBILE_UNRESOLVED) return base_status;
+    if (base_status != MEMORIA_MOBILE_UNRESOLVED && base_status != MEMORIA_MOBILE_OK) return base_status;
     if (!handle || !response_json || !request_json.data || !request_json.size) return base_status;
     if (response_json->data &&
         (strstr((const char *)response_json->data, "\"attribute_resolution_used\":true") ||
-         strstr((const char *)response_json->data, "\"temporal_state_used\":true"))) return base_status;
+         strstr((const char *)response_json->data, "\"temporal_state_used\":true") ||
+         strstr((const char *)response_json->data, "\"trajectory_used\":true"))) return base_status;
 
     json = (char *)malloc(request_json.size + 1u);
     if (!json) return base_status;
@@ -344,6 +372,8 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
     if (!concept_namespace || !concept_namespace[0] || !handle->concept_runtime || !query || !query[0]) goto done;
 
     if (source && source[0] && target && target[0]) {
+        /* Explicit fallback anchors must not displace a resolved lookup. */
+        if (base_status == MEMORIA_MOBILE_OK) goto done;
         effective_source = source;
         effective_target = target;
     } else if (memoria_relation_anchor_extract(query, inferred_source, sizeof(inferred_source), inferred_target, sizeof(inferred_target)) == MEMORIA_RELATION_ANCHOR_HIT) {
@@ -397,8 +427,12 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
             response_json->data = NULL;
             response_json->size = 0;
             base_status = bridge_set_neighborhood_hit(response_json, neighborhood_source, neighbors, neighbor_count);
+            goto done;
         }
     }
+
+    if (base_status == MEMORIA_MOBILE_OK)
+        base_status = bridge_check_vague_relation_hit(query, response_json);
 
 done:
     free(query); free(namespace_id); free(concept_namespace); free(target); free(source); free(json);

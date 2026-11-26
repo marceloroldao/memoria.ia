@@ -22,6 +22,9 @@ int memoria_lineage_is_factual_root_type(const char *source_type) {
     return source_type && (
         strcmp(source_type, "user_assertion") == 0 ||
         strcmp(source_type, "user_correction") == 0 ||
+        /* Durable records written before the source taxonomy split. */
+        strcmp(source_type, "direct_observation") == 0 ||
+        strcmp(source_type, "external_import") == 0 ||
         strcmp(source_type, "external_public") == 0 ||
         strcmp(source_type, "external_private") == 0 ||
         strcmp(source_type, "sensor_observation") == 0
