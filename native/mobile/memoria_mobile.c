@@ -2170,28 +2170,32 @@ memoria_mobile_status memoria_mobile_resolve_context_json(memoria_mobile_handle 
         free(query); free(namespace_id); free(concept_namespace); free(json);
         return response_status;
     }
-    if (!ensure_semantic_capacity(h, h->turn_count)) {
-        free(query); free(namespace_id); free(concept_namespace); free(json);
-        return MEMORIA_MOBILE_INTERNAL_ERROR;
-    }
-    sources = h->semantic_sources;
     size_t source_count = 0;
-    for (i = 0; i < h->turn_count; ++i) {
-        lineage_root lineage = {0};
-        if (!turn_namespace_matches(&h->turns[i], namespace_id) ||
-            !active_lineage_root(h,h->turns[i].memory_id,namespace_id,&lineage)) continue;
-        sources[source_count].memory_id = h->turns[i].memory_id;
-        sources[source_count].text = h->turns[i].text;
-        sources[source_count].authority = lineage.authority;
-        sources[source_count].order = h->turns[i].order;
-        sources[source_count].source_type = h->turns[i].source_type;
-        sources[source_count].ultimate_source_memory_id = lineage.memory_id;
-        ++source_count;
-    }
 resolve_attempt:
     if (try_temporal_response(h, query, namespace_id, concept_namespace, NULL, out, &response_status)) {
         free(namespace_id); free(concept_namespace); free(query); free(json);
         return response_status;
+    }
+    /* Temporal evidence is resolved directly from durable turns. Only
+     * prepare semantic sources if recall proceeds through that route. */
+    if (!sources) {
+        if (!ensure_semantic_capacity(h, h->turn_count)) {
+            free(query); free(namespace_id); free(concept_namespace); free(json);
+            return MEMORIA_MOBILE_INTERNAL_ERROR;
+        }
+        sources = h->semantic_sources;
+        for (i = 0; i < h->turn_count; ++i) {
+            lineage_root lineage = {0};
+            if (!turn_namespace_matches(&h->turns[i], namespace_id) ||
+                !active_lineage_root(h,h->turns[i].memory_id,namespace_id,&lineage)) continue;
+            sources[source_count].memory_id = h->turns[i].memory_id;
+            sources[source_count].text = h->turns[i].text;
+            sources[source_count].authority = lineage.authority;
+            sources[source_count].order = h->turns[i].order;
+            sources[source_count].source_type = h->turns[i].source_type;
+            sources[source_count].ultimate_source_memory_id = lineage.memory_id;
+            ++source_count;
+        }
     }
     trajectory_mode = memoria_trajectory_resolve_json(json, query, sources, source_count, &tr, &window_count);
     if (trajectory_mode < 0) {
