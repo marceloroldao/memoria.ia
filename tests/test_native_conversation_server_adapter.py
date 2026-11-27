@@ -453,6 +453,39 @@ def _assert_temporal_sources(result):
     assert {item["memory_id"] for item in result["provenance"]} == source_ids
 
 
+def test_temporal_session_cache_tracks_new_turns_and_clears_on_format(tmp_path):
+    service = _native_service(tmp_path, _native_library())
+    query = "Qual era a tensão da fonte Vega na ordem 25?"
+    try:
+        original_ids = {}
+        sessions = [None, *(f"session-{i}" for i in range(24))]
+        for index, session in enumerate(sessions):
+            recorded = service.ingest(
+                role="user", text=f"A fonte Vega fornece {12 + index} volts.",
+                order=10, session_id=session,
+            )
+            original_ids[session] = recorded.memory_ids[0]
+            assert service.resolve(query=query, session_id=session).memory_ids == (original_ids[session],)
+
+        correction = service.ingest(
+            role="user", text="A fonte Vega fornece 48 volts.", order=20,
+            corrects_memory_ids=[original_ids[None]],
+        )
+        assert service.resolve(query=query).memory_ids == (correction.memory_ids[0],)
+        before_correction = "Qual era a tensão da fonte Vega na ordem 15?"
+        assert service.resolve(query=before_correction).memory_ids == (original_ids[None],)
+        for session in sessions[1:]:
+            assert service.resolve(query=query, session_id=session).memory_ids == (original_ids[session],)
+
+        assert service.format_store("FORMATAR")["removed_turns"] == len(sessions) + 1
+        assert service.resolve(query=query).status == "UNRESOLVED"
+        replacement = service.ingest(role="user", text="A fonte Vega fornece 36 volts.", order=5)
+        assert service.resolve(query=query).memory_ids == (replacement.memory_ids[0],)
+        assert service.resolve(query=query, session_id=sessions[-1]).status == "UNRESOLVED"
+    finally:
+        service.close()
+
+
 @pytest.mark.parametrize("seed", range(6))
 def test_generated_temporal_histories_against_reference_after_reopen(tmp_path, seed):
     rng = Random(seed)

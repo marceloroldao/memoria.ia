@@ -43,6 +43,25 @@ typedef struct memory_index_slot {
     unsigned char occupied;
 } memory_index_slot;
 
+typedef struct temporal_observation {
+    memoria_relation relation;
+    size_t turn_index;
+} temporal_observation;
+
+typedef struct temporal_session {
+    const char *namespace_id;
+    temporal_observation *observations;
+    size_t count;
+    size_t capacity;
+    size_t processed_turns;
+} temporal_session;
+
+typedef struct temporal_history {
+    temporal_session *sessions;
+    size_t count;
+    size_t capacity;
+} temporal_history;
+
 struct memoria_mobile_handle {
     char *data_dir;
     char *organization_id;
@@ -57,6 +76,7 @@ struct memoria_mobile_handle {
     memory_index_slot *memory_index;
     size_t memory_index_capacity;
     size_t memory_index_count;
+    temporal_history temporal_history;
     episode_row *episodes;
     size_t episode_count;
     size_t episode_capacity;
@@ -1186,36 +1206,107 @@ static memoria_mobile_status render_temporal_snapshot(
     return status;
 }
 
-/* Extract from persisted turns so histories written by earlier versions are
- * available without a database migration. Only factual roots supply values. */
+static temporal_session *temporal_session_slot(temporal_session *sessions, size_t capacity,
+                                               const char *namespace_id) {
+    size_t index = (size_t)memory_key_hash(namespace_id, "") & (capacity - 1u);
+    while (sessions[index].namespace_id && strcmp(sessions[index].namespace_id, namespace_id) != 0)
+        index = (index + 1u) & (capacity - 1u);
+    return &sessions[index];
+}
+
+static temporal_session *temporal_history_add_session(temporal_history *history, const char *namespace_id) {
+    if (history->count >= history->capacity / 2u) {
+        size_t capacity = history->capacity ? history->capacity * 2u : 16u;
+        if (!capacity || capacity > SIZE_MAX / sizeof(*history->sessions)) return NULL;
+        temporal_session *sessions = calloc(capacity, sizeof(*sessions));
+        if (!sessions) return NULL;
+        for (size_t i = 0; i < history->capacity; ++i) {
+            temporal_session entry = history->sessions[i];
+            if (entry.namespace_id) *temporal_session_slot(sessions, capacity, entry.namespace_id) = entry;
+        }
+        free(history->sessions);
+        history->sessions = sessions;
+        history->capacity = capacity;
+    }
+    temporal_session *session = temporal_session_slot(history->sessions, history->capacity, namespace_id);
+    session->namespace_id = namespace_id;
+    ++history->count;
+    return session;
+}
+
+static int temporal_session_append(temporal_session *session, size_t turn_index,
+                                   const memoria_relation *relation) {
+    if (session->count == session->capacity) {
+        size_t capacity = session->capacity ? session->capacity * 2u : 8u;
+        if (!capacity || capacity > SIZE_MAX / sizeof(*session->observations)) return 0;
+        temporal_observation *rows = realloc(session->observations, capacity * sizeof(*rows));
+        if (!rows) return 0;
+        session->observations = rows;
+        session->capacity = capacity;
+    }
+    session->observations[session->count++] = (temporal_observation){*relation, turn_index};
+    return 1;
+}
+
+static void temporal_history_clear(temporal_history *history) {
+    for (size_t i = 0; i < history->capacity; ++i) free(history->sessions[i].observations);
+    free(history->sessions);
+    *history = (temporal_history){0};
+}
+
+/* Build only the requested session and resume from the last processed turn.
+ * Use original text for older BDRs and keep arrival order for tie handling. */
+static int temporal_history_update(memoria_mobile_handle *h, const char *namespace_id,
+                                   const temporal_session **out) {
+    temporal_history *history = &h->temporal_history;
+    temporal_session *session = history->capacity
+        ? temporal_session_slot(history->sessions, history->capacity, namespace_id) : NULL;
+    if (session && !session->namespace_id) session = NULL;
+    size_t start = session ? session->processed_turns : 0;
+    for (size_t i = start; i < h->turn_count; ++i) {
+        const turn_row *turn = &h->turns[i];
+        if (!turn_namespace_matches(turn, namespace_id) || !turn->source_type ||
+            turn->authority < 0.5 || !turn->text ||
+            (strcmp(turn->source_type, "user_assertion") != 0 &&
+             strcmp(turn->source_type, "user_correction") != 0 &&
+             strcmp(turn->source_type, "direct_observation") != 0 &&
+             strcmp(turn->source_type, "external_import") != 0) || looks_like_question_text(turn->text)) continue;
+        memoria_relation relation = {0};
+        if (!memoria_extract_attribute_relation(turn->text, &relation)) continue;
+        /* The key is owned by the persisted turn and lives until reset or close. */
+        if (!session) session = temporal_history_add_session(history, turn->namespace_id ? turn->namespace_id : "");
+        if (!session) return 0;
+        if (!temporal_session_append(session, i, &relation)) {
+            session->processed_turns = i;
+            return 0;
+        }
+    }
+    if (session) session->processed_turns = h->turn_count;
+    *out = session;
+    return 1;
+}
+
 static int typed_temporal_facts(
     memoria_mobile_handle *h,
     const char *query,
-    const char *namespace_id,
+    const temporal_session *session,
     const char *property,
     const char *concept_namespace,
     const char *concept_id,
     const char *exact_entity,
     const long *as_of_order,
     memoria_relation *target,
-    memoria_relation *relations,
     memoria_state_fact *facts,
     size_t *count
 ) {
     const memoria_concept_index *concepts = memoria_concept_runtime_index(h->concept_runtime);
     int named_entity = concept_id != NULL;
     *count = 0;
-    for (size_t i = 0; i < h->turn_count; ++i) {
-        const turn_row *turn = &h->turns[i];
-        memoria_relation *relation = &relations[*count];
-        if ((as_of_order && turn->order > *as_of_order) ||
-            !turn_namespace_matches(turn, namespace_id) || !turn->source_type ||
-            turn->authority < 0.5 || !turn->text || looks_like_question_text(turn->text) ||
-            (strcmp(turn->source_type, "user_assertion") != 0 &&
-             strcmp(turn->source_type, "user_correction") != 0 &&
-             strcmp(turn->source_type, "direct_observation") != 0 &&
-             strcmp(turn->source_type, "external_import") != 0)) continue;
-        if (!memoria_extract_attribute_relation(turn->text, relation)) continue;
+    for (size_t i = 0; session && i < session->count; ++i) {
+        const temporal_observation *observation = &session->observations[i];
+        const turn_row *turn = &h->turns[observation->turn_index];
+        const memoria_relation *relation = &observation->relation;
+        if (as_of_order && turn->order > *as_of_order) continue;
         if (concept_id) {
             memoria_concept_resolution source =
                 memoria_concept_resolve(concepts, concept_namespace, relation->subject);
@@ -1254,8 +1345,6 @@ static int try_temporal_response(
     int wants_previous = 0, wants_current = 0;
     const memoria_relation *target = NULL;
     memoria_relation typed_target = {0};
-    memoria_relation *typed_relations = NULL;
-    char typed_previous_value[sizeof(typed_target.object)];
     char normalized_query[MEMORIA_CONCEPT_QUERY_CAP];
     const char *requested_property = NULL;
     const char *entity_query = NULL;
@@ -1363,22 +1452,25 @@ static int try_temporal_response(
             concept_id = mention.concept_ids[0];
     }
     if (requested_property || asks_for_transition) {
-        typed_relations = calloc(h->turn_count, sizeof(*typed_relations));
-        facts = calloc(h->turn_count, sizeof(*facts));
-        if (!typed_relations || !facts) {
-            free(typed_relations);
-            free(facts);
+        const temporal_session *session;
+        if (!temporal_history_update(h, namespace_id, &session)) {
             *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
             return 1;
         }
-        typed = typed_temporal_facts(h, query, namespace_id, requested_property,
+        if (session && session->count) {
+            facts = calloc(session->count, sizeof(*facts));
+            if (!facts) {
+                *status_out = MEMORIA_MOBILE_INTERNAL_ERROR;
+                return 1;
+            }
+        }
+        typed = typed_temporal_facts(h, query, session, requested_property,
                                      concept_namespace, concept_id,
                                      asks_for_transition || cutoff_status ? entity_query : NULL,
-                                     cutoff_status ? &orders.to : NULL, &typed_target, typed_relations, facts, &fact_count);
+                                     cutoff_status ? &orders.to : NULL, &typed_target, facts, &fact_count);
         if (typed <= 0) {
-            free(typed_relations);
             free(facts);
-            typed_relations = NULL;
+            facts = NULL;
             if (typed < 0 || requires_typed_history || cutoff_status) {
                 *status_out = typed_temporal_unresolved(out, "temporal entity or requested property is not uniquely justified");
                 return 1;
@@ -1449,7 +1541,6 @@ static int try_temporal_response(
         free(conflicts.items);
         free(transitions);
         free(facts);
-        free(typed_relations);
         return 1;
     }
     if (asks_for_transition) {
@@ -1465,7 +1556,6 @@ static int try_temporal_response(
                                             count ? MEMORIA_MOBILE_OK : MEMORIA_MOBILE_UNRESOLVED, out)
                 : typed_temporal_unresolved(out, "no justified differences between the event orders");
             free(facts);
-            free(typed_relations);
             return 1;
         }
         size_t count = collect_entity_transitions(target->subject, facts, fact_count,
@@ -1474,7 +1564,6 @@ static int try_temporal_response(
             *status_out = render_entity_transitions(h, namespace_id, transitions, count, latest_phrase != NULL,
                                                     NULL, NULL, MEMORIA_MOBILE_OK, out);
             free(facts);
-            free(typed_relations);
             return 1;
         }
         state = (memoria_temporal_state_result){0};
@@ -1492,19 +1581,10 @@ static int try_temporal_response(
                                        orders.to, state.confidence, out)
             : render_snapshot_conflict(h, namespace_id, facts, fact_count, orders.to, out);
         free(facts);
-        free(typed_relations);
         return 1;
     }
+    /* State values refer to cached observations or persisted turns. */
     free(facts);
-    if (typed && state.hit) {
-        snprintf(typed_target.object, sizeof(typed_target.object), "%s", state.current_value);
-        state.current_value = typed_target.object;
-    }
-    if (typed && state.previous_value) {
-        snprintf(typed_previous_value, sizeof(typed_previous_value), "%s", state.previous_value);
-        state.previous_value = typed_previous_value;
-    }
-    free(typed_relations);
     if (!state.hit) {
         if (status_out) *status_out = typed
             ? typed_temporal_unresolved(out, asks_for_transition ? "no supported transition for entity"
@@ -3769,6 +3849,7 @@ memoria_mobile_status memoria_mobile_format_json(
         goto done;
     }
 
+    temporal_history_clear(&h->temporal_history);
     for (i = 0; i < h->turn_count; ++i) free_turn(&h->turns[i]);
     for (i = 0; i < h->episode_count; ++i) free_episode(&h->episodes[i]);
     h->turn_count = 0;
@@ -3828,6 +3909,7 @@ void memoria_mobile_free_buffer(memoria_mobile_buffer b) { free((void *)b.data);
 void memoria_mobile_close(memoria_mobile_handle *h) {
     size_t i;
     if (!h) return;
+    temporal_history_clear(&h->temporal_history);
     for (i = 0; i < h->turn_count; ++i) free_turn(&h->turns[i]);
     for (i = 0; i < h->episode_count; ++i) free_episode(&h->episodes[i]);
     memoria_concept_runtime_close(h->concept_runtime);

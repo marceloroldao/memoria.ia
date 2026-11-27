@@ -40,9 +40,12 @@ def main():
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--sizes", type=int, nargs="+", default=(128, 512, 2048))
     parser.add_argument("--samples", type=int, default=9)
+    parser.add_argument("--sessions", type=int, default=1)
     args = parser.parse_args()
-    if args.samples < 1 or any(size < len(OBSERVATIONS) for size in args.sizes):
-        parser.error("provide at least one sample and room for the target observations")
+    if args.samples < 1 or args.sessions < 1:
+        parser.error("provide at least one sample and session")
+    if any(size < len(OBSERVATIONS) + args.sessions - 1 for size in args.sizes):
+        parser.error("provide enough records for the target observations and every session")
 
     print("records,query,baseline_median_ms,candidate_median_ms,speedup")
     for size in args.sizes:
@@ -50,22 +53,29 @@ def main():
             path = Path(temp)
             with open_store(path, args.baseline) as store:
                 for index in range(size - len(OBSERVATIONS)):
+                    session_number = (index + 1) % args.sessions
+                    session = SESSION if session_number == 0 else f"{SESSION}-{session_number}"
                     text = f"A fonte Auxiliar{index} fornece 5 volts."
-                    store.ingest(role="user", text=text, order=index % 70 + 1, session_id=SESSION)
+                    store.ingest(role="user", text=text, order=index % 70 + 1, session_id=session)
                 for order, text in reversed(OBSERVATIONS):
                     store.ingest(role="user", text=text, order=order, session_id=SESSION)
                 store.flush()
 
-            # Alternate which build runs first across two rounds. Open and warm up
-            # before timing so the comparison isolates recall on an open store.
+            # Alternate which build runs first. Measure the initial snapshot
+            # separately from repeated queries on the same open store.
             samples = [{route: [] for route in QUERIES} for _ in range(2)]
+            first_snapshot = [[], []]
             expected = None
-            for order in ((0, 1), (1, 0)):
+            for order in ((0, 1), (1, 0)) * 2:
                 for index in order:
                     library = (args.baseline, args.candidate)[index]
                     with open_store(path, library) as store:
-                        results = {route: store.resolve(query=query, session_id=SESSION)
-                                   for route, query in QUERIES.items()}
+                        results = {}
+                        for route, query in QUERIES.items():
+                            start = perf_counter_ns()
+                            results[route] = store.resolve(query=query, session_id=SESSION)
+                            if route == "snapshot":
+                                first_snapshot[index].append(perf_counter_ns() - start)
                         if expected is None:
                             if any(result.status != "HIT" for result in results.values()):
                                 raise RuntimeError("benchmark queries did not hit the reference store")
@@ -78,8 +88,10 @@ def main():
                                 store.resolve(query=query, session_id=SESSION)
                                 samples[index][route].append(perf_counter_ns() - start)
 
-        for route in QUERIES:
-            baseline, candidate = (median(build[route]) / 1e6 for build in samples)
+        timings = {route: [build[route] for build in samples] for route in QUERIES}
+        timings["first_snapshot"] = first_snapshot
+        for route, timings_by_build in timings.items():
+            baseline, candidate = (median(build) / 1e6 for build in timings_by_build)
             print(f"{size},{route},{baseline:.3f},{candidate:.3f},{baseline / candidate:.2f}")
 
 
