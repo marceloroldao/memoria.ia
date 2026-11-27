@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from random import Random
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -410,5 +411,163 @@ def test_native_conversation_reports_multiple_changes_with_their_own_sources_aft
             "Qual era a cor da fonte Vega Mini na ordem 25?",
         ):
             assert _resolve(client, question, "workshop")["status"] == "UNRESOLVED"
+    finally:
+        service.close()
+
+
+def _latest_event(events, cutoff):
+    order = max((order for order in events if order <= cutoff), default=None)
+    return (order, events[order]) if order is not None else (None, {})
+
+
+def _transition_evidence(property_name, before, after):
+    before_order, old = before
+    after_order, new = after
+    (old_value, old_id), = old.items()
+    (new_value, new_id), = new.items()
+    return property_name, old_value, new_value, before_order, after_order, old_id, new_id
+
+
+def _response_transition(item):
+    return (
+        item["property"], item["previous_value"], item["current_value"],
+        item["previous_order"], item["current_order"],
+        item["previous_memory_id"], item["current_memory_id"],
+    )
+
+
+def _conflict_observations(item):
+    return {observation["value"]: observation["memory_id"] for observation in item["observations"]}
+
+
+def _assert_temporal_sources(result):
+    source_ids = set()
+    for field in ("temporal_changes", "temporal_equal_endpoints"):
+        for item in result.get(field, []):
+            source_ids.update((item["previous_memory_id"], item["current_memory_id"]))
+    for conflict in result.get("temporal_conflicts", []):
+        source_ids.update(_conflict_observations(conflict).values())
+        if conflict.get("resume"):
+            source_ids.add(conflict["resume"]["memory_id"])
+    assert set(result["memory_ids"]) == source_ids
+    assert {item["memory_id"] for item in result["provenance"]} == source_ids
+
+
+@pytest.mark.parametrize("seed", range(6))
+def test_generated_temporal_histories_against_reference_after_reopen(tmp_path, seed):
+    rng = Random(seed)
+    formats = {
+        "color": ("cor", "A fonte Semente é {}.", ("cinza", "preta", "verde")),
+        "voltage": ("tensão", "A fonte Semente fornece {}.", ("12 volts", "18 volts", "24 volts")),
+        "weight": ("peso", "A fonte Semente pesa {}.", ("2 quilos", "3 quilos", "4 quilos")),
+    }
+    readings = [
+        (order, prop, value)
+        for order in range(1, 13)
+        for prop, (_, _, values) in formats.items()
+        for value in rng.sample(values, rng.choices((0, 1, 2, 3), weights=(4, 9, 4, 1))[0])
+    ]
+    rng.shuffle(readings)
+    events = {prop: {} for prop in formats}
+    library = _native_library()
+    service = _native_service(tmp_path, library)
+    try:
+        for order, prop, value in readings:
+            recorded = service.ingest(
+                role="user", text=formats[prop][1].format(value), order=order, session_id="generated",
+            )
+            events[prop].setdefault(order, {})[value] = recorded.memory_ids[0]
+        # These would win at the same order if either namespace or source isolation failed.
+        service.ingest(
+            role="user", text="A fonte Semente fornece 99 volts.", order=12, session_id="other",
+        )
+        service.ingest(
+            role="assistant", text="A fonte Semente é vermelha.", order=12, session_id="generated",
+        )
+        service.flush()
+    finally:
+        service.close()
+
+    service = _native_service(tmp_path, library)
+    try:
+        app = FastAPI()
+        attach_server_conversation_routes(app, api_key="secret", service=service)
+        with TestClient(app) as client:
+            for prop, (label, _, _) in formats.items():
+                for order in range(13):
+                    observed_order, observed = _latest_event(events[prop], order)
+                    query = f"Qual era {label} da fonte Semente na ordem {order}?"
+                    actual = _resolve(client, query, "generated")
+                    if len(observed) == 1:
+                        assert actual["status"] == "HIT", query
+                        assert actual["as_of_order"] == order
+                        assert actual["relations"][0]["object"] == next(iter(observed))
+                    else:
+                        assert actual["status"] == "UNRESOLVED", query
+                        assert actual["relations"] == []
+                    assert set(actual["memory_ids"]) == set(observed.values()), query
+                    assert {row["memory_id"] for row in actual["provenance"]} == set(observed.values())
+                    if len(observed) > 1:
+                        (conflict,) = actual["temporal_conflicts"]
+                        assert conflict["order"] == observed_order
+                        assert _conflict_observations(conflict) == observed
+                    else:
+                        assert "temporal_conflicts" not in actual
+
+            windows = [(left, left + 1) for left in range(12)] + [(0, 3), (0, 12), (2, 9), (4, 12)]
+            for left, right in windows:
+                expected_changes, expected_equal, blocked = [], [], {}
+                expected_trace, interruptions = [], {}
+                for prop, history in events.items():
+                    start = _latest_event(history, left)
+                    end = _latest_event(history, right)
+                    for cutoff, (event_order, values) in ((left, start), (right, end)):
+                        if len(values) > 1:
+                            blocked.setdefault((prop, event_order), []).append(cutoff)
+                    if len(start[1]) == len(end[1]) == 1 and start[0] != end[0]:
+                        transition = _transition_evidence(prop, start, end)
+                        (expected_equal if transition[1] == transition[2] else expected_changes).append(transition)
+
+                    trace = [start] if start[0] is not None else []
+                    trace.extend(sorted((order, values) for order, values in history.items() if left < order <= right))
+                    for before, after in zip(trace, trace[1:]):
+                        if len(before[1]) == len(after[1]) == 1 and before[1].keys() != after[1].keys():
+                            expected_trace.append(_transition_evidence(prop, before, after))
+                    for order, values in trace:
+                        if len(values) <= 1:
+                            continue
+                        next_reading = next(((n, v) for n, v in trace if n > order and len(v) == 1), None)
+                        if next_reading:
+                            next_order, next_values = next_reading
+                            (next_value, next_id), = next_values.items()
+                            resume = {"order": next_order, "value": next_value, "memory_id": next_id}
+                        else:
+                            resume = None
+                        interruptions[prop, order] = (values, order < left, resume)
+
+                suffix = f"na fonte Semente entre as ordens {left} e {right}?"
+                comparison = _resolve(client, f"O que mudou {suffix}", "generated")
+                assert comparison["status"] == ("HIT" if expected_changes or expected_equal else "UNRESOLVED"), suffix
+                assert [_response_transition(item) for item in comparison.get("temporal_changes", [])] == expected_changes
+                assert [_response_transition(item) for item in comparison.get("temporal_equal_endpoints", [])] == expected_equal
+                comparison_conflicts = comparison.get("temporal_conflicts", [])
+                assert {(item["property"], item["order"]): item["endpoint_orders"] for item in comparison_conflicts} == blocked
+                for item in comparison_conflicts:
+                    assert _conflict_observations(item) == events[item["property"]][item["order"]]
+
+                _assert_temporal_sources(comparison)
+
+                timeline = _resolve(client, f"Quais mudanças ocorreram {suffix}", "generated")
+                assert timeline["status"] == ("HIT" if expected_trace or interruptions else "UNRESOLVED"), suffix
+                timeline_changes = timeline.get("temporal_changes", [])
+                assert [_response_transition(item) for item in timeline_changes] == sorted(
+                    expected_trace, key=lambda change: (change[4], tuple(formats).index(change[0])),
+                )
+                assert [item["transition_order"] for item in timeline_changes] == [item["current_order"] for item in timeline_changes]
+                assert {
+                    (item["property"], item["order"]): (_conflict_observations(item), item["inherited"], item["resume"])
+                    for item in timeline.get("temporal_conflicts", [])
+                } == interruptions
+                _assert_temporal_sources(timeline)
     finally:
         service.close()
